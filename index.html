@@ -545,6 +545,20 @@
                 setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 800);
             }, 1000);
         });
+
+        if ('launchQueue' in window) {
+    window.launchQueue.setConsumer((launchParams) => {
+        if (launchParams.files && launchParams.files.length > 0) {
+            // Lấy tất cả các file được chọn (ví dụ bro bôi đen 5 bài rồi Enter)
+            Promise.all(launchParams.files.map(fileHandle => fileHandle.getFile()))
+                .then(files => {
+                    // Gọi lại hàm handleFiles mà chúng ta đã viết trước đó
+                    handleFiles(files);
+                    console.log("Đã nhận file từ hệ thống:", files);
+                });
+        }
+    });
+}
     </script>
 </body>
 </html>
