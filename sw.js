@@ -1,4 +1,4 @@
-const CACHE_NAME = 'studio-pro-v1';
+const CACHE_NAME = 'studio-pro-v2';
 
 // Danh sách tài nguyên cần cache để chạy offline hoàn hảo
 const ASSETS = [
