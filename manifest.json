@@ -1,5 +1,5 @@
 {
-  "name": "Music Player",
+  "name": "Music Player Expressive",
   "short_name": "Music Player",
   "start_url": "index.html",
   "display": "standalone",
@@ -9,20 +9,20 @@
   "icons": [
     {
       "src": "music_note.png",
-      "sizes": "24x24",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "music_note.png",
-      "sizes": "24x24",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
   "file_handlers": [
     {
-      "action": "/",
+      "action": "index.html",
       "accept": {
         "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".flac"]
       }
