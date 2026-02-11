@@ -4,6 +4,7 @@ const CACHE_NAME = 'studio-pro-v1';
 const ASSETS = [
   './',
   './index.html',
+  './index_md1.html',
   './manifest.json',
   './music_note.png',
   // Assets từ GitHub của bro
