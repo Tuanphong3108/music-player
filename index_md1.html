@@ -5,24 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Player Classic - MD1</title>
     
-    <!-- Link Manifest cho PWA MD1 -->
     <link rel="manifest" href="manifest_md1.json">
     <link rel="icon" type="image/png" href="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/music_note/default/48px.svg">
     
-    <!-- Material Design 1 - Roboto Font & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     
     <style>
-        /* Override default scrollbar for MD1 feel */
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('https://tuanphong3108.github.io/google-sans-do-not-access/minecraft.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 3px; }
 
         :root {
-            /* Palette Material Design 1: Indigo & Pink */
             --primary-color: #3F51B5;
             --primary-dark: #303F9F;
             --accent-color: #FF4081;
@@ -33,7 +35,6 @@
             --divider: #BDBDBD;
             --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
             --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-            --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -44,19 +45,29 @@
             font-family: 'Roboto', sans-serif; overflow: hidden;
         }
 
-        /* --- LOADING OVERLAY --- */
+        /* --- MD1 CIRCULAR LOADING --- */
         #loading-overlay {
             position: fixed; inset: 0; background: var(--surface-color);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             z-index: 2000; transition: opacity 0.4s ease;
         }
-        #loading-overlay img { width: 64px; }
 
-        .app-shell {
-            display: flex; flex-direction: column; height: 100vh;
+        .md1-loader {
+            width: 48px; height: 48px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        /* --- HEADER (MD1 Toolbar) --- */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .app-shell { display: flex; flex-direction: column; height: 100vh; }
+
+        /* --- TOOLBAR --- */
         .toolbar {
             height: 56px; background: var(--primary-color); color: #fff;
             display: flex; align-items: center; padding: 0 16px;
@@ -64,23 +75,22 @@
         }
         .toolbar h1 { margin: 0 0 0 16px; font-size: 20px; font-weight: 500; flex: 1; }
 
-        /* --- MAIN LAYOUT --- */
-        .main-container {
-            flex: 1; display: flex; position: relative; overflow: hidden;
-        }
+        /* --- MAIN CONTAINER --- */
+        .main-container { flex: 1; display: flex; position: relative; overflow: hidden; }
 
-        /* --- PLAYLIST (Side Drawer style) --- */
+        /* --- PLAYLIST PANEL --- */
         .playlist-panel {
             width: 300px; background: var(--surface-color); border-right: 1px solid var(--divider);
-            display: flex; flex-direction: column; transition: transform 0.3s ease;
-            z-index: 50;
+            display: flex; flex-direction: column; z-index: 50;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .playlist-panel.hidden-sidebar {
+            margin-left: -300px;
+            transform: translateX(-100%);
         }
 
-        .playlist-header {
-            padding: 16px; border-bottom: 1px solid var(--divider);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .playlist-header h2 { margin: 0; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; }
+        .playlist-header { padding: 16px; border-bottom: 1px solid var(--divider); display: flex; justify-content: space-between; align-items: center; }
+        .playlist-header h2 { margin: 0; font-size: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
 
         .playlist-items { flex: 1; overflow-y: auto; }
         .song-item {
@@ -89,126 +99,115 @@
         }
         .song-item:hover { background: #F5F5F5; }
         .song-item.active { background: #E8EAF6; color: var(--primary-color); }
-        .song-item.active .track-title { font-weight: 500; }
 
         /* --- VISUALIZER AREA --- */
-        .visual-area {
-            flex: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center;
-        }
+        .visual-area { flex: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
         #visualizer { width: 100%; height: 100%; }
+        .empty-state { position: absolute; color: rgba(255,255,255,0.3); text-align: center; pointer-events: none; }
 
-        .empty-state {
-            position: absolute; color: rgba(255,255,255,0.3); text-align: center;
+        /* --- PLAYER BAR --- */
+        .player-bar { height: 80px; background: var(--surface-color); border-top: 1px solid var(--divider); display: flex; flex-direction: column; z-index: 110; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .seek-bar-container { width: 100%; height: 4px; position: relative; cursor: pointer; }
+        
+        /* Cải tiến Input Range (Seek & Volume) */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 2px;
+            cursor: pointer;
+            outline: none;
         }
 
-        /* --- PLAYER BAR (MD1 Bottom Sheet) --- */
-        .player-bar {
-            height: 80px; background: var(--surface-color); border-top: 1px solid var(--divider);
-            display: flex; flex-direction: column; z-index: 110; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        }
-
-        .seek-bar-container {
-            width: 100%; height: 4px; position: relative; cursor: pointer;
-        }
+        /* Seek Bar đặc biệt phủ toàn màn hình chiều rộng */
         #seek-slider {
-            position: absolute; top: -14px; left: 0; width: 100%; 
-            margin: 0; appearance: none; background: transparent; cursor: pointer;
-        }
-        #seek-slider::-webkit-slider-runnable-track { height: 4px; background: #ddd; }
-        #seek-slider::-webkit-slider-thumb { 
-            appearance: none; width: 12px; height: 12px; background: var(--accent-color); 
-            border-radius: 50%; margin-top: -4px; box-shadow: var(--shadow-1);
-        }
-
-        .player-content {
-            flex: 1; display: flex; align-items: center; padding: 0 16px; gap: 24px;
+            position: absolute;
+            top: -14px;
+            left: 0;
+            width: 100%;
+            margin: 0;
+            background: transparent;
+            z-index: 10;
         }
 
-        .current-info { display: flex; align-items: center; gap: 12px; width: 250px; min-width: 0; }
-        .album-art { 
-            width: 48px; height: 48px; background: #eee; border-radius: 2px; 
-            display: flex; align-items: center; justify-content: center;
+        /* Track (Phần dải trượt) */
+        #seek-slider::-webkit-slider-runnable-track {
+            height: 4px;
+            background: transparent; /* Sẽ xử lý bằng CSS biến từ JS */
+        }
+
+        /* Thumb (Dấu chấm) */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            margin-top: -4px;
             box-shadow: var(--shadow-1);
+            transition: transform 0.1s ease;
+        }
+        input[type="range"]:active::-webkit-slider-thumb {
+            transform: scale(1.3);
         }
 
+        .player-content { flex: 1; display: flex; align-items: center; padding: 0 16px; gap: 24px; }
+        .current-info { display: flex; align-items: center; gap: 12px; width: 250px; min-width: 0; }
+        .album-art { width: 48px; height: 48px; background: #eee; border-radius: 2px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-1); }
         .track-meta { min-width: 0; }
         .track-meta h4 { margin: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .track-meta p { margin: 4px 0 0; font-size: 12px; color: var(--text-secondary); }
 
         .main-controls { flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; }
-
-        /* --- BUTTONS (MD1 Flat & FAB) --- */
-        .btn-icon {
-            background: transparent; border: none; color: var(--text-secondary);
-            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
-        }
+        .btn-icon { background: transparent; border: none; color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .btn-icon:hover { background: rgba(0,0,0,0.05); }
         .btn-icon.active { color: var(--primary-color); }
-
-        .fab-play {
-            width: 56px; height: 56px; background: var(--accent-color); color: #fff;
-            border-radius: 50%; box-shadow: var(--shadow-2); border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .fab-play:active { box-shadow: var(--shadow-3); transform: scale(1.05); }
+        .fab-play { width: 56px; height: 56px; background: var(--accent-color); color: #fff; border-radius: 50%; box-shadow: var(--shadow-2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         .extra-controls { width: 250px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-        .volume-slider-md { width: 80px; accent-color: var(--primary-color); }
-
+        .volume-slider-container { width: 80px; display: flex; align-items: center; }
         .time-display { font-size: 11px; color: var(--text-secondary); font-weight: 500; min-width: 70px; }
 
         .hidden { display: none; }
-
-        /* Responsive */
-        @media (max-width: 720px) {
-            .playlist-panel { display: none; }
-            .current-info { width: auto; }
-            .extra-controls { display: none; }
-        }
     </style>
 </head>
 <body>
 
     <div id="loading-overlay">
-        <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" alt="Loading" style="filter: grayscale(1) brightness(0.5);">
-        <p style="color: var(--text-secondary); margin-top: 16px; font-size: 12px; letter-spacing: 1px; font-weight: 500;">XIN CHỜ...</p>
+        <div class="md1-loader"></div>
+        <p style="color: var(--text-secondary); margin-top: 16px; font-size: 12px; letter-spacing: 1px; font-weight: 500; font-family: 'Minecraft', sans-serif;">XIN CHỜ...</p>
     </div>
 
     <div class="app-shell">
         <div class="toolbar">
-            <span class="material-symbols-outlined">menu</span>
-            <h1>Âm nhạc</h1>
+            <button class="btn-icon" style="color: #fff;" id="menu-toggle">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <h1>Music Player</h1>
             <button class="btn-icon" style="color: #fff;" onclick="document.getElementById('file-input').click()">
                 <span class="material-symbols-outlined">library_add</span>
             </button>
         </div>
 
         <div class="main-container">
-            <!-- Playlist -->
-            <div class="playlist-panel">
+            <div class="playlist-panel" id="playlist-panel">
                 <div class="playlist-header">
                     <h2>Danh sách phát</h2>
                     <span id="track-count" style="font-size: 12px; color: var(--accent-color); font-weight: bold;">0</span>
                 </div>
-                <div class="playlist-items" id="playlist-container">
-                    <!-- Songs here -->
-                </div>
+                <div class="playlist-items" id="playlist-container"></div>
             </div>
 
-            <!-- Visualizer Area -->
             <div class="visual-area">
                 <div id="empty-hint" class="empty-state">
                     <span class="material-symbols-outlined" style="font-size: 48px;">music_note</span>
-                    <p>Chọn bài hát để bắt đầu</p>
+                    <p>Chọn bài hát hoặc kéo thả vào đây</p>
                 </div>
                 <canvas id="visualizer"></canvas>
             </div>
         </div>
 
-        <!-- Player Bar -->
         <div class="player-bar">
             <div class="seek-bar-container">
                 <input type="range" id="seek-slider" min="0" max="100" value="0">
@@ -220,7 +219,7 @@
                     </div>
                     <div class="track-meta">
                         <h4 id="track-name">Sẵn sàng</h4>
-                        <p id="track-artist">Chưa có bài hát</p>
+                        <p id="track-artist">Âm nhạc của tôi</p>
                     </div>
                 </div>
 
@@ -237,7 +236,9 @@
                         <span id="current-time">0:00</span> / <span id="duration">0:00</span>
                     </div>
                     <span class="material-symbols-outlined" style="font-size: 20px; color: var(--text-secondary)">volume_up</span>
-                    <input type="range" id="volume-slider" class="volume-slider-md" min="0" max="100" value="80">
+                    <div class="volume-slider-container">
+                        <input type="range" id="volume-slider" min="0" max="100" value="80">
+                    </div>
                 </div>
             </div>
         </div>
@@ -250,6 +251,8 @@
         const audio = document.getElementById('audio-element');
         const fileInput = document.getElementById('file-input');
         const playlistContainer = document.getElementById('playlist-container');
+        const playlistPanel = document.getElementById('playlist-panel');
+        const menuToggle = document.getElementById('menu-toggle');
         const playBtn = document.getElementById('play-btn');
         const playIcon = playBtn.querySelector('.material-symbols-outlined');
         const visualizer = document.getElementById('visualizer');
@@ -264,23 +267,40 @@
         let isShuffle = false;
         let repeatMode = 0; 
 
-        // Files Handling
+        // Hàm cập nhật màu fill cho input range
+        function updateRangeFill(slider, activeColor = '#FF4081') {
+            const percent = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+            slider.style.background = `linear-gradient(to right, ${activeColor} ${percent}%, rgba(0,0,0,0.1) ${percent}%)`;
+        }
+
+        menuToggle.addEventListener('click', () => {
+            playlistPanel.classList.toggle('hidden-sidebar');
+        });
+
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
         window.addEventListener('dragover', (e) => e.preventDefault());
-        window.addEventListener('drop', (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            handleFiles(e.dataTransfer.files);
+        });
 
         function handleFiles(files) {
+            if (!files || files.length === 0) return;
             Array.from(files).forEach(file => {
-                playlist.push({ 
-                    name: file.name.replace(/\.[^/.]+$/, ""), 
-                    url: URL.createObjectURL(file),
-                    ext: file.name.split('.').pop()
-                });
+                if (file.type.startsWith('audio/')) {
+                    playlist.push({ 
+                        name: file.name.replace(/\.[^/.]+$/, ""), 
+                        url: URL.createObjectURL(file),
+                        ext: file.name.split('.').pop()
+                    });
+                }
             });
             updatePlaylistUI();
-            if (currentIndex === -1) playTrack(0);
-            emptyHint.style.display = 'none';
-            initVisualizer();
+            if (currentIndex === -1 && playlist.length > 0) playTrack(0);
+            if (playlist.length > 0) {
+                emptyHint.style.display = 'none';
+                initVisualizer();
+            }
         }
 
         function updatePlaylistUI() {
@@ -292,7 +312,7 @@
                 item.innerHTML = `
                     <span class="material-symbols-outlined" style="font-size:24px">${index === currentIndex && !audio.paused ? 'volume_up' : 'music_note'}</span>
                     <div class="track-meta">
-                        <div class="track-title" style="font-size: 14px;">${track.name}</div>
+                        <div class="track-title">${track.name}</div>
                         <div style="font-size: 11px; opacity: 0.6">.${track.ext.toUpperCase()}</div>
                     </div>
                 `;
@@ -306,8 +326,7 @@
             currentIndex = index;
             audio.src = playlist[index].url;
             trackNameEl.innerText = playlist[index].name;
-            trackArtistEl.innerText = `Đang phát .${playlist[index].ext.toUpperCase()}`;
-            
+            trackArtistEl.innerText = "Đang phát";
             updatePlaylistUI();
             audio.play();
             playIcon.innerText = 'pause';
@@ -315,22 +334,19 @@
 
         playBtn.addEventListener('click', () => {
             if (!audio.src && playlist.length > 0) playTrack(0);
-            if (audio.paused) { 
-                audio.play(); 
-                playIcon.innerText = 'pause';
-            } else { 
-                audio.pause(); 
-                playIcon.innerText = 'play_arrow';
-            }
+            else if (audio.paused) { audio.play(); playIcon.innerText = 'pause'; }
+            else { audio.pause(); playIcon.innerText = 'play_arrow'; }
             updatePlaylistUI();
         });
 
         document.getElementById('next-btn').addEventListener('click', () => {
+            if (playlist.length === 0) return;
             if (isShuffle) playTrack(Math.floor(Math.random() * playlist.length));
             else playTrack((currentIndex + 1) % playlist.length);
         });
 
         document.getElementById('prev-btn').addEventListener('click', () => {
+            if (playlist.length === 0) return;
             let p = currentIndex - 1; if (p < 0) p = playlist.length - 1;
             playTrack(p);
         });
@@ -351,7 +367,6 @@
             else playIcon.innerText = 'play_arrow';
         });
 
-        // Visualizer MD1 Style (Clean and simple)
         let audioCtx, analyser, dataArray;
         function initVisualizer() {
             if (audioCtx) return;
@@ -372,22 +387,19 @@
             const ctx = visualizer.getContext('2d');
             visualizer.width = visualizer.clientWidth;
             visualizer.height = visualizer.clientHeight;
-            
             const barWidth = (visualizer.width / dataArray.length);
             ctx.clearRect(0, 0, visualizer.width, visualizer.height);
-            
             dataArray.forEach((val, i) => {
                 const h = (val / 255) * visualizer.height * 0.8;
-                // MD1 Style bars: solid color with slight opacity
                 ctx.fillStyle = i % 2 === 0 ? 'rgba(63, 81, 181, 0.6)' : 'rgba(255, 64, 129, 0.6)';
                 ctx.fillRect(i * barWidth, visualizer.height - h, barWidth - 2, h);
             });
         }
 
-        // Time and Progress
         audio.addEventListener('timeupdate', () => {
             const p = (audio.currentTime / audio.duration) * 100;
             seekSlider.value = p || 0;
+            updateRangeFill(seekSlider);
             document.getElementById('current-time').innerText = formatTime(audio.currentTime);
             document.getElementById('duration').innerText = formatTime(audio.duration);
         });
@@ -401,27 +413,33 @@
 
         seekSlider.addEventListener('input', (e) => {
             audio.currentTime = (e.target.value / 100) * audio.duration;
+            updateRangeFill(seekSlider);
         });
         
         volumeSlider.addEventListener('input', (e) => {
             audio.volume = e.target.value / 100;
+            updateRangeFill(volumeSlider, '#3F51B5'); // Dùng màu Primary cho volume
         });
 
-        // Launch Queue for PWA
+        // --- LAUNCH QUEUE SYSTEM ---
         if ('launchQueue' in window) {
             window.launchQueue.setConsumer((launchParams) => {
                 if (launchParams.files && launchParams.files.length > 0) {
                     Promise.all(launchParams.files.map(fileHandle => fileHandle.getFile()))
-                        .then(files => handleFiles(files));
+                        .then(files => {
+                            handleFiles(files);
+                        });
                 }
             });
         }
 
         window.addEventListener('load', () => {
+            updateRangeFill(seekSlider);
+            updateRangeFill(volumeSlider, '#3F51B5');
             setTimeout(() => {
                 document.getElementById('loading-overlay').style.opacity = '0';
-                setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 400);
-            }, 800);
+                setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 800);
+            }, 1000);
         });
     </script>
 </body>
