@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Player</title>
+    <link rel="icon" type="image/png" href="music_note.png">
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
     <link href="https://fonts.material.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
@@ -92,7 +93,6 @@
             backdrop-filter: blur(30px); transition: var(--m3-transition); z-index: 50;
         }
         
-        /* Playlist thu gọn */
         .playlist-card.collapsed { 
             width: 72px; height: 72px; border-radius: 24px; align-self: flex-start;
         }
@@ -108,7 +108,6 @@
         .playlist-header h3 { margin: 0; font-size: 16px; font-weight: 600; transition: 0.3s; }
         .playlist-card.collapsed .playlist-header h3 { display: none; }
         
-        /* Icon mũi tên */
         .expand-icon { transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); font-size: 24px; }
         .playlist-card.collapsed .expand-icon { transform: rotate(-90deg); }
         
@@ -149,14 +148,12 @@
         }
         .bg-thumb-preview.visible { opacity: 1; }
 
-        /* --- MARQUEE (CHỮ CHẠY) --- */
+        /* --- MARQUEE --- */
         .marquee-container { 
             width: 100%; overflow: hidden; white-space: nowrap; position: relative;
             mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
         }
         .marquee-content { display: flex; width: max-content; align-items: center; }
-        
-        /* Animation chạy chữ */
         .is-scrolling .marquee-content { animation: marquee-scroll 10s linear infinite; }
         
         @keyframes marquee-scroll {
@@ -192,7 +189,10 @@
         .mini-art { 
             width: 48px; height: 48px; background: var(--md-sys-color-surface-variant); 
             border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            overflow: hidden;
         }
+        .custom-icon { width: 24px; height: 24px; object-fit: contain; }
+
         .track-text { min-width: 0; flex: 1; }
         .track-text h4 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: 0.1px; }
         .track-text p { margin: 2px 0 0; font-family: 'Minecraft'; font-size: 9px; opacity: 0.5; }
@@ -270,7 +270,9 @@
             </div>
 
             <div class="track-info">
-                <div class="mini-art" id="player-mini-art"><span class="material-symbols-outlined">music_note</span></div>
+                <div class="mini-art" id="player-mini-art">
+                    <img src="music_note.png" class="custom-icon" alt="music note" onerror="this.outerHTML='<span class=\'material-symbols-outlined\'>music_note</span>'">
+                </div>
                 <div class="track-text">
                     <div class="marquee-container" id="name-container">
                         <div class="marquee-content" id="track-name-wrapper">
@@ -303,7 +305,6 @@
     <audio id="audio-element"></audio>
 
     <script>
-        // --- SERVICE WORKER REGISTRATION ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -341,7 +342,6 @@
             slider.style.background = `linear-gradient(to right, ${fillCol} 0%, ${fillCol} ${percent}%, ${bgCol} ${percent}%, ${bgCol} 100%)`;
         }
 
-        // --- FIXED MARQUEE LOGIC ---
         function applyMarquee() {
             nameContainer.classList.remove('is-scrolling');
             nameWrapper.querySelectorAll('.clone').forEach(c => c.remove());
@@ -365,7 +365,6 @@
         window.addEventListener('dragover', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
 
-        // --- FILE HANDLER API LOGIC ---
         if ('launchQueue' in window) {
             window.launchQueue.setConsumer(async (launchParams) => {
                 if (launchParams.files.length > 0) {
