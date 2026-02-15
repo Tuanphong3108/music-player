@@ -1,50 +1,75 @@
-const CACHE_NAME = 'studio-pro-v2';
+const CACHE_NAME = 'studio-pro-v5';
 
-// Danh sách tài nguyên cần cache để chạy offline hoàn hảo
-const ASSETS = [
+// ===== FILE TĨNH PRECACHE =====
+const STATIC_ASSETS = [
   './',
   './index.html',
   './index_md1.html',
   './manifest.json',
   './music_note.png',
-  // Assets từ GitHub của bro
+
+  // assets ngoài nhưng ổn định
   'https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif',
-  'https://tuanphong3108.github.io/google-sans-do-not-access/minecraft.ttf',
-  // Google Fonts & Material Symbols (Hệ thống icon và font chữ)
-  'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap',
-  'https://fonts.material.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+  'https://tuanphong3108.github.io/google-sans-do-not-access/minecraft.ttf'
 ];
 
-// Cài đặt Service Worker và cache tài nguyên
+
+// ===== INSTALL =====
 self.addEventListener('install', (e) => {
-  self.skipWaiting(); // Ép SW mới hoạt động ngay lập tức
+  self.skipWaiting();
+
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(STATIC_ASSETS))
   );
 });
 
-// Kích hoạt và dọn dẹp cache cũ để giải phóng bộ nhớ cho con OPPO A6x
+
+// ===== ACTIVATE =====
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      )
+    )
   );
+
   self.clients.claim();
 });
 
-// Phản hồi các yêu cầu từ cache (Cache First strategy)
+
+// ===== FETCH – CACHE EVERYTHING POSSIBLE =====
 self.addEventListener('fetch', (e) => {
+  const req = e.request;
+
   e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request).then((response) => {
-        // Nếu là request thành công, có thể cân nhắc cache thêm vào đây
-        return response;
-      });
+    caches.match(req).then(cached => {
+      // 1. Có cache → trả luôn
+      if (cached) return cached;
+
+      // 2. Không có → thử network
+      return fetch(req)
+        .then(res => {
+
+          // Chỉ cache request GET hợp lệ
+          if (req.method === 'GET') {
+            const clone = res.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(req, clone));
+          }
+
+          return res;
+        })
+        .catch(() => {
+          // 3. Offline hoàn toàn → fallback navigation
+          if (req.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
     })
   );
 });
