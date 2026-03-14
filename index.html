@@ -13,6 +13,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     
+    <!-- Library for reading MP3 Metadata -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+
     <style>
         @font-face {
             font-family: 'Minecraft';
@@ -42,7 +45,7 @@
             -webkit-font-feature-settings: 'liga';
             -webkit-font-smoothing: antialiased;
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            width: 1em; height: 1em; overflow: hidden;
+            transition: var(--m3-transition);
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -65,7 +68,7 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             z-index: 2000; transition: opacity 0.5s ease, visibility 0.5s;
         }
-        #loading-overlay img { width: 80px; filter: hue-rotate(260deg) brightness(1.2) saturate(1.5); }
+        #loading-overlay img { width: 80px; filter: grayscale(1) brightness(1.5) sepia(1) hue-rotate(240deg) saturate(3); }
 
         #context-menu {
             position: fixed; background: var(--md-sys-color-surface-variant);
@@ -97,8 +100,10 @@
             position: relative; flex-shrink: 0;
         }
         .btn-m3:hover { background: var(--md-sys-color-secondary-container); transform: scale(1.1); }
+        .btn-m3:hover .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
         .btn-m3:active { transform: scale(0.9); }
-        .btn-m3.active { color: var(--md-sys-color-primary); font-variation-settings: 'FILL' 1; }
+        .btn-m3.active { color: var(--md-sys-color-primary); }
+        .btn-m3.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
         
         .repeat-badge {
             position: absolute; font-size: 10px; font-weight: 900; bottom: 8px; right: 8px;
@@ -143,8 +148,44 @@
         .song-item:hover { background: rgba(255, 255, 255, 0.08); transform: scale(1.02); }
         .song-item.active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 
-        .visual-stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
-        #visualizer { width: 100%; height: 100%; border-radius: 32px; z-index: 2; }
+        .visual-stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; border-radius: 32px; overflow: hidden;}
+        #visualizer { width: 100%; height: 100%; border-radius: 32px; z-index: 2; position: absolute; inset: 0;}
+
+        .lyric-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(12px); border-radius: 32px;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 50vh 20px; overflow-y: auto; scroll-behavior: smooth;
+            z-index: 15; opacity: 0; pointer-events: none; transition: var(--m3-transition);
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .lyric-overlay::-webkit-scrollbar { display: none; }
+        .lyric-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        .lyric-line {
+            font-size: 24px; color: rgba(255,255,255,0.3); margin: 16px 0;
+            text-align: center; transition: var(--m3-transition);
+            cursor: pointer; transform-origin: center;
+            font-weight: 600; max-width: 80%; line-height: 1.4;
+        }
+        .lyric-line:hover { color: rgba(255,255,255,0.8); }
+        .lyric-line.active {
+            font-size: 38px; color: #fff;
+            font-weight: 800; text-shadow: 0 4px 24px rgba(208, 188, 255, 0.4);
+            transform: scale(1.05);
+        }
+        /* Static lyric style */
+        .lyric-line.static {
+            color: rgba(255,255,255,0.7);
+            font-size: 20px;
+            cursor: default;
+        }
+        .lyric-line.static:hover { color: #fff; }
+
+        .lyric-placeholder {
+            margin: auto; font-family: 'Minecraft'; opacity: 0.5; font-size: 12px; letter-spacing: 1px;
+            text-align: center; line-height: 2;
+        }
 
         .pause-overlay {
             position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
@@ -199,20 +240,22 @@
         #seek-slider::-webkit-slider-thumb { 
             appearance: none; width: 14px; height: 14px; 
             background: var(--md-sys-color-primary); border-radius: 50%; opacity: 0;
+            transition: transform 0.2s;
         }
         .player-shell:hover #seek-slider::-webkit-slider-thumb { opacity: 1; }
 
         .track-info { display: flex; align-items: center; gap: 14px; min-width: 0; }
         .mini-art { 
-            width: 48px; height: 48px; background: var(--md-sys-color-surface-variant); 
+            width: 48px; height: 48px; background: var(--md-sys-color-secondary-container); 
             border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-            overflow: hidden;
+            overflow: hidden; position: relative;
         }
-        .custom-icon { width: 24px; height: 24px; object-fit: contain; }
+        .mini-art img { width: 100%; height: 100%; object-fit: cover; }
+        .mini-art .placeholder-icon { color: var(--md-sys-color-primary); font-size: 28px; }
 
         .track-text { min-width: 0; flex: 1; }
         .track-text h4 { margin: 0; font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .track-text p { margin: 2px 0 0; font-family: 'Minecraft'; font-size: 9px; opacity: 0.5; }
+        .track-text p { margin: 2px 0 0; font-family: 'Minecraft'; font-size: 9px; opacity: 0.5; text-transform: uppercase; }
 
         .controls-group { display: flex; justify-content: center; align-items: center; gap: 12px; }
         
@@ -236,13 +279,17 @@
 
     <div id="loading-overlay">
         <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" alt="Loading">
-        <p style="font-family:'Minecraft'; color:var(--md-sys-color-primary); margin-top:16px; font-size: 10px; letter-spacing: 1px;">OPTIMIZING UI ELEMENTS...</p>
+        <p style="font-family:'Minecraft'; color:var(--md-sys-color-primary); margin-top:16px; font-size: 10px; letter-spacing: 1px;">OPTIMIZING MEDIA SESSION...</p>
     </div>
 
     <div id="context-menu">
         <div class="cm-item danger" id="cm-delete">
             <span class="material-symbols-outlined">delete</span>
             <span>Xóa bài hát</span>
+        </div>
+        <div class="cm-item" id="cm-add-lrc">
+            <span class="material-symbols-outlined">description</span>
+            <span>Thêm lời lẻ (.lrc)</span>
         </div>
     </div>
 
@@ -252,7 +299,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.02.14</span>
+                <span>PLAYER V2026.03.14</span>
             </div>
             <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
         </div>
@@ -277,6 +324,10 @@
                 </div>
                 <div id="bg-preview" class="bg-thumb-preview"></div>
                 <canvas id="visualizer"></canvas>
+                
+                <div class="lyric-overlay" id="lyric-overlay">
+                    <div class="lyric-placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
+                </div>
             </div>
         </div>
 
@@ -288,7 +339,8 @@
             <div class="seek-container"><input type="range" id="seek-slider" min="0" max="100" value="0"></div>
             <div class="track-info">
                 <div class="mini-art" id="player-mini-art">
-                    <img src="music_note.png" class="custom-icon" alt="music note" onerror="this.outerHTML='<span class=\'material-symbols-outlined\'>music_note</span>'">
+                    <img src="" id="art-img" class="hidden" alt="art">
+                    <span id="art-placeholder" class="material-symbols-outlined placeholder-icon" style="font-variation-settings:'FILL' 1">music_note</span>
                 </div>
                 <div class="track-text">
                     <div class="marquee-container" id="name-container">
@@ -296,7 +348,7 @@
                             <h4 id="track-name" class="track-name-text">Studio Standby</h4>
                         </div>
                     </div>
-                    <p id="track-artist">ENGINE IDLE</p>
+                    <p id="track-artist">ENGINE IDLE | SYSTEM</p>
                 </div>
             </div>
             <div class="controls-group">
@@ -308,6 +360,9 @@
                     <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
                     <div class="repeat-badge">1</div>
                 </button>
+                <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">lyrics</span>
+                </button>
             </div>
             <div class="volume-group">
                 <span class="material-symbols-outlined" style="font-size: 20px;">volume_up</span>
@@ -316,12 +371,14 @@
         </div>
     </div>
 
-    <input type="file" id="file-input" class="hidden" accept="audio/*" multiple>
+    <input type="file" id="file-input" class="hidden" accept="audio/*, .lrc" multiple>
+    <input type="file" id="lrc-manual-input" class="hidden" accept=".lrc">
     <audio id="audio-element"></audio>
 
     <script>
         const audio = document.getElementById('audio-element');
         const fileInput = document.getElementById('file-input');
+        const lrcManualInput = document.getElementById('lrc-manual-input');
         const playlistContainer = document.getElementById('playlist-container');
         const playlistCard = document.getElementById('playlist-card');
         const playBtn = document.getElementById('play-btn');
@@ -332,23 +389,30 @@
         const nameContainer = document.getElementById('name-container');
         const nameWrapper = document.getElementById('track-name-wrapper');
         const trackNameEl = document.getElementById('track-name');
+        const trackArtistEl = document.getElementById('track-artist');
         const bgPreview = document.getElementById('bg-preview');
         const dropZone = document.getElementById('drop-zone');
         const contextMenu = document.getElementById('context-menu');
         const cmDelete = document.getElementById('cm-delete');
+        const cmAddLrc = document.getElementById('cm-add-lrc');
+        const lyricOverlay = document.getElementById('lyric-overlay');
+        const lyricBtn = document.getElementById('lyric-btn');
+        const artImg = document.getElementById('art-img');
+        const artPlaceholder = document.getElementById('art-placeholder');
 
         let playlist = [];
         let currentIndex = -1;
         let isShuffle = false;
         let repeatMode = 0; 
-        let targetDeleteIndex = -1;
+        let targetMenuIndex = -1;
+        let isLyricVisible = false;
 
-        // --- CONTEXT MENU LOGIC ---
+        // Context Menu Logic
         document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
             const songItem = e.target.closest('.song-item');
             if (songItem) {
-                targetDeleteIndex = parseInt(songItem.dataset.index);
+                e.preventDefault();
+                targetMenuIndex = parseInt(songItem.dataset.index);
                 contextMenu.style.display = 'flex';
                 contextMenu.style.left = `${e.clientX}px`;
                 contextMenu.style.top = `${e.clientY}px`;
@@ -360,25 +424,41 @@
         document.addEventListener('click', () => contextMenu.style.display = 'none');
 
         cmDelete.addEventListener('click', () => {
-            if (targetDeleteIndex > -1) {
-                const isPlayingDeleted = (currentIndex === targetDeleteIndex);
-                playlist.splice(targetDeleteIndex, 1);
-                
+            if (targetMenuIndex > -1) {
+                const isPlayingDeleted = (currentIndex === targetMenuIndex);
+                playlist.splice(targetMenuIndex, 1);
                 if (isPlayingDeleted) {
-                    audio.pause();
-                    audio.src = '';
-                    currentIndex = -1;
+                    audio.pause(); audio.src = ''; currentIndex = -1;
                     trackNameEl.innerText = "Studio Standby";
-                    document.getElementById('track-artist').innerText = "ENGINE IDLE";
+                    trackArtistEl.innerText = "ENGINE IDLE | SYSTEM";
+                    artImg.classList.add('hidden');
+                    artPlaceholder.classList.remove('hidden');
+                    bgPreview.style.backgroundImage = 'none';
                     playBtn.querySelector('span').innerText = 'play_arrow';
                     pauseOverlay.classList.remove('visible');
-                } else if (currentIndex > targetDeleteIndex) {
-                    currentIndex--;
-                }
-                
+                    renderLyrics();
+                    updateMediaSession();
+                } else if (currentIndex > targetMenuIndex) currentIndex--;
                 updatePlaylistUI();
-                targetDeleteIndex = -1;
+                targetMenuIndex = -1;
                 if (playlist.length === 0) dropZone.style.display = 'flex';
+            }
+        });
+
+        cmAddLrc.addEventListener('click', () => {
+             if (targetMenuIndex > -1) lrcManualInput.click();
+        });
+
+        lrcManualInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && targetMenuIndex > -1) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    playlist[targetMenuIndex].lyrics = parseLRC(ev.target.result);
+                    if (currentIndex === targetMenuIndex) renderLyrics();
+                    lrcManualInput.value = ""; // Reset
+                };
+                reader.readAsText(file);
             }
         });
 
@@ -407,20 +487,182 @@
         window.addEventListener('dragover', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
 
-        function handleFiles(files) {
+        async function handleFiles(files) {
+            const audioFiles = [];
+            const lrcFiles = [];
+            
             Array.from(files).forEach(file => {
-                playlist.push({ 
-                    name: file.name.replace(/\.[^/.]+$/, ""), 
-                    url: URL.createObjectURL(file),
-                    ext: file.name.split('.').pop()
-                });
+                if (file.name.toLowerCase().endsWith('.lrc')) lrcFiles.push(file);
+                else if (file.type.startsWith('audio/')) audioFiles.push(file);
             });
+
+            if (audioFiles.length === 0 && lrcFiles.length > 0 && currentIndex !== -1) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    playlist[currentIndex].lyrics = parseLRC(e.target.result);
+                    renderLyrics();
+                };
+                reader.readAsText(lrcFiles[0]);
+                return;
+            }
+
+            for (const file of audioFiles) {
+                let title = file.name.replace(/\.[^/.]+$/, "");
+                let artist = "UNKNOWN ARTIST";
+                let album = "Unknown Album";
+                let cover = null;
+                
+                await new Promise((resolve) => {
+                    window.jsmediatags.read(file, {
+                        onSuccess: function(tag) {
+                            if (tag.tags.artist) artist = tag.tags.artist;
+                            if (tag.tags.album) album = tag.tags.album;
+                            if (tag.tags.picture) {
+                                const { data, format } = tag.tags.picture;
+                                let base64String = "";
+                                for (let i = 0; i < data.length; i++) {
+                                    base64String += String.fromCharCode(data[i]);
+                                }
+                                cover = `data:${format};base64,${window.btoa(base64String)}`;
+                            }
+                            resolve();
+                        },
+                        onError: function() { resolve(); }
+                    });
+                });
+
+                playlist.push({ 
+                    name: title,
+                    artist: artist,
+                    album: album,
+                    cover: cover,
+                    url: URL.createObjectURL(file),
+                    ext: file.name.split('.').pop().toUpperCase(),
+                    lyrics: null,
+                    rawName: file.name.replace(/\.[^/.]+$/, "") 
+                });
+            }
+
+            for (const file of lrcFiles) {
+                const reader = new FileReader();
+                const content = await new Promise(r => {
+                    reader.onload = (e) => r(e.target.result);
+                    reader.readAsText(file);
+                });
+                
+                const parsed = parseLRC(content);
+                const baseName = file.name.replace(/\.[^/.]+$/, "");
+                const targetTrack = playlist.find(t => t.rawName === baseName);
+                
+                if (targetTrack) {
+                    targetTrack.lyrics = parsed;
+                } else if (audioFiles.length > 0) {
+                    playlist[playlist.length - 1].lyrics = parsed;
+                }
+            }
+
             updatePlaylistUI();
             if (currentIndex === -1 && playlist.length > 0) playTrack(0);
-            dropZone.style.display = 'none';
+            if (playlist.length > 0) dropZone.style.display = 'none';
             bgPreview.classList.add('visible');
             initVisualizer();
+            if (currentIndex !== -1) renderLyrics();
         }
+
+        function parseLRC(lrcText) {
+            const lines = lrcText.split('\n');
+            const result = [];
+            const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/; 
+            
+            const hasTime = lines.some(line => timeReg.test(line));
+
+            if (!hasTime) {
+                return lines.map(line => ({ time: -1, text: line.trim() })).filter(l => l.text);
+            }
+
+            lines.forEach(line => {
+                const match = timeReg.exec(line);
+                if (match) {
+                    const min = parseInt(match[1]);
+                    const sec = parseInt(match[2]);
+                    const msStr = match[3];
+                    const ms = parseInt(msStr);
+                    const time = min * 60 + sec + (msStr.length === 2 ? ms / 100 : ms / 1000);
+                    const txt = line.replace(timeReg, '').trim();
+                    if (txt) result.push({ time, text: txt });
+                }
+            });
+            return result.sort((a,b) => a.time - b.time);
+        }
+
+        function renderLyrics() {
+            lyricOverlay.innerHTML = '';
+            const track = playlist[currentIndex];
+            if (!track || !track.lyrics || track.lyrics.length === 0) {
+                lyricOverlay.innerHTML = '<div class="lyric-placeholder">BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)<br><small style="font-size:8px">Chuột phải vào bài hát để nạp lẻ</small></div>';
+                return;
+            }
+
+            const isStatic = track.lyrics[0]?.time === -1;
+
+            if (!isStatic) {
+                const spacerTop = document.createElement('div'); spacerTop.style.height = '40vh';
+                lyricOverlay.appendChild(spacerTop);
+            }
+
+            track.lyrics.forEach((l, i) => {
+                const div = document.createElement('div');
+                div.className = `lyric-line ${isStatic ? 'static' : ''}`; 
+                div.innerText = l.text;
+                if (!isStatic) {
+                    div.onclick = () => { audio.currentTime = l.time; audio.play(); };
+                }
+                lyricOverlay.appendChild(div);
+            });
+
+            if (!isStatic) {
+                const spacerBottom = document.createElement('div'); spacerBottom.style.height = '40vh';
+                lyricOverlay.appendChild(spacerBottom);
+            } else {
+                lyricOverlay.style.padding = '100px 20px';
+            }
+        }
+
+        function syncLyrics() {
+            if (!isLyricVisible) return;
+            const track = playlist[currentIndex];
+            if (!track || !track.lyrics || track.lyrics[0]?.time === -1) return;
+            
+            const time = audio.currentTime;
+            let activeIdx = -1;
+            for (let i = 0; i < track.lyrics.length; i++) {
+                if (time >= track.lyrics[i].time - 0.2) activeIdx = i;
+                else break;
+            }
+            if (activeIdx !== -1) {
+                const lines = lyricOverlay.querySelectorAll('.lyric-line');
+                const currentActive = lyricOverlay.querySelector('.lyric-line.active');
+                const newActive = lines[activeIdx];
+                if (currentActive !== newActive) {
+                    if (currentActive) currentActive.classList.remove('active');
+                    if (newActive) {
+                        newActive.classList.add('active');
+                        const offset = newActive.offsetTop - lyricOverlay.clientHeight / 2 + newActive.clientHeight / 2;
+                        lyricOverlay.scrollTo({ top: offset, behavior: 'smooth' });
+                    }
+                }
+            }
+        }
+
+        lyricBtn.addEventListener('click', function() {
+            isLyricVisible = !isLyricVisible;
+            this.classList.toggle('active', isLyricVisible);
+            lyricOverlay.classList.toggle('visible', isLyricVisible);
+            if (isLyricVisible) {
+                 renderLyrics();
+                 syncLyrics();
+            }
+        });
 
         function updatePlaylistUI() {
             playlistContainer.innerHTML = '';
@@ -433,6 +675,7 @@
                     <span class="material-symbols-outlined" style="font-size:20px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'play_arrow'}</span>
                     <div class="track-text">
                         <div style="font-weight:700; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
+                        <div style="font-family:'Minecraft'; font-size: 8px; opacity: 0.6; margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''}</div>
                     </div>
                 `;
                 item.onclick = () => playTrack(index);
@@ -443,20 +686,71 @@
         function playTrack(index) {
             if (index < 0 || index >= playlist.length) return;
             currentIndex = index;
-            audio.src = playlist[index].url;
-            trackNameEl.innerText = playlist[index].name;
-            document.getElementById('track-artist').innerText = `FORMAT: .${playlist[index].ext.toUpperCase()} | STATUS: PLAYING`;
+            const track = playlist[index];
+            audio.src = track.url;
+            trackNameEl.innerText = track.name;
+            trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
+            
+            if (track.cover) {
+                artImg.src = track.cover;
+                artImg.classList.remove('hidden');
+                artPlaceholder.classList.add('hidden');
+                bgPreview.style.backgroundImage = `url(${track.cover})`;
+            } else {
+                artImg.classList.add('hidden');
+                artPlaceholder.classList.remove('hidden');
+                bgPreview.style.backgroundImage = 'none';
+            }
+            
+            renderLyrics();
             applyMarquee();
             updatePlaylistUI();
+            updateMediaSession();
+            
             audio.play().catch(() => {});
             playBtn.querySelector('span').innerText = 'pause';
             pauseOverlay.classList.remove('visible');
         }
 
+        function updateMediaSession() {
+            if ('mediaSession' in navigator) {
+                const track = playlist[currentIndex];
+                if (!track) return;
+
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: track.name,
+                    artist: track.artist,
+                    album: track.album || "Unknown Album",
+                    artwork: track.cover ? [
+                        { src: track.cover, sizes: '96x96', type: 'image/png' },
+                        { src: track.cover, sizes: '512x512', type: 'image/png' }
+                    ] : []
+                });
+
+                navigator.mediaSession.setActionHandler('play', () => playBtn.click());
+                navigator.mediaSession.setActionHandler('pause', () => playBtn.click());
+                navigator.mediaSession.setActionHandler('previoustrack', () => document.getElementById('prev-btn').click());
+                navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
+                navigator.mediaSession.setActionHandler('seekto', (details) => {
+                    if (details.seekTime) audio.currentTime = details.seekTime;
+                });
+            }
+        }
+
         playBtn.addEventListener('click', () => {
             if (!audio.src && playlist.length > 0) playTrack(0);
-            else if (audio.paused) { audio.play(); playBtn.querySelector('span').innerText = 'pause'; pauseOverlay.classList.remove('visible'); }
-            else { audio.pause(); playBtn.querySelector('span').innerText = 'play_arrow'; pauseOverlay.classList.add('visible'); }
+            else if (audio.paused) { 
+                audio.play(); 
+                playBtn.querySelector('span').innerText = 'pause'; 
+                pauseOverlay.classList.remove('visible');
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+            }
+            else { 
+                audio.pause(); 
+                playBtn.querySelector('span').innerText = 'play_arrow'; 
+                pauseOverlay.classList.add('visible'); 
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+            }
             updatePlaylistUI();
         });
 
@@ -521,6 +815,15 @@
             updateSliderFill(seekSlider);
             document.getElementById('current-time').innerText = formatTime(audio.currentTime);
             document.getElementById('duration').innerText = formatTime(audio.duration);
+            syncLyrics();
+            
+            if ('mediaSession' in navigator && audio.duration) {
+                navigator.mediaSession.setPositionState({
+                    duration: audio.duration,
+                    playbackRate: audio.playbackRate,
+                    position: audio.currentTime
+                });
+            }
         });
 
         function formatTime(s) {
@@ -532,7 +835,6 @@
         seekSlider.addEventListener('input', (e) => audio.currentTime = (e.target.value / 100) * audio.duration);
         volumeSlider.addEventListener('input', (e) => { audio.volume = e.target.value / 100; updateSliderFill(volumeSlider); });
 
-        // LaunchQueue Support
         if ('launchQueue' in window) {
             window.launchQueue.setConsumer((params) => {
                 if (params.files && params.files.length) {
@@ -541,14 +843,22 @@
             });
         }
 
-        // Failsafe Loading
         const hideLoading = () => {
             const loader = document.getElementById('loading-overlay');
             loader.style.opacity = '0';
             setTimeout(() => loader.style.visibility = 'hidden', 500);
         };
         window.addEventListener('load', hideLoading);
-        setTimeout(hideLoading, 1500); // Tự tắt sau 1.5s
+        setTimeout(hideLoading, 1500);
+
+        // --- SERVICE WORKER REGISTRATION (ADDED) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => console.log('SW Registered with scope:', registration.scope))
+                    .catch(err => console.log('SW Registration failed:', err));
+            });
+        }
     </script>
 </body>
 </html>
