@@ -257,7 +257,7 @@
         .track-text h4 { margin: 0; font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .track-text p { margin: 2px 0 0; font-family: 'Minecraft'; font-size: 9px; opacity: 0.5; text-transform: uppercase; }
 
-        .controls-group { display: flex; justify-content: center; align-items: center; gap: 12px; }
+        .controls-group { display: flex; justify-content: center; align-items: center; gap: 8px; }
         
         .volume-group { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
         #volume-slider { width: 90px; height: 4px; border-radius: 2px; appearance: none; background: var(--md-sys-color-surface-variant); cursor: pointer; }
@@ -272,6 +272,7 @@
             .player-shell { grid-template-columns: 1fr 1fr; padding: 12px 16px; }
             .volume-group { display: none; }
             .playlist-card { width: 280px; }
+            .controls-group { gap: 4px; }
         }
     </style>
 </head>
@@ -299,7 +300,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.03.14</span>
+                <span>PLAYER V2026.03.15</span>
             </div>
             <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
         </div>
@@ -352,13 +353,16 @@
                 </div>
             </div>
             <div class="controls-group">
-                <button class="btn-m3" id="shuffle-btn"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                <button class="btn-m3" id="prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
-                <button class="btn-m3 btn-play" id="play-btn"><span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span></button>
-                <button class="btn-m3" id="next-btn"><span class="material-symbols-outlined">skip_next</span></button>
-                <button class="btn-m3" id="repeat-btn">
+                <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
+                <button class="btn-m3" id="prev-btn" title="Bài trước"><span class="material-symbols-outlined">skip_previous</span></button>
+                <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng"><span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span></button>
+                <button class="btn-m3" id="next-btn" title="Bài tiếp theo"><span class="material-symbols-outlined">skip_next</span></button>
+                <button class="btn-m3" id="repeat-btn" title="Chế độ lặp">
                     <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
                     <div class="repeat-badge">1</div>
+                </button>
+                <button class="btn-m3" id="share-btn" title="Chia sẻ bài hát">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">share</span>
                 </button>
                 <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát">
                     <span class="material-symbols-outlined" style="font-size: 20px;">lyrics</span>
@@ -382,6 +386,7 @@
         const playlistContainer = document.getElementById('playlist-container');
         const playlistCard = document.getElementById('playlist-card');
         const playBtn = document.getElementById('play-btn');
+        const shareBtn = document.getElementById('share-btn');
         const pauseOverlay = document.getElementById('pause-overlay');
         const visualizer = document.getElementById('visualizer');
         const seekSlider = document.getElementById('seek-slider');
@@ -539,7 +544,8 @@
                     url: URL.createObjectURL(file),
                     ext: file.name.split('.').pop().toUpperCase(),
                     lyrics: null,
-                    rawName: file.name.replace(/\.[^/.]+$/, "") 
+                    rawName: file.name.replace(/\.[^/.]+$/, ""),
+                    originalFile: file // Lưu file gốc để chia sẻ sau này
                 });
             }
 
@@ -661,6 +667,32 @@
             if (isLyricVisible) {
                  renderLyrics();
                  syncLyrics();
+            }
+        });
+
+        // --- SHARE FEATURE ---
+        shareBtn.addEventListener('click', async () => {
+            const track = playlist[currentIndex];
+            if (!track || !track.originalFile) return;
+
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [track.originalFile] })) {
+                try {
+                    await navigator.share({
+                        files: [track.originalFile],
+                        title: track.name,
+                        text: `Nghe bài hát: ${track.name} - ${track.artist}`
+                    });
+                } catch (err) {
+                    console.log("Share failed:", err);
+                }
+            } else {
+                // Fallback: Tải xuống nếu không hỗ trợ Share API
+                const a = document.createElement('a');
+                a.href = track.url;
+                a.download = track.originalFile.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             }
         });
 
@@ -851,12 +883,12 @@
         window.addEventListener('load', hideLoading);
         setTimeout(hideLoading, 1500);
 
-        // --- SERVICE WORKER REGISTRATION (ADDED) ---
+        // --- SERVICE WORKER REGISTRATION ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(registration => console.log('SW Registered with scope:', registration.scope))
-                    .catch(err => console.log('SW Registration failed:', err));
+                    .then(registration => console.log('SW Registered'))
+                    .catch(err => console.log('SW Failed', err));
             });
         }
     </script>
