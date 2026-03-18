@@ -141,6 +141,38 @@
         
         #track-count { font-family: 'Minecraft'; font-size: 9px; opacity: 0.5; margin: 0; }
         
+        /* Search Bar Styles */
+        .search-container {
+            padding: 0 16px 12px;
+            transition: var(--m3-transition);
+        }
+        .playlist-card.collapsed .search-container { display: none; }
+        .search-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            height: 40px;
+            border: 1px solid transparent;
+            transition: 0.3s;
+        }
+        .search-wrapper:focus-within {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--md-sys-color-primary);
+        }
+        .search-wrapper span { font-size: 18px; opacity: 0.5; }
+        .search-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 0 8px;
+            width: 100%;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .search-input::placeholder { color: rgba(255,255,255,0.3); }
+
         .playlist-items { flex: 1; overflow-y: auto; padding: 8px; }
         .playlist-card.collapsed .playlist-items { display: none; }
 
@@ -177,7 +209,6 @@
             font-weight: 800; text-shadow: 0 4px 24px rgba(208, 188, 255, 0.4);
             transform: scale(1.05);
         }
-        /* Static lyric style */
         .lyric-line.static {
             color: rgba(255,255,255,0.7);
             font-size: 20px;
@@ -308,7 +339,6 @@
         </div>
 
         <div class="main-content">
-            <!-- Playlist card mặc định không có class collapsed để auto mở -->
             <div class="playlist-card" id="playlist-card">
                 <div class="playlist-header" onclick="togglePlaylist()">
                     <div class="expand-icon-group">
@@ -318,6 +348,15 @@
                     <h3 id="pl-title">Playlist</h3>
                     <p id="track-count">0</p>
                 </div>
+                
+                <!-- NEW: Search Bar -->
+                <div class="search-container">
+                    <div class="search-wrapper">
+                        <span class="material-symbols-outlined">search</span>
+                        <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ...">
+                    </div>
+                </div>
+
                 <div class="playlist-items" id="playlist-container"></div>
             </div>
 
@@ -406,6 +445,7 @@
         const lyricBtn = document.getElementById('lyric-btn');
         const artImg = document.getElementById('art-img');
         const artPlaceholder = document.getElementById('art-placeholder');
+        const playlistSearch = document.getElementById('playlist-search');
 
         let playlist = [];
         let currentIndex = -1;
@@ -413,6 +453,7 @@
         let repeatMode = 0; 
         let targetMenuIndex = -1;
         let isLyricVisible = false;
+        let searchQuery = "";
 
         // Context Menu Logic
         document.addEventListener('contextmenu', (e) => {
@@ -463,7 +504,7 @@
                 reader.onload = (ev) => {
                     playlist[targetMenuIndex].lyrics = parseLRC(ev.target.result);
                     if (currentIndex === targetMenuIndex) renderLyrics();
-                    lrcManualInput.value = ""; // Reset
+                    lrcManualInput.value = ""; 
                 };
                 reader.readAsText(file);
             }
@@ -497,7 +538,7 @@
         async function handleFiles(files) {
             const audioFiles = [];
             const lrcFiles = [];
-            const startIdx = playlist.length; // Lưu lại vị trí bắt đầu thêm mới
+            const startIdx = playlist.length;
             
             Array.from(files).forEach(file => {
                 if (file.name.toLowerCase().endsWith('.lrc')) lrcFiles.push(file);
@@ -571,7 +612,6 @@
 
             updatePlaylistUI();
             
-            // TỰ ĐỘNG NHẢY SANG BÀI MỚI TẢI
             if (audioFiles.length > 0) {
                 playTrack(startIdx);
             } else if (currentIndex === -1 && playlist.length > 0) {
@@ -588,7 +628,6 @@
             const lines = lrcText.split('\n');
             const result = [];
             const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/; 
-            
             const hasTime = lines.some(line => timeReg.test(line));
 
             if (!hasTime) {
@@ -619,7 +658,6 @@
             }
 
             const isStatic = track.lyrics[0]?.time === -1;
-
             if (!isStatic) {
                 const spacerTop = document.createElement('div'); spacerTop.style.height = '40vh';
                 lyricOverlay.appendChild(spacerTop);
@@ -679,23 +717,36 @@
             }
         });
 
+        // Search logic
+        playlistSearch.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            updatePlaylistUI();
+        });
+
         function updatePlaylistUI() {
             playlistContainer.innerHTML = '';
-            document.getElementById('track-count').innerText = playlist.length;
+            let count = 0;
             playlist.forEach((track, index) => {
-                const item = document.createElement('div');
-                item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
-                item.dataset.index = index;
-                item.innerHTML = `
-                    <span class="material-symbols-outlined" style="font-size:20px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'play_arrow'}</span>
-                    <div class="track-text">
-                        <div style="font-weight:700; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
-                        <div style="font-family:'Minecraft'; font-size: 8px; opacity: 0.6; margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''}</div>
-                    </div>
-                `;
-                item.onclick = () => playTrack(index);
-                playlistContainer.appendChild(item);
+                const matches = track.name.toLowerCase().includes(searchQuery) || 
+                               track.artist.toLowerCase().includes(searchQuery);
+                
+                if (matches) {
+                    count++;
+                    const item = document.createElement('div');
+                    item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
+                    item.dataset.index = index;
+                    item.innerHTML = `
+                        <span class="material-symbols-outlined" style="font-size:20px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'play_arrow'}</span>
+                        <div class="track-text">
+                            <div style="font-weight:700; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
+                            <div style="font-family:'Minecraft'; font-size: 8px; opacity: 0.6; margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''}</div>
+                        </div>
+                    `;
+                    item.onclick = () => playTrack(index);
+                    playlistContainer.appendChild(item);
+                }
             });
+            document.getElementById('track-count').innerText = searchQuery ? `${count}/${playlist.length}` : playlist.length;
         }
 
         function playTrack(index) {
@@ -866,7 +917,6 @@
         window.addEventListener('load', hideLoading);
         setTimeout(hideLoading, 1500);
 
-        // --- SERVICE WORKER REGISTRATION ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
