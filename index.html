@@ -133,8 +133,11 @@
         .playlist-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
         .playlist-card.collapsed .playlist-header h3 { display: none; }
         
+        .expand-icon-group { display: flex; align-items: center; gap: 8px; }
         .expand-icon { transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .playlist-card.collapsed .expand-icon { transform: rotate(-90deg); }
+        .hide-text { font-family: 'Minecraft'; font-size: 10px; opacity: 0.6; display: block; }
+        .playlist-card.collapsed .hide-text { display: none; }
         
         #track-count { font-family: 'Minecraft'; font-size: 9px; opacity: 0.5; margin: 0; }
         
@@ -305,9 +308,13 @@
         </div>
 
         <div class="main-content">
-            <div class="playlist-card collapsed" id="playlist-card">
+            <!-- Playlist card mặc định không có class collapsed để auto mở -->
+            <div class="playlist-card" id="playlist-card">
                 <div class="playlist-header" onclick="togglePlaylist()">
-                    <span class="material-symbols-outlined expand-icon">expand_more</span>
+                    <div class="expand-icon-group">
+                        <span class="material-symbols-outlined expand-icon">expand_more</span>
+                        <span class="hide-text">Ẩn</span>
+                    </div>
                     <h3 id="pl-title">Playlist</h3>
                     <p id="track-count">0</p>
                 </div>
@@ -490,6 +497,7 @@
         async function handleFiles(files) {
             const audioFiles = [];
             const lrcFiles = [];
+            const startIdx = playlist.length; // Lưu lại vị trí bắt đầu thêm mới
             
             Array.from(files).forEach(file => {
                 if (file.name.toLowerCase().endsWith('.lrc')) lrcFiles.push(file);
@@ -562,7 +570,14 @@
             }
 
             updatePlaylistUI();
-            if (currentIndex === -1 && playlist.length > 0) playTrack(0);
+            
+            // TỰ ĐỘNG NHẢY SANG BÀI MỚI TẢI
+            if (audioFiles.length > 0) {
+                playTrack(startIdx);
+            } else if (currentIndex === -1 && playlist.length > 0) {
+                playTrack(0);
+            }
+
             if (playlist.length > 0) dropZone.style.display = 'none';
             bgPreview.classList.add('visible');
             initVisualizer();
@@ -851,7 +866,7 @@
         window.addEventListener('load', hideLoading);
         setTimeout(hideLoading, 1500);
 
-        // --- SERVICE WORKER REGISTRATION (ADDED) ---
+        // --- SERVICE WORKER REGISTRATION ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
