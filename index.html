@@ -141,36 +141,14 @@
         
         #track-count { font-family: 'Minecraft'; font-size: 9px; opacity: 0.5; margin: 0; }
         
-        /* Search Bar Styles */
-        .search-container {
-            padding: 0 16px 12px;
-            transition: var(--m3-transition);
-        }
+        .search-container { padding: 0 16px 12px; transition: var(--m3-transition); }
         .playlist-card.collapsed .search-container { display: none; }
         .search-wrapper {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            height: 40px;
-            border: 1px solid transparent;
-            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.1); border-radius: 16px; display: flex; align-items: center; padding: 0 12px; height: 40px; border: 1px solid transparent; transition: 0.3s;
         }
-        .search-wrapper:focus-within {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--md-sys-color-primary);
-        }
+        .search-wrapper:focus-within { background: rgba(255, 255, 255, 0.15); border-color: var(--md-sys-color-primary); }
         .search-wrapper span { font-size: 18px; opacity: 0.5; }
-        .search-input {
-            background: transparent;
-            border: none;
-            color: #fff;
-            padding: 0 8px;
-            width: 100%;
-            font-size: 14px;
-            font-family: inherit;
-        }
+        .search-input { background: transparent; border: none; color: #fff; padding: 0 8px; width: 100%; font-size: 14px; font-family: inherit; }
         .search-input::placeholder { color: rgba(255,255,255,0.3); }
 
         .playlist-items { flex: 1; overflow-y: auto; padding: 8px; }
@@ -209,11 +187,7 @@
             font-weight: 800; text-shadow: 0 4px 24px rgba(208, 188, 255, 0.4);
             transform: scale(1.05);
         }
-        .lyric-line.static {
-            color: rgba(255,255,255,0.7);
-            font-size: 20px;
-            cursor: default;
-        }
+        .lyric-line.static { color: rgba(255,255,255,0.7); font-size: 20px; cursor: default; }
         .lyric-line.static:hover { color: #fff; }
 
         .lyric-placeholder {
@@ -262,19 +236,13 @@
             align-items: center; gap: 16px; z-index: 100;
         }
 
-        .seek-container { 
-            position: absolute; top: -2px; left: 32px; right: 32px; 
-            display: flex; align-items: center; z-index: 110; 
-        }
+        .seek-container { position: absolute; top: -2px; left: 32px; right: 32px; display: flex; align-items: center; z-index: 110; }
         #seek-slider {
-            width: 100%; height: 4px; border-radius: 2px; appearance: none; 
-            background: rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s;
+            width: 100%; height: 4px; border-radius: 2px; appearance: none; background: rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s;
         }
         #seek-slider:hover { height: 8px; }
         #seek-slider::-webkit-slider-thumb { 
-            appearance: none; width: 14px; height: 14px; 
-            background: var(--md-sys-color-primary); border-radius: 50%; opacity: 0;
-            transition: transform 0.2s;
+            appearance: none; width: 14px; height: 14px; background: var(--md-sys-color-primary); border-radius: 50%; opacity: 0; transition: transform 0.2s;
         }
         .player-shell:hover #seek-slider::-webkit-slider-thumb { opacity: 1; }
 
@@ -292,7 +260,6 @@
         .track-text p { margin: 2px 0 0; font-family: 'Minecraft'; font-size: 9px; opacity: 0.5; text-transform: uppercase; }
 
         .controls-group { display: flex; justify-content: center; align-items: center; gap: 12px; }
-        
         .volume-group { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
         #volume-slider { width: 90px; height: 4px; border-radius: 2px; appearance: none; background: var(--md-sys-color-surface-variant); cursor: pointer; }
 
@@ -305,7 +272,6 @@
         @media (max-width: 850px) {
             .player-shell { grid-template-columns: 1fr 1fr; padding: 12px 16px; }
             .volume-group { display: none; }
-            .playlist-card { width: 280px; }
         }
     </style>
 </head>
@@ -317,71 +283,45 @@
     </div>
 
     <div id="context-menu">
-        <div class="cm-item danger" id="cm-delete">
-            <span class="material-symbols-outlined">delete</span>
-            <span>Xóa bài hát</span>
-        </div>
-        <div class="cm-item" id="cm-add-lrc">
-            <span class="material-symbols-outlined">description</span>
-            <span>Thêm lời lẻ (.lrc)</span>
-        </div>
+        <div class="cm-item danger" id="cm-delete"><span class="material-symbols-outlined">delete</span><span>Xóa bài hát</span></div>
+        <div class="cm-item" id="cm-add-lrc"><span class="material-symbols-outlined">description</span><span>Thêm lời lẻ (.lrc)</span></div>
     </div>
 
     <div class="ambient-bg"></div>
 
     <div class="app-container">
         <div class="top-bar">
-            <div class="brand">
-                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.03.18-build215517</span>
-            </div>
+            <div class="brand"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span><span>PLAYER V2026.03.18</span></div>
             <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
         </div>
 
         <div class="main-content">
             <div class="playlist-card" id="playlist-card">
                 <div class="playlist-header" onclick="togglePlaylist()">
-                    <div class="expand-icon-group">
-                        <span class="material-symbols-outlined expand-icon">expand_more</span>
-                        <span class="hide-text">Ẩn</span>
-                    </div>
+                    <div class="expand-icon-group"><span class="material-symbols-outlined expand-icon">expand_more</span><span class="hide-text">Ẩn</span></div>
                     <h3 id="pl-title">Playlist</h3>
                     <p id="track-count">0</p>
                 </div>
-                
-                <!-- NEW: Search Bar -->
                 <div class="search-container">
-                    <div class="search-wrapper">
-                        <span class="material-symbols-outlined">search</span>
-                        <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ...">
-                    </div>
+                    <div class="search-wrapper"><span class="material-symbols-outlined">search</span><input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ..."></div>
                 </div>
-
                 <div class="playlist-items" id="playlist-container"></div>
             </div>
 
             <div class="visual-stage">
-                <div class="pause-overlay" id="pause-overlay">
-                    <div class="pause-icon-bg"><span class="material-symbols-outlined">pause</span></div>
-                </div>
+                <div class="pause-overlay" id="pause-overlay"><div class="pause-icon-bg"><span class="material-symbols-outlined">pause</span></div></div>
                 <div id="drop-zone" style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">
                     <span class="material-symbols-outlined" style="font-size:56px; opacity: 0.1">upload_file</span>
                     <p style="font-family:'Minecraft'; font-size:10px; margin-top:12px; opacity: 0.2">DRAG ASSETS OR CLICK + TO START</p>
                 </div>
                 <div id="bg-preview" class="bg-thumb-preview"></div>
                 <canvas id="visualizer"></canvas>
-                
-                <div class="lyric-overlay" id="lyric-overlay">
-                    <div class="lyric-placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
-                </div>
+                <div class="lyric-overlay" id="lyric-overlay"><div class="lyric-placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div></div>
             </div>
         </div>
 
         <div class="player-shell">
-            <div class="time-labels">
-                <span id="current-time">0:00</span>
-                <span id="duration">0:00</span>
-            </div>
+            <div class="time-labels"><span id="current-time">0:00</span><span id="duration">0:00</span></div>
             <div class="seek-container"><input type="range" id="seek-slider" min="0" max="100" value="0"></div>
             <div class="track-info">
                 <div class="mini-art" id="player-mini-art">
@@ -389,11 +329,7 @@
                     <span id="art-placeholder" class="material-symbols-outlined placeholder-icon" style="font-variation-settings:'FILL' 1">music_note</span>
                 </div>
                 <div class="track-text">
-                    <div class="marquee-container" id="name-container">
-                        <div class="marquee-content" id="track-name-wrapper">
-                            <h4 id="track-name" class="track-name-text">Song name</h4>
-                        </div>
-                    </div>
+                    <div class="marquee-container" id="name-container"><div class="marquee-content" id="track-name-wrapper"><h4 id="track-name" class="track-name-text">Song name</h4></div></div>
                     <p id="track-artist">ARTIST | FILE</p>
                 </div>
             </div>
@@ -402,18 +338,10 @@
                 <button class="btn-m3" id="prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
                 <button class="btn-m3 btn-play" id="play-btn"><span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span></button>
                 <button class="btn-m3" id="next-btn"><span class="material-symbols-outlined">skip_next</span></button>
-                <button class="btn-m3" id="repeat-btn">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
-                    <div class="repeat-badge">1</div>
-                </button>
-                <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">lyrics</span>
-                </button>
+                <button class="btn-m3" id="repeat-btn"><span class="material-symbols-outlined" style="font-size: 20px;">repeat</span><div class="repeat-badge">1</div></button>
+                <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát"><span class="material-symbols-outlined" style="font-size: 20px;">lyrics</span></button>
             </div>
-            <div class="volume-group">
-                <span class="material-symbols-outlined" style="font-size: 20px;">volume_up</span>
-                <input type="range" id="volume-slider" min="0" max="100" value="80">
-            </div>
+            <div class="volume-group"><span class="material-symbols-outlined" style="font-size: 20px;">volume_up</span><input type="range" id="volume-slider" min="0" max="100" value="80"></div>
         </div>
     </div>
 
@@ -455,7 +383,6 @@
         let isLyricVisible = false;
         let searchQuery = "";
 
-        // Context Menu Logic
         document.addEventListener('contextmenu', (e) => {
             const songItem = e.target.closest('.song-item');
             if (songItem) {
@@ -464,9 +391,7 @@
                 contextMenu.style.display = 'flex';
                 contextMenu.style.left = `${e.clientX}px`;
                 contextMenu.style.top = `${e.clientY}px`;
-            } else {
-                contextMenu.style.display = 'none';
-            }
+            } else contextMenu.style.display = 'none';
         });
 
         document.addEventListener('click', () => contextMenu.style.display = 'none');
@@ -485,7 +410,6 @@
                     playBtn.querySelector('span').innerText = 'play_arrow';
                     pauseOverlay.classList.remove('visible');
                     renderLyrics();
-                    updateMediaSession();
                 } else if (currentIndex > targetMenuIndex) currentIndex--;
                 updatePlaylistUI();
                 targetMenuIndex = -1;
@@ -493,9 +417,7 @@
             }
         });
 
-        cmAddLrc.addEventListener('click', () => {
-             if (targetMenuIndex > -1) lrcManualInput.click();
-        });
+        cmAddLrc.addEventListener('click', () => { if (targetMenuIndex > -1) lrcManualInput.click(); });
 
         lrcManualInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -538,88 +460,90 @@
         async function handleFiles(files) {
             const audioFiles = [];
             const lrcFiles = [];
-            const startIdx = playlist.length;
+            let lastJumpIndex = -1;
+            let addedCount = 0;
             
             Array.from(files).forEach(file => {
                 if (file.name.toLowerCase().endsWith('.lrc')) lrcFiles.push(file);
                 else if (file.type.startsWith('audio/')) audioFiles.push(file);
             });
 
-            if (audioFiles.length === 0 && lrcFiles.length > 0 && currentIndex !== -1) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    playlist[currentIndex].lyrics = parseLRC(e.target.result);
-                    renderLyrics();
-                };
-                reader.readAsText(lrcFiles[0]);
-                return;
-            }
-
             for (const file of audioFiles) {
-                let title = file.name.replace(/\.[^/.]+$/, "");
-                let artist = "UNKNOWN ARTIST";
-                let album = "Unknown Album";
-                let cover = null;
+                let meta = { title: file.name.replace(/\.[^/.]+$/, ""), artist: "UNKNOWN ARTIST" };
                 
+                // Đọc tag Metadata nhanh
                 await new Promise((resolve) => {
                     window.jsmediatags.read(file, {
-                        onSuccess: function(tag) {
-                            if (tag.tags.artist) artist = tag.tags.artist;
-                            if (tag.tags.album) album = tag.tags.album;
+                        onSuccess: (tag) => {
+                            if (tag.tags.title) meta.title = tag.tags.title;
+                            if (tag.tags.artist) meta.artist = tag.tags.artist;
+                            resolve();
+                        },
+                        onError: () => resolve()
+                    });
+                });
+
+                // Kiểm tra trùng cực gắt dựa trên Metadata
+                const existingIdx = playlist.findIndex(t => 
+                    t.name.trim().toLowerCase() === meta.title.trim().toLowerCase() && 
+                    t.artist.trim().toLowerCase() === meta.artist.trim().toLowerCase()
+                );
+
+                if (existingIdx !== -1) {
+                    lastJumpIndex = existingIdx; // Ghi nhớ index bài trùng cuối cùng
+                    continue; // Skip, ko nạp thêm
+                }
+
+                // Nếu là bài mới thì nạp full tag (Album, Cover)
+                let fullMeta = { ...meta, album: "Unknown Album", cover: null };
+                await new Promise((resolve) => {
+                    window.jsmediatags.read(file, {
+                        onSuccess: (tag) => {
+                            if (tag.tags.album) fullMeta.album = tag.tags.album;
                             if (tag.tags.picture) {
                                 const { data, format } = tag.tags.picture;
                                 let base64String = "";
-                                for (let i = 0; i < data.length; i++) {
-                                    base64String += String.fromCharCode(data[i]);
-                                }
-                                cover = `data:${format};base64,${window.btoa(base64String)}`;
+                                for (let i = 0; i < data.length; i++) base64String += String.fromCharCode(data[i]);
+                                fullMeta.cover = `data:${format};base64,${window.btoa(base64String)}`;
                             }
                             resolve();
                         },
-                        onError: function() { resolve(); }
+                        onError: () => resolve()
                     });
                 });
 
                 playlist.push({ 
-                    name: title,
-                    artist: artist,
-                    album: album,
-                    cover: cover,
-                    url: URL.createObjectURL(file),
-                    ext: file.name.split('.').pop().toUpperCase(),
-                    lyrics: null,
-                    rawName: file.name.replace(/\.[^/.]+$/, "") 
+                    name: fullMeta.title, artist: fullMeta.artist, album: fullMeta.album, cover: fullMeta.cover,
+                    url: URL.createObjectURL(file), ext: file.name.split('.').pop().toUpperCase(),
+                    lyrics: null, rawName: file.name.replace(/\.[^/.]+$/, "") 
                 });
+                addedCount++;
             }
 
+            // Gán file LRC cho bài tương ứng
             for (const file of lrcFiles) {
                 const reader = new FileReader();
-                const content = await new Promise(r => {
-                    reader.onload = (e) => r(e.target.result);
-                    reader.readAsText(file);
-                });
-                
-                const parsed = parseLRC(content);
+                const content = await new Promise(r => { reader.onload = (e) => r(e.target.result); reader.readAsText(file); });
                 const baseName = file.name.replace(/\.[^/.]+$/, "");
                 const targetTrack = playlist.find(t => t.rawName === baseName);
-                
-                if (targetTrack) {
-                    targetTrack.lyrics = parsed;
-                } else if (audioFiles.length > 0) {
-                    playlist[playlist.length - 1].lyrics = parsed;
-                }
+                if (targetTrack) targetTrack.lyrics = parseLRC(content);
             }
 
             updatePlaylistUI();
-            
-            if (audioFiles.length > 0) {
-                playTrack(startIdx);
-            } else if (currentIndex === -1 && playlist.length > 0) {
-                playTrack(0);
-            }
 
-            if (playlist.length > 0) dropZone.style.display = 'none';
-            bgPreview.classList.add('visible');
+            if (playlist.length > 0) {
+                dropZone.style.display = 'none';
+                
+                // --- LOGIC NHẢY BÀI QUAN TRỌNG ---
+                if (addedCount > 0) {
+                    // Nếu có add bài mới, nhảy bài cuối cùng vừa add
+                    playTrack(playlist.length - 1);
+                } else if (lastJumpIndex !== -1) {
+                    // Nếu không có bài nào mới (toàn bài trùng), nhảy tới bài trùng tìm thấy
+                    playTrack(lastJumpIndex);
+                }
+            }
+            
             initVisualizer();
             if (currentIndex !== -1) renderLyrics();
         }
@@ -628,20 +552,12 @@
             const lines = lrcText.split('\n');
             const result = [];
             const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/; 
-            const hasTime = lines.some(line => timeReg.test(line));
-
-            if (!hasTime) {
-                return lines.map(line => ({ time: -1, text: line.trim() })).filter(l => l.text);
-            }
-
+            if (!lines.some(line => timeReg.test(line))) return lines.map(line => ({ time: -1, text: line.trim() })).filter(l => l.text);
             lines.forEach(line => {
                 const match = timeReg.exec(line);
                 if (match) {
-                    const min = parseInt(match[1]);
-                    const sec = parseInt(match[2]);
-                    const msStr = match[3];
-                    const ms = parseInt(msStr);
-                    const time = min * 60 + sec + (msStr.length === 2 ? ms / 100 : ms / 1000);
+                    const min = parseInt(match[1]), sec = parseInt(match[2]), msStr = match[3];
+                    const time = min * 60 + sec + (msStr.length === 2 ? parseInt(msStr)/100 : parseInt(msStr)/1000);
                     const txt = line.replace(timeReg, '').trim();
                     if (txt) result.push({ time, text: txt });
                 }
@@ -656,52 +572,35 @@
                 lyricOverlay.innerHTML = '<div class="lyric-placeholder">BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)<br><small style="font-size:8px">Chuột phải vào bài hát để nạp lẻ</small></div>';
                 return;
             }
-
             const isStatic = track.lyrics[0]?.time === -1;
-            if (!isStatic) {
-                const spacerTop = document.createElement('div'); spacerTop.style.height = '40vh';
-                lyricOverlay.appendChild(spacerTop);
-            }
-
-            track.lyrics.forEach((l, i) => {
+            if (!isStatic) lyricOverlay.appendChild(Object.assign(document.createElement('div'), { style: "height:40vh" }));
+            track.lyrics.forEach((l) => {
                 const div = document.createElement('div');
                 div.className = `lyric-line ${isStatic ? 'static' : ''}`; 
                 div.innerText = l.text;
-                if (!isStatic) {
-                    div.onclick = () => { audio.currentTime = l.time; audio.play(); };
-                }
+                if (!isStatic) div.onclick = () => { audio.currentTime = l.time; audio.play(); };
                 lyricOverlay.appendChild(div);
             });
-
-            if (!isStatic) {
-                const spacerBottom = document.createElement('div'); spacerBottom.style.height = '40vh';
-                lyricOverlay.appendChild(spacerBottom);
-            } else {
-                lyricOverlay.style.padding = '100px 20px';
-            }
+            if (!isStatic) lyricOverlay.appendChild(Object.assign(document.createElement('div'), { style: "height:40vh" }));
+            else lyricOverlay.style.padding = '100px 20px';
         }
 
         function syncLyrics() {
             if (!isLyricVisible) return;
             const track = playlist[currentIndex];
             if (!track || !track.lyrics || track.lyrics[0]?.time === -1) return;
-            
             const time = audio.currentTime;
             let activeIdx = -1;
             for (let i = 0; i < track.lyrics.length; i++) {
-                if (time >= track.lyrics[i].time - 0.2) activeIdx = i;
-                else break;
+                if (time >= track.lyrics[i].time - 0.2) activeIdx = i; else break;
             }
             if (activeIdx !== -1) {
-                const lines = lyricOverlay.querySelectorAll('.lyric-line');
-                const currentActive = lyricOverlay.querySelector('.lyric-line.active');
-                const newActive = lines[activeIdx];
+                const lines = lyricOverlay.querySelectorAll('.lyric-line'), currentActive = lyricOverlay.querySelector('.lyric-line.active'), newActive = lines[activeIdx];
                 if (currentActive !== newActive) {
                     if (currentActive) currentActive.classList.remove('active');
                     if (newActive) {
                         newActive.classList.add('active');
-                        const offset = newActive.offsetTop - lyricOverlay.clientHeight / 2 + newActive.clientHeight / 2;
-                        lyricOverlay.scrollTo({ top: offset, behavior: 'smooth' });
+                        lyricOverlay.scrollTo({ top: newActive.offsetTop - lyricOverlay.clientHeight/2 + newActive.clientHeight/2, behavior: 'smooth' });
                     }
                 }
             }
@@ -711,26 +610,16 @@
             isLyricVisible = !isLyricVisible;
             this.classList.toggle('active', isLyricVisible);
             lyricOverlay.classList.toggle('visible', isLyricVisible);
-            if (isLyricVisible) {
-                 renderLyrics();
-                 syncLyrics();
-            }
+            if (isLyricVisible) { renderLyrics(); syncLyrics(); }
         });
 
-        // Search logic
-        playlistSearch.addEventListener('input', (e) => {
-            searchQuery = e.target.value.toLowerCase().trim();
-            updatePlaylistUI();
-        });
+        playlistSearch.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase().trim(); updatePlaylistUI(); });
 
         function updatePlaylistUI() {
             playlistContainer.innerHTML = '';
             let count = 0;
             playlist.forEach((track, index) => {
-                const matches = track.name.toLowerCase().includes(searchQuery) || 
-                               track.artist.toLowerCase().includes(searchQuery);
-                
-                if (matches) {
+                if (track.name.toLowerCase().includes(searchQuery) || track.artist.toLowerCase().includes(searchQuery)) {
                     count++;
                     const item = document.createElement('div');
                     item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
@@ -756,23 +645,9 @@
             audio.src = track.url;
             trackNameEl.innerText = track.name;
             trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
-            
-            if (track.cover) {
-                artImg.src = track.cover;
-                artImg.classList.remove('hidden');
-                artPlaceholder.classList.add('hidden');
-                bgPreview.style.backgroundImage = `url(${track.cover})`;
-            } else {
-                artImg.classList.add('hidden');
-                artPlaceholder.classList.remove('hidden');
-                bgPreview.style.backgroundImage = 'none';
-            }
-            
-            renderLyrics();
-            applyMarquee();
-            updatePlaylistUI();
-            updateMediaSession();
-            
+            if (track.cover) { artImg.src = track.cover; artImg.classList.remove('hidden'); artPlaceholder.classList.add('hidden'); bgPreview.style.backgroundImage = `url(${track.cover})`; }
+            else { artImg.classList.add('hidden'); artPlaceholder.classList.remove('hidden'); bgPreview.style.backgroundImage = 'none'; }
+            renderLyrics(); applyMarquee(); updatePlaylistUI(); updateMediaSession();
             audio.play().catch(() => {});
             playBtn.querySelector('span').innerText = 'pause';
             pauseOverlay.classList.remove('visible');
@@ -780,70 +655,43 @@
 
         function updateMediaSession() {
             if ('mediaSession' in navigator) {
-                const track = playlist[currentIndex];
-                if (!track) return;
-
+                const track = playlist[currentIndex]; if (!track) return;
                 navigator.mediaSession.metadata = new MediaMetadata({
-                    title: track.name,
-                    artist: track.artist,
-                    album: track.album || "Unknown Album",
-                    artwork: track.cover ? [
-                        { src: track.cover, sizes: '96x96', type: 'image/png' },
-                        { src: track.cover, sizes: '512x512', type: 'image/png' }
-                    ] : []
+                    title: track.name, artist: track.artist, album: track.album || "Unknown Album",
+                    artwork: track.cover ? [{ src: track.cover, sizes: '512x512', type: 'image/png' }] : []
                 });
-
                 navigator.mediaSession.setActionHandler('play', () => playBtn.click());
                 navigator.mediaSession.setActionHandler('pause', () => playBtn.click());
                 navigator.mediaSession.setActionHandler('previoustrack', () => document.getElementById('prev-btn').click());
                 navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
-                navigator.mediaSession.setActionHandler('seekto', (details) => {
-                    if (details.seekTime) audio.currentTime = details.seekTime;
-                });
             }
         }
 
         playBtn.addEventListener('click', () => {
             if (!audio.src && playlist.length > 0) playTrack(0);
-            else if (audio.paused) { 
-                audio.play(); 
-                playBtn.querySelector('span').innerText = 'pause'; 
-                pauseOverlay.classList.remove('visible');
-                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-            }
-            else { 
-                audio.pause(); 
-                playBtn.querySelector('span').innerText = 'play_arrow'; 
-                pauseOverlay.classList.add('visible'); 
-                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
-            }
+            else if (audio.paused) { audio.play(); playBtn.querySelector('span').innerText = 'pause'; pauseOverlay.classList.remove('visible'); }
+            else { audio.pause(); playBtn.querySelector('span').innerText = 'play_arrow'; pauseOverlay.classList.add('visible'); }
             updatePlaylistUI();
         });
 
         document.getElementById('next-btn').addEventListener('click', () => {
-            if (isShuffle) playTrack(Math.floor(Math.random() * playlist.length));
-            else playTrack((currentIndex + 1) % playlist.length);
+            if (isShuffle) playTrack(Math.floor(Math.random() * playlist.length)); else playTrack((currentIndex + 1) % playlist.length);
         });
 
         document.getElementById('prev-btn').addEventListener('click', () => {
-            let p = currentIndex - 1; if (p < 0) p = playlist.length - 1;
-            playTrack(p);
+            let p = currentIndex - 1; if (p < 0) p = playlist.length - 1; playTrack(p);
         });
 
-        document.getElementById('shuffle-btn').addEventListener('click', function() {
-            isShuffle = !isShuffle; this.classList.toggle('active', isShuffle);
-        });
+        document.getElementById('shuffle-btn').addEventListener('click', function() { isShuffle = !isShuffle; this.classList.toggle('active', isShuffle); });
 
         document.getElementById('repeat-btn').addEventListener('click', function() {
             repeatMode = (repeatMode + 1) % 3;
-            this.classList.toggle('active', repeatMode > 0);
-            this.classList.toggle('repeat-one', repeatMode === 2);
+            this.classList.toggle('active', repeatMode > 0); this.classList.toggle('repeat-one', repeatMode === 2);
             this.querySelector('.repeat-badge').innerText = repeatMode === 2 ? '1' : '';
         });
 
         audio.addEventListener('ended', () => {
-            if (repeatMode === 2) audio.play();
-            else if (repeatMode === 1 || currentIndex < playlist.length - 1) document.getElementById('next-btn').click();
+            if (repeatMode === 2) audio.play(); else if (repeatMode === 1 || currentIndex < playlist.length - 1) document.getElementById('next-btn').click();
         });
 
         let audioCtx, analyser, dataArray;
@@ -853,26 +701,20 @@
             analyser = audioCtx.createAnalyser();
             const source = audioCtx.createMediaElementSource(audio);
             source.connect(analyser); analyser.connect(audioCtx.destination);
-            analyser.fftSize = 256;
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.fftSize = 256; dataArray = new Uint8Array(analyser.frequencyBinCount);
             draw();
         }
 
         function draw() {
-            requestAnimationFrame(draw);
-            if (!analyser) return;
+            requestAnimationFrame(draw); if (!analyser) return;
             analyser.getByteFrequencyData(dataArray);
             const ctx = visualizer.getContext('2d');
-            visualizer.width = visualizer.clientWidth;
-            visualizer.height = visualizer.clientHeight;
-            const barWidth = (visualizer.width / dataArray.length) * 2.5;
-            let x = 0; ctx.clearRect(0,0, visualizer.width, visualizer.height);
+            visualizer.width = visualizer.clientWidth; visualizer.height = visualizer.clientHeight;
+            const barWidth = (visualizer.width / dataArray.length) * 2.5; let x = 0; ctx.clearRect(0,0, visualizer.width, visualizer.height);
             dataArray.forEach(val => {
                 const h = (val / 255) * visualizer.height * 0.6;
                 ctx.fillStyle = `rgba(208, 188, 255, ${0.2 + (val/255)*0.6})`;
-                ctx.beginPath();
-                ctx.roundRect(x, (visualizer.height/2) - (h/2), barWidth-2, Math.max(h, 4), 10);
-                ctx.fill(); x += barWidth;
+                ctx.beginPath(); ctx.roundRect(x, (visualizer.height/2) - (h/2), barWidth-2, Math.max(h, 4), 10); ctx.fill(); x += barWidth;
             });
         }
 
@@ -882,48 +724,15 @@
             document.getElementById('current-time').innerText = formatTime(audio.currentTime);
             document.getElementById('duration').innerText = formatTime(audio.duration);
             syncLyrics();
-            
-            if ('mediaSession' in navigator && audio.duration) {
-                navigator.mediaSession.setPositionState({
-                    duration: audio.duration,
-                    playbackRate: audio.playbackRate,
-                    position: audio.currentTime
-                });
-            }
         });
 
-        function formatTime(s) {
-            if (isNaN(s)) return "0:00";
-            const m = Math.floor(s/60); const sec = Math.floor(s%60);
-            return `${m}:${sec < 10 ? '0' : ''}${sec}`;
-        }
+        function formatTime(s) { if (isNaN(s)) return "0:00"; const m = Math.floor(s/60), sec = Math.floor(s%60); return `${m}:${sec < 10 ? '0' : ''}${sec}`; }
 
         seekSlider.addEventListener('input', (e) => audio.currentTime = (e.target.value / 100) * audio.duration);
         volumeSlider.addEventListener('input', (e) => { audio.volume = e.target.value / 100; updateSliderFill(volumeSlider); });
 
-        if ('launchQueue' in window) {
-            window.launchQueue.setConsumer((params) => {
-                if (params.files && params.files.length) {
-                    Promise.all(params.files.map(h => h.getFile())).then(handleFiles);
-                }
-            });
-        }
-
-        const hideLoading = () => {
-            const loader = document.getElementById('loading-overlay');
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.visibility = 'hidden', 500);
-        };
-        window.addEventListener('load', hideLoading);
-        setTimeout(hideLoading, 1500);
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(registration => console.log('SW Registered with scope:', registration.scope))
-                    .catch(err => console.log('SW Registration failed:', err));
-            });
-        }
+        const hideLoading = () => { const l = document.getElementById('loading-overlay'); l.style.opacity = '0'; setTimeout(() => l.style.visibility = 'hidden', 500); };
+        window.addEventListener('load', hideLoading); setTimeout(hideLoading, 1500);
     </script>
 </body>
 </html>
