@@ -364,7 +364,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.03.19-build200155</span>
+                <span>PLAYER V2026.03.19-build202150</span>
             </div>
             <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
         </div>
@@ -932,6 +932,25 @@
         };
         window.addEventListener('load', hideLoading);
         setTimeout(hideLoading, 1500);
+
+                // --- HỆ THỐNG XỬ LÝ FILE TỪ HỆ ĐIỀU HÀNH (LAUNCH QUEUE) ---
+        if ('launchQueue' in window) {
+            window.launchQueue.setConsumer((params) => {
+                if (params.files && params.files.length) {
+                    Promise.all(params.files.map(h => h.getFile())).then(handleFiles);
+                }
+            });
+        }
+
+
+        // --- ĐĂNG KÝ SERVICE WORKER CHO PWA ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => console.log('SW Registered with scope:', registration.scope))
+                    .catch(err => console.log('SW Registration failed:', err));
+            });
+        }
     </script>
 </body>
 </html>
