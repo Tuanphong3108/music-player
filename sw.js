@@ -1,9 +1,10 @@
-const CACHE_NAME = 'music-player-v2026.05.30-hotfixbuild171735';
+const CACHE_NAME = 'music-player-v2026.05.30-build174751';
 
 // ===== FILE TĨNH PRECACHE =====
 const STATIC_ASSETS = [
   './',
   './index.html',
+  '/changelog.html',
   './index_md1.html',
   './manifest.json',
   './music_note.png',
