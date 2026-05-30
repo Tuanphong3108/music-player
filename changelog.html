@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>What's New?</title>
+  <title>PLAYER - Embedded Changelog (Dark Mode)</title>
   
   <!-- Google Sans Flex Font -->
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
@@ -12,13 +12,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    /* Áp dụng font Google Sans Flex toàn trang */
+    /* Áp dụng font Google Sans Flex và ép nền tối vĩnh viễn */
     body {
       font-family: 'Google Sans Flex', sans-serif;
-      background-color: transparent; /* Nền trong suốt để dễ nhúng */
+      background-color: #0f111a; /* Nền tối siêu sang chống tàng hình */
     }
     
-    /* Ẩn scrollbar thô thiển */
+    /* Ẩn/Tinh chỉnh scrollbar cho mượt */
     ::-webkit-scrollbar {
       width: 4px;
     }
@@ -26,7 +26,7 @@
       background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 99px;
     }
   </style>
@@ -57,17 +57,16 @@
     const EMBED_CONFIG = {
       appName: "Music Player",
       version: "v2026.05.30",
-      build: "build174751",
+      build: "build173302",
       
-      // CONFIG MÀU CHỮ ĐỂ CHỐNG TÀNG HÌNH TRÊN NỀN SÁNG
-      // Nếu nền app của bro màu tối: hãy đổi các mã màu dưới đây thành '#ffffff' và 'rgba(255,255,255,0.7)'
-      mainTextColor: "#1c1b1f",       // Màu chữ tiêu đề chính (Mặc định: Đen xám cực sang)
-      subTextColor: "rgba(28,27,31,0.8)", // Màu chữ nội dung changelog (Mặc định: Xám đậm dễ nhìn)
-      buildBadgeBg: "rgba(0,0,0,0.08)",   // Nền của tag build
+      // CONFIG MÀU CHỮ TRÊN NỀN TỐI (Đã được tối ưu hoàn hảo)
+      mainTextColor: "#ffffff",           // Màu chữ trắng tinh khôi cho tiêu đề chính
+      subTextColor: "rgba(255,255,255,0.8)", // Màu chữ xám trắng nhẹ cho changelog dễ đọc
+      buildBadgeBg: "rgba(255,255,255,0.1)", // Nền của tag build trông mờ ảo
       
       // Danh sách nội dung hiển thị bên dưới.
       changelogItems: [
-        "- Đã thêm 'What's new?' vào Music Player",
+        "- Đã thêm 'What's New?' vào Music Player",
       ]
     };
     // =========================================================================
@@ -83,8 +82,8 @@
       headerTitle.style.color = EMBED_CONFIG.mainTextColor;
       headerTitle.innerHTML = `
         <span>${EMBED_CONFIG.appName}</span> 
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 font-bold">${EMBED_CONFIG.version}</span>
-        <span class="text-[10px] px-2 py-0.5 rounded-md font-mono" style="background-color: ${EMBED_CONFIG.buildBadgeBg}; color: ${EMBED_CONFIG.mainTextColor}; opacity: 0.6;">${EMBED_CONFIG.build}</span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-bold">${EMBED_CONFIG.version}</span>
+        <span class="text-[10px] px-2 py-0.5 rounded-md font-mono" style="background-color: ${EMBED_CONFIG.buildBadgeBg}; color: ${EMBED_CONFIG.mainTextColor}; opacity: 0.7;">${EMBED_CONFIG.build}</span>
       `;
 
       // 2. Render Changelog Items
