@@ -266,6 +266,24 @@
         }
         .pause-icon-bg span { font-size: 64px; font-variation-settings: 'FILL' 1; }
 
+        .top-active-lyric {
+            position: absolute; top: 32px; left: 50%; transform: translateX(-50%);
+            width: 90%; text-align: center; z-index: 10;
+            font-size: 24px; font-weight: 800; color: #fff;
+            text-shadow: 0 4px 16px rgba(0,0,0,0.8), 0 0 8px rgba(208, 188, 255, 0.4); 
+            pointer-events: none; transition: var(--m3-transition); 
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        .bouncing-dots { display: inline-flex; align-items: flex-end; justify-content: center; height: 1em; gap: 4px; }
+        .bouncing-dots .dot { animation: dot-jump 1s infinite; font-size: 1.2em; line-height: 0.5; color: var(--md-sys-color-primary); }
+        .bouncing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+        .bouncing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dot-jump {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
         .bg-thumb-preview {
             position: absolute; inset: 0; background-size: cover; background-position: center;
             filter: blur(80px) brightness(0.4); opacity: 0; transition: opacity 2s ease;
@@ -364,7 +382,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.05.30-build082930</span>
+                <span>PLAYER V2026.05.30-build133155</span>
             </div>
             <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
         </div>
@@ -400,6 +418,7 @@
                 </div>
                 <div id="bg-preview" class="bg-thumb-preview"></div>
                 <canvas id="visualizer"></canvas>
+                <div id="top-active-lyric" class="top-active-lyric"></div>
                 
                 <div class="lyric-overlay" id="lyric-overlay">
                     <div class="lyric-placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
@@ -682,10 +701,17 @@
                     const ms = parseInt(msStr);
                     const time = min * 60 + sec + (msStr.length === 2 ? ms / 100 : ms / 1000);
                     const txt = line.replace(timeReg, '').trim();
-                    if (txt) result.push({ time, text: txt });
+                    // Sửa chỗ này: Chấp nhận cả chuỗi rỗng (txt === "") để hiện dấu 3 chấm
+                    result.push({ time, text: txt });
                 }
             });
             return result.sort((a,b) => a.time - b.time);
+        }
+
+        // Helper render lyric text hoặc 3 chấm nhảy
+        function formatLyricLine(text) {
+            if (text === "") return '<div class="bouncing-dots"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>';
+            return text;
         }
 
         function renderLyrics() {
@@ -705,7 +731,7 @@
             track.lyrics.forEach((l, i) => {
                 const div = document.createElement('div');
                 div.className = `lyric-line ${isStatic ? 'static' : ''}`; 
-                div.innerText = l.text;
+                div.innerHTML = formatLyricLine(l.text);
                 if (!isStatic) {
                     div.onclick = () => { audio.currentTime = l.time; audio.play(); };
                 }
@@ -721,9 +747,16 @@
         }
 
         function syncLyrics() {
-            if (!isLyricVisible) return;
             const track = playlist[currentIndex];
-            if (!track || !track.lyrics || track.lyrics[0]?.time === -1) return;
+            if (!track || !track.lyrics || track.lyrics[0]?.time === -1) {
+                if (customPipWindow) {
+                    const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
+                    if (pipLyricEl) { pipLyricEl.innerHTML = ''; pipLyricEl.dataset.currentIdx = ''; }
+                }
+                const topLyricEl = document.getElementById('top-active-lyric');
+                if (topLyricEl) { topLyricEl.innerHTML = ''; topLyricEl.dataset.currentIdx = ''; }
+                return;
+            }
             
             const time = audio.currentTime;
             let activeIdx = -1;
@@ -731,6 +764,27 @@
                 if (time >= track.lyrics[i].time - 0.2) activeIdx = i;
                 else break;
             }
+            
+            // Đồng bộ lời sang PiP và Top Lyric (Có "trí nhớ" chống render lại làm giật animation)
+            const htmlContent = activeIdx !== -1 ? formatLyricLine(track.lyrics[activeIdx].text) : '';
+            const idxStr = activeIdx.toString();
+            
+            if (customPipWindow) {
+                const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
+                if (pipLyricEl && pipLyricEl.dataset.currentIdx !== idxStr) {
+                    pipLyricEl.innerHTML = htmlContent;
+                    pipLyricEl.dataset.currentIdx = idxStr; // Lưu lại ID dòng đang hát
+                }
+            }
+            
+            const topLyricEl = document.getElementById('top-active-lyric');
+            if (topLyricEl && topLyricEl.dataset.currentIdx !== idxStr) {
+                topLyricEl.innerHTML = htmlContent;
+                topLyricEl.dataset.currentIdx = idxStr; // Lưu lại ID dòng đang hát
+            }
+
+            if (!isLyricVisible) return; // UI chính vẫn giữ nguyên
+
             if (activeIdx !== -1) {
                 const lines = lyricOverlay.querySelectorAll('.lyric-line');
                 const currentActive = lyricOverlay.querySelector('.lyric-line.active');
@@ -1006,15 +1060,18 @@
             
             // Lấy các element từ PiP DOM
             const titleEl = doc.getElementById('pip-title');
+            const artistEl = doc.getElementById('pip-artist');
             const bgEl = doc.getElementById('pip-bg');
             const playSpan = doc.getElementById('pip-play-btn').querySelector('span');
             const shuffleBtn = doc.getElementById('pip-shuffle-btn');
             const repeatBtn = doc.getElementById('pip-repeat-btn');
             const repeatBadge = doc.getElementById('pip-repeat-badge');
+            const lyricEl = doc.getElementById('pip-lyric');
 
             // Cập nhật Bài hát và Ảnh nền/Icon
             if (track) {
                 titleEl.innerText = track.name;
+                artistEl.innerText = track.artist;
                 if (track.cover) {
                     bgEl.style.backgroundImage = `url(${track.cover})`;
                     bgEl.innerHTML = '';
@@ -1024,9 +1081,12 @@
                 }
             } else {
                 titleEl.innerText = 'Chưa có bài hát';
+                artistEl.innerText = 'Studio Standby';
                 bgEl.style.backgroundImage = 'none';
                 bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
             }
+
+            if (lyricEl) lyricEl.innerText = ''; // Reset lyric khi sang bài mới, syncLyrics sẽ nạp lại
 
             // Cập nhật Nút bấm Play/Pause
             playSpan.innerText = audio.paused ? 'play_arrow' : 'pause';
@@ -1087,9 +1147,9 @@
                         display: flex; flex-direction: column;
                     }
                     .pip-bg { 
-                        position: fixed; inset: -20px; z-index: 1;
+                        position: fixed; inset: 0; z-index: 1;
                         background-size: cover; background-position: center;
-                        filter: blur(16px) brightness(0.4); 
+                        filter: brightness(0.4); 
                         display: flex; justify-content: center; align-items: center;
                     }
                     .pip-player-section {
@@ -1097,11 +1157,32 @@
                         display: flex; flex-direction: column; justify-content: space-between;
                         padding: 32px 24px; transition: height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
                     }
-                    .pip-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+                    .pip-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+                    .pip-header-content { flex: 1; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
                     .pip-title { 
-                        font-size: 18px; font-weight: 700; margin: 0; flex: 1; text-align: center;
+                        font-size: 16px; font-weight: 700; margin: 0; width: 100%; text-align: center;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                         text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                    }
+                    .pip-artist {
+                        font-size: 10px; font-weight: 400; margin: 4px 0 0; width: 100%; text-align: center; opacity: 0.7;
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                        font-family: 'Minecraft', sans-serif; text-transform: uppercase;
+                    }
+                    .pip-lyric {
+                        flex: 1; display: flex; align-items: center; justify-content: center;
+                        text-align: center; font-size: 16px; font-weight: 700; color: #D0BCFF;
+                        padding: 0 16px; text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+                        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+                        margin: 12px 0;
+                    }
+                    .bouncing-dots { display: inline-flex; align-items: flex-end; justify-content: center; height: 1em; gap: 4px; }
+                    .bouncing-dots .dot { animation: dot-jump 1s infinite; font-size: 1.2em; line-height: 0.5; color: #D0BCFF;}
+                    .bouncing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+                    .bouncing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+                    @keyframes dot-jump {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-8px); }
                     }
                     .pip-controls { 
                         display: flex; justify-content: center; align-items: center; gap: 8px;
@@ -1175,9 +1256,15 @@
                     <div class="pip-player-section">
                         <div class="pip-header">
                             <div style="width: 32px;"></div> <!-- Cân bằng Flexbox -->
-                            <h4 id="pip-title" class="pip-title">Studio Standby</h4>
+                            <div class="pip-header-content">
+                                <h4 id="pip-title" class="pip-title">Studio Standby</h4>
+                                <p id="pip-artist" class="pip-artist">ENGINE IDLE | SYSTEM</p>
+                            </div>
                             <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;"><span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span></button>
                         </div>
+                        
+                        <div id="pip-lyric" class="pip-lyric"></div>
+
                         <div class="pip-controls">
                             <button class="btn-m3" id="pip-shuffle-btn"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
                             <button class="btn-m3" id="pip-prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
@@ -1210,6 +1297,7 @@
                 pipDoc.getElementById('pip-expand-btn').onclick = () => {
                     customPipWindow.resizeTo(320, 500); // Kéo dài cửa sổ
                     pipDoc.querySelector('.pip-player-section').style.height = '180px'; // Bóp player lại cho list hiện
+                    pipDoc.getElementById('pip-lyric').style.display = 'none'; // Ẩn lời để lấy khoảng trống
                     pipDoc.getElementById('pip-playlist-section').style.display = 'flex';
                     pipDoc.getElementById('pip-expand-btn').style.opacity = '0';
                     pipDoc.getElementById('pip-expand-btn').style.pointerEvents = 'none';
@@ -1220,6 +1308,7 @@
                 pipDoc.getElementById('pip-close-btn').onclick = () => {
                     customPipWindow.resizeTo(320, 320); // Thu ngắn cửa sổ về hình vuông ban đầu
                     pipDoc.querySelector('.pip-player-section').style.height = '100%'; // Trả player về full size
+                    pipDoc.getElementById('pip-lyric').style.display = '-webkit-box'; // Hiện lại lời
                     pipDoc.getElementById('pip-playlist-section').style.display = 'none';
                     pipDoc.getElementById('pip-expand-btn').style.opacity = '1';
                     pipDoc.getElementById('pip-expand-btn').style.pointerEvents = 'auto';
