@@ -382,7 +382,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.05.30-build135600</span>
+                <span>PLAYER V2026.05.30-hotfixbuild171735</span>
             </div>
             <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
         </div>
@@ -859,6 +859,14 @@
                 artPlaceholder.classList.remove('hidden');
                 bgPreview.style.backgroundImage = 'none';
             }
+
+            // CHUYỂN PHẦN DỌN DẸP LYRIC VÀO ĐÂY: Chỉ reset khi đổi bài hát thực sự
+            if (customPipWindow) {
+                const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
+                if (pipLyricEl) { pipLyricEl.innerHTML = ''; pipLyricEl.dataset.currentIdx = ''; }
+            }
+            const topLyricEl = document.getElementById('top-active-lyric');
+            if (topLyricEl) { topLyricEl.innerHTML = ''; topLyricEl.dataset.currentIdx = ''; }
             
             renderLyrics();
             applyMarquee();
@@ -1077,7 +1085,7 @@
             const shuffleBtn = doc.getElementById('pip-shuffle-btn');
             const repeatBtn = doc.getElementById('pip-repeat-btn');
             const repeatBadge = doc.getElementById('pip-repeat-badge');
-            const lyricEl = doc.getElementById('pip-lyric');
+            // Cấm hàm này đụng vào lyricEl nữa nhé!
 
             // Cập nhật Bài hát và Ảnh nền/Icon
             if (track) {
@@ -1097,7 +1105,7 @@
                 bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
             }
 
-            if (lyricEl) lyricEl.innerText = ''; // Reset lyric khi sang bài mới, syncLyrics sẽ nạp lại
+            // ĐÃ BỐC DÒNG XÓA LYRIC ĐI CHỖ KHÁC RỒI ĐẤY! Tự do bấm nút mà không lo mất chữ!
 
             // Cập nhật Nút bấm Play/Pause
             playSpan.innerText = audio.paused ? 'play_arrow' : 'pause';
