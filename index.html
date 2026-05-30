@@ -266,6 +266,38 @@
         }
         .pause-icon-bg span { font-size: 64px; font-variation-settings: 'FILL' 1; }
 
+        /* --- CHANGELOG MODAL --- */
+        .cl-overlay {
+            position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+        }
+        .cl-overlay.open { opacity: 1; pointer-events: auto; }
+        .cl-dialog {
+            width: 90%; max-width: 600px; height: 80%; max-height: 800px;
+            background: var(--md-sys-color-surface-variant); border-radius: 28px;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+            transform: scale(0); opacity: 0; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+        }
+        .cl-overlay.open .cl-dialog { transform: scale(1); opacity: 1; }
+        .cl-header {
+            padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);
+            border-bottom: 1px solid var(--md-sys-color-outline);
+        }
+        .cl-header h2 { margin: 0; font-size: 20px; font-weight: 700; font-family: 'Minecraft', sans-serif; }
+        .cl-iframe { flex: 1; width: 100%; border: none; background: var(--md-sys-color-surface); }
+        
+        @keyframes cl-bounce {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.3); }
+            60% { transform: scale(0.9); }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .cl-bounce-anim { animation: cl-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
         .top-active-lyric {
             position: absolute; top: 32px; left: 50%; transform: translateX(-50%);
             width: 90%; text-align: center; z-index: 10;
@@ -376,15 +408,29 @@
         </div>
     </div>
 
+    <!-- Modal Changelog -->
+    <div id="changelog-overlay" class="cl-overlay">
+        <div id="changelog-dialog" class="cl-dialog">
+            <div class="cl-header">
+                <h2>CHANGELOG</h2>
+                <button class="btn-m3" id="cl-close-btn"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <iframe src="changelog.html" class="cl-iframe"></iframe>
+        </div>
+    </div>
+
     <div class="ambient-bg"></div>
 
     <div class="app-container">
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.05.30-hotfixbuild171735</span>
+                <span>PLAYER V2026.05.30-build174751</span>
             </div>
-            <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-m3" id="changelog-btn" title="Cập nhật (Changelog)"><span class="material-symbols-outlined">history</span></button>
+                <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
+            </div>
         </div>
 
         <div class="main-content">
@@ -1342,6 +1388,45 @@
             } catch (error) {
                 console.error("Vỡ kế hoạch mở PiP:", error);
             }
+        });
+
+        // --- HỆ THỐNG CHANGELOG MODAL ---
+        const clBtn = document.getElementById('changelog-btn');
+        const clOverlay = document.getElementById('changelog-overlay');
+        const clDialog = document.getElementById('changelog-dialog');
+        const clCloseBtn = document.getElementById('cl-close-btn');
+
+        clBtn.addEventListener('click', () => {
+            // Tính toán vị trí tâm nút bấm
+            const rect = clBtn.getBoundingClientRect();
+            const btnCx = rect.left + rect.width / 2;
+            const btnCy = rect.top + rect.height / 2;
+            
+            // Tính toán khoảng cách từ tâm màn hình đến nút để setup Transform Origin
+            const originX = btnCx - window.innerWidth / 2;
+            const originY = btnCy - window.innerHeight / 2;
+            
+            // Đặt Origin chính xác vào vị trí nút bấm
+            clDialog.style.transformOrigin = `calc(50% + ${originX}px) calc(50% + ${originY}px)`;
+            
+            // Mở dialog
+            clOverlay.classList.add('open');
+        });
+
+        clCloseBtn.addEventListener('click', () => {
+            clOverlay.classList.remove('open');
+            
+            // Đợi hiệu ứng đóng kết thúc rồi cho nút nảy lên
+            setTimeout(() => {
+                clBtn.classList.add('cl-bounce-anim');
+                // Tắt class animation sau khi hoàn thành
+                setTimeout(() => clBtn.classList.remove('cl-bounce-anim'), 600);
+            }, 400); // Khớp với thời gian thu nhỏ
+        });
+        
+        // Click ra vùng tối để đóng luôn
+        clOverlay.addEventListener('click', (e) => {
+            if (e.target === clOverlay) clCloseBtn.click();
         });
 
     </script>
