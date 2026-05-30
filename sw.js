@@ -1,4 +1,4 @@
-const CACHE_NAME = 'music-player-v2026.03.19-build220616';
+const CACHE_NAME = 'music-player-v2026.05.30-build082930';
 
 // ===== FILE TĨNH PRECACHE =====
 const STATIC_ASSETS = [
