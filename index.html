@@ -132,6 +132,7 @@
         .app-container {
             display: flex; flex-direction: column; height: 100vh;
             max-width: 1400px; margin: 0 auto; padding: 16px; gap: 12px;
+            position: relative;
         }
 
         .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 100; }
@@ -192,7 +193,7 @@
             border-radius: 16px;
             display: flex;
             align-items: center;
-            padding: 0 12px;
+            padding: 0 4px 0 12px;
             height: 40px;
             border: 1px solid transparent;
             transition: 0.3s;
@@ -201,7 +202,7 @@
             background: var(--md-sys-color-surface-variant);
             border-color: var(--md-sys-color-primary);
         }
-        .search-wrapper span { font-size: 18px; opacity: 0.5; }
+        .search-wrapper span.search-icon { font-size: 18px; opacity: 0.5; }
         .search-input {
             background: transparent; border: none;
             color: var(--md-sys-color-on-surface);
@@ -220,7 +221,7 @@
         .song-item:hover { background: rgba(0, 0, 0, 0.05); transform: scale(1.02); }
         .song-item.active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 
-        .visual-stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; border-radius: 32px; overflow: hidden;}
+        .visual-stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; border-radius: 32px; overflow: hidden; transition: var(--m3-transition); }
         #visualizer { width: 100%; height: 100%; border-radius: 32px; z-index: 2; position: absolute; inset: 0;}
 
         .lyric-overlay {
@@ -341,6 +342,7 @@
             border: 1px solid var(--playlist-border); border-radius: 28px;
             padding: 16px 24px; display: grid; grid-template-columns: 1.2fr 1.5fr 1fr;
             align-items: center; gap: 16px; z-index: 100;
+            transition: var(--m3-transition);
         }
 
         .seek-container { 
@@ -383,6 +385,42 @@
         }
         .hidden { display: none; }
 
+        /* --- REORDER UI MODE STYLES --- */
+        body.reorder-active .player-shell { transform: translateY(150%); opacity: 0; pointer-events: none; }
+        body.reorder-active .playlist-card { width: 100%; flex: 1; }
+        body.reorder-active .visual-stage { transform: translateX(100%); opacity: 0; flex: 0; min-width: 0; margin: 0; padding: 0; pointer-events: none; }
+        
+        /* Ẩn search và nút thu gọn khi ở chế độ Reorder */
+        body.reorder-active .search-container { display: none; }
+        body.reorder-active .expand-icon-group { display: none; }
+        
+        /* Hiển thị icon drag thay cho icon play */
+        .song-item .icon-play { display: block; }
+        .song-item .icon-drag { display: none; cursor: grab; }
+        body.reorder-active .song-item .icon-play { display: none; }
+        body.reorder-active .song-item .icon-drag { display: block; }
+        
+        /* Hiệu ứng khi đang cầm kéo thả */
+        .song-item.dragging { 
+            opacity: 0.5; 
+            background: var(--md-sys-color-surface-variant); 
+            border: 1px dashed var(--md-sys-color-primary); 
+        }
+
+        .reorder-done-btn {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            width: 150px; height: 56px; border-radius: 28px; /* Đổi thành hình Pill dài */
+            background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+            border: none; display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); cursor: pointer; z-index: 2000;
+            transition: bottom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s;
+            font-family: 'Google Sans Flex', sans-serif; font-weight: 700; font-size: 16px;
+        }
+        .reorder-done-btn:hover { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); transform: translateX(-50%) scale(1.05); }
+        .reorder-done-btn:active { transform: translateX(-50%) scale(0.95); }
+        body.reorder-active .reorder-done-btn { bottom: 32px; }
+        .reorder-done-btn span { font-size: 24px; font-weight: 700; font-variation-settings: 'wght' 700; }
+
         @media (max-width: 850px) {
             .player-shell { grid-template-columns: 1fr 1fr; padding: 12px 16px; }
             .volume-group { display: none; }
@@ -400,7 +438,8 @@
     <div id="context-menu">
         <div class="cm-item danger" id="cm-delete">
             <span class="material-symbols-outlined">delete</span>
-            <span>Xóa bài hát</span>
+            <!-- Thay đổi text theo yêu cầu -->
+            <span>Xoá khỏi playlist</span>
         </div>
         <div class="cm-item" id="cm-add-lrc">
             <span class="material-symbols-outlined">description</span>
@@ -425,7 +464,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.05.30-build174751</span>
+                <span>PLAYER V2026.05.31-build134200</span>
             </div>
             <div style="display: flex; gap: 8px;">
                 <button class="btn-m3" id="changelog-btn" title="Cập nhật"><span class="material-symbols-outlined">release_alert</span></button>
@@ -446,8 +485,12 @@
                 
                 <div class="search-container">
                     <div class="search-wrapper">
-                        <span class="material-symbols-outlined">search</span>
+                        <span class="material-symbols-outlined search-icon">search</span>
                         <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ...">
+                        <!-- Thêm nút Reorder vào thanh search -->
+                        <button class="btn-m3" id="reorder-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Chế độ sửa danh sách">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">sort</span>
+                        </button>
                     </div>
                 </div>
 
@@ -513,6 +556,12 @@
                 <input type="range" id="volume-slider" min="0" max="100" value="80">
             </div>
         </div>
+
+        <!-- Nút Tick hoàn tất Reorder -->
+        <button id="reorder-done-btn" class="reorder-done-btn" title="Hoàn tất">
+            <span class="material-symbols-outlined">check</span>
+            HOÀN TẤT
+        </button>
     </div>
 
     <input type="file" id="file-input" class="hidden" accept="audio/*, .lrc" multiple>
@@ -520,6 +569,28 @@
     <audio id="audio-element"></audio>
 
     <script>
+        // --- HÀM LOẠI BỎ DẤU TIẾNG VIỆT (PHỤC VỤ TÌM KIẾM TỐI ƯU) ---
+        function removeVietnameseTones(str) {
+            if (!str) return "";
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); 
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i"); 
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o"); 
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u"); 
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y"); 
+            str = str.replace(/đ/g,"d");
+            str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+            str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+            str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|MỠ/g, "O");
+            str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+            str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+            str = str.replace(/Đ/g, "D");
+            str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // ̀ ́ ̃ ̉ ̣  huyền, sắc, ngã, hỏi, nặng
+            str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // ˆ ̆ ̛  Â, Ê, Ă, Ơ, Ư
+            return str;
+        }
+
         // --- LOGIC GIỮ NGUYÊN HOÀN TOÀN TỪ BẢN GỐC CỦA PHONG ---
         const audio = document.getElementById('audio-element');
         const fileInput = document.getElementById('file-input');
@@ -554,6 +625,8 @@
         let targetMenuIndex = -1;
         let isLyricVisible = false;
         let searchQuery = "";
+        let isReorderMode = false;
+        let dragSourceIndex = -1;
 
         function updateThemeColor() {
             const isLight = window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -856,35 +929,135 @@
             }
         });
 
+        // --- Cập nhật sự kiện tìm kiếm để sử dụng loại bỏ dấu ---
         playlistSearch.addEventListener('input', (e) => {
-            searchQuery = e.target.value.toLowerCase().trim();
+            searchQuery = removeVietnameseTones(e.target.value.toLowerCase().trim());
             updatePlaylistUI();
+        });
+
+        // --- Tích hợp nút Toggle Reorder Mode ---
+        document.getElementById('reorder-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // Ngăn playlist-header bắt sự kiện
+            isReorderMode = true;
+            document.body.classList.add('reorder-active');
+            if (playlistCard.classList.contains('collapsed')) {
+                togglePlaylist(); // Mở list ra nếu đang thu nhỏ
+            }
+            updatePlaylistUI(); // Render lại để kích hoạt Drag & Drop
+        });
+
+        // --- Nút Tick thoát Reorder Mode ---
+        document.getElementById('reorder-done-btn').addEventListener('click', () => {
+            isReorderMode = false;
+            document.body.classList.remove('reorder-active');
+            updatePlaylistUI(); // Tắt Drag & Drop, mở lại onclick Play
         });
 
         function updatePlaylistUI() {
             playlistContainer.innerHTML = '';
             let count = 0;
             playlist.forEach((track, index) => {
-                const matches = track.name.toLowerCase().includes(searchQuery) || 
-                               track.artist.toLowerCase().includes(searchQuery);
+                const normalizedName = removeVietnameseTones(track.name).toLowerCase();
+                const normalizedArtist = removeVietnameseTones(track.artist).toLowerCase();
+                
+                // Bỏ qua filter search khi đang sắp xếp để không bị lỗi index
+                const matches = isReorderMode || normalizedName.includes(searchQuery) || normalizedArtist.includes(searchQuery);
                 
                 if (matches) {
                     count++;
                     const item = document.createElement('div');
                     item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
                     item.dataset.index = index;
+                    
+                    // Thêm 2 icon (Play và Drag). CSS sẽ tự ẩn/hiện dựa theo body.reorder-active
                     item.innerHTML = `
-                        <span class="material-symbols-outlined" style="font-size:20px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'play_arrow'}</span>
+                        <span class="material-symbols-outlined icon-play" style="font-size:20px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'play_arrow'}</span>
+                        <span class="material-symbols-outlined icon-drag" style="font-size:20px" title="Nắm để kéo thả">drag_handle</span>
                         <div class="track-text">
                             <div style="font-weight:700; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
                             <div style="font-family:'Minecraft'; font-size: 8px; opacity: 0.6; margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''}</div>
                         </div>
                     `;
-                    item.onclick = () => playTrack(index);
+                    
+                    // Kích hoạt Drag & Drop nếu ở chế độ Reorder
+                    if (isReorderMode) {
+                        item.draggable = true;
+                        
+                        item.addEventListener('dragstart', (e) => {
+                            dragSourceIndex = index;
+                            item.classList.add('dragging');
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', index); // Cần thiết cho Firefox
+                        });
+                        
+                        item.addEventListener('dragover', (e) => {
+                            e.preventDefault(); // Cho phép thả
+                            e.dataTransfer.dropEffect = 'move';
+                            
+                            // Tạo vạch chỉ báo vị trí sẽ chèn vào (trên hay dưới item hiện tại)
+                            const bounding = item.getBoundingClientRect();
+                            const offset = bounding.y + (bounding.height / 2);
+                            if (e.clientY - offset > 0) {
+                                item.style.borderBottom = "2px solid var(--md-sys-color-primary)";
+                                item.style.borderTop = "none";
+                            } else {
+                                item.style.borderTop = "2px solid var(--md-sys-color-primary)";
+                                item.style.borderBottom = "none";
+                            }
+                        });
+                        
+                        item.addEventListener('dragleave', () => {
+                            item.style.borderTop = "none";
+                            item.style.borderBottom = "none";
+                        });
+                        
+                        item.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            item.style.borderTop = "none";
+                            item.style.borderBottom = "none";
+                            
+                            const targetIndex = index;
+                            if (dragSourceIndex !== -1 && dragSourceIndex !== targetIndex) {
+                                // Lưu mốc bài hát đang phát (để update lại currentIndex sau khi tráo đổi mảng)
+                                const playingTrack = currentIndex !== -1 ? playlist[currentIndex] : null;
+                                
+                                // Bóc bài hát ra và chèn vào vị trí mới
+                                const draggedTrack = playlist.splice(dragSourceIndex, 1)[0];
+                                playlist.splice(targetIndex, 0, draggedTrack);
+                                
+                                // Fix lại ID đang phát
+                                if (playingTrack) currentIndex = playlist.indexOf(playingTrack);
+                                
+                                updatePlaylistUI();
+                            }
+                        });
+                        
+                        item.addEventListener('dragend', () => {
+                            item.classList.remove('dragging');
+                            dragSourceIndex = -1;
+                            // Reset toàn bộ viền đề phòng bug rác giao diện
+                            document.querySelectorAll('.song-item').forEach(el => {
+                                el.style.borderTop = "none";
+                                el.style.borderBottom = "none";
+                            });
+                        });
+                        
+                    } else {
+                        // Trạng thái bình thường: Nhấn để phát
+                        item.onclick = () => playTrack(index);
+                    }
+
                     playlistContainer.appendChild(item);
                 }
             });
-            document.getElementById('track-count').innerText = searchQuery ? `${count}/${playlist.length}` : playlist.length;
+            
+            // Cập nhật số lượng bài hát
+            document.getElementById('track-count').innerText = searchQuery && !isReorderMode ? `${count}/${playlist.length}` : playlist.length;
+
+            // Đồng bộ danh sách phát sang PiP nếu cửa sổ PiP đang mở
+            if (typeof renderPipPlaylist === 'function' && customPipWindow) {
+                renderPipPlaylist();
+            }
         }
 
         function playTrack(index) {
@@ -1090,11 +1263,12 @@
             });
         }
 
-        document.addEventListener('contextmenu', event => event.preventDefault());
+        // document.addEventListener('contextmenu', event => event.preventDefault());
 
         // --- HỆ THỐNG CUSTOM PICTURE-IN-PICTURE (NEW) ---
         let customPipWindow = null;
         const pipBtn = document.getElementById('pip-btn');
+        let pipTargetMenuIndex = -1; // Biến lưu index bài hát khi click chuột phải trong PiP
 
         // Hàm render playlist cho PiP
         function renderPipPlaylist() {
@@ -1113,6 +1287,16 @@
                     </div>
                 `;
                 item.onclick = () => playTrack(index);
+                
+                // Bắt sự kiện chuột phải riêng biệt trên từng item list bên trong PiP
+                item.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    pipTargetMenuIndex = index;
+                    customPipWindow.document.getElementById('pip-cm-title').innerText = track.name;
+                    customPipWindow.document.getElementById('pip-cm-overlay').classList.add('open');
+                    customPipWindow.document.getElementById('pip-context-menu').classList.add('open');
+                };
+
                 container.appendChild(item);
             });
         }
@@ -1150,8 +1334,6 @@
                 bgEl.style.backgroundImage = 'none';
                 bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
             }
-
-            // ĐÃ BỐC DÒNG XÓA LYRIC ĐI CHỖ KHÁC RỒI ĐẤY! Tự do bấm nút mà không lo mất chữ!
 
             // Cập nhật Nút bấm Play/Pause
             playSpan.innerText = audio.paused ? 'play_arrow' : 'pause';
@@ -1312,10 +1494,33 @@
                     ::-webkit-scrollbar { width: 6px; }
                     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
                     ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+                    /* --- CSS CUSTOM CONTEXT MENU CHO PIP --- */
+                    .pip-context-menu {
+                        position: absolute; bottom: 0; left: 0; width: 100%;
+                        background: #332D41; border-top-left-radius: 20px; border-top-right-radius: 20px;
+                        padding: 20px 16px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        z-index: 100; box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+                        display: flex; flex-direction: column; gap: 16px;
+                    }
+                    .pip-context-menu.open { transform: translateY(0); }
+                    .pip-cm-overlay {
+                        position: absolute; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+                        z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+                    }
+                    .pip-cm-overlay.open { opacity: 1; pointer-events: auto; }
+                    .pip-cm-title { font-size: 15px; font-weight: 700; text-align: center; color: #EADDFF; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+                    .pip-cm-btn {
+                        background: rgba(242, 184, 181, 0.1); color: #F2B8B5; border: none;
+                        padding: 14px; border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 600;
+                        cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+                        transition: background 0.2s;
+                    }
+                    .pip-cm-btn:active { background: rgba(242, 184, 181, 0.25); }
                 `;
                 pipDoc.head.appendChild(style);
 
-                // Dựng DOM cho cửa sổ PiP
+                // Dựng DOM cho cửa sổ PiP kèm Custom Context Menu
                 pipDoc.body.innerHTML = `
                     <div id="pip-bg" class="pip-bg"></div>
                     <div class="pip-player-section">
@@ -1349,6 +1554,16 @@
                         </div>
                         <div class="pip-playlist-container" id="pip-playlist-container"></div>
                     </div>
+
+                    <!-- Custom Context Menu cho PiP -->
+                    <div class="pip-cm-overlay" id="pip-cm-overlay"></div>
+                    <div class="pip-context-menu" id="pip-context-menu">
+                        <div class="pip-cm-title" id="pip-cm-title">Song Name</div>
+                        <button class="pip-cm-btn" id="pip-cm-delete">
+                            <span class="material-symbols-outlined">delete</span>
+                            Xoá khỏi playlist
+                        </button>
+                    </div>
                 `;
 
                 // Bắt event từ PiP dội thẳng về thẻ gốc của Player
@@ -1377,6 +1592,28 @@
                     pipDoc.getElementById('pip-playlist-section').style.display = 'none';
                     pipDoc.getElementById('pip-expand-btn').style.opacity = '1';
                     pipDoc.getElementById('pip-expand-btn').style.pointerEvents = 'auto';
+                };
+
+                // Logic xử lý Context Menu trong PiP
+                const pipOverlayEl = pipDoc.getElementById('pip-cm-overlay');
+                const pipCmEl = pipDoc.getElementById('pip-context-menu');
+                
+                const closePipCm = () => {
+                    pipOverlayEl.classList.remove('open');
+                    pipCmEl.classList.remove('open');
+                    pipTargetMenuIndex = -1;
+                };
+
+                pipOverlayEl.onclick = closePipCm;
+
+                // Chức năng Xóa bài hát từ menu PiP
+                pipDoc.getElementById('pip-cm-delete').onclick = () => {
+                    if (pipTargetMenuIndex > -1) {
+                        targetMenuIndex = pipTargetMenuIndex; 
+                        document.getElementById('cm-delete').click(); // Kích hoạt hàm delete gốc ở player lớn
+                        closePipCm();
+                        // (Việc load lại UI và list pip đã được gọi tự động bên trong cụm cmDelete.click())
+                    }
                 };
 
                 // Dọn rác khi user chủ động đóng tab PiP
