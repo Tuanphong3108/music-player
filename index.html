@@ -515,6 +515,35 @@
         body.reorder-active .reorder-done-btn { bottom: 32px; }
         .reorder-done-btn span { font-size: 24px; font-weight: 700; font-variation-settings: 'wght' 700; }
 
+        /* --- PWA INSTALL TOOLTIP --- */
+        .install-wrapper {
+            position: relative;
+            display: none; /* Ẩn mặc định khi tải trang */
+        }
+        .install-tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: var(--md-sys-color-surface-variant);
+            color: var(--md-sys-color-on-surface-variant);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--m3-transition);
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid var(--playlist-border);
+        }
+        .install-wrapper:hover .install-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(4px);
+        }
+
         @media (max-width: 850px) {
             .player-shell { grid-template-columns: 1fr 1fr; padding: 12px 16px; }
             .volume-group { display: none; }
@@ -608,9 +637,15 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.06.01-build111130</span>
+                <span>PLAYER V2026.06.01-build120123</span>
             </div>
             <div style="display: flex; gap: 8px;">
+                <div class="install-wrapper" id="install-wrapper">
+                    <button class="btn-m3" id="install-btn">
+                        <span class="material-symbols-outlined">install_desktop</span>
+                    </button>
+                    <div class="install-tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
+                </div>
                 <button class="btn-m3" id="settings-btn" title="Cài đặt"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="changelog-btn" title="Cập nhật"><span class="material-symbols-outlined">release_alert</span></button>
                 <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add_circle</span></button>
@@ -1867,6 +1902,53 @@
         
         clOverlay.addEventListener('click', (e) => {
             if (e.target === clOverlay) clCloseBtn.click();
+        });
+
+        // --- HỆ THỐNG PWA INSTALL ---
+        let deferredPrompt;
+        const installWrapper = document.getElementById('install-wrapper');
+        const installBtn = document.getElementById('install-btn');
+
+        // Lắng nghe sự kiện trước khi cài đặt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Ngăn chặn prompt mini mặc định của Chrome
+            e.preventDefault();
+            // Lưu trữ sự kiện để gọi lại sau
+            deferredPrompt = e;
+            
+            // Kiểm tra xem có đang mở dưới dạng PWA Standalone không
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            
+            // Nếu không phải Standalone thì mới hiện nút
+            if (!isStandalone) {
+                installWrapper.style.display = 'block';
+            }
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Hiển thị hộp thoại cài đặt của Chrome
+                deferredPrompt.prompt();
+                
+                // Đợi phản hồi từ người dùng (Cài đặt hay Huỷ)
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('Đã đồng ý cài đặt PWA');
+                } else {
+                    console.log('Đã huỷ cài đặt PWA');
+                }
+                
+                // Xoá biến tạm và ẩn nút cài đặt
+                deferredPrompt = null;
+                installWrapper.style.display = 'none';
+            }
+        });
+
+        // Lắng nghe sự kiện khi app đã được cài đặt xong
+        window.addEventListener('appinstalled', () => {
+            installWrapper.style.display = 'none';
+            deferredPrompt = null;
+            console.log('PWA đã được cài đặt vào hệ thống');
         });
 
     </script>
