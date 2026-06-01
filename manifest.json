@@ -24,7 +24,8 @@
     {
       "action": "index.html",
       "accept": {
-        "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".flac"]
+        "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".flac"],
+        "text/plain": [".lrc"]
       }
     }
   ],
