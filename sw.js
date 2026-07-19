@@ -4,7 +4,7 @@ const CACHE_NAME = 'audio-player-v2026.07.19-build210202';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  '/changelog.html',
+  './changelog.html',
   './index_md1.html',
   './manifest.json',
   './music_note.png',
