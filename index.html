@@ -2086,6 +2086,10 @@
                 }
                 const topLyricEl = document.getElementById('top-active-lyric');
                 if (topLyricEl) { topLyricEl.innerHTML = ''; topLyricEl.dataset.currentIdx = ''; }
+
+                // Xoá luôn lyric đang hiển thị ở Full screen, tránh giữ lại dòng cũ của bài trước
+                const fsLyricElEmpty = document.getElementById('fs-lyric');
+                if (fsLyricElEmpty) { fsLyricElEmpty.innerHTML = ''; fsLyricElEmpty.dataset.currentIdx = ''; }
                 return;
             }
             
@@ -2298,6 +2302,8 @@
             }
             const topLyricEl = document.getElementById('top-active-lyric');
             if (topLyricEl) { topLyricEl.innerHTML = ''; topLyricEl.dataset.currentIdx = ''; }
+            const fsLyricElReset = document.getElementById('fs-lyric');
+            if (fsLyricElReset) { fsLyricElReset.innerHTML = ''; fsLyricElReset.dataset.currentIdx = ''; }
             
             renderLyrics();
             applyMarquee();
