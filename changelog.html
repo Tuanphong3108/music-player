@@ -12,13 +12,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    /* Áp dụng font Google Sans Flex và ép nền tối vĩnh viễn */
+    /* Áp dụng font Google Sans Flex và hiệu ứng mượt khi chuyển đổi màu sắc */
     body {
       font-family: 'Google Sans Flex', sans-serif;
-      background-color: #0f111a; /* Nền tối siêu sang chống tàng hình */
+      transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    /* Ẩn/Tinh chỉnh scrollbar cho mượt */
+    /* Hiệu ứng chuyển màu mượt cho các phần tử con */
+    .theme-transition {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Tinh chỉnh thanh cuộn siêu thanh lịch */
     ::-webkit-scrollbar {
       width: 4px;
     }
@@ -26,7 +31,7 @@
       background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(155, 155, 155, 0.2);
       border-radius: 99px;
     }
   </style>
@@ -38,69 +43,143 @@
     
     <!-- PHẦN ĐẦU: TIÊU ĐỀ PHIÊN BẢN -->
     <header class="flex flex-col gap-1">
-      <h1 id="app-title-version" class="text-lg font-black tracking-tight flex flex-wrap items-baseline gap-1.5">
-        <!-- Render động -->
+      <h1 id="app-title-version" class="text-lg font-black tracking-tight flex flex-wrap items-baseline gap-1.5 theme-transition">
+        <!-- Nội dung Header sẽ được render động ở đây -->
       </h1>
     </header>
 
     <!-- PHẦN DƯỚI: DANH SÁCH CHANGELOG -->
     <main id="changelog-container" class="flex flex-col gap-2.5 pl-1">
-      <!-- Render động -->
+      <!-- Các dòng cập nhật sẽ được render động ở đây -->
     </main>
     
   </div>
 
   <script>
-    // =========================================================================
-    // ⬇️ BRO PHONG THAY ĐỔI TOÀN BỘ NỘI DUNG & MÀU SẮC TẠI ĐÂY LÀ OK ⬇️
-    // =========================================================================
-    const EMBED_CONFIG = {
-      appName: "Music Player",
-      version: "v2026.06.01",
-      build: "build165713",
-      
-      // CONFIG MÀU CHỮ TRÊN NỀN TỐI (Đã được tối ưu hoàn hảo)
-      mainTextColor: "#ffffff",           // Màu chữ trắng tinh khôi cho tiêu đề chính
-      subTextColor: "rgba(255,255,255,0.8)", // Màu chữ xám trắng nhẹ cho changelog dễ đọc
-      buildBadgeBg: "rgba(255,255,255,0.1)", // Nền của tag build trông mờ ảo
-      
-      // Danh sách nội dung hiển thị bên dưới.
-      changelogItems: [
-        "- Thêm tooltips tuỳ chỉnh",
-        "- Đổi 'Dark dark bủh bủh lmao' -> 'Tối'",
-      ]
-    };
-    // =========================================================================
-    // ⬆️ HẾT PHẦN CẤU HÌNH CỦA BRO ⬆️
-    // =========================================================================
+// =========================================================================
+// ⬇️ BRO PHONG THAY ĐỔI TOÀN BỘ NỘI DUNG & MÀU SẮC TẠI ĐÂY LÀ OK ⬇️
+// =========================================================================
+const EMBED_CONFIG = {
+  appName: "Audio Player",
+  version: "v2026.07.19",
+  build: "build151025",
 
-    function initEmbed() {
-      // Áp dụng màu chữ chủ đạo từ cấu hình
-      document.body.style.color = EMBED_CONFIG.subTextColor;
+  // Mặc định ban đầu khi chưa nhận tin nhắn sẽ hiển thị theme này
+  defaultTheme: "dark",
 
-      // 1. Render Header
-      const headerTitle = document.getElementById('app-title-version');
-      headerTitle.style.color = EMBED_CONFIG.mainTextColor;
-      headerTitle.innerHTML = `
-        <span>${EMBED_CONFIG.appName}</span> 
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-bold">${EMBED_CONFIG.version}</span>
-        <span class="text-[10px] px-2 py-0.5 rounded-md font-mono" style="background-color: ${EMBED_CONFIG.buildBadgeBg}; color: ${EMBED_CONFIG.mainTextColor}; opacity: 0.7;">${EMBED_CONFIG.build}</span>
-      `;
+  // 🌌 DARK MODE
+  darkTheme: {
+    bg: "#0f111a",
+    mainTextColor: "#ffffff",
+    subTextColor: "rgba(255,255,255,0.8)",
+    buildBadgeBg: "rgba(255,255,255,0.1)"
+  },
 
-      // 2. Render Changelog Items
-      const container = document.getElementById('changelog-container');
-      container.innerHTML = ''; // Xóa mẫu cũ
+  // ☀️ LIGHT MODE
+  lightTheme: {
+    bg: "#f8f9fa",
+    mainTextColor: "#1a1a1a",
+    subTextColor: "rgba(0,0,0,0.7)",
+    buildBadgeBg: "rgba(0,0,0,0.05)"
+  },
 
-      EMBED_CONFIG.changelogItems.forEach(item => {
-        const itemParagraph = document.createElement('p');
-        itemParagraph.className = 'text-sm leading-relaxed font-semibold transition-all duration-200';
-        itemParagraph.style.color = EMBED_CONFIG.subTextColor;
-        itemParagraph.innerText = item;
-        container.appendChild(itemParagraph);
+  changelogItems: [
+    "🎵 Đổi tên ứng dụng từ Music Player thành Audio Player",
+    "📝 Thêm Metadata Editor (Experimental)",
+    "🖼️ Thêm Thumbnail Editor (Experimental)",
+    "🎮 Bắt đầu tích hợp giao diện Minecraft Ore UI",
+    "🎤 Hỗ trợ đọc Lyric Embed từ file nhạc",
+    "🖥️ Thêm Full Screen Mode mới",
+    "🎨 Thêm Accent Color (10 màu)",
+    "⌨️ Thêm nhiều phím tắt mới",
+    "📰 What's New đã đồng bộ theme của Audio Player",
+    "⚡ Cải thiện hiệu năng và sửa nhiều lỗi"
+  ]
+};
+// =========================================================================
+// ⬆️ HẾT PHẦN CẤU HÌNH CỦA BRO ⬆️
+// =========================================================================
+
+    // Biến lưu giữ theme hiện tại ("dark" hoặc "light")
+    let currentTheme = EMBED_CONFIG.defaultTheme;
+
+    /**
+     * Hàm dùng để cập nhật màu sắc hiển thị dựa trên cấu hình màu tương ứng của theme
+     */
+    function applyThemeStyles(themeName) {
+      currentTheme = themeName;
+      const theme = themeName === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
+
+      // 1. Áp dụng cho Body (Nền & Màu chữ mặc định)
+      document.body.style.backgroundColor = theme.bg;
+      document.body.style.color = theme.subTextColor;
+
+      // 2. Áp dụng cho tên App
+      const appNameSpan = document.getElementById('app-name-text');
+      if (appNameSpan) {
+        appNameSpan.style.color = theme.mainTextColor;
+      }
+
+      // 3. Áp dụng cho Nhãn Build (Build Badge)
+      const buildBadge = document.getElementById('build-badge');
+      if (buildBadge) {
+        buildBadge.style.backgroundColor = theme.buildBadgeBg;
+        buildBadge.style.color = theme.mainTextColor;
+      }
+
+      // 4. Áp dụng cho các dòng Changelog
+      const items = document.querySelectorAll('.changelog-item');
+      items.forEach(item => {
+        item.style.color = theme.subTextColor;
       });
     }
 
-    // Chạy render ngay khi load trang
+    /**
+     * Khởi tạo và kết xuất cấu trúc DOM tĩnh dựa trên cấu hình
+     */
+    function initEmbed() {
+      const activeTheme = currentTheme === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
+
+      // 1. Khởi tạo cấu trúc Tiêu đề & Phiên bản
+      const headerTitle = document.getElementById('app-title-version');
+      headerTitle.innerHTML = `
+        <span id="app-name-text" class="theme-transition" style="color: ${activeTheme.mainTextColor}">${EMBED_CONFIG.appName}</span> 
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-bold">${EMBED_CONFIG.version}</span>
+        <span id="build-badge" class="text-[10px] px-2 py-0.5 rounded-md font-mono theme-transition" 
+              style="background-color: ${activeTheme.buildBadgeBg}; color: ${activeTheme.mainTextColor}; opacity: 0.85;">
+          ${EMBED_CONFIG.build}
+        </span>
+      `;
+
+      // 2. Khởi tạo danh sách Changelog
+      const container = document.getElementById('changelog-container');
+      container.innerHTML = ''; 
+
+      EMBED_CONFIG.changelogItems.forEach(item => {
+        const itemParagraph = document.createElement('p');
+        itemParagraph.className = 'changelog-item text-sm leading-relaxed font-semibold theme-transition';
+        itemParagraph.style.color = activeTheme.subTextColor;
+        itemParagraph.innerText = item;
+        container.appendChild(itemParagraph);
+      });
+
+      // 3. Thực thi áp dụng màu ban đầu
+      applyThemeStyles(currentTheme);
+    }
+
+    // LẮNG NGHE SỰ KIỆN POSTMESSAGE TỪ TRANG CHA HOẶC IFRAME CONTAINER
+    window.addEventListener('message', (event) => {
+      // Nhận giá trị trực tiếp dạng String hoặc thông qua một Object { theme: "..." }
+      const data = event.data;
+      
+      if (data === 'dark' || (data && data.theme === 'dark')) {
+        applyThemeStyles('dark');
+      } else if (data === 'light' || (data && data.theme === 'light')) {
+        applyThemeStyles('light');
+      }
+    });
+
+    // Thực thi render ngay khi tải trang xong
     window.onload = initEmbed;
   </script>
 </body>
