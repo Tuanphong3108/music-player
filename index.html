@@ -1723,6 +1723,9 @@
             root.style.setProperty('--md-sys-color-on-surface-variant', colors.onSurfaceVariant);
             root.style.setProperty('--md-sys-color-outline', colors.outline);
             root.style.setProperty('--ambient-gradient', colors.ambientGradient);
+
+            // Đồng bộ màu thanh header trình duyệt/PWA (theme-color) đúng theo accent đang chọn
+            document.getElementById('theme-meta').setAttribute('content', colors.surface);
         }
 
         // --- ÁP DỤNG CHỦ ĐỀ SÁNG/TỐI THÍCH ỨNG ---
@@ -1741,10 +1744,7 @@
                 root.classList.add('theme-dark');
             }
             
-            const isLight = resolveThemeMode(themeValue) === 'light';
-            document.getElementById('theme-meta').setAttribute('content', isLight ? '#FEF7FF' : '#1C1B1F');
-            
-            // Đồng bộ màu sắc điểm nhấn ngay khi đổi giao diện
+            // Đồng bộ màu sắc điểm nhấn (và theme-color header) ngay khi đổi giao diện
             applyAccentColor();
         }
 
