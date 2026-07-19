@@ -897,7 +897,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.07.19-build210202</span>
+                <span>AUDIOPLAYER V2026.07.19-build151025</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1830,32 +1830,13 @@
 
         let playlist = [];
         let currentIndex = -1;
-        let isShuffle = localStorage.getItem('settings_shuffle') === 'true';
-        let repeatMode = parseInt(localStorage.getItem('settings_repeat_mode')) || 0;
+        let isShuffle = false;
+        let repeatMode = 0; 
         let targetMenuIndex = -1;
         let isLyricVisible = false;
         let searchQuery = "";
         let isReorderMode = false;
         let dragSourceIndex = -1;
-
-        // Khôi phục giao diện nút Shuffle/Repeat theo trạng thái đã lưu ở lần dùng trước
-        (function restorePlaybackModesUI() {
-            const shuffleBtnEl = document.getElementById('shuffle-btn');
-            const prevBtnEl = document.getElementById('prev-btn');
-            const repeatBtnEl = document.getElementById('repeat-btn');
-            if (shuffleBtnEl) shuffleBtnEl.classList.toggle('active', isShuffle);
-            if (isShuffle && prevBtnEl) {
-                prevBtnEl.style.opacity = '0.4';
-                prevBtnEl.style.pointerEvents = 'none';
-                prevBtnEl.setAttribute('title', 'Chế độ ngẫu nhiên đang bật (Prev vô hiệu)');
-            }
-            if (repeatBtnEl) {
-                repeatBtnEl.classList.toggle('active', repeatMode > 0);
-                repeatBtnEl.classList.toggle('repeat-one', repeatMode === 2);
-                const badge = repeatBtnEl.querySelector('.repeat-badge');
-                if (badge) badge.innerText = repeatMode === 2 ? '1' : '';
-            }
-        })();
 
         // Tự động chuyển đổi màu chủ đề hệ thống khi cấu hình hệ thống thay đổi
         window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
@@ -2463,7 +2444,6 @@
         // --- SHUFFLE BUTTON ACTION WITH PREV BUTTON INACTIVATION ---
         document.getElementById('shuffle-btn').addEventListener('click', function() {
             isShuffle = !isShuffle; this.classList.toggle('active', isShuffle);
-            localStorage.setItem('settings_shuffle', isShuffle);
             
             // Xử lý làm mờ và chặn tương tác nút Previous theo luật Shuffle của Phong
             const prevBtn = document.getElementById('prev-btn');
@@ -2484,7 +2464,6 @@
             this.classList.toggle('active', repeatMode > 0);
             this.classList.toggle('repeat-one', repeatMode === 2);
             this.querySelector('.repeat-badge').innerText = repeatMode === 2 ? '1' : '';
-            localStorage.setItem('settings_repeat_mode', repeatMode);
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
         });
 
@@ -2552,14 +2531,8 @@
 
         // --- STREAMING_CHUNK:Configuring smart audio volume controls... ---
         // --- HỆ THỐNG ĐIỀU CHỈNH LOA & ÂM LƯỢNG THÔNG MINH ---
-        // Khôi phục mức âm lượng đã lưu ở lần dùng trước (mặc định 80% nếu chưa từng lưu)
-        const persistedVolPercent = parseFloat(localStorage.getItem('settings_volume'));
-        const initialVolPercent = isNaN(persistedVolPercent) ? 80 : Math.min(100, Math.max(0, persistedVolPercent));
-        audio.volume = initialVolPercent / 100;
-        volumeSlider.value = initialVolPercent;
-
-        let savedVolume = audio.volume > 0 ? audio.volume : 0.8;
-        let isMuted = audio.volume === 0;
+        let savedVolume = 0.8;
+        let isMuted = false;
 
         function toggleMute() {
             const muteBtnIcon = document.getElementById('mute-btn').querySelector('span');
@@ -2576,7 +2549,6 @@
                 isMuted = false;
             }
             updateSliderFill(volumeSlider);
-            localStorage.setItem('settings_volume', volumeSlider.value);
         }
 
         document.getElementById('mute-btn').addEventListener('click', toggleMute);
@@ -2595,13 +2567,7 @@
                 isMuted = false;
                 savedVolume = audio.volume; // Ghi đè âm lượng ghi nhớ bằng giá trị kéo hiện tại
             }
-            localStorage.setItem('settings_volume', val);
         });
-
-        // Đồng bộ icon loa + thanh trượt khớp với mức âm lượng vừa khôi phục ở trên
-        document.getElementById('mute-btn').querySelector('span').innerText =
-            isMuted ? 'volume_off' : (audio.volume > 0.5 ? 'volume_up' : 'volume_down');
-        updateSliderFill(volumeSlider);
 
         const hideLoading = () => {
             const loader = document.getElementById('loading-overlay');
@@ -3738,13 +3704,6 @@
                 clearTimeout(fsIdleTimer);
                 window.removeEventListener('mousemove', resetFsIdleTimer);
                 window.removeEventListener('click', resetFsIdleTimer);
-
-                // Thoát Full screen: khôi phục đúng theme người dùng đã cài đặt trong Settings
-                applyTheme(settings.theme);
-            } else {
-                // Vào Full screen: ép tạm sang chế độ Tối để xem cho đẹp/dịu mắt hơn, KHÔNG
-                // đụng vào settings.theme hay localStorage -> thoát ra là tự trả lại theme gốc
-                applyTheme('dark');
             }
         });
 
