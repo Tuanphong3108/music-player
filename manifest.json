@@ -1,11 +1,11 @@
 {
-  "name": "Music Player Expressive",
-  "short_name": "Music Player",
+  "name": "Audio Player",
+  "short_name": "Audio Player",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#1C1B1F",
   "theme_color": "#D0BCFF",
-  "description": "Material Design 3 Expressive Music Player with Real-time Visuals",
+  "description": "Material Design 3 Expressive Audio Player with Real-time Visuals",
   "icons": [
     {
       "src": "music_note.png",
