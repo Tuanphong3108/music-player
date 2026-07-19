@@ -1450,7 +1450,7 @@
             <div class="dialog-header">✓ Đã lưu thành công</div>
             <div class="dialog-body" style="text-align:center;padding-top:20px;padding-bottom:6px;">
               <div class="check-circle">✓</div>
-              Đã lưu metadata thành công!
+              <span id="saveSuccessText">Đã lưu metadata thành công!</span>
             </div>
             <div class="dialog-footer" style="justify-content:center;">
               <button class="ore-btn ore-btn-green" id="btnOK">OK</button>
@@ -1493,8 +1493,19 @@
           window.addEventListener('message', e => {
             const d = e.data;
 
+            if (d && typeof d === 'object' && d.type === 'saved') {
+              document.getElementById('savingScreen').classList.remove('active');
+              document.getElementById('saveSuccessText').innerText = d.persisted
+                ? 'Đã ghi đè trực tiếp vào file gốc trên đĩa thành công!'
+                : 'Trình duyệt không có quyền ghi thẳng vào file gốc, nên file MP3 đã cập nhật thẻ được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.';
+              document.getElementById('overlaySuccess').classList.remove('hidden');
+              return;
+            }
+
+            // Tương thích ngược, phòng khi có nơi khác còn gửi chuỗi 'saved' đơn thuần
             if (d === 'saved') {
               document.getElementById('savingScreen').classList.remove('active');
+              document.getElementById('saveSuccessText').innerText = 'Đã lưu metadata thành công!';
               document.getElementById('overlaySuccess').classList.remove('hidden');
               return;
             }
@@ -3194,9 +3205,9 @@
             confirmOverwriteModal.classList.remove('open');
             if (!pendingMetadata) return;
 
-            const success = await writeAudioMetadata(pendingMetadata);
-            if (success) {
-                metadataIframe.contentWindow.postMessage('saved', '*');
+            const result = await writeAudioMetadata(pendingMetadata);
+            if (result.ok) {
+                metadataIframe.contentWindow.postMessage({ type: 'saved', persisted: result.persisted }, '*');
                 
                 const track = playlist[currentIndex];
                 trackNameEl.innerText = track.name;
@@ -3228,7 +3239,7 @@
 
         async function writeAudioMetadata(meta) {
             const track = playlist[currentIndex];
-            if (!track || !track.file) return false;
+            if (!track || !track.file) return { ok: false, persisted: false };
 
             try {
                 const arrayBuffer = await track.file.arrayBuffer();
@@ -3267,14 +3278,22 @@
                 const taggedBuffer = writer.arrayBuffer;
                 const taggedBlob = new Blob([taggedBuffer], { type: 'audio/mpeg' });
 
+                // persisted = true chỉ khi ghi thành công THẲNG vào file gốc trên đĩa.
+                // Nếu không có fileHandle (mở nhạc kiểu <input type=file> cũ, hoặc trình
+                // duyệt không hỗ trợ File System Access API) hoặc bị từ chối quyền ghi,
+                // mọi thay đổi chỉ tồn tại tạm trong bộ nhớ (blob) của phiên làm việc này
+                // — KHÔNG có cách nào để bất kỳ web app nào ghi thẳng vào ổ cứng trong
+                // trường hợp đó, đây là giới hạn bảo mật cứng của trình duyệt, không phải bug.
+                let persisted = false;
                 if (track.fileHandle) {
                     try {
                         const writable = await track.fileHandle.createWritable();
                         await writable.write(taggedBlob);
                         await writable.close();
+                        persisted = true;
                         console.log("Đã ghi đè trực tiếp lên ổ cứng thông qua File System Access API!");
                     } catch (fsErr) {
-                        console.warn("Lỗi ghi trực tiếp đĩa, vẫn giữ lưu trữ tạm thời:", fsErr);
+                        console.warn("Lỗi ghi trực tiếp đĩa (thiếu quyền ghi hoặc handle đã cũ), chỉ giữ lưu trữ tạm thời:", fsErr);
                     }
                 }
 
@@ -3290,10 +3309,23 @@
                 track.url = URL.createObjectURL(newFile);
                 audio.src = track.url;
 
-                return true;
+                // Không ghi thẳng được vào file gốc -> tự động tải file đã cập nhật thẻ về
+                // máy, để người dùng không mất thay đổi khi tải lại trang / mở lại file gốc.
+                if (!persisted) {
+                    const dlUrl = URL.createObjectURL(taggedBlob);
+                    const a = document.createElement('a');
+                    a.href = dlUrl;
+                    a.download = newFile.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
+                }
+
+                return { ok: true, persisted };
             } catch (err) {
                 console.error("Lỗi biên soạn tag ID3:", err);
-                return false;
+                return { ok: false, persisted: false };
             }
         }
 
@@ -3358,14 +3390,14 @@
                 track.cover = null;
                 track.newCoverBuffer = null;
 
-                const success = await writeAudioMetadata({
+                const result = await writeAudioMetadata({
                     title: track.name,
                     artist: track.artist,
                     album: track.album,
                     lyric: track.lyricsRaw
                 });
 
-                if (success) {
+                if (result.ok) {
                     thumbEditorPreview.style.display = 'none';
                     thumbEditorPlaceholder.style.display = 'block';
                     btnThumbDelete.style.display = 'none';
@@ -3374,7 +3406,9 @@
                     bgPreview.style.backgroundImage = 'none';
                     updatePlaylistUI();
                     if(typeof updatePiPUI === 'function') updatePiPUI();
-                    alert("Đã xoá thumbnail thành công!");
+                    alert(result.persisted
+                        ? "Đã xoá thumbnail và ghi đè trực tiếp vào file gốc thành công!"
+                        : "Đã xoá thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.");
                 } else {
                     alert("Lỗi xảy ra trong khi xoá thumbnail.");
                 }
@@ -3540,14 +3574,14 @@
             track.newCoverBuffer = arrayBuffer;
             track.cover = currentCroppedDataUrl;
 
-            const success = await writeAudioMetadata({
+            const result = await writeAudioMetadata({
                 title: track.name,
                 artist: track.artist,
                 album: track.album,
                 lyric: track.lyricsRaw
             });
 
-            if (success) {
+            if (result.ok) {
                 artImg.src = track.cover;
                 artImg.classList.remove('hidden');
                 artPlaceholder.classList.add('hidden');
@@ -3555,7 +3589,9 @@
                 
                 updatePlaylistUI();
                 if(typeof updatePiPUI === 'function') updatePiPUI();
-                alert("Đã lưu thumbnail thành công!");
+                alert(result.persisted
+                    ? "Đã lưu thumbnail và ghi đè trực tiếp vào file gốc thành công!"
+                    : "Đã lưu thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.");
             } else {
                 alert("Xảy ra lỗi trong khi biên dịch thumbnail.");
             }
