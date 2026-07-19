@@ -1927,7 +1927,40 @@
 
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
         window.addEventListener('dragover', (e) => e.preventDefault());
-        window.addEventListener('drop', (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
+        window.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            const items = e.dataTransfer.items;
+
+            // Chrome/Edge: lấy FileSystemHandle thật từ item kéo-thả để có thể ghi thẳng
+            // vào file gốc trên đĩa (giống hệt flow bấm nút "Chọn file"), thay vì chỉ nhận
+            // một bản sao File "chết" không ghi lại đĩa được.
+            if (items && items.length > 0 && typeof items[0].getAsFileSystemHandle === 'function') {
+                try {
+                    const handlePromises = [];
+                    for (const item of items) {
+                        if (item.kind === 'file') handlePromises.push(item.getAsFileSystemHandle());
+                    }
+                    const handles = await Promise.all(handlePromises);
+                    const files = [];
+                    for (const handle of handles) {
+                        if (handle && handle.kind === 'file') {
+                            const file = await handle.getFile();
+                            file.fileHandle = handle;
+                            files.push(file);
+                        }
+                    }
+                    if (files.length > 0) {
+                        handleFiles(files);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("Không lấy được FileSystemHandle khi kéo-thả, dùng File thường (chỉ lưu tạm):", err);
+                }
+            }
+
+            // Trình duyệt không hỗ trợ (Firefox, Safari...): fallback về File thường như cũ
+            handleFiles(e.dataTransfer.files);
+        });
 
         // --- STREAMING_CHUNK:Reading audio metadata with Lyric Embed support... ---
         async function handleFiles(files) {
