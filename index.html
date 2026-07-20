@@ -1919,6 +1919,13 @@
         cmDelete.addEventListener('click', () => {
             if (targetMenuIndex > -1) {
                 const isPlayingDeleted = (currentIndex === targetMenuIndex);
+
+                // Giải phóng blob URL của bài bị xoá, nếu không nó rò rỉ bộ nhớ vĩnh viễn
+                // (không tự động dọn cho tới khi tải lại trang) -> càng xoá/thêm nhạc nhiều
+                // trong 1 phiên càng ngốn RAM, khiến cả trang ì đi kể cả lúc mở Metadata Editor
+                const removedTrack = playlist[targetMenuIndex];
+                if (removedTrack && removedTrack.url) URL.revokeObjectURL(removedTrack.url);
+
                 playlist.splice(targetMenuIndex, 1);
                 if (isPlayingDeleted) {
                     audio.pause(); audio.src = ''; currentIndex = -1;
