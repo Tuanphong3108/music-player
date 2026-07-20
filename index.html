@@ -1517,6 +1517,26 @@
           function hasChanges() { return ORDER.some(k => fields[k].value !== original[k]); }
           function postMsg(msg) { window.parent.postMessage(msg,'*'); }
 
+          // Báo đóng cho parent (chỉ vuốt iframe ra, KHÔNG phá huỷ nó), rồi sau ~1s
+          // (đúng lúc animation trượt ra ngoài xong) tự dọn sạch form về trạng thái ban
+          // đầu, sẵn sàng nhận 'load' cho lần mở tiếp theo mà không cần tải lại từ đầu.
+          function sendClose() {
+            postMsg('close');
+            setTimeout(resetEditorState, 1000);
+          }
+
+          function resetEditorState() {
+            ORDER.forEach(k => { fields[k].value = ''; original[k] = ''; });
+            document.getElementById('overlaySuccess').classList.add('hidden');
+            document.getElementById('overlayFail').classList.add('hidden');
+            document.getElementById('overlayUnsaved').classList.add('hidden');
+            document.getElementById('savingScreen').classList.remove('active');
+            document.getElementById('mainContent').style.display = '';
+            document.getElementById('actionBar').style.display = '';
+            document.getElementById('topbarEl').style.display = '';
+            window.scrollTo(0, 0);
+          }
+
           function hideAllUI() {
             document.getElementById('mainContent').style.display = 'none';
             document.getElementById('actionBar').style.display   = 'none';
@@ -1569,7 +1589,7 @@
 
           function tryClose() {
             if (hasChanges()) document.getElementById('overlayUnsaved').classList.remove('hidden');
-            else postMsg('close');
+            else sendClose();
           }
           document.getElementById('btnBack').addEventListener('click', tryClose);
           document.getElementById('btnCancel').addEventListener('click', tryClose);
@@ -1578,17 +1598,17 @@
             document.getElementById('overlayUnsaved').classList.add('hidden'));
           document.getElementById('btnDiscard').addEventListener('click', () => {
             document.getElementById('overlayUnsaved').classList.add('hidden');
-            postMsg('close');
+            sendClose();
           });
 
           document.getElementById('btnOK').addEventListener('click', () => {
             document.getElementById('overlaySuccess').classList.add('hidden');
-            postMsg('close');
+            sendClose();
           });
 
           document.getElementById('btnFailOK').addEventListener('click', () => {
             document.getElementById('overlayFail').classList.add('hidden');
-            postMsg('close');
+            sendClose();
           });
 
           document.getElementById('btnUploadLrc').addEventListener('click', () =>
@@ -3372,6 +3392,8 @@
 
         let metadataLoadTimeoutId = null;
         let metadataEditorRevealed = false;
+        let metadataEditorReady = false;      // true khi iframe đã tải xong LẦN ĐẦU (chỉ 1 lần duy nhất)
+        let metadataEditorPendingOpen = false; // true nếu người dùng bấm mở trước khi kịp tải xong lần đầu
 
         function clearMetadataLoadTimeout() {
             if (metadataLoadTimeoutId) {
@@ -3403,28 +3425,49 @@
             metadataIframe.style.right = '0';
         }
 
+        function sendLoadDataToEditor() {
+            const track = playlist[currentIndex];
+            if (!track) return;
+            metadataIframe.contentWindow.postMessage({
+                type: 'load',
+                title: track.name || '',
+                artist: track.artist || '',
+                album: track.album || '',
+                lyric: track.lyricsRaw || ''
+            }, '*');
+        }
+
+        // CHIẾN LƯỢC MỚI: tải iframe trình chỉnh sửa DUY NHẤT MỘT LẦN ngay lúc vào
+        // trang (ẩn sẵn ngoài rìa phải màn hình qua CSS right:-100vw có sẵn), thay vì
+        // tạo mới document mỗi lần bấm mở — việc gán lại srcdoc liên tục mỗi lần mở
+        // trước đây chính là thứ khiến "Metadata Editor tải lâu hơn" sau một thời gian
+        // dùng: mỗi lần mở là parse + chạy lại toàn bộ HTML/CSS/JS của editor từ đầu.
+        // Giờ mở/đóng chỉ là trượt qua trượt lại, document iframe sống xuyên suốt phiên.
+        metadataIframe.onload = () => {
+            metadataEditorReady = true;
+            if (metadataEditorPendingOpen) {
+                metadataEditorPendingOpen = false;
+                sendLoadDataToEditor();
+            }
+        };
+        metadataIframe.srcdoc = document.getElementById('metadata-editor-template').innerHTML;
+
         btnEditMetadataFields.addEventListener('click', () => {
             editOptionsModal.classList.remove('open');
             metadataEditorRevealed = false;
+
+            if (metadataEditorReady) {
+                // Editor đã sống sẵn từ trước -> chỉ cần gửi dữ liệu bài hiện tại, gần
+                // như tức thì, không cần hiện màn hình loading/đợi gì nữa
+                sendLoadDataToEditor();
+                return;
+            }
+
+            // Hiếm khi xảy ra: người dùng bấm mở ngay khi editor còn đang tải lần đầu
             hideMetadataLoadTimeoutError();
             document.getElementById('metadata-loading-overlay').style.display = 'flex';
-            
-            const editorTemplate = document.getElementById('metadata-editor-template').innerHTML;
-            metadataIframe.srcdoc = editorTemplate;
+            metadataEditorPendingOpen = true;
 
-            metadataIframe.onload = () => {
-                const track = playlist[currentIndex];
-                const loadData = {
-                    type: 'load',
-                    title: track.name || '',
-                    artist: track.artist || '',
-                    album: track.album || '',
-                    lyric: track.lyricsRaw || ''
-                };
-                metadataIframe.contentWindow.postMessage(loadData, '*');
-            };
-
-            // Quá 10 giây mà trình chỉnh sửa vẫn chưa xác nhận tải xong -> báo lỗi
             clearMetadataLoadTimeout();
             metadataLoadTimeoutId = setTimeout(() => {
                 if (!metadataEditorRevealed) {
@@ -3435,15 +3478,14 @@
 
         document.getElementById('metadata-timeout-ok').addEventListener('click', () => {
             clearMetadataLoadTimeout();
-            metadataEditorRevealed = true; // đánh dấu để load_success đến muộn không tự mở lại nữa
+            metadataEditorPendingOpen = false;
             document.getElementById('metadata-loading-overlay').style.display = 'none';
-            metadataIframe.srcdoc = ''; // Dừng hẳn iframe đang cố tải dở
+            // KHÔNG đụng vào srcdoc nữa -> để iframe tiếp tục tải nền, sẵn sàng cho lần thử sau
         });
 
         document.getElementById('metadata-timeout-continue').addEventListener('click', () => {
-            // Vẫn tiếp tục: không còn chờ 'load_success' nữa, hiện iframe ra ngay với
-            // animation trượt y hệt lúc tải thành công bình thường; từ giờ chỉ còn xử lý
-            // các lệnh 'close', lệnh lưu (save)... như luồng bình thường của editor
+            // Vẫn tiếp tục: không còn chờ tải xong nữa, hiện iframe ra ngay với animation
+            // trượt y hệt lúc tải thành công bình thường
             revealMetadataEditor();
         });
 
@@ -3454,7 +3496,10 @@
             if (d === 'load_success') {
                 revealMetadataEditor();
             }
-            // Khi nhận được "close" từ iframe, trượt iframe ra rìa phải và Refresh UI ngay lập tức
+            // Khi nhận được "close" từ iframe: CHỈ vuốt iframe ra rìa phải, không đụng
+            // tới srcdoc/document của nó -> giữ nguyên trạng thái sống, mở lại lần sau
+            // tức thì. Việc dọn form về rỗng do chính iframe tự làm sau ~1s (đã xử lý
+            // bên trong template, đồng bộ với thời lượng animation trượt ra).
             else if (d === 'close') {
                 metadataIframe.style.right = '-100vw'; 
                 refreshCurrentTrackUI(); // Cập nhật tên/nghệ sĩ/lời bài hát tại chỗ tức thì
