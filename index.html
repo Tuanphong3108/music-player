@@ -652,8 +652,22 @@
 
     <!-- Loading Overlay for Metadata Editor -->
     <div id="metadata-loading-overlay">
-        <div style="width:48px; height:48px; border:4px solid rgba(255,255,255,0.1); border-top-color:var(--md-sys-color-primary); border-radius:50%; animation: spin 1s linear infinite;"></div>
-        <p style="font-family:'Minecraft'; color:#fff; font-size:12px; letter-spacing:1px;">ĐANG KHỞI CHẠY TRÌNH CHỈNH SỬA...</p>
+        <div id="metadata-loading-spinner" style="display:flex; flex-direction:column; gap:16px; justify-content:center; align-items:center;">
+            <div style="width:48px; height:48px; border:4px solid rgba(255,255,255,0.1); border-top-color:var(--md-sys-color-primary); border-radius:50%; animation: spin 1s linear infinite;"></div>
+            <p style="font-family:'Minecraft'; color:#fff; font-size:12px; letter-spacing:1px;">ĐANG KHỞI CHẠY TRÌNH CHỈNH SỬA...</p>
+        </div>
+        <div id="metadata-loading-timeout-dialog" style="display:none; width:90%; max-width: 360px; border-radius:20px; overflow:hidden; background: var(--md-sys-color-surface-variant); box-shadow: 0 24px 48px rgba(0,0,0,0.5);">
+            <div class="cl-header" style="padding:16px 20px;">
+                <h2 style="font-size:16px; font-weight:700; font-family:'Minecraft';">Không thể tải trình chỉnh sửa</h2>
+            </div>
+            <div style="padding:20px; background: var(--md-sys-color-surface); display:flex; flex-direction:column; gap:18px;">
+                <p style="font-size:14px; color: var(--md-sys-color-on-surface); line-height:1.5; margin:0;">Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bro có thể đóng lại thử sau, hoặc tiếp tục chờ.</p>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button class="btn-m3" id="metadata-timeout-ok" title="Đóng trình chỉnh sửa" style="border-radius:12px; padding:0 16px; width:auto; height:40px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);">OK</button>
+                    <button class="btn-m3" id="metadata-timeout-continue" title="Vẫn tiếp tục chờ/mở trình chỉnh sửa" style="border-radius:12px; padding:0 16px; width:auto; height:40px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);">Vẫn tiếp tục</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Context Menu -->
@@ -914,7 +928,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.07.20-build082241</span>
+                <span>AUDIOPLAYER V2026.07.20-build091043</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -3351,8 +3365,28 @@
             updateMoreInfoBtnState();
         });
 
+        let metadataLoadTimeoutId = null;
+
+        function clearMetadataLoadTimeout() {
+            if (metadataLoadTimeoutId) {
+                clearTimeout(metadataLoadTimeoutId);
+                metadataLoadTimeoutId = null;
+            }
+        }
+
+        function showMetadataLoadTimeoutError() {
+            document.getElementById('metadata-loading-spinner').style.display = 'none';
+            document.getElementById('metadata-loading-timeout-dialog').style.display = 'block';
+        }
+
+        function hideMetadataLoadTimeoutError() {
+            document.getElementById('metadata-loading-timeout-dialog').style.display = 'none';
+            document.getElementById('metadata-loading-spinner').style.display = 'flex';
+        }
+
         btnEditMetadataFields.addEventListener('click', () => {
             editOptionsModal.classList.remove('open');
+            hideMetadataLoadTimeoutError();
             document.getElementById('metadata-loading-overlay').style.display = 'flex';
             
             const editorTemplate = document.getElementById('metadata-editor-template').innerHTML;
@@ -3369,6 +3403,27 @@
                 };
                 metadataIframe.contentWindow.postMessage(loadData, '*');
             };
+
+            // Quá 10 giây mà trình chỉnh sửa vẫn chưa xác nhận tải xong -> báo lỗi
+            clearMetadataLoadTimeout();
+            metadataLoadTimeoutId = setTimeout(() => {
+                if (document.getElementById('metadata-loading-overlay').style.display === 'flex') {
+                    showMetadataLoadTimeoutError();
+                }
+            }, 10000);
+        });
+
+        document.getElementById('metadata-timeout-ok').addEventListener('click', () => {
+            clearMetadataLoadTimeout();
+            document.getElementById('metadata-loading-overlay').style.display = 'none';
+            metadataIframe.srcdoc = ''; // Dừng hẳn iframe đang cố tải dở
+        });
+
+        document.getElementById('metadata-timeout-continue').addEventListener('click', () => {
+            // Vẫn tiếp tục: bỏ qua cảnh báo, ép hiện trình chỉnh sửa ra dù chưa xác nhận tải xong
+            hideMetadataLoadTimeoutError();
+            document.getElementById('metadata-loading-overlay').style.display = 'none';
+            metadataIframe.style.right = '0';
         });
 
         window.addEventListener('message', async (e) => {
@@ -3376,6 +3431,7 @@
             if (!d) return;
 
             if (d === 'load_success') {
+                clearMetadataLoadTimeout();
                 document.getElementById('metadata-loading-overlay').style.display = 'none';
                 metadataIframe.style.right = '0'; 
             }
