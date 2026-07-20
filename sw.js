@@ -1,4 +1,4 @@
-const CACHE_NAME = 'audio-player-v2026.07.20-build091043-background_hotfix';
+const CACHE_NAME = 'audio-player-v2026.07.20-build091043-background_hotfix_memory_leak';
 
 // ===== FILE TĨNH PRECACHE =====
 const STATIC_ASSETS = [
