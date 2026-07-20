@@ -25,7 +25,7 @@
     <style>
         @font-face {
             font-family: 'Minecraft';
-            src: url('https://tuanphong3108.github.io/google-sans-do-not-access/minecraft.ttf') format('truetype');
+            src: url('./minecraft.ttf') format('truetype');
             font-weight: normal; font-style: normal;
         }
 
@@ -928,7 +928,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.07.20-build091043</span>
+                <span>AUDIOPLAYERV2026.07.20-build091043</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1096,17 +1096,15 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Edit Metadata</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <style>
           @font-face {
             font-family: 'MinecraftTen';
-            src: url('https://tuanphong3108.github.io/google-sans-do-not-access/MinecraftTen-VGORe.ttf') format('truetype');
+            src: url('./MinecraftTen-VGORe.ttf') format('truetype');
             font-display: swap;
           }
           @font-face {
             font-family: 'Minecraft';
-            src: url('https://tuanphong3108.github.io/google-sans-do-not-access/minecraft.ttf') format('truetype');
+            src: url('./minecraft.ttf') format('truetype');
             font-display: swap;
           }
 
@@ -1391,7 +1389,7 @@
 
           .dialog-body {
             padding: 18px 16px 12px;
-            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Segoe UI Variable', Roboto, sans-serif;
             font-size: 13px;
             font-weight: 400;
             line-height: 1.6;
@@ -1426,18 +1424,6 @@
         </style>
         </head>
         <body>
-        <script>
-          // Nạp font Roboto bất đồng bộ SAU khi document đã dựng xong, không chặn
-          // sự kiện 'load' của iframe -> tránh làm chậm/timeout lúc mở trình chỉnh sửa.
-          // Có 'Segoe UI'/sans-serif fallback nên UI vẫn hiển thị bình thường ngay cả
-          // khi font này tải chậm hoặc thất bại.
-          (function() {
-            var link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap';
-            document.head.appendChild(link);
-          })();
-        </script>
 
         <div class="topbar" id="topbarEl">
           <button class="btn-back" id="btnBack" title="Quay lại">&lt;</button>
