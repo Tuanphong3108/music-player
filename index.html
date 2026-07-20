@@ -3366,6 +3366,7 @@
         });
 
         let metadataLoadTimeoutId = null;
+        let metadataEditorRevealed = false;
 
         function clearMetadataLoadTimeout() {
             if (metadataLoadTimeoutId) {
@@ -3384,8 +3385,22 @@
             document.getElementById('metadata-loading-spinner').style.display = 'flex';
         }
 
+        // Hàm dùng chung để hiện iframe trình chỉnh sửa + chạy animation trượt vào —
+        // gọi từ cả nhánh nhận 'load_success' thật lẫn nhánh bấm "Vẫn tiếp tục",
+        // để 2 trường hợp luôn có animation giống hệt nhau, và idempotent để
+        // load_success đến muộn (sau khi đã bấm Vẫn tiếp tục) không làm gì thêm nữa.
+        function revealMetadataEditor() {
+            if (metadataEditorRevealed) return;
+            metadataEditorRevealed = true;
+            clearMetadataLoadTimeout();
+            hideMetadataLoadTimeoutError();
+            document.getElementById('metadata-loading-overlay').style.display = 'none';
+            metadataIframe.style.right = '0';
+        }
+
         btnEditMetadataFields.addEventListener('click', () => {
             editOptionsModal.classList.remove('open');
+            metadataEditorRevealed = false;
             hideMetadataLoadTimeoutError();
             document.getElementById('metadata-loading-overlay').style.display = 'flex';
             
@@ -3407,7 +3422,7 @@
             // Quá 10 giây mà trình chỉnh sửa vẫn chưa xác nhận tải xong -> báo lỗi
             clearMetadataLoadTimeout();
             metadataLoadTimeoutId = setTimeout(() => {
-                if (document.getElementById('metadata-loading-overlay').style.display === 'flex') {
+                if (!metadataEditorRevealed) {
                     showMetadataLoadTimeoutError();
                 }
             }, 10000);
@@ -3415,15 +3430,16 @@
 
         document.getElementById('metadata-timeout-ok').addEventListener('click', () => {
             clearMetadataLoadTimeout();
+            metadataEditorRevealed = true; // đánh dấu để load_success đến muộn không tự mở lại nữa
             document.getElementById('metadata-loading-overlay').style.display = 'none';
             metadataIframe.srcdoc = ''; // Dừng hẳn iframe đang cố tải dở
         });
 
         document.getElementById('metadata-timeout-continue').addEventListener('click', () => {
-            // Vẫn tiếp tục: bỏ qua cảnh báo, ép hiện trình chỉnh sửa ra dù chưa xác nhận tải xong
-            hideMetadataLoadTimeoutError();
-            document.getElementById('metadata-loading-overlay').style.display = 'none';
-            metadataIframe.style.right = '0';
+            // Vẫn tiếp tục: không còn chờ 'load_success' nữa, hiện iframe ra ngay với
+            // animation trượt y hệt lúc tải thành công bình thường; từ giờ chỉ còn xử lý
+            // các lệnh 'close', lệnh lưu (save)... như luồng bình thường của editor
+            revealMetadataEditor();
         });
 
         window.addEventListener('message', async (e) => {
@@ -3431,9 +3447,7 @@
             if (!d) return;
 
             if (d === 'load_success') {
-                clearMetadataLoadTimeout();
-                document.getElementById('metadata-loading-overlay').style.display = 'none';
-                metadataIframe.style.right = '0'; 
+                revealMetadataEditor();
             }
             // Khi nhận được "close" từ iframe, trượt iframe ra rìa phải và Refresh UI ngay lập tức
             else if (d === 'close') {
