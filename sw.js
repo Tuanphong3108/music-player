@@ -1,4 +1,4 @@
-const CACHE_NAME = 'audio-player-v2026.07.20-build091043';
+const CACHE_NAME = 'audio-player-v2026.07.20-build091043-background_hotfix';
 
 // ===== FILE TĨNH PRECACHE =====
 const STATIC_ASSETS = [
@@ -7,6 +7,8 @@ const STATIC_ASSETS = [
   './changelog.html',
   './index_md1.html',
   './manifest.json',
+  './minecraft.ttf',
+  './MinecraftTen-VGORe.ttf',
   './music_note.png',
   'https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif',
   'https://tuanphong3108.github.io/google-sans-do-not-access/minecraft.ttf'
