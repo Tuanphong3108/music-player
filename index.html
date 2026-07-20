@@ -214,8 +214,12 @@
         .btn-m3:hover { background: var(--md-sys-color-secondary-container); transform: scale(1.1); }
         .btn-m3:hover .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
         .btn-m3:active { transform: scale(0.9); }
-        .btn-m3.active { color: var(--md-sys-color-primary); }
+        .btn-m3.active { color: var(--md-sys-color-primary); background: var(--md-sys-color-secondary-container); }
         .btn-m3.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+        .btn-m3:disabled, .btn-m3.btn-disabled {
+            opacity: 0.35; cursor: not-allowed; pointer-events: none;
+        }
+        .btn-m3:disabled:hover, .btn-m3.btn-disabled:hover { transform: none; background: transparent; }
         
         .repeat-badge {
             position: absolute; font-size: 10px; font-weight: 900; bottom: 8px; right: 8px;
@@ -669,7 +673,7 @@
         <div id="changelog-dialog" class="cl-dialog">
             <div class="cl-header">
                 <h2>What's New</h2>
-                <button class="btn-m3" id="cl-close-btn"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="cl-close-btn" title="Đóng"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="cl-iframe-wrap">
                 <iframe src="changelog.html" class="cl-iframe"></iframe>
@@ -685,7 +689,7 @@
         <div id="settings-dialog" class="cl-dialog" style="width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0;">
             <div class="cl-header" style="padding: 20px 32px;">
                 <h2 style="font-family: 'Minecraft', sans-serif; font-size: 24px; letter-spacing: 1px;">Cài đặt hệ thống</h2>
-                <button class="btn-m3" id="settings-close-btn" style="width: 52px; height: 52px;"><span class="material-symbols-outlined" style="font-size: 28px;">close</span></button>
+                <button class="btn-m3" id="settings-close-btn" style="width: 52px; height: 52px;" title="Đóng"><span class="material-symbols-outlined" style="font-size: 28px;">close</span></button>
             </div>
             <div style="flex: 1; padding: 40px 10%; display: flex; flex-direction: column; gap: 32px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); overflow-y: auto;">
                 
@@ -762,21 +766,34 @@
         </div>
     </div>
 
+    <!-- Modal: Thông tin khác (File Info) -->
+    <div id="more-info-modal" class="cl-overlay">
+        <div class="cl-dialog" style="max-width: 400px; height: auto; max-height: 90%; border-radius: 24px;">
+            <div class="cl-header" style="padding: 16px 20px;">
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Thông tin khác</h2>
+                <button class="btn-m3" id="more-info-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div id="more-info-body" style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 22px; overflow-y: auto;">
+                <!-- Được JS điền động -->
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Edit Option Chooser Dialog -->
     <div id="edit-options-modal" class="cl-overlay">
         <div class="cl-dialog" style="max-width: 380px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
                 <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Chỉnh sửa bài hát</h2>
-                <button class="btn-m3" id="edit-options-close"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="edit-options-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 16px;">
                 
-                <button class="btn-m3" id="btn-edit-thumbnail" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;">
+                <button class="btn-m3" id="btn-edit-thumbnail" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;" title="Sửa thumbnail">
                     <span class="material-symbols-outlined">image</span>
                     <span>Sửa Thumbnail</span>
                 </button>
 
-                <button class="btn-m3" id="btn-edit-metadata-fields" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;">
+                <button class="btn-m3" id="btn-edit-metadata-fields" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;" title="Sửa thông tin bài hát">
                     <span class="material-symbols-outlined">edit</span>
                     <span>Sửa thông tin bài hát</span>
                 </button>
@@ -806,8 +823,8 @@
                 <p style="font-size: 11px; opacity: 0.7; color: var(--md-sys-color-primary);">Sau khi lưu, tệp sẽ được cập nhật trực tiếp trong hệ thống.</p>
             </div>
             <div style="padding: 12px 20px; background: var(--md-sys-color-surface-variant); display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn-m3" id="confirm-overwrite-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);">Huỷ</button>
-                <button class="btn-m3" id="confirm-overwrite-save" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);">Lưu</button>
+                <button class="btn-m3" id="confirm-overwrite-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ">Huỷ</button>
+                <button class="btn-m3" id="confirm-overwrite-save" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Lưu thay đổi">Lưu</button>
             </div>
         </div>
     </div>
@@ -817,7 +834,7 @@
         <div class="cl-dialog" style="max-width: 380px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
                 <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Sửa Thumbnail</h2>
-                <button class="btn-m3" id="thumb-editor-close"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="thumb-editor-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; align-items: center; gap: 20px;">
                 
@@ -827,9 +844,9 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                    <button class="btn-m3" id="btn-thumb-upload" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:600;">Tải lên</button>
-                    <button class="btn-m3" id="btn-thumb-delete" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-error); color: #fff; font-weight:600; display: none;">Xoá thumbnail</button>
-                    <button class="btn-m3" id="btn-thumb-cancel" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight:600;">Huỷ</button>
+                    <button class="btn-m3" id="btn-thumb-upload" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:600;" title="Tải ảnh lên">Tải lên</button>
+                    <button class="btn-m3" id="btn-thumb-delete" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-error); color: #fff; font-weight:600; display: none;" title="Xoá thumbnail">Xoá thumbnail</button>
+                    <button class="btn-m3" id="btn-thumb-cancel" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight:600;" title="Huỷ">Huỷ</button>
                 </div>
 
             </div>
@@ -856,7 +873,7 @@
                         <span class="material-symbols-outlined" style="font-size:18px;">zoom_in</span>
                     </div>
 
-                    <button class="btn-m3" id="btn-crop-rotate" style="height: 40px; border-radius: 10px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600; width:100%;">
+                    <button class="btn-m3" id="btn-crop-rotate" style="height: 40px; border-radius: 10px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600; width:100%;" title="Xoay ảnh">
                         <span class="material-symbols-outlined">rotate_right</span>
                         <span>Xoay 90°</span>
                     </button>
@@ -865,8 +882,8 @@
 
             </div>
             <div style="padding: 12px 20px; background: var(--md-sys-color-surface-variant); display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn-m3" id="btn-crop-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);">Huỷ</button>
-                <button class="btn-m3" id="btn-crop-ok" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);">OK</button>
+                <button class="btn-m3" id="btn-crop-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ">Huỷ</button>
+                <button class="btn-m3" id="btn-crop-ok" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Xác nhận">OK</button>
             </div>
         </div>
     </div>
@@ -882,8 +899,8 @@
                 <p style="font-size: 13px; text-align: center; color: var(--md-sys-color-on-surface);">Bạn có muốn lưu ảnh cắt này làm ảnh bìa mới cho bài hát?</p>
             </div>
             <div style="padding: 12px 20px; background: var(--md-sys-color-surface-variant); display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn-m3" id="btn-save-thumb-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);">Huỷ</button>
-                <button class="btn-m3" id="btn-save-thumb-ok" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);">Lưu</button>
+                <button class="btn-m3" id="btn-save-thumb-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ">Huỷ</button>
+                <button class="btn-m3" id="btn-save-thumb-ok" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Lưu thumbnail">Lưu</button>
             </div>
         </div>
     </div>
@@ -901,7 +918,7 @@
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
-                    <button class="btn-m3" id="install-btn">
+                    <button class="btn-m3" id="install-btn" title="Cài đặt ứng dụng">
                         <span class="material-symbols-outlined">install_desktop</span>
                     </button>
                     <div class="install-tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
@@ -910,7 +927,7 @@
                 <button class="btn-m3" id="changelog-btn" title="Cập nhật"><span class="material-symbols-outlined">release_alert</span></button>
                 
                 <!-- Nút add_circle kích hoạt Dropdown API File System tiến tiến -->
-                <button class="btn-m3" id="add-music-trigger"><span class="material-symbols-outlined">add_circle</span></button>
+                <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc"><span class="material-symbols-outlined">add_circle</span></button>
                 
                 <!-- Dropdown M3 chọn tệp File System -->
                 <div class="m3-dropdown" id="add-music-dropdown">
@@ -1011,21 +1028,26 @@
                                 <h4 id="track-name" class="track-name-text">Song name</h4>
                             </div>
                         </div>
-                        <!-- Nút Bút Chì Chỉnh Sửa Metadata sát cạnh tên bài hát -->
-                        <button class="btn-m3" id="edit-metadata-btn" style="width: 32px; height: 32px; flex-shrink: 0;" title="Chỉnh sửa thông tin">
-                            <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
-                        </button>
+                        <!-- Nút Bút Chì Chỉnh Sửa Metadata + nút Thông tin khác, xếp dọc sát cạnh tên bài hát -->
+                        <div style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;">
+                            <button class="btn-m3" id="edit-metadata-btn" style="width: 22px; height: 22px;" title="Chỉnh sửa thông tin">
+                                <span class="material-symbols-outlined" style="font-size: 15px;">edit</span>
+                            </button>
+                            <button class="btn-m3" id="more-info-btn" style="width: 22px; height: 22px;" title="Thông tin khác" disabled>
+                                <span class="material-symbols-outlined" style="font-size: 15px;">info</span>
+                            </button>
+                        </div>
                     </div>
                     <p id="track-artist">ARTIST | FILE</p>
                 </div>
             </div>
             <div class="controls-group">
                 <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)"><span class="material-symbols-outlined" style="font-size: 20px;">picture_in_picture_alt</span></button>
-                <button class="btn-m3" id="shuffle-btn"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                <button class="btn-m3" id="prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
-                <button class="btn-m3 btn-play" id="play-btn"><span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span></button>
-                <button class="btn-m3" id="next-btn"><span class="material-symbols-outlined">skip_next</span></button>
-                <button class="btn-m3" id="repeat-btn">
+                <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
+                <button class="btn-m3" id="prev-btn" title="Bài trước"><span class="material-symbols-outlined">skip_previous</span></button>
+                <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng"><span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span></button>
+                <button class="btn-m3" id="next-btn" title="Bài tiếp theo"><span class="material-symbols-outlined">skip_next</span></button>
+                <button class="btn-m3" id="repeat-btn" title="Lặp lại">
                     <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
                     <div class="repeat-badge">1</div>
                 </button>
@@ -1035,7 +1057,7 @@
             </div>
             <div class="volume-group">
                 <!-- Chuyển loa thường thành loa thông minh kiêm nút bật/tắt tiếng nhanh -->
-                <button class="btn-m3" id="mute-btn" style="width: 36px; height: 36px; margin-right: -4px;"><span class="material-symbols-outlined" style="font-size: 20px;">volume_up</span></button>
+                <button class="btn-m3" id="mute-btn" style="width: 36px; height: 36px; margin-right: -4px;" title="Tắt/Bật tiếng"><span class="material-symbols-outlined" style="font-size: 20px;">volume_up</span></button>
                 <input type="range" id="volume-slider" min="0" max="100" value="80">
             </div>
         </div>
@@ -1392,7 +1414,7 @@
         <body>
 
         <div class="topbar" id="topbarEl">
-          <button class="btn-back" id="btnBack">&lt;</button>
+          <button class="btn-back" id="btnBack" title="Quay lại">&lt;</button>
           <span class="topbar-title">EDIT METADATA</span>
         </div>
 
@@ -1414,7 +1436,7 @@
           <div class="field-row">
             <div class="lrc-row">
               <div class="field-label">Lyric Embed</div>
-              <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnUploadLrc">⬆ Tải lên .lrc</button>
+              <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnUploadLrc" title="Tải lên file phụ đề .lrc">⬆ Tải lên .lrc</button>
             </div>
             <textarea class="ore-input" id="fieldLyric"></textarea>
             <input type="file" id="lrcFileInput" accept=".lrc,.txt">
@@ -1427,8 +1449,8 @@
         </div>
 
         <div class="action-bar" id="actionBar">
-          <button class="ore-btn ore-btn-ghost" id="btnCancel">Hủy</button>
-          <button class="ore-btn ore-btn-green" id="btnSave">✓ Lưu</button>
+          <button class="ore-btn ore-btn-ghost" id="btnCancel" title="Huỷ bỏ">Hủy</button>
+          <button class="ore-btn ore-btn-green" id="btnSave" title="Lưu thay đổi">✓ Lưu</button>
         </div>
 
         <div class="overlay hidden" id="overlayUnsaved">
@@ -1439,8 +1461,8 @@
               Nếu thoát ngay bây giờ, mọi chỉnh sửa sẽ bị mất.
             </div>
             <div class="dialog-footer">
-              <button class="ore-btn ore-btn-ghost ore-btn-sm" id="btnStay">Tiếp tục chỉnh sửa</button>
-              <button class="ore-btn ore-btn-red ore-btn-sm" id="btnDiscard">Bỏ thay đổi</button>
+              <button class="ore-btn ore-btn-ghost ore-btn-sm" id="btnStay" title="Tiếp tục chỉnh sửa">Tiếp tục chỉnh sửa</button>
+              <button class="ore-btn ore-btn-red ore-btn-sm" id="btnDiscard" title="Bỏ thay đổi">Bỏ thay đổi</button>
             </div>
           </div>
         </div>
@@ -1453,7 +1475,7 @@
               <span id="saveSuccessText">Đã lưu metadata thành công!</span>
             </div>
             <div class="dialog-footer" style="justify-content:center;">
-              <button class="ore-btn ore-btn-green" id="btnOK">OK</button>
+              <button class="ore-btn ore-btn-green" id="btnOK" title="Đóng">OK</button>
             </div>
           </div>
         </div>
@@ -1465,7 +1487,7 @@
               <div style="font-family:'Roboto','Segoe UI',sans-serif;font-size:15px;font-weight:700;color:#E53935;margin-bottom:4px;">Đã xảy ra lỗi</div>
             </div>
             <div class="dialog-footer" style="justify-content:center;">
-              <button class="ore-btn ore-btn-red" id="btnFailOK">OK</button>
+              <button class="ore-btn ore-btn-red" id="btnFailOK" title="Đóng">OK</button>
             </div>
           </div>
         </div>
@@ -1998,6 +2020,7 @@
                 let title = file.name.replace(/\.[^/.]+$/, "");
                 let artist = "UNKNOWN ARTIST";
                 let album = "Unknown Album";
+                let year = "";
                 let cover = null;
                 let lyricsRaw = "";
                 
@@ -2007,6 +2030,7 @@
                             if (tag.tags.title) title = tag.tags.title;
                             if (tag.tags.artist) artist = tag.tags.artist;
                             if (tag.tags.album) album = tag.tags.album;
+                            if (tag.tags.year) year = tag.tags.year;
                             // Hỗ trợ Lyric Embed cho các tệp nhạc phổ biến
                             if (tag.tags.USLT) {
                                 lyricsRaw = typeof tag.tags.USLT.data === 'object' ? tag.tags.USLT.data.lyrics : tag.tags.USLT.data;
@@ -2037,6 +2061,7 @@
                         name: title,
                         artist: artist,
                         album: album,
+                        year: year,
                         cover: cover,
                         url: URL.createObjectURL(file),
                         ext: file.name.split('.').pop().toUpperCase(),
@@ -2349,6 +2374,11 @@
             audio.src = track.url;
             trackNameEl.innerText = track.name;
             trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
+
+            // Chưa xác nhận bài mới có mở được không -> xám nút "Thông tin khác" cho tới
+            // khi audio báo loadedmetadata (thành công) hoặc error (thất bại)
+            track.canOpen = false;
+            if (typeof updateMoreInfoBtnState === 'function') updateMoreInfoBtnState();
             
             if (track.cover) {
                 artImg.src = track.cover;
@@ -2805,7 +2835,7 @@
                     }
                     .btn-m3:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
                     .btn-m3:active { transform: scale(0.9); }
-                    .btn-m3.active { color: #D0BCFF; }
+                    .btn-m3.active { color: #D0BCFF; background: rgba(255,255,255,0.1); }
                     
                     .btn-play {
                         width: 56px; height: 56px; border-radius: 20px;
@@ -2888,17 +2918,17 @@
                                 <h4 id="pip-title" class="pip-title">Studio Standby</h4>
                                 <p id="pip-artist" class="pip-artist">ENGINE IDLE | SYSTEM</p>
                             </div>
-                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;"><span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span></button>
+                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;" title="Thu gọn/Mở rộng"><span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span></button>
                         </div>
                         
                         <div id="pip-lyric" class="pip-lyric"></div>
 
                         <div class="pip-controls">
-                            <button class="btn-m3" id="pip-shuffle-btn"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                            <button class="btn-m3" id="pip-prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
-                            <button class="btn-m3 btn-play" id="pip-play-btn"><span class="material-symbols-outlined">play_arrow</span></button>
-                            <button class="btn-m3" id="pip-next-btn"><span class="material-symbols-outlined">skip_next</span></button>
-                            <button class="btn-m3" id="pip-repeat-btn">
+                            <button class="btn-m3" id="pip-shuffle-btn" title="Phát ngẫu nhiên"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
+                            <button class="btn-m3" id="pip-prev-btn" title="Bài trước"><span class="material-symbols-outlined">skip_previous</span></button>
+                            <button class="btn-m3 btn-play" id="pip-play-btn" title="Phát/Tạm dừng"><span class="material-symbols-outlined">play_arrow</span></button>
+                            <button class="btn-m3" id="pip-next-btn" title="Bài tiếp theo"><span class="material-symbols-outlined">skip_next</span></button>
+                            <button class="btn-m3" id="pip-repeat-btn" title="Lặp lại">
                                 <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
                                 <div id="pip-repeat-badge" class="repeat-badge">1</div>
                             </button>
@@ -2908,7 +2938,7 @@
                     <div class="pip-playlist-section" id="pip-playlist-section">
                         <div class="pip-playlist-header">
                             <span style="font-size: 14px; font-weight: 600;">Danh sách phát</span>
-                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;"><span class="material-symbols-outlined" style="font-size: 18px;">close</span></button>
+                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;" title="Đóng"><span class="material-symbols-outlined" style="font-size: 18px;">close</span></button>
                         </div>
                         <div class="pip-playlist-container" id="pip-playlist-container"></div>
                     </div>
@@ -2916,7 +2946,7 @@
                     <div class="pip-cm-overlay" id="pip-cm-overlay"></div>
                     <div class="pip-context-menu" id="pip-context-menu">
                         <div class="pip-cm-title" id="pip-cm-title">Song Name</div>
-                        <button class="pip-cm-btn" id="pip-cm-delete">
+                        <button class="pip-cm-btn" id="pip-cm-delete" title="Xoá khỏi playlist">
                             <span class="material-symbols-outlined">delete</span>
                             Xoá khỏi playlist
                         </button>
@@ -3228,6 +3258,98 @@
         });
 
         editOptionsClose.addEventListener('click', () => editOptionsModal.classList.remove('open'));
+
+        // --- STREAMING_CHUNK:Setting up the "Thông tin khác" (file info) panel... ---
+        // --- HỆ THỐNG "THÔNG TIN KHÁC" (FILE INFO) ---
+        const moreInfoBtn = document.getElementById('more-info-btn');
+        const moreInfoModal = document.getElementById('more-info-modal');
+        const moreInfoClose = document.getElementById('more-info-close');
+        const moreInfoBody = document.getElementById('more-info-body');
+
+        function formatFileSizeVi(bytes) {
+            if (!bytes && bytes !== 0) return 'Không rõ';
+            const mb = bytes / (1024 * 1024);
+            return mb.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MB';
+        }
+
+        function formatModifiedDateVi(timestamp) {
+            if (!timestamp) return 'Không rõ';
+            const d = new Date(timestamp);
+            const now = new Date();
+            const isSameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+            const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+            const timeStr = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            if (isSameDay(d, now)) return `Hôm nay lúc ${timeStr}`;
+            if (isSameDay(d, yesterday)) return `Hôm qua lúc ${timeStr}`;
+            return `${d.toLocaleDateString('vi-VN')} lúc ${timeStr}`;
+        }
+
+        // Định dạng thời lượng kiểu HH:MM:SS, tự ẩn phần Giờ nếu bài hát dưới 1 tiếng
+        function formatDurationVi(totalSeconds) {
+            if (!isFinite(totalSeconds) || totalSeconds < 0) return '0:00';
+            const total = Math.round(totalSeconds);
+            const h = Math.floor(total / 3600);
+            const m = Math.floor((total % 3600) / 60);
+            const s = total % 60;
+            const pad = (n) => String(n).padStart(2, '0');
+            return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+        }
+
+        function moreInfoRowHTML(icon, label, value) {
+            return `<div style="display:flex; gap:16px; align-items:flex-start;">
+                <span class="material-symbols-outlined" style="font-size:22px; opacity:0.75; margin-top:1px;">${icon}</span>
+                <div style="min-width:0;">
+                    <div style="font-size:13px; opacity:0.6;">${label}</div>
+                    <div style="font-size:15px; font-weight:600; word-break:break-word;">${value}</div>
+                </div>
+            </div>`;
+        }
+
+        function openMoreInfoModal() {
+            const track = playlist[currentIndex];
+            if (!track || moreInfoBtn.disabled) return;
+
+            const rows = [];
+            rows.push(moreInfoRowHTML('music_note', (track.file && track.file.type) || `Tệp ${track.ext}`, formatFileSizeVi(track.file ? track.file.size : null)));
+            rows.push(moreInfoRowHTML('calendar_month', 'Ngày sửa đổi', formatModifiedDateVi(track.file ? track.file.lastModified : null)));
+            rows.push(moreInfoRowHTML('schedule', 'Thời lượng', formatDurationVi(audio.duration)));
+            rows.push(moreInfoRowHTML('edit', 'Tên bài hát', track.name || 'Không rõ'));
+            rows.push(moreInfoRowHTML('person', 'Nghệ sĩ', track.artist || 'Không rõ'));
+            rows.push(moreInfoRowHTML('album', 'Đĩa nhạc', track.album || 'Không rõ'));
+            if (track.year) rows.push(moreInfoRowHTML('calendar_today', 'Năm', track.year));
+
+            moreInfoBody.innerHTML = rows.join('');
+            moreInfoModal.classList.add('open');
+        }
+
+        // Cập nhật trạng thái nút "Thông tin khác": xám đi nếu chưa có bài nào đang mở,
+        // hoặc bài hiện tại chưa xác nhận mở/đọc được (đang test / bị lỗi)
+        function updateMoreInfoBtnState() {
+            const track = playlist[currentIndex];
+            moreInfoBtn.disabled = !track || track.canOpen !== true;
+        }
+
+        moreInfoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openMoreInfoModal();
+        });
+        moreInfoClose.addEventListener('click', () => moreInfoModal.classList.remove('open'));
+        moreInfoModal.addEventListener('click', (e) => {
+            if (e.target === moreInfoModal) moreInfoModal.classList.remove('open');
+        });
+
+        // Test nền: mỗi khi audio nạp xong metadata thành công -> bài hát này "mở được",
+        // bật nút; nếu audio báo lỗi (file hỏng/không hỗ trợ) -> giữ nút tắt (xám)
+        audio.addEventListener('loadedmetadata', () => {
+            const track = playlist[currentIndex];
+            if (track) track.canOpen = true;
+            updateMoreInfoBtnState();
+        });
+        audio.addEventListener('error', () => {
+            const track = playlist[currentIndex];
+            if (track) track.canOpen = false;
+            updateMoreInfoBtnState();
+        });
 
         btnEditMetadataFields.addEventListener('click', () => {
             editOptionsModal.classList.remove('open');
