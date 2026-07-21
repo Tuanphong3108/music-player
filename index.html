@@ -959,7 +959,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.07.21-build080706</span>
+                <span>AUDIOPLAYER V2026.07.21-build212149</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -3402,10 +3402,21 @@
 
             let body;
             if (feedbackIncludeSysinfo.checked) {
+                const themeLabels = { system: 'System', light: 'Light', dark: 'Dark' };
+                const settingAccentEl = document.getElementById('setting-accent');
+                const accentLabel = settingAccentEl.options[settingAccentEl.selectedIndex]
+                    ? settingAccentEl.options[settingAccentEl.selectedIndex].text
+                    : settings.accent;
+
                 body = 'Loại: ' + feedbackType + '\n'
                     + 'Nội dung: ' + content + '\n'
                     + '────────────────────────────\n'
                     + 'Audio Player Version:\n' + getAppVersionText() + '\n'
+                    + 'Main Player Lyric: ' + (settings.showMainLyric ? 'ON' : 'OFF') + '\n'
+                    + 'PiP Lyric: ' + (settings.showPipLyric ? 'ON' : 'OFF') + '\n'
+                    + 'Fullscreen Lyric: ' + (settings.showFsLyric ? 'ON' : 'OFF') + '\n'
+                    + 'Theme: ' + (themeLabels[settings.theme] || settings.theme) + '\n'
+                    + 'Accent Color: ' + accentLabel + '\n'
                     + 'Browser:\n' + getBrowserInfo() + '\n'
                     + 'Platform:\n' + getPlatformInfo() + '\n'
                     + 'Thời gian:\n' + timeStr + '\n'
@@ -3968,35 +3979,50 @@
         });
 
         btnCropOk.addEventListener('click', () => {
+            // Giữ nguyên độ phân giải ảnh gốc thay vì luôn ép cứng về 300x300 (trước đây
+            // làm giảm chất lượng nếu ảnh gốc có độ phân giải cao). Tính kích thước output
+            // theo đúng tỉ lệ giữa ảnh gốc và khung preview 300px đang dùng để thao tác
+            // crop/zoom/pan, rồi scale toàn bộ phép vẽ tương ứng - kết quả là vùng crop
+            // giống hệt những gì thấy trên preview nhưng ở độ phân giải gốc của ảnh.
+            const imgRatio = cropImg.naturalWidth / cropImg.naturalHeight;
+            const baseFitSize = imgRatio > 1 ? cropImg.naturalWidth : cropImg.naturalHeight;
+            // Không nhỏ hơn 300 (giữ chất lượng tối thiểu như trước), không vượt quá 4096
+            // (giới hạn an toàn kỹ thuật để tránh chạm trần kích thước canvas của trình duyệt)
+            const outputScale = Math.min(Math.max(baseFitSize / 300, 1), 4096 / 300);
+            const OUT = Math.round(300 * outputScale);
+            const MARGIN = Math.round(20 * outputScale);
+            const INNER = OUT - MARGIN * 2;
+
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = 300;
-            tempCanvas.height = 300;
+            tempCanvas.width = OUT;
+            tempCanvas.height = OUT;
             const tempCtx = tempCanvas.getContext('2d');
 
             tempCtx.save();
-            tempCtx.translate(150, 150);
+            tempCtx.translate(OUT / 2, OUT / 2);
             tempCtx.rotate((rotationDegrees * Math.PI) / 180);
             tempCtx.scale(zoomValue, zoomValue);
 
-            const imgRatio = cropImg.width / cropImg.height;
-            let drawW = 300;
-            let drawH = 300;
+            let drawW = OUT;
+            let drawH = OUT;
             if (imgRatio > 1) {
-                drawH = 300 / imgRatio;
+                drawH = OUT / imgRatio;
             } else {
-                drawW = 300 * imgRatio;
+                drawW = OUT * imgRatio;
             }
 
-            tempCtx.drawImage(cropImg, -drawW / 2 + panX, -drawH / 2 + panY, drawW, drawH);
+            // panX/panY được ghi nhận trong không gian preview 300px -> nhân theo outputScale
+            // để giữ đúng tỉ lệ vị trí đã kéo khi vẽ ở độ phân giải cao hơn
+            tempCtx.drawImage(cropImg, -drawW / 2 + panX * outputScale, -drawH / 2 + panY * outputScale, drawW, drawH);
             tempCtx.restore();
 
             const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = 300;
-            finalCanvas.height = 300;
+            finalCanvas.width = OUT;
+            finalCanvas.height = OUT;
             const finalCtx = finalCanvas.getContext('2d');
-            finalCtx.drawImage(tempCanvas, 20, 20, 260, 260, 0, 0, 300, 300);
+            finalCtx.drawImage(tempCanvas, MARGIN, MARGIN, INNER, INNER, 0, 0, OUT, OUT);
 
-            currentCroppedDataUrl = finalCanvas.toDataURL('image/jpeg', 0.9);
+            currentCroppedDataUrl = finalCanvas.toDataURL('image/jpeg', 0.92);
             
             cropRotateModal.classList.remove('open');
             saveThumbConfirmModal.classList.add('open');
