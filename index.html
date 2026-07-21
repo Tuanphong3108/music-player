@@ -800,6 +800,10 @@
                 </div>
                 <textarea id="feedback-content" placeholder="Nhập nội dung phản hồi của bạn..." style="width:100%; min-height:130px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); border-radius:12px; padding:12px; font-family: inherit; font-size:14px; resize: vertical; box-sizing:border-box;"></textarea>
                 <span id="feedback-error" style="display:none; color:#E53935; font-size:13px;">Vui lòng nhập nội dung phản hồi trước khi gửi.</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <md-checkbox id="feedback-include-sysinfo" checked touch-target="wrapper"></md-checkbox>
+                    <label for="feedback-include-sysinfo" style="font-size:14px; cursor:pointer;">Gửi kèm thông tin hệ thống</label>
+                </div>
                 <button class="btn-m3" id="feedback-submit" title="Gửi phản hồi qua email" style="width:100%; height:48px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px; justify-content:center;">
                     <span class="material-symbols-outlined">send</span> Gửi phản hồi
                 </button>
@@ -3335,8 +3339,47 @@
         const feedbackSubmit = document.getElementById('feedback-submit');
         const feedbackTypeBug = document.getElementById('feedback-type-bug');
         const feedbackTypeSuggestion = document.getElementById('feedback-type-suggestion');
+        const feedbackIncludeSysinfo = document.getElementById('feedback-include-sysinfo');
+
+        // Đọc đúng version đang hiển thị ở góc trên bên trái app (span cạnh icon library_music)
+        function getAppVersionText() {
+            const versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
+            return versionEl ? versionEl.innerText.trim() : 'Không rõ';
+        }
+
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            let m = ua.match(/Edg\/([\d.]+)/);
+            if (m) return 'Microsoft Edge ' + m[1];
+            m = ua.match(/OPR\/([\d.]+)/);
+            if (m) return 'Opera ' + m[1];
+            m = ua.match(/Chrome\/([\d.]+)/);
+            if (m) return 'Google Chrome ' + m[1];
+            m = ua.match(/Firefox\/([\d.]+)/);
+            if (m) return 'Mozilla Firefox ' + m[1];
+            m = ua.match(/Version\/([\d.]+).*Safari/);
+            if (m) return 'Safari ' + m[1];
+            return ua;
+        }
+
+        function getPlatformInfo() {
+            const ua = navigator.userAgent;
+            if (/Windows NT 10\.0/.test(ua)) return 'Windows 10/11';
+            if (/Windows NT/.test(ua)) return 'Windows';
+            if (/Mac OS X/.test(ua)) return 'macOS';
+            if (/Android/.test(ua)) return 'Android';
+            if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+            if (/Linux/.test(ua)) return 'Linux';
+            return navigator.platform || 'Không rõ';
+        }
+
+        function formatFeedbackTimestamp(d) {
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
 
         feedbackBtn.addEventListener('click', () => {
+            feedbackIncludeSysinfo.checked = true; // Mỗi lần mở dialog đều tự bật lại
             feedbackModal.classList.add('open');
         });
         feedbackClose.addEventListener('click', () => feedbackModal.classList.remove('open'));
@@ -3355,10 +3398,25 @@
 
             const feedbackType = feedbackTypeSuggestion.checked ? 'Gợi ý tính năng' : 'Báo cáo lỗi';
             const subject = 'Phản hồi về Audio Player';
-            const body = 'Phản hồi của người dùng về Audio Player\n'
-                + 'Loại phản hồi: ' + feedbackType + '\n'
-                + 'Nội dung phản hồi: ' + content + '\n\n'
-                + '[Nội dung email được tạo tự động bởi hệ thống của Audio Player]';
+            const timeStr = formatFeedbackTimestamp(new Date());
+
+            let body;
+            if (feedbackIncludeSysinfo.checked) {
+                body = 'Loại: ' + feedbackType + '\n'
+                    + 'Nội dung: ' + content + '\n'
+                    + '────────────────────────────\n'
+                    + 'Audio Player Version:\n' + getAppVersionText() + '\n'
+                    + 'Browser:\n' + getBrowserInfo() + '\n'
+                    + 'Platform:\n' + getPlatformInfo() + '\n'
+                    + 'Thời gian:\n' + timeStr + '\n'
+                    + '[Nội dung email được tạo tự động từ hệ thống của Audio Player]';
+            } else {
+                body = 'Loại: ' + feedbackType + '\n'
+                    + 'Nội dung: ' + content + '\n'
+                    + 'Người dùng không cung cấp thông tin hệ thống\n'
+                    + 'Thời gian:\n' + timeStr + '\n'
+                    + '[Nội dung email được tạo tự động từ hệ thống của Audio Player]';
+            }
 
             window.open('mailto:phongvn406@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
 
