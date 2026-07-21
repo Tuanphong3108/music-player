@@ -1,4 +1,4 @@
-const CACHE_NAME = 'audio-player-v2026.07.21-build0806706-hotfix';
+const CACHE_NAME = 'audio-player-v2026.07.21-build0806706-hotfixv2';
 
 // ===== FILE TĨNH PRECACHE =====
 const STATIC_ASSETS = [
