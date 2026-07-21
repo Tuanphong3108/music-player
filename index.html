@@ -955,7 +955,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.07.21-build0806706</span>
+                <span>AUDIOPLAYER V2026.07.21-build080706</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -3360,7 +3360,7 @@
                 + 'Nội dung phản hồi: ' + content + '\n\n'
                 + '[Nội dung email được tạo tự động bởi hệ thống của Audio Player]';
 
-            window.location.href = 'mailto:phongvn406@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+            window.open('mailto:phongvn406@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
 
             feedbackModal.classList.remove('open');
             feedbackContent.value = '';
