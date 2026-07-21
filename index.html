@@ -780,6 +780,33 @@
         </div>
     </div>
 
+    <!-- Modal: Gửi phản hồi -->
+    <div id="feedback-modal" class="cl-overlay">
+        <div class="cl-dialog" style="max-width: 420px; height: auto; max-height: 90%; border-radius: 24px;">
+            <div class="cl-header" style="padding: 16px 20px;">
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Báo cáo lỗi hoặc gửi phản hồi</h2>
+                <button class="btn-m3" id="feedback-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 18px; overflow-y: auto;">
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <md-radio id="feedback-type-bug" name="feedback-type" value="Báo cáo lỗi" checked touch-target="wrapper"></md-radio>
+                        <label for="feedback-type-bug" style="font-size:14px; cursor:pointer;">Báo cáo lỗi</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <md-radio id="feedback-type-suggestion" name="feedback-type" value="Gợi ý tính năng" touch-target="wrapper"></md-radio>
+                        <label for="feedback-type-suggestion" style="font-size:14px; cursor:pointer;">Gợi ý tính năng</label>
+                    </div>
+                </div>
+                <textarea id="feedback-content" placeholder="Nhập nội dung phản hồi của bạn..." style="width:100%; min-height:130px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); border-radius:12px; padding:12px; font-family: inherit; font-size:14px; resize: vertical; box-sizing:border-box;"></textarea>
+                <span id="feedback-error" style="display:none; color:#E53935; font-size:13px;">Vui lòng nhập nội dung phản hồi trước khi gửi.</span>
+                <button class="btn-m3" id="feedback-submit" title="Gửi phản hồi qua email" style="width:100%; height:48px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px; justify-content:center;">
+                    <span class="material-symbols-outlined">send</span> Gửi phản hồi
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Thông tin khác (File Info) -->
     <div id="more-info-modal" class="cl-overlay">
         <div class="cl-dialog" style="max-width: 400px; height: auto; max-height: 90%; border-radius: 24px;">
@@ -928,7 +955,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYERV2026.07.20-build091043</span>
+                <span>AUDIOPLAYER V2026.07.21-build0806706</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -938,6 +965,7 @@
                     <div class="install-tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
                 </div>
                 <button class="btn-m3" id="settings-btn" title="Cài đặt"><span class="material-symbols-outlined">settings</span></button>
+                <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi"><span class="material-symbols-outlined">feedback</span></button>
                 <button class="btn-m3" id="changelog-btn" title="Cập nhật"><span class="material-symbols-outlined">release_alert</span></button>
                 
                 <!-- Nút add_circle kích hoạt Dropdown API File System tiến tiến -->
@@ -3298,6 +3326,48 @@
 
         editOptionsClose.addEventListener('click', () => editOptionsModal.classList.remove('open'));
 
+        // --- HỆ THỐNG "GỬI PHẢN HỒI" (FEEDBACK QUA MAILTO) ---
+        const feedbackBtn = document.getElementById('feedback-btn');
+        const feedbackModal = document.getElementById('feedback-modal');
+        const feedbackClose = document.getElementById('feedback-close');
+        const feedbackContent = document.getElementById('feedback-content');
+        const feedbackError = document.getElementById('feedback-error');
+        const feedbackSubmit = document.getElementById('feedback-submit');
+        const feedbackTypeBug = document.getElementById('feedback-type-bug');
+        const feedbackTypeSuggestion = document.getElementById('feedback-type-suggestion');
+
+        feedbackBtn.addEventListener('click', () => {
+            feedbackModal.classList.add('open');
+        });
+        feedbackClose.addEventListener('click', () => feedbackModal.classList.remove('open'));
+        feedbackModal.addEventListener('click', (e) => {
+            if (e.target === feedbackModal) feedbackModal.classList.remove('open');
+        });
+
+        feedbackSubmit.addEventListener('click', () => {
+            const content = feedbackContent.value.trim();
+            if (!content) {
+                feedbackError.style.display = 'block';
+                feedbackContent.focus();
+                return;
+            }
+            feedbackError.style.display = 'none';
+
+            const feedbackType = feedbackTypeSuggestion.checked ? 'Gợi ý tính năng' : 'Báo cáo lỗi';
+            const subject = 'Phản hồi về Audio Player';
+            const body = 'Phản hồi của người dùng về Audio Player\n'
+                + 'Loại phản hồi: ' + feedbackType + '\n'
+                + 'Nội dung phản hồi: ' + content + '\n\n'
+                + '[Nội dung email được tạo tự động bởi hệ thống của Audio Player]';
+
+            window.location.href = 'mailto:phongvn406@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+
+            feedbackModal.classList.remove('open');
+            feedbackContent.value = '';
+            feedbackTypeBug.checked = true;
+            feedbackTypeSuggestion.checked = false;
+        });
+
         // --- STREAMING_CHUNK:Setting up the "Thông tin khác" (file info) panel... ---
         // --- HỆ THỐNG "THÔNG TIN KHÁC" (FILE INFO) ---
         const moreInfoBtn = document.getElementById('more-info-btn');
@@ -4048,6 +4118,16 @@
                 e.preventDefault();
                 document.getElementById('add-music-trigger').click();
             } 
+            // Phím Ctrl + Mũi tên Phải: Chuyển sang bài tiếp theo
+            else if (e.ctrlKey && e.code === 'ArrowRight') {
+                e.preventDefault();
+                document.getElementById('next-btn').click();
+            }
+            // Phím Ctrl + Mũi tên Trái: Chuyển về bài trước đó (vô hiệu khi Shuffle đang bật)
+            else if (e.ctrlKey && e.code === 'ArrowLeft') {
+                e.preventDefault();
+                if (!isShuffle) document.getElementById('prev-btn').click();
+            }
             // Phím Mũi tên Phải: Tua tiến 5 giây
             else if (e.code === 'ArrowRight') {
                 e.preventDefault();
@@ -4058,6 +4138,17 @@
                 e.preventDefault();
                 audio.currentTime = Math.max(0, audio.currentTime - 5);
             } 
+            // Phím Mũi tên Lên/Xuống: Điều chỉnh mức âm lượng
+            else if (e.code === 'ArrowUp') {
+                e.preventDefault();
+                volumeSlider.value = Math.min(100, parseInt(volumeSlider.value, 10) + 5);
+                volumeSlider.dispatchEvent(new Event('input'));
+            }
+            else if (e.code === 'ArrowDown') {
+                e.preventDefault();
+                volumeSlider.value = Math.max(0, parseInt(volumeSlider.value, 10) - 5);
+                volumeSlider.dispatchEvent(new Event('input'));
+            }
             // Phím M: Mute/Unmute thông minh
             else if (e.code === 'KeyM') {
                 e.preventDefault();
