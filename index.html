@@ -959,7 +959,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.07.21-build212149</span>
+                <span>AUDIOPLAYER V2026.07.22-build074324</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1476,11 +1476,22 @@
             <div class="field-label">Album</div>
             <input class="ore-input" type="text" id="fieldAlbum">
           </div>
+          <div class="field-row">
+            <div class="field-label">Thể loại (Genre)</div>
+            <input class="ore-input" type="text" id="fieldGenre">
+          </div>
+          <div class="field-row">
+            <div class="field-label">Nhà soạn nhạc (Composer)</div>
+            <input class="ore-input" type="text" id="fieldComposer">
+          </div>
           <div class="section-header" style="padding-top:12px;">Lyric</div>
           <div class="field-row">
             <div class="lrc-row">
               <div class="field-label">Lyric Embed</div>
-              <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnUploadLrc" title="Tải lên file phụ đề .lrc">⬆ Tải lên .lrc</button>
+              <div style="display:flex; gap:8px;">
+                <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnSearchLrc" title="Tìm lyric trên lrclib.net">🔍 Tìm kiếm</button>
+                <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnUploadLrc" title="Tải lên file phụ đề .lrc">⬆ Tải lên .lrc</button>
+              </div>
             </div>
             <textarea class="ore-input" id="fieldLyric"></textarea>
             <input type="file" id="lrcFileInput" accept=".lrc,.txt">
@@ -1541,10 +1552,12 @@
             title:  document.getElementById('fieldTitle'),
             artist: document.getElementById('fieldArtist'),
             album:  document.getElementById('fieldAlbum'),
+            genre:  document.getElementById('fieldGenre'),
+            composer: document.getElementById('fieldComposer'),
             lyric:  document.getElementById('fieldLyric'),
           };
-          const ORDER = ['title','artist','album','lyric'];
-          let original = {title:'',artist:'',album:'',lyric:''};
+          const ORDER = ['title','artist','album','genre','composer','lyric'];
+          let original = {title:'',artist:'',album:'',genre:'',composer:'',lyric:''};
 
           function hasChanges() { return ORDER.some(k => fields[k].value !== original[k]); }
           function postMsg(msg) { window.parent.postMessage(msg,'*'); }
@@ -1610,11 +1623,15 @@
 
           document.getElementById('btnSave').addEventListener('click', () => {
             hideAllUI();
+            // Nghệ sĩ/Album để trống -> tự điền "Unknown". Genre/Composer để trống thì
+            // giữ nguyên trắng, không tự gán "Unknown" cho 2 mục này.
             postMsg({
               type:   'save',
               title:  fields.title.value,
-              artist: fields.artist.value,
-              album:  fields.album.value,
+              artist: fields.artist.value.trim() || 'Unknown',
+              album:  fields.album.value.trim() || 'Unknown',
+              genre:  fields.genre.value,
+              composer: fields.composer.value,
               lyric:  fields.lyric.value,
             });
           });
@@ -1641,6 +1658,14 @@
           document.getElementById('btnFailOK').addEventListener('click', () => {
             document.getElementById('overlayFail').classList.add('hidden');
             sendClose();
+          });
+
+          document.getElementById('btnSearchLrc').addEventListener('click', () => {
+            const t = fields.title.value.trim();
+            const a = fields.artist.value.trim();
+            if (!t) return; // Không có tên bài hát thì thôi, không mở gì cả
+            const query = encodeURIComponent(t) + (a ? '+' + encodeURIComponent(a) : '');
+            window.open('https://lrclib.net/search/' + query, '_blank');
           });
 
           document.getElementById('btnUploadLrc').addEventListener('click', () =>
@@ -2092,6 +2117,8 @@
                 let artist = "UNKNOWN ARTIST";
                 let album = "Unknown Album";
                 let year = "";
+                let genre = "";
+                let composer = "";
                 let cover = null;
                 let lyricsRaw = "";
                 
@@ -2102,6 +2129,8 @@
                             if (tag.tags.artist) artist = tag.tags.artist;
                             if (tag.tags.album) album = tag.tags.album;
                             if (tag.tags.year) year = tag.tags.year;
+                            if (tag.tags.genre) genre = tag.tags.genre;
+                            if (tag.tags.composer) composer = tag.tags.composer;
                             // Hỗ trợ Lyric Embed cho các tệp nhạc phổ biến
                             if (tag.tags.USLT) {
                                 lyricsRaw = typeof tag.tags.USLT.data === 'object' ? tag.tags.USLT.data.lyrics : tag.tags.USLT.data;
@@ -2133,6 +2162,8 @@
                         artist: artist,
                         album: album,
                         year: year,
+                        genre: genre,
+                        composer: composer,
                         cover: cover,
                         url: URL.createObjectURL(file),
                         ext: file.name.split('.').pop().toUpperCase(),
@@ -3572,6 +3603,8 @@
                 title: track.name || '',
                 artist: track.artist || '',
                 album: track.album || '',
+                genre: track.genre || '',
+                composer: track.composer || '',
                 lyric: track.lyricsRaw || ''
             }, '*');
         }
@@ -3704,7 +3737,9 @@
 
                 writer.setFrame('TIT2', meta.title || '')
                       .setFrame('TPE1', [meta.artist || ''])
-                      .setFrame('TALB', meta.album || '');
+                      .setFrame('TALB', meta.album || '')
+                      .setFrame('TCON', [meta.genre || ''])
+                      .setFrame('TCOM', [meta.composer || '']);
 
                 if (meta.lyric) {
                     writer.setFrame('USLT', {
@@ -3759,6 +3794,8 @@
                 track.name = meta.title || track.name;
                 track.artist = meta.artist || track.artist;
                 track.album = meta.album || track.album;
+                track.genre = meta.genre || '';       // Trống -> để trắng thật sự, không giữ lại giá trị cũ
+                track.composer = meta.composer || ''; // Trống -> để trắng thật sự, không giữ lại giá trị cũ
                 track.lyrics = meta.lyric ? parseLRC(meta.lyric) : null;
                 track.lyricsRaw = meta.lyric || "";
 
@@ -3851,6 +3888,8 @@
                     title: track.name,
                     artist: track.artist,
                     album: track.album,
+                    genre: track.genre,
+                    composer: track.composer,
                     lyric: track.lyricsRaw
                 });
 
@@ -4050,6 +4089,8 @@
                 title: track.name,
                 artist: track.artist,
                 album: track.album,
+                genre: track.genre,
+                composer: track.composer,
                 lyric: track.lyricsRaw
             });
 
