@@ -648,6 +648,18 @@
     <div id="loading-overlay">
         <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" alt="Loading">
         <p style="font-family:'Minecraft'; color:var(--md-sys-color-primary); margin-top:16px; font-size: 10px; letter-spacing: 1px;">BY PHONGVN, ALSO WAIT FOR THE APP...</p>
+        <!--
+          Nút Báo cáo: href tối giản "mailto:phongvn406@gmail.com" được viết cứng thẳng
+          trong HTML, KHÔNG phụ thuộc JS chạy được hay không -> luôn mở đúng mail tới
+          đúng người nhận trong MỌI trường hợp, kể cả khi toàn bộ app bị lỗi/kẹt cứng ở
+          Loading. Đoạn script riêng biệt phía cuối trang (tách khỏi script chính, để dù
+          script chính có lỗi giữa chừng thì đoạn này vẫn chạy) sẽ "nâng cấp" href này
+          thành bản đầy đủ có version/thời gian nếu chạy thành công.
+        -->
+        <a id="loading-report-btn" class="btn-m3" title="Báo cáo lỗi khẩn cấp" href="mailto:phongvn406@gmail.com"
+           style="margin-top: 24px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; padding: 10px 22px; border-radius: 14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-family:'Minecraft'; font-size: 11px; letter-spacing: 1px; width: auto; height: auto;">
+            <span class="material-symbols-outlined" style="font-size:18px;">bug_report</span> BÁO CÁO
+        </a>
     </div>
 
     <!-- Loading Overlay for Metadata Editor -->
@@ -959,7 +971,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.07.22-build074324</span>
+                <span>AUDIOPLAYER V2026.07.22-build160422</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1466,23 +1478,23 @@
           <div class="section-header">Thông tin bài hát</div>
           <div class="field-row">
             <div class="field-label">Tên bài hát</div>
-            <input class="ore-input" type="text" id="fieldTitle">
+            <input class="ore-input" type="text" id="fieldTitle" name="fieldTitle-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
             <div class="field-label">Nghệ sĩ</div>
-            <input class="ore-input" type="text" id="fieldArtist">
+            <input class="ore-input" type="text" id="fieldArtist" name="fieldArtist-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
             <div class="field-label">Album</div>
-            <input class="ore-input" type="text" id="fieldAlbum">
+            <input class="ore-input" type="text" id="fieldAlbum" name="fieldAlbum-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
             <div class="field-label">Thể loại (Genre)</div>
-            <input class="ore-input" type="text" id="fieldGenre">
+            <input class="ore-input" type="text" id="fieldGenre" name="fieldGenre-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
             <div class="field-label">Nhà soạn nhạc (Composer)</div>
-            <input class="ore-input" type="text" id="fieldComposer">
+            <input class="ore-input" type="text" id="fieldComposer" name="fieldComposer-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="section-header" style="padding-top:12px;">Lyric</div>
           <div class="field-row">
@@ -1905,7 +1917,7 @@
             str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
             str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
             str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
-            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|MỠ/g, "O");
+            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
             str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
             str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
             str = str.replace(/Đ/g, "D");
@@ -2379,8 +2391,11 @@
             playlist.forEach((track, index) => {
                 const normalizedName = removeVietnameseTones(track.name).toLowerCase();
                 const normalizedArtist = removeVietnameseTones(track.artist).toLowerCase();
+                const normalizedGenre = removeVietnameseTones(track.genre || '').toLowerCase();
+                const normalizedComposer = removeVietnameseTones(track.composer || '').toLowerCase();
                 
-                const matches = isReorderMode || normalizedName.includes(searchQuery) || normalizedArtist.includes(searchQuery);
+                const matches = isReorderMode || normalizedName.includes(searchQuery) || normalizedArtist.includes(searchQuery)
+                    || normalizedGenre.includes(searchQuery) || normalizedComposer.includes(searchQuery);
                 
                 if (matches) {
                     count++;
@@ -3525,6 +3540,7 @@
             rows.push(moreInfoRowHTML('edit', 'Tên bài hát', track.name || 'Không rõ'));
             rows.push(moreInfoRowHTML('person', 'Nghệ sĩ', track.artist || 'Không rõ'));
             rows.push(moreInfoRowHTML('album', 'Đĩa nhạc', track.album || 'Không rõ'));
+            rows.push(moreInfoRowHTML('edit_note', 'Nhà soạn nhạc', track.composer || 'Unknown'));
             if (track.year) rows.push(moreInfoRowHTML('calendar_today', 'Năm', track.year));
 
             moreInfoBody.innerHTML = rows.join('');
@@ -4281,6 +4297,41 @@
             }
         });
 
+    </script>
+
+    <!--
+      Script ĐỘC LẬP, tách hẳn khỏi script chính phía trên: dù script chính có ném lỗi
+      giữa chừng (khiến app kẹt cứng ở Loading), tag <script> riêng này vẫn được trình
+      duyệt chạy bình thường (lỗi ở 1 script tag không chặn các script tag khác). Đặt ở
+      cuối body để chắc chắn .top-bar .brand đã tồn tại trong DOM lúc đọc. Toàn bộ nằm
+      trong try/catch: nếu có lỗi bất kỳ, href tối giản "mailto:phongvn406@gmail.com"
+      đã viết sẵn trong HTML vẫn còn nguyên -> nút Báo cáo luôn hoạt động 100%.
+    -->
+    <script>
+        try {
+            var loadingReportBtn = document.getElementById('loading-report-btn');
+            if (loadingReportBtn) {
+                var pad2 = function(n) { return String(n).padStart(2, '0'); };
+                var nowDt = new Date();
+                var timeStr = pad2(nowDt.getDate()) + '/' + pad2(nowDt.getMonth() + 1) + '/' + nowDt.getFullYear()
+                    + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
+
+                var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V_INDEV-build_NOT_STABLE';
+
+                var reportSubject = 'Lỗi khẩn cấp về Audio Player';
+                var reportBody = 'Loại: Báo cáo lỗi\n'
+                    + 'Nội dung: Audio Player không thể tải được, màn hình bị kẹt cứng ở Loading và không thể vào giao diện chính\n'
+                    + '────────────────────────────\n'
+                    + 'Audio Player Version:\n' + versionText + '\n'
+                    + 'Thời gian:\n' + timeStr + '\n'
+                    + '[Nội dung email được tạo tự động từ hệ thống của Audio Player]';
+
+                loadingReportBtn.href = 'mailto:phongvn406@gmail.com?subject=' + encodeURIComponent(reportSubject) + '&body=' + encodeURIComponent(reportBody);
+            }
+        } catch (err) {
+            // Bỏ qua mọi lỗi -> giữ nguyên href tối giản mặc định, nút vẫn mở đúng mailto
+        }
     </script>
 </body>
 </html>
