@@ -326,6 +326,12 @@
             opacity: 0 !important;
             pointer-events: none !important;
         }
+        /* Tự ẩn con trỏ chuột khi thanh media control đã trượt xuống ở Full screen mode
+           (chỉ áp dụng trong fullscreen, đồng bộ với cùng bộ đếm idle của thanh control) */
+        body.fullscreen-active.fs-cursor-hidden,
+        body.fullscreen-active.fs-cursor-hidden * {
+            cursor: none !important;
+        }
         body.fullscreen-active .lyric-overlay { display: none !important; }
 
         .lyric-overlay {
@@ -640,6 +646,43 @@
             .volume-group { display: none; }
             .playlist-card { width: 280px; }
         }
+
+        /* --- GIẢM HIỆU ỨNG CHUYỂN ĐỘNG ---
+           Vô hiệu hoá gần như toàn bộ transition/animation CSS của app. #visualizer
+           KHÔNG bị ảnh hưởng vì sóng nhạc được vẽ bằng JS (canvas + requestAnimationFrame),
+           không dùng CSS transition/animation nên tự động nằm ngoài phạm vi rule này. */
+        html.reduce-motion *,
+        html.reduce-motion *::before,
+        html.reduce-motion *::after {
+            transition-duration: 0.001ms !important;
+            animation-duration: 0.001ms !important;
+            animation-delay: 0ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+        }
+
+        /* --- GIẢM HIỆU ỨNG MỜ VÀ CHUYỂN ĐỘNG (NÂNG CAO) ---
+           Ngoài toàn bộ hiệu ứng ở trên, còn: bỏ backdrop-filter (blur kính mờ) khắp app,
+           album art không blur nữa mà chỉ tối đi, ẩn hẳn sóng nhạc, và lyric chuyển vào
+           giữa màn hình thay vì nằm trên cao — tối ưu cho máy cấu hình thấp. */
+        html.reduce-effects *,
+        html.reduce-effects *::before,
+        html.reduce-effects *::after {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        html.reduce-effects .bg-thumb-preview {
+            filter: brightness(0.4) !important;
+        }
+        html.reduce-effects #visualizer {
+            display: none !important;
+        }
+        html.reduce-effects .top-active-lyric {
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 80% !important;
+        }
     </style>
 </head>
 <body>
@@ -702,9 +745,18 @@
                 <button class="btn-m3" id="cl-close-btn" title="Đóng"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="cl-iframe-wrap">
-                <iframe src="changelog.html" class="cl-iframe"></iframe>
+                <iframe src="changelogAUDIOPLAYER_V2026.08.26-build135608.html" class="cl-iframe"></iframe>
                 <div id="cl-loading-overlay">
-                    <md-circular-progress indeterminate></md-circular-progress>
+                    <div id="cl-loading-spinner" style="display:flex; flex-direction:column; gap:16px; justify-content:center; align-items:center;">
+                        <md-circular-progress indeterminate></md-circular-progress>
+                    </div>
+                    <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
+                        <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
+                        <p style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Không thể tải What's New, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
+                        <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
+                            <span class="material-symbols-outlined">feedback</span> Gửi phản hồi
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -750,6 +802,30 @@
                         <span style="font-size: 12px; opacity: 0.6;">Hiển thị lời bài hát ngay bên dưới tên và nghệ sĩ khi ở chế độ toàn màn hình</span>
                     </div>
                     <md-switch id="setting-fs-lyric">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+
+                <!-- Switch 4: Giảm hiệu ứng chuyển động -->
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;">Giảm hiệu ứng chuyển động</span>
+                        <span style="font-size: 12px; opacity: 0.6;">Khi bật lên, hiệu ứng chuyển động giữa các trang sẽ không còn (Ngoại trừ sóng âm, tắt ở cài đặt riêng)</span>
+                    </div>
+                    <md-switch id="setting-reduce-motion">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+
+                <!-- Switch 5: Giảm hiệu ứng mờ và chuyển động (Nâng cao) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;">Giảm hiệu ứng mờ và chuyển động (Nâng cao)</span>
+                        <span style="font-size: 12px; opacity: 0.6;">Sẽ giảm các hiệu ứng mờ, chuyển động và xóa sóng nhạc, hữu ích khi máy có cấu hình thấp vcl.</span>
+                    </div>
+                    <md-switch id="setting-reduce-effects">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
@@ -971,7 +1047,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.07.22-build160422</span>
+                <span>AUDIOPLAYER V2026.08.26-build135608</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1827,9 +1903,21 @@
             showMainLyric: localStorage.getItem('settings_show_main_lyric') !== 'false',
             showPipLyric: localStorage.getItem('settings_show_pip_lyric') !== 'false',
             showFsLyric: localStorage.getItem('settings_show_fs_lyric') !== 'false',
+            reduceMotion: localStorage.getItem('settings_reduce_motion') === 'true',   // Mặc định Off
+            reduceEffects: localStorage.getItem('settings_reduce_effects') === 'true', // Mặc định Off
             theme: localStorage.getItem('settings_theme') || 'dark',
             accent: localStorage.getItem('settings_accent') || 'purple'
         };
+
+        // Áp class reduce-motion/reduce-effects lên <html> theo đúng settings hiện tại
+        function applyMotionEffectSettings() {
+            const root = document.documentElement;
+            // Bật "Nâng cao" thì luôn kéo theo bật "Giảm hiệu ứng chuyển động" cơ bản
+            const motionOn = settings.reduceMotion || settings.reduceEffects;
+            root.classList.toggle('reduce-motion', motionOn);
+            root.classList.toggle('reduce-effects', settings.reduceEffects);
+        }
+        applyMotionEffectSettings();
 
         // --- ÁP DỤNG MÀU SẮC CHỦ ĐẠO DỰA TRÊN THIẾT LẬP ---
         function applyAccentColor(themeOverride) {
@@ -2657,6 +2745,10 @@
         function draw() {
             requestAnimationFrame(draw);
             if (!analyser) return;
+            // "Giảm hiệu ứng mờ và chuyển động (Nâng cao)" đang bật -> bỏ hẳn việc phân
+            // tích tần số + vẽ canvas mỗi khung hình để tiết kiệm CPU cho máy yếu, chứ
+            // không chỉ ẩn bằng CSS (ẩn bằng CSS vẫn tốn CPU vẽ ở dưới nếu không chặn ở đây)
+            if (settings.reduceEffects) return;
             analyser.getByteFrequencyData(dataArray);
             const ctx = visualizer.getContext('2d');
             visualizer.width = visualizer.clientWidth;
@@ -3133,12 +3225,18 @@
         const settingMainLyric = document.getElementById('setting-main-lyric');
         const settingPipLyric = document.getElementById('setting-pip-lyric');
         const settingFsLyric = document.getElementById('setting-fs-lyric');
+        const settingReduceMotion = document.getElementById('setting-reduce-motion');
+        const settingReduceEffects = document.getElementById('setting-reduce-effects');
         const settingTheme = document.getElementById('setting-theme');
         const settingAccent = document.getElementById('setting-accent');
 
         settingMainLyric.selected = settings.showMainLyric;
         settingPipLyric.selected = settings.showPipLyric;
         settingFsLyric.selected = settings.showFsLyric;
+        settingReduceEffects.selected = settings.reduceEffects;
+        // "Nâng cao" đang bật thì force + khoá switch cơ bản luôn hiện đang bật, không cho tắt riêng
+        settingReduceMotion.selected = settings.reduceMotion || settings.reduceEffects;
+        settingReduceMotion.disabled = settings.reduceEffects;
         settingTheme.value = settings.theme;
         settingAccent.value = settings.accent;
 
@@ -3159,6 +3257,27 @@
             settings.showFsLyric = e.target.selected;
             localStorage.setItem('settings_show_fs_lyric', settings.showFsLyric);
             applyLyricVisibility();
+        });
+
+        settingReduceMotion.addEventListener('change', (e) => {
+            settings.reduceMotion = e.target.selected;
+            localStorage.setItem('settings_reduce_motion', settings.reduceMotion);
+            applyMotionEffectSettings();
+        });
+
+        settingReduceEffects.addEventListener('change', (e) => {
+            settings.reduceEffects = e.target.selected;
+            localStorage.setItem('settings_reduce_effects', settings.reduceEffects);
+
+            // Bật "Nâng cao" -> force bật + khoá switch "Giảm hiệu ứng chuyển động" cơ bản
+            if (settings.reduceEffects) {
+                settings.reduceMotion = true;
+                localStorage.setItem('settings_reduce_motion', 'true');
+            }
+            settingReduceMotion.selected = settings.reduceMotion || settings.reduceEffects;
+            settingReduceMotion.disabled = settings.reduceEffects;
+
+            applyMotionEffectSettings();
         });
 
         settingTheme.addEventListener('change', (e) => {
@@ -3204,6 +3323,8 @@
         const clCloseBtn = document.getElementById('cl-close-btn');
         const clIframe = document.querySelector('#changelog-dialog .cl-iframe');
         const clLoadingOverlay = document.getElementById('cl-loading-overlay');
+        const clLoadingSpinner = document.getElementById('cl-loading-spinner');
+        const clLoadingError = document.getElementById('cl-loading-error');
 
         // Gửi theme hiện tại ("dark" hoặc "light") sang trang What's New qua postMessage
         function sendThemeToChangelog() {
@@ -3211,9 +3332,21 @@
             clIframe.contentWindow.postMessage(resolveThemeMode(settings.theme), '*');
         }
 
+        function showChangelogLoadError() {
+            clLoadingSpinner.style.display = 'none';
+            clLoadingError.style.display = 'flex';
+        }
+        function hideChangelogLoadError() {
+            clLoadingError.style.display = 'none';
+            clLoadingSpinner.style.display = 'flex';
+        }
+
         let clLoaded = false;
+        let clLoadTimeoutId = null;
         function markChangelogLoaded() {
             clLoaded = true;
+            if (clLoadTimeoutId) { clearTimeout(clLoadTimeoutId); clLoadTimeoutId = null; }
+            hideChangelogLoadError();
             clLoadingOverlay.classList.add('hidden');
             sendThemeToChangelog();
         }
@@ -3239,10 +3372,22 @@
                 clLoadingOverlay.classList.add('hidden');
                 sendThemeToChangelog();
             } else {
+                hideChangelogLoadError();
                 clLoadingOverlay.classList.remove('hidden');
+
+                // Quá 5 giây mà What's New vẫn chưa tải xong -> báo lỗi kèm nút Gửi phản hồi
+                if (clLoadTimeoutId) clearTimeout(clLoadTimeoutId);
+                clLoadTimeoutId = setTimeout(() => {
+                    if (!clLoaded) showChangelogLoadError();
+                }, 5000);
             }
 
             clOverlay.classList.add('open');
+        });
+
+        document.getElementById('cl-error-feedback-btn').addEventListener('click', () => {
+            clOverlay.classList.remove('open');
+            feedbackBtn.click();
         });
 
         clCloseBtn.addEventListener('click', () => {
@@ -4139,14 +4284,16 @@
 
         let fsIdleTimer = null;
 
-        // Trượt thanh Media xuống khi chuột đứng yên quá 5s
+        // Trượt thanh Media xuống khi chuột đứng yên quá 5s (và tự ẩn luôn con trỏ chuột)
         function startFsIdleTimer() {
             clearTimeout(fsIdleTimer);
             const shell = document.querySelector('.player-shell');
             shell.classList.remove('controls-hidden');
+            document.body.classList.remove('fs-cursor-hidden');
             if (document.body.classList.contains('fullscreen-active')) {
                 fsIdleTimer = setTimeout(() => {
                     shell.classList.add('controls-hidden');
+                    document.body.classList.add('fs-cursor-hidden');
                 }, 5000); 
             }
         }
@@ -4189,6 +4336,7 @@
                 
                 const shell = document.querySelector('.player-shell');
                 shell.classList.remove('controls-hidden');
+                document.body.classList.remove('fs-cursor-hidden');
                 
                 clearTimeout(fsIdleTimer);
                 window.removeEventListener('mousemove', resetFsIdleTimer);
@@ -4317,7 +4465,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V_INDEV-build_NOT_STABLE';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.08.26-build135608';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'
