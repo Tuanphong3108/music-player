@@ -45,12 +45,29 @@
     </script>
 
     <style>
+        :root {
+            --m3-surface: #FEF7FF;
+            --m3-surface-container: #F3EDF7;
+            --m3-on-surface: #1D1B20;
+            --m3-on-surface-variant: #49454F;
+            --m3-outline: #79747E;
+        }
+
+        :root.dark {
+            --m3-surface: #141218;
+            --m3-surface-container: #211F26;
+            --m3-on-surface: #E6E0E9;
+            --m3-on-surface-variant: #CAC4D0;
+            --m3-outline: #938F99;
+        }
+
         body {
             font-family: 'Google Sans Flex', sans-serif;
-            background-color: #141218;
-            color: #E6E0E9;
+            background-color: var(--m3-surface);
+            color: var(--m3-on-surface);
             margin: 0;
             padding: 0;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* Material Symbols Fill on Hover Effect */
@@ -71,11 +88,11 @@
     <main class="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-6 my-auto">
         
         <!-- Header Avatar & Credit -->
-        <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-m3-surfaceContainer border border-m3-outline/20 shadow-sm">
+        <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-sm transition-colors duration-300">
             <img src="https://lh3.googleusercontent.com/a/ACg8ocK1ghp_0vaVGK6czFhTwIBo0asg1GAhSQ4xwdm9kL9kAmu8BneC=s0-c" 
                  alt="Phong VN Avatar" 
                  class="w-6 h-6 rounded-full object-cover border border-m3-primary/40">
-            <span class="text-xs font-medium text-m3-onSurfaceVariant tracking-wide">Made by Phong VN</span>
+            <span class="text-xs font-medium text-[var(--m3-on-surface-variant)] tracking-wide">Made by Phong VN</span>
         </div>
 
         <!-- App Branding -->
@@ -84,7 +101,7 @@
                  alt="Audio Player Logo" 
                  class="w-10 h-10 object-contain drop-shadow"
                  onerror="this.onerror=null; this.src='https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/music_note/default/48px.svg';">
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-m3-onSurface">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--m3-on-surface)] transition-colors duration-300">
                 Audio Player
             </h1>
         </div>
@@ -103,11 +120,11 @@
         </div>
 
         <!-- App Description Box -->
-        <div class="w-full p-5 sm:p-6 rounded-3xl bg-m3-surfaceContainer border border-m3-outline/20 text-left space-y-4 shadow-lg backdrop-blur-md">
-            <p class="text-xs sm:text-sm text-m3-onSurfaceVariant leading-relaxed">
+        <div class="w-full p-5 sm:p-6 rounded-3xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 text-left space-y-4 shadow-lg backdrop-blur-md transition-colors duration-300">
+            <p class="text-xs sm:text-sm text-[var(--m3-on-surface-variant)] leading-relaxed">
                 Audio Player là trình phát nhạc cục bộ chạy hoàn toàn trên trình duyệt (không cần cài đặt, không server) — mở nhạc bằng cách chọn file, kéo-thả, hoặc double-click mở trực tiếp khi cài như PWA. Ngoài phát nhạc cơ bản (Shuffle, Repeat, tua nhanh, phím tắt đầy đủ), điểm đặc biệt là bộ công cụ chỉnh sửa metadata trực tiếp lên file MP3 gốc: sửa Tên bài, Nghệ sĩ, Album, Genre, Composer, Lyric (embed + đồng bộ theo thời gian), cắt/xoay ảnh bìa — và ghi đè thẳng vào file thật trên ổ đĩa (không phải bản sao tạm) nhờ File System Access API.
             </p>
-            <p class="text-xs sm:text-sm text-m3-onSurfaceVariant leading-relaxed">
+            <p class="text-xs sm:text-sm text-[var(--m3-on-surface-variant)] leading-relaxed">
                 Hỗ trợ hiển thị lyric đồng bộ ở màn hình chính, chế độ Picture-in-Picture và Full screen riêng biệt, giao diện Material Design 3 với nhiều theme màu tuỳ chỉnh (sáng/tối/hệ thống), cùng các tuỳ chọn tối ưu hiệu năng (giảm hiệu ứng chuyển động/mờ) cho máy cấu hình thấp. Tìm kiếm playlist thông minh (không dấu vẫn ra kết quả, tìm sâu cả Genre/Composer), có sẵn kênh gửi phản hồi/báo lỗi tích hợp ngay trong app.
             </p>
         </div>
@@ -115,6 +132,18 @@
     </main>
 
     <script>
+        // Listen for theme change messages from parent frame
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            const theme = typeof data === 'string' ? data : (data?.theme || data?.type);
+
+            if (theme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        });
+
         // Send postMessage to parent app on button click
         document.getElementById('whatsNewBtn').addEventListener('click', () => {
             if (window.parent) {
