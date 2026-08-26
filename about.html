@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark scroll-smooth">
+<html lang="vi" class="dark h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SonicPulse Audio - MD3 Expressive Edition</title>
+    <title>About - Audio Player</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,16 +33,11 @@
                             onSurface: '#E6E0E9',
                             onSurfaceVariant: '#CAC4D0',
                             outline: '#938F99',
-                            tertiary: '#EFB8C8',
-                            tertiaryContainer: '#633B48'
+                            tertiary: '#EFB8C8'
                         }
                     },
                     fontFamily: {
                         sans: ['Google Sans Flex', 'sans-serif'],
-                    },
-                    borderRadius: {
-                        '4xl': '28px',
-                        '5xl': '36px'
                     }
                 }
             }
@@ -56,795 +51,85 @@
             color: #E6E0E9;
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
         }
 
         /* Material Symbols Fill on Hover Effect */
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            transition: font-variation-settings 0.25s cubic-bezier(0.2, 0, 0, 1), transform 0.2s ease;
-            display: inline-block;
-            vertical-align: middle;
+            transition: font-variation-settings 0.25s cubic-bezier(0.2, 0, 0, 1);
         }
         
-        .group:hover .material-symbols-outlined,
         button:hover .material-symbols-outlined,
         md-filled-button:hover .material-symbols-outlined,
-        md-outlined-button:hover .material-symbols-outlined,
-        md-icon-button:hover .material-symbols-outlined,
-        .material-symbols-outlined:hover {
+        md-outlined-button:hover .material-symbols-outlined {
             font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
-        }
-
-        /* Custom MD3 Switch - Fixed width & Overshoot Spring dynamics */
-        md-switch {
-            --md-switch-track-width: 52px !important;
-            --md-switch-track-height: 32px !important;
-            --md-switch-handle-width: 24px !important;
-            --md-switch-handle-height: 24px !important;
-            flex-shrink: 0 !important;
-            width: 52px !important;
-        }
-
-        /* Spring Overshoot transition for switch thumb */
-        md-switch::part(handle) {
-            transition: transform 0.45s cubic-bezier(0.34, 1.75, 0.64, 1), width 0.2s ease !important;
-        }
-
-        /* Small & Thin check/close icons inside md-switch */
-        md-switch [slot="icon"], md-switch [slot="selected-icon"], md-switch [slot="unselected-icon"] {
-            font-size: 14px !important;
-            font-weight: 300 !important;
-            --md-icon-size: 14px;
-            width: 14px;
-            height: 14px;
-        }
-
-        /* Custom range sliders for Equalizer */
-        input[type=range] {
-            -webkit-appearance: none;
-            background: #36343B;
-            border-radius: 999px;
-            height: 8px;
-        }
-
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 22px;
-            width: 22px;
-            border-radius: 50%;
-            background: #D0BCFF;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        input[type=range]::-webkit-slider-thumb:hover {
-            transform: scale(1.25);
-            background: #EADDFF;
-        }
-
-        /* Loading GIF Filter to blend with M3 Purple Accent */
-        .md3-loading-img {
-            mix-blend-mode: screen;
-            filter: brightness(1.8) hue-rotate(220deg) contrast(1.2);
-            object-fit: contain;
         }
     </style>
 </head>
-<body class="min-h-screen w-full flex flex-col justify-between selection:bg-m3-primaryContainer selection:text-m3-onPrimaryContainer">
+<body class="w-full h-full min-h-screen bg-m3-surface text-m3-onSurface p-4 sm:p-6 flex flex-col justify-center items-center select-none">
 
-    <header class="sticky top-0 z-50 w-full backdrop-blur-2xl bg-m3-surface/80 border-b border-m3-outline/20 px-4 sm:px-8 py-3">
-        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <!-- Brand Logo -->
-            <a href="#" class="flex items-center gap-3 group text-decoration-none">
-                <div class="w-11 h-11 rounded-2xl bg-m3-primaryContainer text-m3-onPrimaryContainer flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                    <span class="material-symbols-outlined text-2xl">graphic_eq</span>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-xl font-bold tracking-tight text-m3-onSurface flex items-center gap-2">
-                        SonicPulse
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-m3-tertiaryContainer text-m3-tertiary font-medium">M3 Pro</span>
-                    </span>
-                    <span class="text-[11px] text-m3-onSurfaceVariant font-medium tracking-wide">Next-Gen Audio Engine</span>
-                </div>
-            </a>
-
-            <!-- Navigation Chips -->
-            <nav class="hidden md:flex items-center gap-2">
-                <a href="#about" class="px-4 py-2 rounded-full text-sm font-medium text-m3-onSurfaceVariant hover:text-m3-onSurface hover:bg-m3-surfaceContainerHigh transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg">info</span> Giới Thiệu
-                </a>
-                <a href="#demo" class="px-4 py-2 rounded-full text-sm font-medium text-m3-onSurfaceVariant hover:text-m3-onSurface hover:bg-m3-surfaceContainerHigh transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg">play_circle</span> Live Studio
-                </a>
-                <a href="#eq" class="px-4 py-2 rounded-full text-sm font-medium text-m3-onSurfaceVariant hover:text-m3-onSurface hover:bg-m3-surfaceContainerHigh transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg">tune</span> Equalizer
-                </a>
-                <a href="#tech" class="px-4 py-2 rounded-full text-sm font-medium text-m3-onSurfaceVariant hover:text-m3-onSurface hover:bg-m3-surfaceContainerHigh transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg">memory</span> Công Nghệ
-                </a>
-            </nav>
-
-            <!-- Quick Action Buttons -->
-            <div class="flex items-center gap-3">
-                <md-outlined-button id="quickPlayHeaderBtn" class="hidden sm:inline-flex">
-                    <span class="material-symbols-outlined" slot="icon">bolt</span>
-                    Thử Ngay
-                </md-outlined-button>
-                <md-filled-button href="#download">
-                    <span class="material-symbols-outlined" slot="icon">download</span>
-                    Tải App
-                </md-filled-button>
-            </div>
+    <main class="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-6 my-auto">
+        
+        <!-- Header Avatar & Credit -->
+        <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-m3-surfaceContainer border border-m3-outline/20 shadow-sm">
+            <img src="https://lh3.googleusercontent.com/a/ACg8ocK1ghp_0vaVGK6czFhTwIBo0asg1GAhSQ4xwdm9kL9kAmu8BneC=s0-c" 
+                 alt="Phong VN Avatar" 
+                 class="w-6 h-6 rounded-full object-cover border border-m3-primary/40">
+            <span class="text-xs font-medium text-m3-onSurfaceVariant tracking-wide">Made by Phong VN</span>
         </div>
-    </header>
 
-    <!-- MAIN FULL-WIDTH CONTENT -->
-    <main class="w-full flex-grow">
+        <!-- App Branding -->
+        <div class="flex items-center justify-center gap-3">
+            <img src="music_note.png" 
+                 alt="Audio Player Logo" 
+                 class="w-10 h-10 object-contain drop-shadow"
+                 onerror="this.onerror=null; this.src='https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/music_note/default/48px.svg';">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-m3-onSurface">
+                Audio Player
+            </h1>
+        </div>
 
-        <section id="about" class="w-full px-4 sm:px-8 py-12 lg:py-20 max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                
-                <!-- Hero Left Info -->
-                <div class="lg:col-span-7 space-y-6">
-                    <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-m3-surfaceContainerHigh text-m3-primary border border-m3-outline/20 text-xs font-semibold">
-                        <!-- MD3 Loading Indicator GIF Integration -->
-                        <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" alt="Loading" class="h-5 w-auto md3-loading-img" />
-                        <span>SonicPulse Engine v3.5 Hi-Res Master Active</span>
-                    </div>
+        <!-- Action Buttons (Sending PostMessage) -->
+        <div class="flex flex-wrap items-center justify-center gap-3 w-full pt-1">
+            <md-filled-button id="whatsNewBtn" style="--md-filled-button-container-shape: 20px;">
+                <span class="material-symbols-outlined" slot="icon">auto_awesome</span>
+                What's New?
+            </md-filled-button>
 
-                    <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-tight text-m3-onSurface">
-                        Trải Nghiệm Âm Thanh <br>
-                        <span class="text-m3-primary">Đỉnh Cao Chuẩn MD3</span> Expressive
-                    </h1>
+            <md-outlined-button id="exploreMoreBtn" style="--md-outlined-button-container-shape: 20px;">
+                <span class="material-symbols-outlined" slot="icon">explore</span>
+                Khám phá thêm
+            </md-outlined-button>
+        </div>
 
-                    <p class="text-m3-onSurfaceVariant text-base sm:text-lg leading-relaxed max-w-2xl">
-                        Chào <strong>bro Phong</strong>! 🎧 <strong>SonicPulse Audio</strong> được tái thiết kế toàn bộ theo ngôn ngữ <strong>Material Design 3 Expressive</strong>. Tối ưu cực hạn bằng WebAudio DSP & WebAssembly, cho phép xử lý âm thanh 32-bit/384kHz không nén trực tiếp trên trình duyệt với độ trễ siêu thấp.
-                    </p>
-
-                    <!-- Expressive Metric Badges -->
-                    <div class="grid grid-cols-3 gap-4 p-4 rounded-4xl bg-m3-surfaceContainer border border-m3-outline/10">
-                        <div class="text-center sm:text-left">
-                            <div class="text-2xl sm:text-3xl font-black text-m3-primary">32-Bit</div>
-                            <div class="text-xs text-m3-onSurfaceVariant mt-0.5">Độ Sâu Âm Thanh</div>
-                        </div>
-                        <div class="text-center sm:text-left">
-                            <div class="text-2xl sm:text-3xl font-black text-m3-tertiary">0.1ms</div>
-                            <div class="text-xs text-m3-onSurfaceVariant mt-0.5">Độ Trễ Ultra Low</div>
-                        </div>
-                        <div class="text-center sm:text-left">
-                            <div class="text-2xl sm:text-3xl font-black text-emerald-400">100%</div>
-                            <div class="text-xs text-m3-onSurfaceVariant mt-0.5">Offline & Local</div>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="flex flex-wrap items-center gap-4 pt-2">
-                        <md-filled-button id="heroPlayBtn" style="--md-filled-button-container-height: 52px; --md-filled-button-container-shape: 28px;">
-                            <span class="material-symbols-outlined" slot="icon">headphones</span>
-                            Trải Nghiệm Studio Live
-                        </md-filled-button>
-                        <md-outlined-button href="#tech" style="--md-outlined-button-container-height: 52px; --md-outlined-button-container-shape: 28px;">
-                            <span class="material-symbols-outlined" slot="icon">code</span>
-                            Khám Phá Công Nghệ
-                        </md-outlined-button>
-                    </div>
-                </div>
-
-                <!-- Hero Right Vinyl Player Display Card -->
-                <div class="lg:col-span-5">
-                    <div class="p-8 rounded-5xl bg-m3-surfaceContainerHigh border border-m3-outline/20 shadow-2xl relative overflow-hidden group">
-                        
-                        <div class="flex items-center justify-between pb-4 border-b border-m3-outline/10">
-                            <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span>
-                                <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>
-                                <span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span>
-                            </div>
-                            <span class="text-xs font-mono text-m3-primary flex items-center gap-1">
-                                <span class="material-symbols-outlined text-sm">auto_awesome</span> M3 HARDWARE ACCEL
-                            </span>
-                        </div>
-
-                        <!-- Animated Vinyl Record -->
-                        <div class="my-8 text-center relative">
-                            <div class="w-48 h-48 sm:w-56 sm:h-56 mx-auto rounded-full bg-zinc-950 border-4 border-m3-outline/30 flex items-center justify-center shadow-2xl relative transition-transform duration-700" id="albumVinyl">
-                                <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-m3-primaryContainer via-m3-tertiaryContainer to-m3-primary flex items-center justify-center p-1 shadow-inner">
-                                    <div class="w-8 h-8 rounded-full bg-zinc-900 border border-white/20"></div>
-                                </div>
-                                <div class="absolute inset-3 rounded-full border border-white/5 pointer-events-none"></div>
-                                <div class="absolute inset-8 rounded-full border border-white/5 pointer-events-none"></div>
-                                <div class="absolute inset-12 rounded-full border border-white/5 pointer-events-none"></div>
-                            </div>
-
-                            <div class="mt-6 space-y-1">
-                                <h3 class="font-bold text-lg text-m3-onSurface">CyberSynth Expressive Wave</h3>
-                                <p class="text-xs text-m3-onSurfaceVariant">SonicPulse Audiophile Labs - 96kHz Lossless</p>
-                            </div>
-                        </div>
-
-                        <!-- M3 Toggle Switches Box -->
-                        <div class="p-4 rounded-3xl bg-m3-surfaceContainer flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-3">
-                                <span class="material-symbols-outlined text-m3-primary">spatial_audio_off</span>
-                                <div class="flex flex-col">
-                                    <span class="text-xs font-bold text-m3-onSurface">Hi-Res DSD Mode</span>
-                                    <span class="text-[10px] text-m3-onSurfaceVariant">Bật giải mã Bit-Perfect 24/192</span>
-                                </div>
-                            </div>
-                            
-                            <!-- MD3 Switch with Overshoot & Custom Icons -->
-                            <md-switch id="heroDsdSwitch" selected>
-                                <span class="material-symbols-outlined" slot="selected-icon">check</span>
-                                <span class="material-symbols-outlined" slot="unselected-icon">close</span>
-                            </md-switch>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="demo" class="w-full px-4 sm:px-8 py-12 max-w-7xl mx-auto">
-            <div class="p-6 sm:p-10 rounded-5xl bg-m3-surfaceContainer border border-m3-outline/20 relative overflow-hidden">
-                
-                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
-                    <div>
-                        <span class="text-m3-primary text-xs font-bold tracking-widest uppercase flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-sm">graphic_eq</span> Trình Phát Trực Tiếp
-                        </span>
-                        <h2 class="text-2xl sm:text-4xl font-extrabold text-m3-onSurface mt-1">Live Synthesizer & Canvas Visualizer</h2>
-                        <p class="text-m3-onSurfaceVariant text-xs sm:text-sm mt-1">Bấm nút Play để kích hoạt Web Audio API Synthesizer tạo sóng nhạc FFT thực tế!</p>
-                    </div>
-
-                    <!-- Mode Selector Buttons -->
-                    <div class="flex flex-wrap items-center gap-3">
-                        <md-filled-button id="synthMode1Btn">
-                            <span class="material-symbols-outlined" slot="icon">music_note</span>
-                            Synth Beat
-                        </md-filled-button>
-                        <md-outlined-button id="synthMode2Btn">
-                            <span class="material-symbols-outlined" slot="icon">water_drop</span>
-                            Ocean Ambient
-                        </md-outlined-button>
-                    </div>
-                </div>
-
-                <!-- Visualizer Canvas Container -->
-                <div class="relative w-full h-64 sm:h-80 bg-zinc-950 rounded-4xl overflow-hidden border border-m3-outline/20 flex items-center justify-center">
-                    <canvas id="visualizerCanvas" class="w-full h-full block"></canvas>
-
-                    <!-- Initial Play Overlay -->
-                    <div id="canvasOverlay" class="absolute inset-0 bg-zinc-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300">
-                        <div class="w-16 h-16 rounded-3xl bg-m3-primaryContainer text-m3-onPrimaryContainer flex items-center justify-center mb-4 cursor-pointer hover:scale-110 transition-transform">
-                            <span class="material-symbols-outlined text-3xl">play_arrow</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-m3-onSurface">Sẵn Sàng Trải Nghiệm Sound Engine</h3>
-                        <p class="text-xs text-m3-onSurfaceVariant max-w-md mt-2">Bấm nút bên dưới để khởi động bộ tổng hợp âm thanh và xem biểu đồ sóng nhạc FFT.</p>
-                        <div class="mt-6">
-                            <md-filled-button id="startAudioBtn">
-                                Kích Hoạt Audio Engine
-                            </md-filled-button>
-                        </div>
-                    </div>
-
-                    <!-- Playing Status Badge -->
-                    <div class="absolute top-4 left-4 bg-m3-surface/80 border border-m3-outline/20 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 text-xs text-m3-onSurface">
-                        <span id="audioStatusDot" class="w-2.5 h-2.5 rounded-full bg-zinc-600"></span>
-                        <span id="audioStatusText">Đang Tạm Dừng</span>
-                    </div>
-
-                    <div class="absolute top-4 right-4 bg-m3-surface/80 border border-m3-outline/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-mono text-m3-primary">
-                        FFT size: 256
-                    </div>
-                </div>
-
-                <!-- Player Control Bar -->
-                <div class="mt-6 p-6 rounded-4xl bg-m3-surfaceContainerHigh border border-m3-outline/10 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <!-- Audio Controls -->
-                    <div class="flex items-center gap-3">
-                        <md-icon-button id="prevBtn"><span class="material-symbols-outlined">skip_previous</span></md-icon-button>
-                        <md-filled-button id="mainPlayBtn" style="--md-filled-button-container-height: 56px; --md-filled-button-container-shape: 28px;">
-                            <span class="material-symbols-outlined text-2xl" id="playIcon" slot="icon">play_arrow</span>
-                            Phát / Dừng
-                        </md-filled-button>
-                        <md-icon-button id="nextBtn"><span class="material-symbols-outlined">skip_next</span></md-icon-button>
-                    </div>
-
-                    <!-- Slider Controls -->
-                    <div class="flex flex-wrap items-center justify-center gap-6 w-full md:w-auto">
-                        <!-- Volume -->
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-m3-onSurfaceVariant">volume_up</span>
-                            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.7" class="w-28 sm:w-36">
-                        </div>
-                        <div class="h-6 w-px bg-m3-outline/20 hidden sm:block"></div>
-                        <!-- Tempo / BPM -->
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-mono text-m3-onSurfaceVariant">BPM: <strong id="bpmDisplay" class="text-m3-primary">120</strong></span>
-                            <input type="range" id="bpmSlider" min="80" max="160" value="120" class="w-24">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="eq" class="w-full px-4 sm:px-8 py-12 max-w-7xl mx-auto">
-            <div class="text-center max-w-3xl mx-auto mb-12">
-                <span class="text-m3-tertiary text-xs font-bold tracking-widest uppercase">Parametric Equalizer</span>
-                <h2 class="text-3xl sm:text-5xl font-black text-m3-onSurface mt-2">Bộ Tinh Chỉnh Tần Số Studio</h2>
-                <p class="text-m3-onSurfaceVariant text-sm sm:text-base mt-2">
-                    Tối ưu hóa âm bass, dải mid và treble với thuật toán BiquadFilter Clipping-Free không làm móp méo âm thanh.
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <!-- EQ Sliders Card -->
-                <div class="lg:col-span-7 p-6 sm:p-8 rounded-5xl bg-m3-surfaceContainer border border-m3-outline/20 space-y-6">
-                    <div class="flex items-center justify-between pb-4 border-b border-m3-outline/10">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-m3-primary">sliders</span>
-                            <span class="font-bold text-m3-onSurface">Hardware 5-Band Parametric EQ</span>
-                        </div>
-                        <md-text-button id="resetEqBtn">
-                            <span class="material-symbols-outlined" slot="icon">restart_alt</span> Reset
-                        </md-text-button>
-                    </div>
-
-                    <!-- 5 Sliders Grid -->
-                    <div class="grid grid-cols-5 gap-3 sm:gap-6 h-64 items-end pb-4 pt-2">
-                        <!-- Band 60Hz -->
-                        <div class="flex flex-col items-center h-full justify-between">
-                            <span class="text-[11px] font-mono text-m3-primary font-bold" id="val60">0 dB</span>
-                            <input type="range" min="-12" max="12" value="4" class="eq-slider h-40 -rotate-90 origin-center my-auto w-32" data-freq="60">
-                            <span class="text-xs font-bold text-m3-onSurface">60 Hz</span>
-                            <span class="text-[10px] text-m3-onSurfaceVariant">SUB</span>
-                        </div>
-                        <!-- Band 250Hz -->
-                        <div class="flex flex-col items-center h-full justify-between">
-                            <span class="text-[11px] font-mono text-m3-primary font-bold" id="val250">0 dB</span>
-                            <input type="range" min="-12" max="12" value="2" class="eq-slider h-40 -rotate-90 origin-center my-auto w-32" data-freq="250">
-                            <span class="text-xs font-bold text-m3-onSurface">250 Hz</span>
-                            <span class="text-[10px] text-m3-onSurfaceVariant">BASS</span>
-                        </div>
-                        <!-- Band 1kHz -->
-                        <div class="flex flex-col items-center h-full justify-between">
-                            <span class="text-[11px] font-mono text-m3-primary font-bold" id="val1k">0 dB</span>
-                            <input type="range" min="-12" max="12" value="0" class="eq-slider h-40 -rotate-90 origin-center my-auto w-32" data-freq="1000">
-                            <span class="text-xs font-bold text-m3-onSurface">1 kHz</span>
-                            <span class="text-[10px] text-m3-onSurfaceVariant">MID</span>
-                        </div>
-                        <!-- Band 4kHz -->
-                        <div class="flex flex-col items-center h-full justify-between">
-                            <span class="text-[11px] font-mono text-m3-primary font-bold" id="val4k">0 dB</span>
-                            <input type="range" min="-12" max="12" value="3" class="eq-slider h-40 -rotate-90 origin-center my-auto w-32" data-freq="4000">
-                            <span class="text-xs font-bold text-m3-onSurface">4 kHz</span>
-                            <span class="text-[10px] text-m3-onSurfaceVariant">PRESENCE</span>
-                        </div>
-                        <!-- Band 16kHz -->
-                        <div class="flex flex-col items-center h-full justify-between">
-                            <span class="text-[11px] font-mono text-m3-primary font-bold" id="val16k">0 dB</span>
-                            <input type="range" min="-12" max="12" value="5" class="eq-slider h-40 -rotate-90 origin-center my-auto w-32" data-freq="16000">
-                            <span class="text-xs font-bold text-m3-onSurface">16 kHz</span>
-                            <span class="text-[10px] text-m3-onSurfaceVariant">TREBLE</span>
-                        </div>
-                    </div>
-
-                    <!-- Presets Selector -->
-                    <div class="pt-4 border-t border-m3-outline/10 flex flex-wrap items-center gap-2">
-                        <span class="text-xs text-m3-onSurfaceVariant font-medium mr-2">Presets nhanh:</span>
-                        <md-filter-chip class="eq-preset-chip" data-preset="bassboost" label="Bass Boost"></md-filter-chip>
-                        <md-filter-chip class="eq-preset-chip" data-preset="vocal" label="Vocal Clarity"></md-filter-chip>
-                        <md-filter-chip class="eq-preset-chip" data-preset="electronic" label="EDM Club"></md-filter-chip>
-                        <md-filter-chip class="eq-preset-chip" data-preset="flat" label="Flat"></md-filter-chip>
-                    </div>
-                </div>
-
-                <!-- Switches & Feature Highlights -->
-                <div class="lg:col-span-5 space-y-4">
-                    <!-- MD3 Switch Card 1 -->
-                    <div class="p-6 rounded-4xl bg-m3-surfaceContainer border border-m3-outline/20 flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-m3-primaryContainer text-m3-onPrimaryContainer flex items-center justify-center text-xl">
-                                <span class="material-symbols-outlined">3d_rotation</span>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-m3-onSurface">Spatial 3D Audio</h4>
-                                <p class="text-xs text-m3-onSurfaceVariant mt-0.5">Giả lập phòng thu không gian 360° HRTF</p>
-                            </div>
-                        </div>
-                        <!-- Custom MD3 Overshoot Switch -->
-                        <md-switch id="spatialSwitch" selected>
-                            <span class="material-symbols-outlined" slot="selected-icon">check</span>
-                            <span class="material-symbols-outlined" slot="unselected-icon">close</span>
-                        </md-switch>
-                    </div>
-
-                    <!-- MD3 Switch Card 2 -->
-                    <div class="p-6 rounded-4xl bg-m3-surfaceContainer border border-m3-outline/20 flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-m3-tertiaryContainer text-m3-tertiary flex items-center justify-center text-xl">
-                                <span class="material-symbols-outlined">graphic_eq</span>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-m3-onSurface">Tube Amp Warmth</h4>
-                                <p class="text-xs text-m3-onSurfaceVariant mt-0.5">Tạo độ ấm âm thanh ampli đèn analog</p>
-                            </div>
-                        </div>
-                        <!-- Custom MD3 Overshoot Switch -->
-                        <md-switch id="tubeSwitch">
-                            <span class="material-symbols-outlined" slot="selected-icon">check</span>
-                            <span class="material-symbols-outlined" slot="unselected-icon">close</span>
-                        </md-switch>
-                    </div>
-
-                    <!-- MD3 Switch Card 3 -->
-                    <div class="p-6 rounded-4xl bg-m3-surfaceContainer border border-m3-outline/20 flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-950 text-emerald-400 flex items-center justify-center text-xl">
-                                <span class="material-symbols-outlined">shield</span>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-m3-onSurface">Bit-Perfect Pass</h4>
-                                <p class="text-xs text-m3-onSurfaceVariant mt-0.5">Truyền thẳng dữ liệu tới DAC gắn ngoài</p>
-                            </div>
-                        </div>
-                        <!-- Custom MD3 Overshoot Switch -->
-                        <md-switch id="bitPerfectSwitch" selected>
-                            <span class="material-symbols-outlined" slot="selected-icon">check</span>
-                            <span class="material-symbols-outlined" slot="unselected-icon">close</span>
-                        </md-switch>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="tech" class="w-full px-4 sm:px-8 py-12 max-w-7xl mx-auto border-t border-m3-outline/10">
-            <div class="text-center max-w-3xl mx-auto mb-12">
-                <span class="text-m3-primary text-xs font-bold tracking-widest uppercase">Nền Tảng Công Nghệ</span>
-                <h2 class="text-3xl sm:text-5xl font-black text-m3-onSurface mt-2">Cấu Trúc Tối Ưu Cực Hạn</h2>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="p-6 rounded-4xl bg-m3-surfaceContainer border border-m3-outline/20 hover:border-m3-primary transition-colors">
-                    <span class="material-symbols-outlined text-3xl text-m3-primary mb-3">developer_board</span>
-                    <h3 class="font-bold text-lg text-m3-onSurface">C++ WebAssembly</h3>
-                    <p class="text-xs text-m3-onSurfaceVariant mt-2 leading-relaxed">
-                        Kernel xử lý dải tần được biên dịch từ C++ sang WebAssembly, cho tốc độ xử lý nhanh hơn 10x so với JS thuần.
-                    </p>
-                </div>
-
-                <div class="p-6 rounded-4xl bg-m3-surfaceContainer border border-m3-outline/20 hover:border-m3-primary transition-colors">
-                    <span class="material-symbols-outlined text-3xl text-m3-tertiary mb-3">waves</span>
-                    <h3 class="font-bold text-lg text-m3-onSurface">FFT 8192 Resolution</h3>
-                    <p class="text-xs text-m3-onSurfaceVariant mt-2 leading-relaxed">
-                        Phân tích quang phổ âm thanh với 8192 điểm ảnh thời gian thực, tái hiện visualizer cực nét.
-                    </p>
-                </div>
-
-                <div class="p-6 rounded-4xl bg-m3-surfaceContainer border border-m3-outline/20 hover:border-m3-primary transition-colors">
-                    <span class="material-symbols-outlined text-3xl text-emerald-400 mb-3">speed</span>
-                    <h3 class="font-bold text-lg text-m3-onSurface">120 FPS WebGL</h3>
-                    <p class="text-xs text-m3-onSurfaceVariant mt-2 leading-relaxed">
-                        Đồ họa visualizer được tăng tốc phần cứng bằng GPU, giữ mượt mà 120 FPS trên mọi màn hình high-refresh-rate.
-                    </p>
-                </div>
-
-                <div class="p-6 rounded-4xl bg-m3-surfaceContainer border border-m3-outline/20 hover:border-m3-primary transition-colors">
-                    <span class="material-symbols-outlined text-3xl text-amber-400 mb-3">lock</span>
-                    <h3 class="font-bold text-lg text-m3-onSurface">Quyền Riêng Tư 100%</h3>
-                    <p class="text-xs text-m3-onSurfaceVariant mt-2 leading-relaxed">
-                        Tất cả tập tin âm thanh xử lý hoàn toàn cục bộ trên thiết bị của bro, không gửi bất kỳ dữ liệu nào ra bên ngoài.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <section id="download" class="w-full px-4 sm:px-8 py-12 max-w-7xl mx-auto">
-            <div class="p-8 sm:p-14 rounded-5xl bg-gradient-to-r from-m3-primaryContainer via-m3-surfaceContainerHigh to-m3-tertiaryContainer border border-m3-outline/30 text-center relative overflow-hidden space-y-6">
-                <h2 class="text-3xl sm:text-5xl font-black text-m3-onSurface tracking-tight">
-                    Sẵn Sàng Nâng Tầm Đôi Tai Của Bro?
-                </h2>
-                <p class="text-m3-onSurfaceVariant text-sm sm:text-base max-w-2xl mx-auto">
-                    Tải ngay <strong>SonicPulse Audio</strong> cho Windows, macOS, Linux hoặc trải nghiệm bản PWA trực tiếp trên trình duyệt mobile!
-                </p>
-
-                <div class="flex flex-wrap items-center justify-center gap-4 pt-4">
-                    <md-filled-button style="--md-filled-button-container-height: 52px; --md-filled-button-container-shape: 28px;">
-                        <span class="material-symbols-outlined" slot="icon">desktop_windows</span>
-                        Tải Cho Windows
-                    </md-filled-button>
-                    <md-outlined-button style="--md-outlined-button-container-height: 52px; --md-outlined-button-container-shape: 28px;">
-                        <span class="material-symbols-outlined" slot="icon">laptop_mac</span>
-                        Tải Cho macOS
-                    </md-outlined-button>
-                    <md-outlined-button style="--md-outlined-button-container-height: 52px; --md-outlined-button-container-shape: 28px;">
-                        <span class="material-symbols-outlined" slot="icon">terminal</span>
-                        Linux AppImage
-                    </md-outlined-button>
-                </div>
-            </div>
-        </section>
+        <!-- App Description Box -->
+        <div class="w-full p-5 sm:p-6 rounded-3xl bg-m3-surfaceContainer border border-m3-outline/20 text-left space-y-4 shadow-lg backdrop-blur-md">
+            <p class="text-xs sm:text-sm text-m3-onSurfaceVariant leading-relaxed">
+                Audio Player là trình phát nhạc cục bộ chạy hoàn toàn trên trình duyệt (không cần cài đặt, không server) — mở nhạc bằng cách chọn file, kéo-thả, hoặc double-click mở trực tiếp khi cài như PWA. Ngoài phát nhạc cơ bản (Shuffle, Repeat, tua nhanh, phím tắt đầy đủ), điểm đặc biệt là bộ công cụ chỉnh sửa metadata trực tiếp lên file MP3 gốc: sửa Tên bài, Nghệ sĩ, Album, Genre, Composer, Lyric (embed + đồng bộ theo thời gian), cắt/xoay ảnh bìa — và ghi đè thẳng vào file thật trên ổ đĩa (không phải bản sao tạm) nhờ File System Access API.
+            </p>
+            <p class="text-xs sm:text-sm text-m3-onSurfaceVariant leading-relaxed">
+                Hỗ trợ hiển thị lyric đồng bộ ở màn hình chính, chế độ Picture-in-Picture và Full screen riêng biệt, giao diện Material Design 3 với nhiều theme màu tuỳ chỉnh (sáng/tối/hệ thống), cùng các tuỳ chọn tối ưu hiệu năng (giảm hiệu ứng chuyển động/mờ) cho máy cấu hình thấp. Tìm kiếm playlist thông minh (không dấu vẫn ra kết quả, tìm sâu cả Genre/Composer), có sẵn kênh gửi phản hồi/báo lỗi tích hợp ngay trong app.
+            </p>
+        </div>
 
     </main>
 
-    <footer class="w-full border-t border-m3-outline/10 bg-m3-surfaceContainer py-8 px-4 sm:px-8 text-xs text-m3-onSurfaceVariant">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-xl bg-m3-primaryContainer text-m3-onPrimaryContainer flex items-center justify-center font-bold">
-                    <span class="material-symbols-outlined text-sm">graphic_eq</span>
-                </div>
-                <span class="font-bold text-m3-onSurface text-sm">SonicPulse M3 Engine</span>
-            </div>
-            <div>&copy; 2026 SonicPulse Audio Inc. Thiết kế riêng theo phong cách MD3 Expressive.</div>
-            <div class="flex items-center gap-4">
-                <a href="#" class="hover:text-m3-onSurface transition-colors">Bảo Mật</a>
-                <a href="#" class="hover:text-m3-onSurface transition-colors">Điều Khoản</a>
-                <a href="#" class="hover:text-m3-onSurface transition-colors">Liên Hệ</a>
-            </div>
-        </div>
-    </footer>
-
     <script>
-        // Web Audio API Synthesizer & Visualizer Logic
-        let audioCtx = null;
-        let analyser = null;
-        let isPlaying = false;
-        let currentMode = 'synth';
-        let synthInterval = null;
-        let bpm = 120;
-        let gainNode = null;
-        let eqNodes = {};
-
-        const canvas = document.getElementById('visualizerCanvas');
-        const canvasCtx = canvas.getContext('2d');
-        const playIcon = document.getElementById('playIcon');
-        const audioStatusText = document.getElementById('audioStatusText');
-        const audioStatusDot = document.getElementById('audioStatusDot');
-        const albumVinyl = document.getElementById('albumVinyl');
-
-        // Dynamic Canvas Resize
-        function resizeCanvas() {
-            if (canvas.parentElement) {
-                canvas.width = canvas.parentElement.clientWidth;
-                canvas.height = canvas.parentElement.clientHeight;
-            }
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Audio Context Initialization
-        function initAudioContext() {
-            if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
-
-                analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 256;
-
-                gainNode = audioCtx.createGain();
-                gainNode.gain.value = parseFloat(document.getElementById('volumeSlider').value);
-
-                // Create Equalizer Filters
-                const freqs = [60, 250, 1000, 4000, 16000];
-                let lastNode = gainNode;
-
-                freqs.forEach(freq => {
-                    const filter = audioCtx.createBiquadFilter();
-                    filter.type = (freq <= 60) ? 'lowshelf' : (freq >= 16000) ? 'highshelf' : 'peaking';
-                    filter.frequency.value = freq;
-                    filter.gain.value = 0;
-                    eqNodes[freq] = filter;
-
-                    lastNode.connect(filter);
-                    lastNode = filter;
-                });
-
-                lastNode.connect(analyser);
-                analyser.connect(audioCtx.destination);
-            }
-
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
-
-        // Synthesizer Note Sequencer
-        const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
-        let noteIdx = 0;
-
-        function playSynthStep() {
-            if (!isPlaying || !audioCtx) return;
-
-            const osc = audioCtx.createOscillator();
-            const noteGain = audioCtx.createGain();
-
-            if (currentMode === 'synth') {
-                osc.type = noteIdx % 2 === 0 ? 'sawtooth' : 'triangle';
-                const freq = notes[Math.floor(Math.random() * notes.length)];
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-                noteGain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-                noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-
-                osc.connect(noteGain);
-                noteGain.connect(gainNode);
-
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.35);
+        // Send postMessage to parent app on button click
+        document.getElementById('whatsNewBtn').addEventListener('click', () => {
+            if (window.parent) {
+                window.parent.postMessage('whatsnew', '*');
             } else {
-                osc.type = 'sine';
-                const freq = 130 + Math.sin(audioCtx.currentTime) * 50;
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-                noteGain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
-
-                osc.connect(noteGain);
-                noteGain.connect(gainNode);
-
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.8);
+                window.postMessage('whatsnew', '*');
             }
+        });
 
-            noteIdx++;
-        }
-
-        function startAudioLoop() {
-            if (synthInterval) clearInterval(synthInterval);
-            const intervalMs = (60 / bpm) * 1000 / 2;
-            synthInterval = setInterval(playSynthStep, intervalMs);
-        }
-
-        function togglePlay() {
-            initAudioContext();
-
-            if (isPlaying) {
-                isPlaying = false;
-                if (synthInterval) clearInterval(synthInterval);
-                playIcon.innerText = 'play_arrow';
-                audioStatusText.innerText = 'Đang Tạm Dừng';
-                audioStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-zinc-600';
-                albumVinyl.style.transform = 'rotate(0deg)';
+        document.getElementById('exploreMoreBtn').addEventListener('click', () => {
+            if (window.parent) {
+                window.parent.postMessage('explore more', '*');
             } else {
-                isPlaying = true;
-                startAudioLoop();
-                playIcon.innerText = 'pause';
-                audioStatusText.innerText = 'Đang Phát: Live Synth Wave';
-                audioStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping';
-                
-                document.getElementById('canvasOverlay').classList.add('opacity-0', 'pointer-events-none');
+                window.postMessage('explore more', '*');
             }
-        }
-
-        // Draw Canvas FFT Visualizer
-        function drawVisualizer() {
-            requestAnimationFrame(drawVisualizer);
-
-            const width = canvas.width;
-            const height = canvas.height;
-
-            canvasCtx.fillStyle = 'rgba(9, 9, 11, 0.3)';
-            canvasCtx.fillRect(0, 0, width, height);
-
-            if (isPlaying) {
-                albumVinyl.style.transform = `rotate(${(Date.now() / 20) % 360}deg)`;
-            }
-
-            if (!analyser) {
-                // Static subtle wave when idle
-                canvasCtx.beginPath();
-                canvasCtx.strokeStyle = 'rgba(208, 188, 255, 0.2)';
-                canvasCtx.lineWidth = 2;
-                for (let x = 0; x < width; x += 10) {
-                    const y = height / 2 + Math.sin(x * 0.02 + Date.now() * 0.002) * 8;
-                    if (x === 0) canvasCtx.moveTo(x, y);
-                    else canvasCtx.lineTo(x, y);
-                }
-                canvasCtx.stroke();
-                return;
-            }
-
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-
-            const barWidth = (width / bufferLength) * 2.2;
-            let barHeight;
-            let x = 0;
-
-            for (let i = 0; i < bufferLength; i++) {
-                barHeight = (dataArray[i] / 255) * (height * 0.8);
-
-                // M3 Expressive Gradient Colors
-                const gradient = canvasCtx.createLinearGradient(0, height, 0, 0);
-                gradient.addColorStop(0, '#4F378B');
-                gradient.addColorStop(0.5, '#D0BCFF');
-                gradient.addColorStop(1, '#EFB8C8');
-
-                canvasCtx.fillStyle = gradient;
-                canvasCtx.beginPath();
-                canvasCtx.roundRect(x, height - barHeight, barWidth - 2, barHeight, [6, 6, 0, 0]);
-                canvasCtx.fill();
-
-                x += barWidth;
-            }
-        }
-        drawVisualizer();
-
-        // Event Listeners
-        document.getElementById('startAudioBtn').addEventListener('click', togglePlay);
-        document.getElementById('mainPlayBtn').addEventListener('click', togglePlay);
-        document.getElementById('heroPlayBtn').addEventListener('click', () => {
-            document.getElementById('demo').scrollIntoView({ behavior: 'smooth' });
-            if (!isPlaying) togglePlay();
-        });
-        document.getElementById('quickPlayHeaderBtn').addEventListener('click', () => {
-            document.getElementById('demo').scrollIntoView({ behavior: 'smooth' });
-            if (!isPlaying) togglePlay();
-        });
-
-        // Mode Toggles
-        document.getElementById('synthMode1Btn').addEventListener('click', () => {
-            currentMode = 'synth';
-        });
-        document.getElementById('synthMode2Btn').addEventListener('click', () => {
-            currentMode = 'ocean';
-        });
-
-        // Volume & BPM Sliders
-        document.getElementById('volumeSlider').addEventListener('input', (e) => {
-            if (gainNode) gainNode.gain.value = parseFloat(e.target.value);
-        });
-
-        document.getElementById('bpmSlider').addEventListener('input', (e) => {
-            bpm = parseInt(e.target.value);
-            document.getElementById('bpmDisplay').innerText = bpm;
-            if (isPlaying) startAudioLoop();
-        });
-
-        // Equalizer Sliders
-        document.querySelectorAll('.eq-slider').forEach(slider => {
-            slider.addEventListener('input', (e) => {
-                const freq = e.target.getAttribute('data-freq');
-                const val = parseFloat(e.target.value);
-                
-                if (freq === '60') document.getElementById('val60').innerText = (val > 0 ? '+' : '') + val + ' dB';
-                if (freq === '250') document.getElementById('val250').innerText = (val > 0 ? '+' : '') + val + ' dB';
-                if (freq === '1000') document.getElementById('val1k').innerText = (val > 0 ? '+' : '') + val + ' dB';
-                if (freq === '4000') document.getElementById('val4k').innerText = (val > 0 ? '+' : '') + val + ' dB';
-                if (freq === '16000') document.getElementById('val16k').innerText = (val > 0 ? '+' : '') + val + ' dB';
-
-                if (eqNodes[freq]) {
-                    eqNodes[freq].gain.value = val;
-                }
-            });
-        });
-
-        // EQ Presets
-        document.querySelectorAll('.eq-preset-chip').forEach(chip => {
-            chip.addEventListener('click', (e) => {
-                const preset = e.currentTarget.getAttribute('data-preset');
-                let values = [0, 0, 0, 0, 0];
-
-                if (preset === 'bassboost') values = [8, 5, 0, -1, -2];
-                if (preset === 'vocal') values = [-2, 0, 4, 3, 1];
-                if (preset === 'electronic') values = [6, 4, 0, 3, 6];
-                if (preset === 'flat') values = [0, 0, 0, 0, 0];
-
-                const sliders = document.querySelectorAll('.eq-slider');
-                sliders.forEach((slider, idx) => {
-                    slider.value = values[idx];
-                    slider.dispatchEvent(new Event('input'));
-                });
-            });
-        });
-
-        document.getElementById('resetEqBtn').addEventListener('click', () => {
-            document.querySelectorAll('.eq-slider').forEach(slider => {
-                slider.value = 0;
-                slider.dispatchEvent(new Event('input'));
-            });
         });
     </script>
 </body>
