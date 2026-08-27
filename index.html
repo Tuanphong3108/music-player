@@ -399,7 +399,10 @@
             background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);
             border-bottom: 1px solid var(--md-sys-color-outline);
         }
-        .cl-header h2 { margin: 0; font-size: 20px; font-weight: 700; font-family: 'Minecraft', sans-serif; }
+        .cl-header h2 { margin: 0; font-size: 20px; font-weight: 700; font-family: 'Minecraft', sans-serif; transition: font-size 0.2s ease; }
+        #cl-back-btn-wrap.show { width: 44px !important; }
+        #cl-back-btn-wrap.show #cl-back-btn { transform: scale(1) !important; }
+        #cl-madeby-bar.show { transform: translateY(0) !important; }
         .cl-iframe-wrap { position: relative; flex: 1; display: flex; overflow: hidden; }
         .cl-iframe { flex: 1; width: 100%; border: none; background: var(--md-sys-color-surface); }
 
@@ -737,27 +740,35 @@
         </div>
     </div>
 
-    <!-- Modal Changelog -->
+    <!-- Modal About / What's New / More apps (dùng chung 1 dialog, điều hướng qua postMessage) -->
     <div id="changelog-overlay" class="cl-overlay">
         <div id="changelog-dialog" class="cl-dialog">
             <div class="cl-header">
-                <h2>What's New</h2>
+                <div style="display:flex; align-items:center; overflow:hidden;">
+                    <div id="cl-back-btn-wrap" style="width:0; overflow:hidden; flex-shrink:0; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+                        <button class="btn-m3" id="cl-back-btn" title="Quay lại" style="width:40px; height:40px; transform:scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                        </button>
+                    </div>
+                    <h2 id="cl-title" style="white-space:nowrap;">About</h2>
+                </div>
                 <button class="btn-m3" id="cl-close-btn" title="Đóng"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="cl-iframe-wrap">
-                <iframe src="changelogAUDIOPLAYER_V2026.08.26-build135608.html" class="cl-iframe"></iframe>
+                <iframe src="about.html" class="cl-iframe"></iframe>
                 <div id="cl-loading-overlay">
                     <div id="cl-loading-spinner" style="display:flex; flex-direction:column; gap:16px; justify-content:center; align-items:center;">
                         <md-circular-progress indeterminate></md-circular-progress>
                     </div>
                     <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
                         <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
-                        <p style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Không thể tải What's New, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
+                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Mục này đang tải lâu hơn dự kiến, vui lòng đợi thêm 1 lúc, thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
                         <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
                             <span class="material-symbols-outlined">feedback</span> Gửi phản hồi
                         </button>
                     </div>
                 </div>
+                <div id="cl-madeby-bar" style="position:absolute; left:0; right:0; bottom:0; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); padding:14px; text-align:center; font-size:13px; font-weight:700; font-family:'Minecraft'; letter-spacing:1px; z-index:11;">Made by Phong VN</div>
             </div>
         </div>
     </div>
@@ -1047,7 +1058,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.08.26-build135608</span>
+                <span>AUDIOPLAYER V2026..08.27-build124145</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1058,7 +1069,7 @@
                 </div>
                 <button class="btn-m3" id="settings-btn" title="Cài đặt"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi"><span class="material-symbols-outlined">feedback</span></button>
-                <button class="btn-m3" id="changelog-btn" title="Cập nhật"><span class="material-symbols-outlined">release_alert</span></button>
+                <button class="btn-m3" id="changelog-btn" title="About"><span class="material-symbols-outlined">info</span></button>
                 
                 <!-- Nút add_circle kích hoạt Dropdown API File System tiến tiến -->
                 <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc"><span class="material-symbols-outlined">add_circle</span></button>
@@ -3326,7 +3337,23 @@
         const clLoadingSpinner = document.getElementById('cl-loading-spinner');
         const clLoadingError = document.getElementById('cl-loading-error');
 
-        // Gửi theme hiện tại ("dark" hoặc "light") sang trang What's New qua postMessage
+        const clBackBtnWrap = document.getElementById('cl-back-btn-wrap');
+        const clBackBtn = document.getElementById('cl-back-btn');
+        const clTitle = document.getElementById('cl-title');
+        const clMadeByBar = document.getElementById('cl-madeby-bar');
+        const clLoadingErrorText = document.getElementById('cl-loading-error-text');
+
+        // 3 "trang" dùng chung 1 dialog, điều hướng giữa chúng qua postMessage từ bên
+        // trong iframe (về.html tự gửi 'whatsnew' / 'explore more' khi người dùng bấm
+        // vào các mục tương ứng bên trong nó)
+        const CL_PAGES = {
+            about:    { url: 'about.html', title: 'About', errorLabel: 'About', showBack: false, showMadeBy: false },
+            whatsnew: { url: 'changelog.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
+            more:     { url: 'https://tuanphong3108.github.io/apps.html?is_embed=true', title: 'More apps', errorLabel: 'More apps', showBack: true, showMadeBy: true }
+        };
+        let clPage = 'about';
+
+        // Gửi theme hiện tại ("dark" hoặc "light") sang trang đang mở qua postMessage
         function sendThemeToChangelog() {
             if (!clIframe.contentWindow) return;
             clIframe.contentWindow.postMessage(resolveThemeMode(settings.theme), '*');
@@ -3359,6 +3386,40 @@
             }
         } catch (err) { /* bỏ qua, chờ sự kiện load nếu không truy cập được contentDocument */ }
 
+        // Điều hướng sang 1 trang khác trong cùng dialog: đổi header (title + Back button
+        // trượt/zoom vào để đẩy title sang phải), thanh "Made by Phong VN" trượt lên nếu
+        // cần, rồi nạp URL tương ứng vào iframe kèm cơ chế loading/timeout 5s y hệt cũ
+        function clNavigateTo(pageKey) {
+            const page = CL_PAGES[pageKey];
+            if (!page) return;
+            clPage = pageKey;
+
+            clTitle.innerText = page.title;
+            clBackBtnWrap.classList.toggle('show', page.showBack);
+            clMadeByBar.classList.toggle('show', page.showMadeBy);
+            clLoadingErrorText.innerText = 'Mục ' + page.errorLabel + ' đang tải lâu hơn dự kiến, vui lòng đợi thêm 1 lúc, thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"';
+
+            clLoaded = false;
+            if (clLoadTimeoutId) clearTimeout(clLoadTimeoutId);
+            hideChangelogLoadError();
+            clLoadingOverlay.classList.remove('hidden');
+            clIframe.src = page.url;
+
+            clLoadTimeoutId = setTimeout(() => {
+                if (!clLoaded) showChangelogLoadError();
+            }, 5000);
+        }
+
+        clBackBtn.addEventListener('click', () => clNavigateTo('about'));
+
+        // Nhận lệnh điều hướng từ bên trong iframe (About tự gửi ra khi người dùng bấm
+        // vào mục "What's New" hoặc "Explore more" bên trong nó)
+        window.addEventListener('message', (e) => {
+            if (!clOverlay.classList.contains('open')) return;
+            if (e.data === 'whatsnew') clNavigateTo('whatsnew');
+            else if (e.data === 'explore more') clNavigateTo('more');
+        });
+
         clBtn.addEventListener('click', () => {
             const rect = clBtn.getBoundingClientRect();
             const btnCx = rect.left + rect.width / 2;
@@ -3367,7 +3428,7 @@
             const originY = btnCy - window.innerHeight / 2;
             clDialog.style.transformOrigin = `calc(50% + ${originX}px) calc(50% + ${originY}px)`;
 
-            // Phủ lớp loading mỗi lần mở, trừ khi trang đã tải xong từ trước
+            // Phủ lớp loading mỗi lần mở, trừ khi trang hiện tại đã tải xong từ trước
             if (clLoaded) {
                 clLoadingOverlay.classList.add('hidden');
                 sendThemeToChangelog();
@@ -3375,7 +3436,7 @@
                 hideChangelogLoadError();
                 clLoadingOverlay.classList.remove('hidden');
 
-                // Quá 5 giây mà What's New vẫn chưa tải xong -> báo lỗi kèm nút Gửi phản hồi
+                // Quá 5 giây mà trang vẫn chưa tải xong -> báo lỗi kèm nút Gửi phản hồi
                 if (clLoadTimeoutId) clearTimeout(clLoadTimeoutId);
                 clLoadTimeoutId = setTimeout(() => {
                     if (!clLoaded) showChangelogLoadError();
@@ -3392,6 +3453,8 @@
 
         clCloseBtn.addEventListener('click', () => {
             clOverlay.classList.remove('open');
+            // Đóng dialog thì tự quay về About, để lần mở sau luôn bắt đầu lại từ About
+            if (clPage !== 'about') clNavigateTo('about');
             setTimeout(() => {
                 clBtn.classList.add('cl-bounce-anim');
                 setTimeout(() => clBtn.classList.remove('cl-bounce-anim'), 600);
@@ -4465,7 +4528,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.08.26-build135608';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V_INDEV-build_NOT_STABLE';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'
