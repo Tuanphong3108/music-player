@@ -1,4 +1,4 @@
-const CACHE_NAME = 'audio-player-v2026.08.26-build135608';
+const CACHE_NAME = 'audio-player-v2026.08.27-build124145';
 
 // ===== FILE TĨNH PRECACHE =====
 const STATIC_ASSETS = [
@@ -34,7 +34,7 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// ===== FETCH – CACHE MỌI THỨ CHO MẸ DÙNG OFFLINE =====
+// ===== FETCH – CACHE MỌI THỨ ĐỂ DÙNG OFFLINE =====
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   e.respondWith(
@@ -57,7 +57,7 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
-// ===== SINGLETON LOGIC - GỘP CỬA SỔ KHI MẸ BẤM NOTIFICATION HOẶC ICON =====
+// ===== SINGLETON LOGIC - GỘP CỬA SỔ KHI BẤM FILE HOẶC ICON =====
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
