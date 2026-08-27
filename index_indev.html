@@ -762,7 +762,7 @@
                     </div>
                     <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
                         <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
-                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
+                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Mục này đang tải lâu hơn dự kiến, vui lòng đợi thêm 1 lúc, thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
                         <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
                             <span class="material-symbols-outlined">feedback</span> Gửi phản hồi
                         </button>
@@ -3397,7 +3397,7 @@
             clTitle.innerText = page.title;
             clBackBtnWrap.classList.toggle('show', page.showBack);
             clMadeByBar.classList.toggle('show', page.showMadeBy);
-            clLoadingErrorText.innerText = 'Không thể tải ' + page.errorLabel + ', vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"';
+            clLoadingErrorText.innerText = 'Mục ' + page.errorLabel + ' đang tải lâu hơn dự kiến, vui lòng đợi thêm 1 lúc, thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"';
 
             clLoaded = false;
             if (clLoadTimeoutId) clearTimeout(clLoadTimeoutId);
