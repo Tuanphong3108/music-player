@@ -5,16 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - Audio Player</title>
     
+    <!-- Google Sans Flex Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols Outlined -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Material Design 3 Web Components -->
     <script type="module">
         import 'https://esm.run/@material/web/all.js';
     </script>
 
+    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -48,17 +55,23 @@
         :root {
             --m3-surface: #FEF7FF;
             --m3-surface-container: #F3EDF7;
+            --m3-surface-container-high: #ECE6F0;
             --m3-on-surface: #1D1B20;
             --m3-on-surface-variant: #49454F;
             --m3-outline: #79747E;
+            --m3-primary: #6750A4;
+            --m3-on-primary: #FFFFFF;
         }
 
         :root.dark {
             --m3-surface: #141218;
             --m3-surface-container: #211F26;
+            --m3-surface-container-high: #2B2930;
             --m3-on-surface: #E6E0E9;
             --m3-on-surface-variant: #CAC4D0;
             --m3-outline: #938F99;
+            --m3-primary: #D0BCFF;
+            --m3-on-primary: #381E72;
         }
 
         body {
@@ -67,7 +80,8 @@
             color: var(--m3-on-surface);
             margin: 0;
             padding: 0;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.3s cubic-bezier(0.2, 0, 0, 1), color 0.3s cubic-bezier(0.2, 0, 0, 1);
+            overflow-x: hidden;
         }
 
         /* Material Symbols Fill on Hover Effect */
@@ -77,36 +91,57 @@
         }
         
         button:hover .material-symbols-outlined,
+        .feature-card:hover .material-symbols-outlined,
         md-filled-button:hover .material-symbols-outlined,
-        md-outlined-button:hover .material-symbols-outlined {
+        md-outlined-button:hover .material-symbols-outlined,
+        md-icon-button:hover .material-symbols-outlined {
             font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--m3-outline);
+            border-radius: 999px;
+            opacity: 0.3;
+        }
+
+        /* Page Slide Animation */
+        .view-transition {
+            transition: transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1.0), opacity 0.3s ease;
         }
     </style>
 </head>
-<body class="w-full h-full min-h-screen bg-m3-surface text-m3-onSurface p-4 sm:p-6 flex flex-col justify-center items-center select-none">
+<body class="w-full h-full min-h-screen bg-m3-surface text-m3-onSurface p-4 sm:p-6 flex flex-col justify-between items-center select-none relative">
 
-    <main class="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-6 my-auto">
+    <!-- MAIN VIEW CONTAINER -->
+    <main id="mainView" class="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-5 my-auto view-transition opacity-100 translate-x-0">
         
-        <!-- Header Avatar & Credit -->
-        <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-sm transition-colors duration-300">
+        <!-- Header Avatar & Credit (Nhỏ gọn) -->
+        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-sm transition-colors duration-300">
             <img src="https://lh3.googleusercontent.com/a/ACg8ocK1ghp_0vaVGK6czFhTwIBo0asg1GAhSQ4xwdm9kL9kAmu8BneC=s0-c" 
                  alt="Phong VN Avatar" 
-                 class="w-6 h-6 rounded-full object-cover border border-m3-primary/40">
-            <span class="text-xs font-medium text-[var(--m3-on-surface-variant)] tracking-wide">Made by Phong VN</span>
+                 class="w-5 h-5 rounded-full object-cover border border-m3-primary/40">
+            <span class="text-[11px] font-medium text-[var(--m3-on-surface-variant)] tracking-wide">Made by Phong VN</span>
         </div>
 
         <!-- App Branding -->
         <div class="flex items-center justify-center gap-3">
             <img src="music_note.png" 
                  alt="Audio Player Logo" 
-                 class="w-10 h-10 object-contain drop-shadow"
+                 class="w-9 h-9 object-contain drop-shadow"
                  onerror="this.onerror=null; this.src='https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/music_note/default/48px.svg';">
             <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--m3-on-surface)] transition-colors duration-300">
                 Audio Player
             </h1>
         </div>
 
-        <!-- Action Buttons (Sending PostMessage) -->
+        <!-- Action Buttons (PostMessage) -->
         <div class="flex flex-wrap items-center justify-center gap-3 w-full pt-1">
             <md-filled-button id="whatsNewBtn" style="--md-filled-button-container-shape: 20px;">
                 <span class="material-symbols-outlined" slot="icon">auto_awesome</span>
@@ -119,20 +154,208 @@
             </md-outlined-button>
         </div>
 
-        <!-- App Description Box -->
-        <div class="w-full p-5 sm:p-6 rounded-3xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 text-left space-y-4 shadow-lg backdrop-blur-md transition-colors duration-300">
-            <p class="text-xs sm:text-sm text-[var(--m3-on-surface-variant)] leading-relaxed">
-                Audio Player là trình phát nhạc cục bộ chạy hoàn toàn trên trình duyệt (không cần cài đặt, không server) — mở nhạc bằng cách chọn file, kéo-thả, hoặc double-click mở trực tiếp khi cài như PWA. Ngoài phát nhạc cơ bản (Shuffle, Repeat, tua nhanh, phím tắt đầy đủ), điểm đặc biệt là bộ công cụ chỉnh sửa metadata trực tiếp lên file MP3 gốc: sửa Tên bài, Nghệ sĩ, Album, Genre, Composer, Lyric (embed + đồng bộ theo thời gian), cắt/xoay ảnh bìa — và ghi đè thẳng vào file thật trên ổ đĩa (không phải bản sao tạm) nhờ File System Access API.
-            </p>
-            <p class="text-xs sm:text-sm text-[var(--m3-on-surface-variant)] leading-relaxed">
-                Hỗ trợ hiển thị lyric đồng bộ ở màn hình chính, chế độ Picture-in-Picture và Full screen riêng biệt, giao diện Material Design 3 với nhiều theme màu tuỳ chỉnh (sáng/tối/hệ thống), cùng các tuỳ chọn tối ưu hiệu năng (giảm hiệu ứng chuyển động/mờ) cho máy cấu hình thấp. Tìm kiếm playlist thông minh (không dấu vẫn ra kết quả, tìm sâu cả Genre/Composer), có sẵn kênh gửi phản hồi/báo lỗi tích hợp ngay trong app.
-            </p>
+        <!-- Feature Cards List -->
+        <div class="w-full space-y-2.5 text-left pt-2">
+            
+            <!-- Feature 1: Local Player & PWA -->
+            <div onclick="openFeatureDetail(0)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+                <div class="flex items-center gap-3.5 pr-2">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-2xl">laptop_chromebook</span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Trình phát nhạc cục bộ & PWA</h3>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Chạy 100% trên trình duyệt, kéo-thả file, hỗ trợ cài PWA mở trực tiếp.</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </div>
+            </div>
+
+            <!-- Feature 2: ID3 Metadata Editor -->
+            <div onclick="openFeatureDetail(1)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+                <div class="flex items-center gap-3.5 pr-2">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-2xl">edit_note</span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Sửa Tag & Metadata MP3 trực tiếp</h3>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Chỉnh Tên bài, Nghệ sĩ, Lyric, Bìa đĩa & ghi đè file thật qua File System Access API.</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </div>
+            </div>
+
+            <!-- Feature 3: Synced Lyrics & Viewing Modes -->
+            <div onclick="openFeatureDetail(2)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+                <div class="flex items-center gap-3.5 pr-2">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-2xl">lyrics</span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Lời bài hát Sync & Chế độ xem</h3>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Lyric đồng bộ thời gian thực, chế độ Picture-in-Picture & Fullscreen cực phiêu.</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </div>
+            </div>
+
+            <!-- Feature 4: Material Design 3 & Performance -->
+            <div onclick="openFeatureDetail(3)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+                <div class="flex items-center gap-3.5 pr-2">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-2xl">palette</span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Giao diện MD3 & Tối ưu hiệu năng</h3>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Theme màu đa dạng (Sáng/Tối/Hệ thống), tùy chọn giảm hiệu ứng cho máy yếu.</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </div>
+            </div>
+
+            <!-- Feature 5: Smart Search & Feedback -->
+            <div onclick="openFeatureDetail(4)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+                <div class="flex items-center gap-3.5 pr-2">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-2xl">manage_search</span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Tìm kiếm thông minh & Phản hồi</h3>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Tìm nhạc không dấu siêu nhanh, hỗ trợ gửi báo lỗi & đóng góp ý kiến ngay trong app.</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </div>
+            </div>
+
         </div>
 
     </main>
 
+    <!-- FEATURE DETAIL VIEW CONTAINER (Tràn trang, không phải dialog) -->
+    <section id="detailView" class="fixed inset-0 z-50 w-full h-full bg-[var(--m3-surface)] p-4 sm:p-6 flex flex-col justify-between items-center hidden opacity-0 translate-x-8 view-transition overflow-y-auto">
+        
+        <div class="w-full max-w-xl mx-auto flex flex-col space-y-6 my-auto">
+            
+            <!-- Sticky Top Header with Back Button -->
+            <div class="flex items-center gap-3 border-b border-[var(--m3-outline)]/15 pb-4">
+                <button onclick="closeFeatureDetail()" class="p-2 rounded-full hover:bg-[var(--m3-surface-container-high)] text-[var(--m3-on-surface)] transition-colors flex items-center justify-center active:scale-95" title="Quay lại">
+                    <span class="material-symbols-outlined text-2xl">arrow_back</span>
+                </button>
+                <div class="flex items-center gap-2.5">
+                    <span id="detailIcon" class="material-symbols-outlined text-2xl text-[var(--m3-primary)]">info</span>
+                    <h2 id="detailTitle" class="text-lg font-bold text-[var(--m3-on-surface)]">Chi tiết tính năng</h2>
+                </div>
+            </div>
+
+            <!-- Detail Content Card -->
+            <div class="p-5 sm:p-6 rounded-3xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-lg text-left space-y-4">
+                <p id="detailDescription" class="text-sm text-[var(--m3-on-surface-variant)] leading-relaxed whitespace-pre-line font-normal">
+                    <!-- Dynamic content will be injected here -->
+                </p>
+            </div>
+
+            <!-- Back Action Button -->
+            <div class="flex justify-start pt-2">
+                <md-outlined-button onclick="closeFeatureDetail()" style="--md-outlined-button-container-shape: 20px;">
+                    <span class="material-symbols-outlined" slot="icon">arrow_back</span>
+                    Quay lại danh sách
+                </md-outlined-button>
+            </div>
+
+        </div>
+
+    </section>
+
     <script>
-        // Listen for theme change messages from parent frame
+        // Feature Data Store
+        const featuresData = [
+            {
+                title: "Trình phát nhạc cục bộ & PWA",
+                icon: "laptop_chromebook",
+                description: "Audio Player là trình phát nhạc cục bộ chạy hoàn toàn trên trình duyệt (100% Client-side, không cần cài đặt phần mềm phức tạp, không phụ thuộc vào server bên ngoài).\n\n• Mở nhạc cực nhanh bằng cách chọn file từ máy, kéo-thả trực tiếp vào giao diện.\n• Hỗ trợ cài đặt dưới dạng PWA (Progressive Web App), cho phép double-click mở file nhạc trực tiếp từ trình quản lý file của hệ điều hành.\n• Tích hợp đầy đủ các chế độ phát nâng cao: Shuffle (Phát ngẫu nhiên), Repeat (Lặp lại bài/danh sách), tua nhanh thời gian và hỗ trợ hệ thống phím tắt tiện lợi."
+            },
+            {
+                title: "Sửa Tag & Metadata MP3 trực tiếp",
+                icon: "edit_note",
+                description: "Điểm đặc biệt và mạnh mẽ nhất của Audio Player là bộ công cụ chỉnh sửa metadata trực tiếp lên file MP3 gốc:\n\n• Chỉnh sửa đầy đủ các thông tin ID3: Tên bài hát, Nghệ sĩ, Album, Genre (Thể loại), Composer (Nhà soạn nhạc).\n• Nhúng & đồng bộ Lyric theo thời gian thực (LRC format).\n• Công cụ cắt / xoay ảnh bìa (Cover Art) tích hợp trực tiếp.\n• Ghi đè thẳng vào file thật trên ổ đĩa nhờ File System Access API tiên tiến (thay vì chỉ lưu trên bản sao tạm thời như các web player thông thường)."
+            },
+            {
+                title: "Lời bài hát Sync & Chế độ xem",
+                icon: "lyrics",
+                description: "Trải nghiệm âm nhạc sống động với khả năng hiển thị lời bài hát và chế độ xem linh hoạt:\n\n• Hỗ trợ hiển thị lyric đồng bộ chạy theo từng câu chữ ngay tại màn hình chính.\n• Chế độ Picture-in-Picture (PiP): Giữ cửa sổ phát nhạc và lyric luôn nổi trên cùng để vừa làm việc vừa theo dõi bài hát.\n• Chế độ Full Screen riêng biệt với giao diện nghệ thuật tập trung tối đa vào trải nghiệm nghe nhạc."
+            },
+            {
+                title: "Giao diện MD3 & Tối ưu hiệu năng",
+                icon: "palette",
+                description: "Thiết kế hiện đại chuẩn Material Design 3 Expressive kết hợp tối ưu mượt mà:\n\n• Đa dạng theme màu tuỳ chỉnh linh hoạt (Sáng / Tối / Tự động theo Hệ thống).\n• Cung cấp các tuỳ chọn tối ưu hiệu năng chuyên sâu: Tắt bớt hiệu ứng chuyển động, giảm độ mờ (blur) giúp ứng dụng hoạt động siêu mượt trên các thiết bị cấu hình khiêm tốn."
+            },
+            {
+                title: "Tìm kiếm thông minh & Phản hồi",
+                icon: "manage_search",
+                description: "Bộ công cụ tìm kiếm và tương tác hoàn thiện:\n\n• Tìm kiếm playlist thông minh: Tự động bỏ qua dấu tiếng Việt, tìm sâu vào từng ngóc ngách thông tin như Thể loại (Genre) hay Nhà soạn nhạc (Composer).\n• Kênh phản hồi trực tiếp: Tích hợp sẵn form gửi góp ý và báo lỗi ngay bên trong app để người dùng dễ dàng đóng góp ý kiến cho nhà phát triển."
+            }
+        ];
+
+        // Open Feature Detail Screen
+        function openFeatureDetail(index) {
+            const data = featuresData[index];
+            if (!data) return;
+
+            document.getElementById('detailIcon').textContent = data.icon;
+            document.getElementById('detailTitle').textContent = data.title;
+            document.getElementById('detailDescription').textContent = data.description;
+
+            const mainView = document.getElementById('mainView');
+            const detailView = document.getElementById('detailView');
+
+            // Animate Main Out
+            mainView.classList.add('opacity-0', '-translate-x-8');
+            
+            setTimeout(() => {
+                mainView.classList.add('hidden');
+                detailView.classList.remove('hidden');
+                
+                // Trigger reflow for animation
+                void detailView.offsetWidth;
+                
+                // Animate Detail In
+                detailView.classList.remove('opacity-0', 'translate-x-8');
+                detailView.classList.add('opacity-100', 'translate-x-0');
+            }, 200);
+        }
+
+        // Close Feature Detail Screen (Back to list)
+        function closeFeatureDetail() {
+            const mainView = document.getElementById('mainView');
+            const detailView = document.getElementById('detailView');
+
+            // Animate Detail Out
+            detailView.classList.add('opacity-0', 'translate-x-8');
+
+            setTimeout(() => {
+                detailView.classList.add('hidden');
+                mainView.classList.remove('hidden');
+                
+                // Trigger reflow
+                void mainView.offsetWidth;
+
+                // Animate Main In
+                mainView.classList.remove('opacity-0', '-translate-x-8');
+                mainView.classList.add('opacity-100', 'translate-x-0');
+            }, 200);
+        }
+
+        // Listen for Theme Change Messages from Parent Frame
         window.addEventListener('message', (event) => {
             const data = event.data;
             const theme = typeof data === 'string' ? data : (data?.theme || data?.type);
@@ -144,7 +367,7 @@
             }
         });
 
-        // Send postMessage to parent app on button click
+        // Send PostMessage to Parent App on Button Clicks
         document.getElementById('whatsNewBtn').addEventListener('click', () => {
             if (window.parent) {
                 window.parent.postMessage('whatsnew', '*');
