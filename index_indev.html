@@ -639,6 +639,11 @@
         .m3-dropdown-item:hover {
             background: rgba(255,255,255,0.08);
         }
+        .m3-dropdown-item.speed-option { justify-content: center; font-weight: 700; padding: 8px 9px; font-size: 11px; border-radius: 8px; white-space: nowrap; }
+        .m3-dropdown-item.speed-option.active { color: var(--md-sys-color-primary); background: var(--md-sys-color-secondary-container); }
+        /* Dropdown Tốc độ phát định vị theo toạ độ viewport (tính bằng JS lúc mở) thay vì
+           absolute theo phần tử cha, để luôn tránh tràn màn hình bất kể tỉ lệ/kích thước */
+        #speed-dropdown { position: fixed; }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
@@ -762,7 +767,7 @@
                     </div>
                     <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
                         <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
-                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Mục này đang tải lâu hơn dự kiến, vui lòng đợi thêm 1 lúc, thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
+                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
                         <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
                             <span class="material-symbols-outlined">feedback</span> Gửi phản hồi
                         </button>
@@ -1199,6 +1204,23 @@
                 <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát">
                     <span class="material-symbols-outlined" style="font-size: 20px;">lyrics</span>
                 </button>
+                <div style="position:relative;">
+                    <button class="btn-m3" id="speed-btn" title="Tốc độ phát" style="font-family:'Minecraft'; font-size:12px; font-weight:700; width:auto; min-width:44px; padding:0 10px; border-radius:22px;">1x</button>
+                    <div class="m3-dropdown" id="speed-dropdown" style="flex-direction:column; align-items:center; min-width:unset; padding:10px 12px;">
+                        <canvas id="speed-preview-canvas" width="120" height="40" style="display:block;"></canvas>
+                        <div id="speed-preview-label" style="font-family:'Minecraft'; font-size:13px; font-weight:700; color: var(--md-sys-color-primary); padding: 4px 0 8px; text-align:center;">1x</div>
+                        <div style="display:flex; gap:2px;">
+                            <div class="m3-dropdown-item speed-option" data-speed="0.25">0.25x</div>
+                            <div class="m3-dropdown-item speed-option" data-speed="0.5">0.5x</div>
+                            <div class="m3-dropdown-item speed-option" data-speed="0.75">0.75x</div>
+                            <div class="m3-dropdown-item speed-option" data-speed="1">1x</div>
+                            <div class="m3-dropdown-item speed-option" data-speed="1.25">1.25x</div>
+                            <div class="m3-dropdown-item speed-option" data-speed="1.5">1.5x</div>
+                            <div class="m3-dropdown-item speed-option" data-speed="1.75">1.75x</div>
+                            <div class="m3-dropdown-item speed-option" data-speed="2">2x</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="volume-group">
                 <!-- Chuyển loa thường thành loa thông minh kiêm nút bật/tắt tiếng nhanh -->
@@ -2802,6 +2824,134 @@
 
         seekSlider.addEventListener('input', (e) => audio.currentTime = (e.target.value / 100) * audio.duration);
 
+        // --- HỆ THỐNG TỐC ĐỘ PHÁT ---
+        const speedBtn = document.getElementById('speed-btn');
+        const speedDropdown = document.getElementById('speed-dropdown');
+        const speedPreviewLabel = document.getElementById('speed-preview-label');
+        const speedPreviewCanvas = document.getElementById('speed-preview-canvas');
+        const speedPreviewCtx = speedPreviewCanvas.getContext('2d');
+        let currentSpeed = 1;
+        let previewSpeed = 1;
+
+        function applyPlaybackSpeed(speed) {
+            currentSpeed = speed;
+            previewSpeed = speed;
+            audio.playbackRate = speed;
+            speedBtn.innerText = speed + 'x';
+            speedPreviewLabel.innerText = speed + 'x';
+            document.querySelectorAll('.speed-option').forEach(el => {
+                el.classList.toggle('active', parseFloat(el.dataset.speed) === speed);
+            });
+            localStorage.setItem('settings_playback_speed', speed);
+        }
+
+        // Khôi phục tốc độ đã lưu ở lần dùng trước (mặc định 1x nếu chưa từng lưu)
+        const persistedSpeed = parseFloat(localStorage.getItem('settings_playback_speed'));
+        applyPlaybackSpeed(!isNaN(persistedSpeed) && persistedSpeed > 0 ? persistedSpeed : 1);
+
+        // Vẽ minh hoạ trực quan: 1 quả bóng chạy qua lại trên đường ray, tốc độ chạy tỉ
+        // lệ đúng theo previewSpeed đang xem thử -> người dùng "thấy" được tốc độ chứ
+        // không chỉ đọc số. Chỉ chạy khi dropdown đang mở để khỏi tốn CPU lúc ẩn.
+        let speedPreviewRunning = false;
+        let speedPreviewStartTs = null;
+        function drawSpeedPreview(ts) {
+            if (!speedDropdown.classList.contains('show')) { speedPreviewRunning = false; return; }
+            if (speedPreviewStartTs === null) speedPreviewStartTs = ts;
+            const elapsed = (ts - speedPreviewStartTs) / 1000;
+
+            const w = speedPreviewCanvas.width, h = speedPreviewCanvas.height;
+            speedPreviewCtx.clearRect(0, 0, w, h);
+
+            speedPreviewCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+            speedPreviewCtx.lineWidth = 2;
+            speedPreviewCtx.beginPath();
+            speedPreviewCtx.moveTo(8, h / 2);
+            speedPreviewCtx.lineTo(w - 8, h / 2);
+            speedPreviewCtx.stroke();
+
+            // 1 vòng qua-lại mất 2 giây ở tốc độ 1x, nhanh/chậm theo đúng previewSpeed
+            const cyclesPerSecond = 0.5 * previewSpeed;
+            const phase = (elapsed * cyclesPerSecond) % 1;
+            const triWave = phase < 0.5 ? phase * 2 : 2 - phase * 2; // sóng tam giác 0->1->0, chạy đều 2 chiều
+            const x = 10 + triWave * (w - 20);
+
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim() || '#D0BCFF';
+            speedPreviewCtx.fillStyle = accentColor;
+            speedPreviewCtx.beginPath();
+            speedPreviewCtx.arc(x, h / 2, 6, 0, Math.PI * 2);
+            speedPreviewCtx.fill();
+
+            requestAnimationFrame(drawSpeedPreview);
+        }
+        function startSpeedPreviewAnim() {
+            if (speedPreviewRunning) return;
+            speedPreviewRunning = true;
+            speedPreviewStartTs = null;
+            requestAnimationFrame(drawSpeedPreview);
+        }
+
+        // Định vị dropdown theo toạ độ thật của màn hình: ưu tiên mở lên trên nút, tự
+        // đổi xuống dưới nếu không đủ chỗ phía trên; kẹp theo chiều ngang để không bao
+        // giờ tràn ra ngoài mép trái/phải màn hình, bất kể tỉ lệ/kích thước màn hình.
+        function positionSpeedDropdown() {
+            speedDropdown.style.visibility = 'hidden';
+            speedDropdown.classList.add('show');
+
+            const margin = 10;
+            const vw = window.innerWidth, vh = window.innerHeight;
+            const btnRect = speedBtn.getBoundingClientRect();
+            const ddRect = speedDropdown.getBoundingClientRect();
+
+            const spaceAbove = btnRect.top;
+            const spaceBelow = vh - btnRect.bottom;
+            let top = (spaceAbove >= ddRect.height + margin || spaceAbove >= spaceBelow)
+                ? btnRect.top - ddRect.height - margin
+                : btnRect.bottom + margin;
+            top = Math.max(margin, Math.min(top, vh - ddRect.height - margin));
+
+            let left = btnRect.left + btnRect.width / 2 - ddRect.width / 2;
+            left = Math.max(margin, Math.min(left, vw - ddRect.width - margin));
+
+            speedDropdown.style.top = top + 'px';
+            speedDropdown.style.left = left + 'px';
+            speedDropdown.style.visibility = '';
+            speedDropdown.classList.remove('show');
+        }
+
+        speedBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const willOpen = !speedDropdown.classList.contains('show');
+            if (willOpen) {
+                positionSpeedDropdown();
+                speedDropdown.classList.add('show');
+                startSpeedPreviewAnim();
+            } else {
+                speedDropdown.classList.remove('show');
+            }
+        });
+        document.addEventListener('click', () => {
+            speedDropdown.classList.remove('show');
+        });
+        window.addEventListener('resize', () => {
+            if (speedDropdown.classList.contains('show')) positionSpeedDropdown();
+        });
+        document.querySelectorAll('.speed-option').forEach(el => {
+            // Rê chuột qua option nào thì minh hoạ + nhãn hiện thử tốc độ đó, rời chuột
+            // ra thì trả lại đúng tốc độ đang thực sự áp dụng
+            el.addEventListener('mouseenter', () => {
+                previewSpeed = parseFloat(el.dataset.speed);
+                speedPreviewLabel.innerText = el.dataset.speed + 'x';
+            });
+            el.addEventListener('mouseleave', () => {
+                previewSpeed = currentSpeed;
+                speedPreviewLabel.innerText = currentSpeed + 'x';
+            });
+            el.addEventListener('click', () => {
+                applyPlaybackSpeed(parseFloat(el.dataset.speed));
+                speedDropdown.classList.remove('show');
+            });
+        });
+
         // --- STREAMING_CHUNK:Configuring smart audio volume controls... ---
         // --- HỆ THỐNG ĐIỀU CHỈNH LOA & ÂM LƯỢNG THÔNG MINH ---
         // Khôi phục mức âm lượng đã lưu ở lần dùng trước (mặc định 80% nếu chưa từng lưu)
@@ -3397,7 +3547,7 @@
             clTitle.innerText = page.title;
             clBackBtnWrap.classList.toggle('show', page.showBack);
             clMadeByBar.classList.toggle('show', page.showMadeBy);
-            clLoadingErrorText.innerText = 'Mục ' + page.errorLabel + ' đang tải lâu hơn dự kiến, vui lòng đợi thêm 1 lúc, thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"';
+            clLoadingErrorText.innerText = 'Không thể tải ' + page.errorLabel + ', vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"';
 
             clLoaded = false;
             if (clLoadTimeoutId) clearTimeout(clLoadTimeoutId);
