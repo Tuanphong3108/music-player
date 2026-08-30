@@ -2827,6 +2827,11 @@
         // --- HỆ THỐNG TỐC ĐỘ PHÁT ---
         const speedBtn = document.getElementById('speed-btn');
         const speedDropdown = document.getElementById('speed-dropdown');
+        // .player-shell có backdrop-filter -> tự tạo containing block riêng cho mọi phần
+        // tử con position:fixed (đúng theo chuẩn CSS), khiến toạ độ viewport tính bằng JS
+        // bị lệch hẳn. Kéo dropdown ra khỏi player-shell, gắn thẳng vào <body> để
+        // position:fixed định vị đúng theo viewport thật như mong muốn.
+        document.body.appendChild(speedDropdown);
         const speedPreviewLabel = document.getElementById('speed-preview-label');
         const speedPreviewCanvas = document.getElementById('speed-preview-canvas');
         const speedPreviewCtx = speedPreviewCanvas.getContext('2d');
