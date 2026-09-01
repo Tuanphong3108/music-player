@@ -12,7 +12,10 @@
 
 ## Preview
 
+![Giao diện trình phát nhạc](1.png)
+![Giao diện metadata editor](2.png)
 
+---
 
 ## 🌟 Tính năng nổi bật
 
