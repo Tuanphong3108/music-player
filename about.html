@@ -16,6 +16,18 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Marked.js để render Markdown từ README.md -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Thêm DOMPurify để làm sạch HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    
+    <!-- Thêm Highlight.js để tô màu code (Syntax Highlighting) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Theme Light / Dark cho Highlight.js (sẽ toggle qua JS) -->
+    <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" disabled>
+
     <!-- Material Design 3 Web Components -->
     <script type="module">
         import 'https://esm.run/@material/web/all.js';
@@ -120,28 +132,103 @@
         .view-transition {
             transition: transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1.0), opacity 0.3s ease;
         }
+
+        /* Ambient Glow Effect */
+        .ambient-glow {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(103, 80, 164, 0.18) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        :root.dark .ambient-glow {
+            background: radial-gradient(circle, rgba(208, 188, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
+            color: var(--m3-on-surface);
+            font-weight: 700;
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+        }
+        .markdown-content h1 { font-size: 1.75rem; border-bottom: 1px solid var(--m3-outline); padding-bottom: 0.3em; }
+        .markdown-content h2 { font-size: 1.5rem; border-bottom: 1px solid var(--m3-outline); padding-bottom: 0.3em; }
+        .markdown-content h3 { font-size: 1.25rem; }
+        .markdown-content p, .markdown-content ul, .markdown-content ol { margin-bottom: 1em; }
+        .markdown-content ul { list-style-type: disc; padding-left: 1.5em; }
+        .markdown-content ol { list-style-type: decimal; padding-left: 1.5em; }
+        .markdown-content a { color: var(--m3-primary); font-weight: 600; text-decoration: none; transition: text-decoration 0.2s; }
+        .markdown-content a:hover { text-decoration: underline; }
+        /* Inline Code */
+        .markdown-content code:not(.hljs) {
+            background-color: var(--m3-surface-container-highest);
+            color: var(--m3-on-surface);
+            padding: 0.2em 0.4em;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85em;
+        }
+        /* Code Block */
+        .markdown-content pre {
+            background-color: var(--m3-surface-container-highest);
+            border-radius: 12px;
+            padding: 1em;
+            overflow-x: auto;
+            margin-bottom: 1em;
+            border: 1px solid var(--m3-outline);
+            opacity: 0.9;
+        }
+        .markdown-content pre code { background: transparent; padding: 0; color: inherit; font-size: 0.85em; }
+        /* Blockquote */
+        .markdown-content blockquote {
+            border-left: 4px solid var(--m3-primary);
+            padding: 0.5em 1em;
+            margin: 1em 0;
+            color: var(--m3-on-surface-variant);
+            background-color: var(--m3-surface-container);
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+        }
+        /* Table */
+        .markdown-content table { border-collapse: collapse; width: 100%; margin-bottom: 1em; font-size: 0.9em; }
+        .markdown-content th, .markdown-content td { border: 1px solid var(--m3-outline); padding: 8px 12px; text-align: left; }
     </style>
 </head>
-<body class="w-full h-full min-h-screen bg-[var(--m3-surface)] text-[var(--m3-on-surface)] p-4 sm:p-6 flex flex-col justify-between items-center select-none relative">
+<body class="w-full h-full min-h-screen bg-[var(--m3-surface)] text-[var(--m3-on-surface)] p-4 sm:p-6 flex flex-col justify-between items-center select-none relative overflow-x-hidden">
+
+    <!-- Ambient Ambient Glow Background -->
+    <div class="ambient-glow"></div>
 
     <!-- MAIN VIEW CONTAINER -->
-    <main id="mainView" class="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-5 my-auto view-transition opacity-100 translate-x-0">
+    <main id="mainView" class="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-5 my-auto view-transition opacity-100 translate-x-0 relative z-10">
         
         <!-- Header Avatar & Credit (Nhỏ gọn) -->
-        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-sm transition-colors duration-300">
+        <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-sm hover:border-[var(--m3-primary)]/40 transition-all duration-300">
             <img src="https://lh3.googleusercontent.com/a/ACg8ocK1ghp_0vaVGK6czFhTwIBo0asg1GAhSQ4xwdm9kL9kAmu8BneC=s0-c" 
                  alt="Phong VN Avatar" 
-                 class="w-5 h-5 rounded-full object-cover border border-m3-primary/40">
-            <span class="text-[11px] font-medium text-[var(--m3-on-surface-variant)] tracking-wide">Made by Phong VN</span>
+                 class="w-5 h-5 rounded-full object-cover ring-2 ring-[var(--m3-primary)]/40">
+            <span class="text-[11px] font-semibold text-[var(--m3-on-surface-variant)] tracking-wide">Made by Phong VN</span>
         </div>
 
         <!-- App Branding -->
         <div class="flex items-center justify-center gap-3">
-            <img src="music_note.png" 
-                 alt="Audio Player Logo" 
-                 class="w-9 h-9 object-contain drop-shadow"
-                 onerror="this.onerror=null; this.src='https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/music_note/default/48px.svg';">
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--m3-on-surface)] transition-colors duration-300">
+            <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
+                <img src="music_note.png" 
+                     alt="Audio Player Logo" 
+                     class="relative w-10 h-10 object-contain drop-shadow-md"
+                     onerror="this.onerror=null; this.src='https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/music_note/default/48px.svg';">
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-[var(--m3-on-surface)] transition-colors duration-300">
                 Audio Player
             </h1>
         </div>
@@ -163,97 +250,144 @@
         <div class="w-full space-y-2.5 text-left pt-2">
             
             <!-- Feature 0: Shortcuts -->
-            <div onclick="openFeatureDetail(0)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+            <div onclick="openFeatureDetail(0)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
                 <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
                         <span class="material-symbols-outlined text-2xl">keyboard</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Hệ thống Phím tắt tiện lợi</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Space, Mũi tên, Ctrl+O, phím M — Điều khiển trình phát nhạc cực nhanh không cần chuột.</p>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Hệ thống Phím tắt tiện lợi</h3>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--m3-primary)]/15 text-[var(--m3-primary)]">Hotkeys</span>
+                        </div>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Space, Mũi tên, Ctrl+O, phím M — Điều khiển trình phát nhạc cực nhanh không cần chuột.</p>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
                     <span class="material-symbols-outlined text-xl">arrow_forward</span>
                 </div>
             </div>
 
             <!-- Feature 1: Local Player & PWA -->
-            <div onclick="openFeatureDetail(1)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+            <div onclick="openFeatureDetail(1)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
                 <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
                         <span class="material-symbols-outlined text-2xl">laptop_chromebook</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Trình phát nhạc cục bộ & PWA</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Chạy 100% trên trình duyệt, kéo-thả file, hỗ trợ cài PWA mở trực tiếp.</p>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Trình phát nhạc cục bộ & PWA</h3>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Offline</span>
+                        </div>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Chạy 100% trên trình duyệt, kéo-thả file, hỗ trợ cài PWA mở trực tiếp.</p>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
                     <span class="material-symbols-outlined text-xl">arrow_forward</span>
                 </div>
             </div>
 
             <!-- Feature 2: ID3 Metadata Editor -->
-            <div onclick="openFeatureDetail(2)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+            <div onclick="openFeatureDetail(2)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
                 <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
                         <span class="material-symbols-outlined text-2xl">edit_note</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Sửa Tag & Metadata MP3 trực tiếp</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Chỉnh Tên bài, Nghệ sĩ, Lyric, Bìa đĩa & ghi đè file thật qua File System Access API.</p>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Sửa Tag & Metadata MP3 trực tiếp</h3>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">Đặc biệt</span>
+                        </div>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Chỉnh Tên bài, Nghệ sĩ, Lyric, Bìa đĩa & ghi đè file thật qua File System Access API.</p>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
                     <span class="material-symbols-outlined text-xl">arrow_forward</span>
                 </div>
             </div>
 
             <!-- Feature 3: Synced Lyrics & Viewing Modes -->
-            <div onclick="openFeatureDetail(3)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+            <div onclick="openFeatureDetail(3)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
                 <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
                         <span class="material-symbols-outlined text-2xl">lyrics</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Lời bài hát Sync & Chế độ xem</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Lyric đồng bộ thời gian thực, chế độ Picture-in-Picture & Fullscreen cực phiêu.</p>
+                        <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Lời bài hát Sync & Chế độ xem</h3>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Lyric đồng bộ thời gian thực, chế độ Picture-in-Picture & Fullscreen cực phiêu.</p>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
                     <span class="material-symbols-outlined text-xl">arrow_forward</span>
                 </div>
             </div>
 
             <!-- Feature 4: Material Design 3 & Performance -->
-            <div onclick="openFeatureDetail(4)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+            <div onclick="openFeatureDetail(4)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
                 <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
                         <span class="material-symbols-outlined text-2xl">palette</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Giao diện MD3 & Tối ưu hiệu năng</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Theme màu đa dạng (Sáng/Tối/Hệ thống), tùy chọn giảm hiệu ứng cho máy yếu.</p>
+                        <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Giao diện MD3 & Tối ưu hiệu năng</h3>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Theme màu đa dạng (Sáng/Tối/Hệ thống), tùy chọn giảm hiệu ứng cho máy yếu.</p>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
                     <span class="material-symbols-outlined text-xl">arrow_forward</span>
                 </div>
             </div>
 
             <!-- Feature 5: Smart Search & Feedback -->
-            <div onclick="openFeatureDetail(5)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/40 hover:bg-[var(--m3-surface-container-high)] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.99]">
+            <div onclick="openFeatureDetail(5)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
                 <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
                         <span class="material-symbols-outlined text-2xl">manage_search</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Tìm kiếm thông minh & Phản hồi</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1">Tìm nhạc không dấu siêu nhanh, hỗ trợ gửi báo lỗi & đóng góp ý kiến ngay trong app.</p>
+                        <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Tìm kiếm thông minh & Phản hồi</h3>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Tìm nhạc không dấu siêu nhanh, hỗ trợ gửi báo lỗi & đóng góp ý kiến ngay trong app.</p>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-0.5 transition-all shrink-0">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </div>
+            </div>
+
+            <!-- Feature 6: README.md Fetch -->
+            <div onclick="openFeatureDetail(6)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
+                <div class="flex items-center gap-3.5 pr-2">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
+                        <span class="material-symbols-outlined text-2xl">description</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Tài liệu README.md</h3>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400">GitHub</span>
+                        </div>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Xem chi tiết tài liệu hướng dẫn và thông tin dự án trực tiếp từ GitHub.</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </div>
+            </div>
+
+            <!-- Feature 7: MIT License -->
+            <div onclick="openFeatureDetail(7)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
+                <div class="flex items-center gap-3.5 pr-2">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
+                        <span class="material-symbols-outlined text-2xl">gavel</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Bản quyền & Giấy phép (LICENSE)</h3>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400">MIT</span>
+                        </div>
+                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Tóm tắt & Giấy phép mã nguồn mở MIT License © 2026 Phong VN.</p>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
                     <span class="material-symbols-outlined text-xl">arrow_forward</span>
                 </div>
             </div>
@@ -263,12 +397,12 @@
     </main>
 
     <!-- FEATURE DETAIL VIEW CONTAINER (Tràn trang, không phải dialog) -->
-    <section id="detailView" class="fixed inset-0 z-50 w-full h-full bg-[var(--m3-surface)] p-4 sm:p-6 flex flex-col justify-between items-center hidden opacity-0 translate-x-8 view-transition overflow-y-auto">
+    <section id="detailView" class="fixed inset-0 z-50 w-full h-full bg-[var(--m3-surface)] flex flex-col items-center hidden opacity-0 translate-x-8 view-transition">
         
-        <div class="w-full max-w-xl mx-auto flex flex-col space-y-6 my-auto">
+        <div class="w-full max-w-xl mx-auto h-full flex flex-col px-4 sm:px-6 pt-4 sm:pt-6">
             
-            <!-- Sticky Top Header with Back Button -->
-            <div class="flex items-center gap-3 border-b border-[var(--m3-outline)]/15 pb-4">
+            <!-- Sticky Top Header with Back Button (Cố định ở đỉnh màn hình) -->
+            <div class="sticky top-0 z-20 bg-[var(--m3-surface)] pb-4 flex items-center gap-3 border-b border-[var(--m3-outline)]/15 shrink-0 transition-colors duration-300">
                 <button onclick="closeFeatureDetail()" class="p-2 rounded-full hover:bg-[var(--m3-surface-container-high)] text-[var(--m3-on-surface)] transition-colors flex items-center justify-center active:scale-95" title="Quay lại">
                     <span class="material-symbols-outlined text-2xl">arrow_back</span>
                 </button>
@@ -278,25 +412,38 @@
                 </div>
             </div>
 
-            <!-- Detail Content Card -->
-            <div class="p-5 sm:p-6 rounded-3xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-lg text-left space-y-4">
-                <p id="detailDescription" class="text-sm text-[var(--m3-on-surface-variant)] leading-relaxed whitespace-pre-line font-normal">
-                    <!-- Dynamic content will be injected here -->
-                </p>
+            <!-- Scrollable Detail Content Container (Khung nội dung cuộn bên dưới) -->
+            <div class="flex-1 overflow-y-auto py-5 space-y-4">
+                <!-- Detail Content Card -->
+                <div class="p-5 sm:p-6 rounded-3xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-lg text-left space-y-4">
+                    <div id="detailDescription" class="markdown-content">
+                        <!-- Dynamic content will be injected here -->
+                    </div>
+                </div>
             </div>
 
-
         </div>
-
     </section>
 
     <script>
+        // Cấu hình Marked.js kết hợp Highlight.js
+        marked.setOptions({
+            gfm: true, // Hỗ trợ GitHub Flavored Markdown (Tables, Tasklists...)
+            breaks: true, // Tự động xuống dòng
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+
         // Feature Data Store
         const featuresData = [
             {
                 title: "Hệ thống Phím tắt tiện lợi",
                 icon: "keyboard",
-                description: "Thao tác điều khiển nhạc nhanh chóng không cần dùng chuột với dải phím tắt phong phú:\n\n• Space (Khoảng trắng): Tạm dừng / Tiếp tục phát nhạc.\n• Mũi tên trái / phải (← / →): Tiến / Lùi 5 giây.\n• Mũi tên lên / xuống (↑ / ↓): Tăng / Giảm âm lượng.\n• Ctrl + O: Mở hộp thoại chọn và tải file nhạc lên.\n• Phím M: Tắt hoặc bật lại âm thanh (Mute / Unmute).\n• Phím F11: Tắt hoặc bật chế độ toàn màn hình.\n• Phím Ctrl + Mũi tên trái / phải (← / →): Chuyển bài hát tiếp theo hoặc bài trước đó."
+                description: "Thao tác điều khiển nhạc nhanh chóng không cần dùng chuột với dải phím tắt phong phú:\n\n• **Space (Khoảng trắng)**: Tạm dừng / Tiếp tục phát nhạc.\n• **Mũi tên trái / phải (← / →)**: Tiến / Lùi 5 giây.\n• **Mũi tên lên / xuống (↑ / ↓)**: Tăng / Giảm âm lượng.\n• **Ctrl + O**: Mở hộp thoại chọn và tải file nhạc lên.\n• **Phím M**: Tắt hoặc bật lại âm thanh (Mute / Unmute)."
             },
             {
                 title: "Trình phát nhạc cục bộ & PWA",
@@ -322,6 +469,50 @@
                 title: "Tìm kiếm thông minh & Phản hồi",
                 icon: "manage_search",
                 description: "Bộ công cụ tìm kiếm và tương tác hoàn thiện:\n\n• Tìm kiếm playlist thông minh: Tự động bỏ qua dấu tiếng Việt, tìm sâu vào từng ngóc ngách thông tin như Thể loại (Genre) hay Nhà soạn nhạc (Composer).\n• Kênh phản hồi trực tiếp: Tích hợp sẵn form gửi góp ý và báo lỗi ngay bên trong app để người dùng dễ dàng đóng góp ý kiến cho nhà phát triển."
+            },
+            {
+                title: "Tài liệu README.md",
+                icon: "description",
+                isReadme: true
+            },
+            {
+                title: "Bản quyền & Giấy phép (LICENSE)",
+                icon: "gavel",
+                description: `### 📜 Tóm tắt Giấy phép MIT
+
+Phần mềm này được phát hành dưới giấy phép **MIT License**, một trong những giấy phép mã nguồn mở tự do, cởi mở và phổ biến nhất hiện nay:
+
+* ✅ **Miễn phí & Tự do hoàn toàn**: Bạn có quyền tự do sử dụng, sao chép, chỉnh sửa, hợp nhất, xuất bản, phân phối, cấp phép lại hoặc bán các bản sao của ứng dụng này cho bất kỳ mục đích nào (kể cả thương mại).
+* 📜 **Điều kiện duy nhất**: Tất cả các bản sao hoặc phần quan trọng của phần mềm phải bao gồm thông báo bản quyền gốc **\`Copyright (c) 2026 Phong VN\`** và văn bản giấy phép này.
+* 🛡️ **Tuyên bố miễn trừ trách nhiệm**: Phần mềm được cung cấp "NGUYÊN TRẠNG" (AS IS), tác giả không chịu trách nhiệm đối với bất kỳ sự cố hay rủi ro phát sinh nào.
+
+---
+
+### 📄 Văn bản Giấy phép đầy đủ (Full MIT Text)
+
+\`\`\`text
+MIT License
+
+Copyright (c) 2026 Phong VN
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+\`\`\``
             }
         ];
 
@@ -332,7 +523,78 @@
 
             document.getElementById('detailIcon').textContent = data.icon;
             document.getElementById('detailTitle').textContent = data.title;
-            document.getElementById('detailDescription').textContent = data.description;
+            
+            const detailDescEl = document.getElementById('detailDescription');
+
+            if (data.isReadme) {
+                // Hiển thị loading indicator GIF chuẩn của Phong
+                detailDescEl.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 space-y-3">
+                        <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" 
+                             alt="Loading..." 
+                             class="h-8 object-contain mix-blend-multiply dark:invert">
+                        <span class="text-xs font-medium text-[var(--m3-on-surface-variant)]">Đang tải README.md từ GitHub...</span>
+                    </div>
+                `;
+
+                // Fetch file README từ repo
+                fetch('https://tuanphong3108.github.io/music-player/README.md')
+                    .then(res => {
+                        if (!res.ok) throw new Error('Không thể tải file README.md');
+                        return res.text();
+                    })
+                    .then(markdown => {
+                        if (window.marked && window.DOMPurify) {
+                            // Parse markdown sang HTML
+                            const rawHtml = marked.parse(markdown);
+                            // Dọn dẹp HTML qua DOMPurify để bảo vệ XSS
+                            const cleanHtml = DOMPurify.sanitize(rawHtml);
+                            detailDescEl.innerHTML = cleanHtml;
+
+                            // Xử lý tự động link ảnh tương đối & thêm hiệu ứng tương tác
+                            detailDescEl.querySelectorAll('img').forEach(img => {
+                                const rawSrc = img.getAttribute('src');
+                                if (rawSrc && !rawSrc.startsWith('http://') && !rawSrc.startsWith('https://') && !rawSrc.startsWith('data:') && !rawSrc.startsWith('//')) {
+                                    // Tự kết hợp URL gốc của repo để ảnh tương đối load ngon lành
+                                    const baseUrl = 'https://tuanphong3108.github.io/music-player/';
+                                    img.src = baseUrl + rawSrc.replace(/^\.\//, '');
+                                }
+                                
+                                // Gán tooltip + sự kiện click để xem ảnh phóng to
+                                img.title = 'Bấm để mở ảnh gốc trong tab mới';
+                                img.onclick = () => window.open(img.src, '_blank');
+                                
+                                // Xử lý fallback nếu ảnh bị hỏng URL
+                                img.onerror = function() {
+                                    this.onerror = null;
+                                    this.alt = '⚠️ Không thể tải hình ảnh: ' + (rawSrc || 'Image');
+                                    this.style.padding = '1rem';
+                                    this.style.background = 'var(--m3-surface-container-highest)';
+                                    this.style.borderRadius = '12px';
+                                    this.style.fontSize = '12px';
+                                };
+                            });
+
+                        } else {
+                            detailDescEl.innerText = markdown;
+                        }
+                    })
+                    .catch(err => {
+                        detailDescEl.innerHTML = `
+                            <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
+                                <p class="font-bold">Lỗi khi tải README.md:</p>
+                                <p>${err.message}</p>
+                            </div>
+                        `;
+                    });
+            } else {
+                if (window.marked && window.DOMPurify) {
+                    const rawHtml = marked.parse(data.description);
+                    detailDescEl.innerHTML = DOMPurify.sanitize(rawHtml);
+                } else {
+                    detailDescEl.innerText = data.description;
+                }
+            }
 
             const mainView = document.getElementById('mainView');
             const detailView = document.getElementById('detailView');
@@ -381,8 +643,14 @@
 
             if (theme === 'light') {
                 document.documentElement.classList.remove('dark');
+                // Tự động đổi theme Code Highlight sang Light
+                document.getElementById('hljs-light').disabled = false;
+                document.getElementById('hljs-dark').disabled = true;
             } else if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
+                // Tự động đổi theme Code Highlight sang Dark
+                document.getElementById('hljs-light').disabled = true;
+                document.getElementById('hljs-dark').disabled = false;
             }
         });
 
