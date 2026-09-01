@@ -1073,7 +1073,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V_INDEV-build_LA_PEACE</span>
+                <span>AUDIOPLAYER V_INDEV-build_NOT_STABLE</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -2678,6 +2678,21 @@
                                     const draggedTrack = playlist.splice(dragSourceIndex, 1)[0];
                                     playlist.splice(targetIndex, 0, draggedTrack);
                                     if (playingTrack) currentIndex = playlist.indexOf(playingTrack);
+
+                                    // Playlist thật vừa đổi vị trí -> mọi index đang lưu trong
+                                    // shuffleOrder (nếu đã tồn tại) phải remap lại y hệt phép
+                                    // chuyển vị trí này, nếu không tab Shuffle sẽ trỏ lệch bài
+                                    if (shuffleInitialized) {
+                                        shuffleOrder = shuffleOrder.map(idx => {
+                                            if (idx === dragSourceIndex) return targetIndex;
+                                            if (dragSourceIndex < targetIndex) {
+                                                if (idx > dragSourceIndex && idx <= targetIndex) return idx - 1;
+                                            } else if (dragSourceIndex > targetIndex) {
+                                                if (idx >= targetIndex && idx < dragSourceIndex) return idx + 1;
+                                            }
+                                            return idx;
+                                        });
+                                    }
                                 }
                                 updatePlaylistUI();
                             }
