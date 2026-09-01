@@ -1,4 +1,4 @@
-# 🎵 Music Player (MD3 Expressive)
+# 🎵 Audio Player
 
 > Một trình phát nhạc cục bộ (Client-side) hiện đại, mượt mà và giàu tính năng được xây dựng trên nền tảng giao diện **Material Design 3 Expressive**. Trải nghiệm nghe nhạc đỉnh cao ngay trên trình duyệt mà không cần cài đặt phần mềm phức tạp hay lo lắng về quyền riêng tư.
 
@@ -6,9 +6,13 @@
 
 ## 📸 Trải nghiệm
 
-* 🌐 **Live App:** [music-player](https://tuanphong3108.github.io/music-player/) *(Hoạt động 100% Offline sau khi tải xong)*
+* 🌐 **Live App:** [Audio Player](https://tuanphong3108.github.io/music-player/) *(Hoạt động 100% Offline sau khi tải xong)*
 
 ---
+
+## Preview
+
+
 
 ## 🌟 Tính năng nổi bật
 
@@ -68,8 +72,8 @@ Không cần Node.js hay Build tool phức tạp, bạn có thể chạy dự á
 
 ---
 
+## 📝 Giấy phép (License)
 
+Dự án này được phát hành dưới mã nguồn mở [MIT License](https://github.com/Tuanphong3108/music-player/blob/main/LICENSE).
 
-1. **Clone repository:**
-   ```bash
-   git clone [https://github.com/Tuanphong3108/music-player.git](https://github.com/Tuanphong3108/music-player.git)
+Build with ❤️ by [Phong VN](https://tuanphong3108.github.io).
