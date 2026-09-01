@@ -259,6 +259,16 @@
         
         .search-container { padding: 0 16px 12px; transition: var(--m3-transition); }
         .playlist-card.collapsed .search-container { display: none; }
+        .playlist-card.collapsed #pl-tabs { display: none !important; }
+        body.reorder-active #pl-tabs { display: none !important; }
+
+        #pl-tabs.expanded { max-height: 44px !important; padding-bottom: 10px; }
+        .pl-tab-btn {
+            flex: 1; border: none; background: var(--md-sys-color-surface-variant);
+            color: var(--md-sys-color-on-surface-variant); font-family: inherit; font-size: 13px; font-weight: 700;
+            padding: 8px 0; border-radius: 12px; cursor: pointer; transition: var(--m3-transition);
+        }
+        .pl-tab-btn.active { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
         .search-wrapper {
             background: var(--search-bg);
             border-radius: 16px;
@@ -668,6 +678,13 @@
             animation-iteration-count: 1 !important;
             scroll-behavior: auto !important;
         }
+        /* Ngoại lệ: chữ chạy (marquee) tên bài/nghệ sĩ vẫn tiếp tục chạy bình thường dù
+           đang bật Giảm hiệu ứng chuyển động, theo đúng yêu cầu riêng */
+        html.reduce-motion .is-scrolling .marquee-content {
+            animation-duration: 10s !important;
+            animation-delay: 0ms !important;
+            animation-iteration-count: infinite !important;
+        }
 
         /* --- GIẢM HIỆU ỨNG MỜ VÀ CHUYỂN ĐỘNG (NÂNG CAO) ---
            Ngoài toàn bộ hiệu ứng ở trên, còn: bỏ backdrop-filter (blur kính mờ) khắp app,
@@ -1063,7 +1080,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.08.30-build124722</span>
+                <span>AUDIOPLAYER V2026.09.01-build083006</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1107,11 +1124,19 @@
                     <h3 id="pl-title">Playlist</h3>
                     <p id="track-count">0</p>
                 </div>
+
+                <div id="pl-tabs" style="max-height:0; overflow:hidden; transition: max-height 0.35s cubic-bezier(0.34,1.56,0.64,1); display:flex; gap:8px; padding: 0 16px;">
+                    <button class="pl-tab-btn active" id="pl-tab-playlist" data-tab="playlist">Playlist</button>
+                    <button class="pl-tab-btn" id="pl-tab-shuffle" data-tab="shuffle">Shuffle</button>
+                </div>
                 
                 <div class="search-container">
                     <div class="search-wrapper">
                         <span class="material-symbols-outlined search-icon">search</span>
                         <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ...">
+                        <button class="btn-m3" id="reshuffle-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px; display:none;" title="Xáo lại danh sách Shuffle">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">shuffle_on</span>
+                        </button>
                         <button class="btn-m3" id="reorder-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Chế độ sửa danh sách">
                             <span class="material-symbols-outlined" style="font-size: 18px;">sort</span>
                         </button>
@@ -1195,7 +1220,10 @@
                 <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)"><span class="material-symbols-outlined" style="font-size: 20px;">picture_in_picture_alt</span></button>
                 <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
                 <button class="btn-m3" id="prev-btn" title="Bài trước"><span class="material-symbols-outlined">skip_previous</span></button>
-                <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng"><span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span></button>
+                <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng">
+                    <span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span>
+                    <md-circular-progress class="play-btn-spinner" indeterminate style="display:none; --md-circular-progress-size: 28px;"></md-circular-progress>
+                </button>
                 <button class="btn-m3" id="next-btn" title="Bài tiếp theo"><span class="material-symbols-outlined">skip_next</span></button>
                 <button class="btn-m3" id="repeat-btn" title="Lặp lại">
                     <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
@@ -2084,16 +2112,40 @@
         let isReorderMode = false;
         let dragSourceIndex = -1;
 
+        // --- HỆ THỐNG THỨ TỰ PHÁT NGẪU NHIÊN (SHUFFLE) ---
+        let shuffleOrder = [];        // Mảng các INDEX trỏ vào playlist, thứ tự phát khi Shuffle bật
+        let shuffleInitialized = false; // Đã từng tạo shuffleOrder chưa (để biết lúc nào cần random lại)
+        let activePlTab = 'playlist';   // Tab đang xem trong khung playlist: 'playlist' | 'shuffle'
+
+        function generateShuffleOrder() {
+            // Bài đang phát (nếu có) được đặt cố định ở VỊ TRÍ 0 thật sự trong mảng, còn
+            // lại toàn bộ được xáo trộn ngẫu nhiên -> Next tự nhiên chạy xuống đúng bài
+            // kế tiếp thật (shuffleOrder[1]), không cần "làm giả" lúc hiển thị nữa, và
+            // logic dừng ở cuối danh sách khi tắt Repeat luôn đúng vì đây là thứ tự thật.
+            const rest = playlist.map((_, i) => i).filter(i => i !== currentIndex);
+            for (let i = rest.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [rest[i], rest[j]] = [rest[j], rest[i]];
+            }
+            shuffleOrder = currentIndex !== -1 ? [currentIndex, ...rest] : rest;
+            shuffleInitialized = true;
+        }
+
         // Khôi phục giao diện nút Shuffle/Repeat theo trạng thái đã lưu ở lần dùng trước
         (function restorePlaybackModesUI() {
             const shuffleBtnEl = document.getElementById('shuffle-btn');
-            const prevBtnEl = document.getElementById('prev-btn');
             const repeatBtnEl = document.getElementById('repeat-btn');
             if (shuffleBtnEl) shuffleBtnEl.classList.toggle('active', isShuffle);
-            if (isShuffle && prevBtnEl) {
-                prevBtnEl.style.opacity = '0.4';
-                prevBtnEl.style.pointerEvents = 'none';
-                prevBtnEl.setAttribute('title', 'Chế độ ngẫu nhiên đang bật (Prev vô hiệu)');
+            if (isShuffle) {
+                activePlTab = 'shuffle';
+                const plTabs = document.getElementById('pl-tabs');
+                if (plTabs) plTabs.classList.add('expanded');
+                const tabPlaylistEl = document.getElementById('pl-tab-playlist');
+                const tabShuffleEl = document.getElementById('pl-tab-shuffle');
+                if (tabPlaylistEl) tabPlaylistEl.classList.remove('active');
+                if (tabShuffleEl) tabShuffleEl.classList.add('active');
+                const reshuffleBtnEl = document.getElementById('reshuffle-btn');
+                if (reshuffleBtnEl) reshuffleBtnEl.style.display = 'flex';
             }
             if (repeatBtnEl) {
                 repeatBtnEl.classList.toggle('active', repeatMode > 0);
@@ -2137,6 +2189,15 @@
                 if (removedTrack && removedTrack.url) URL.revokeObjectURL(removedTrack.url);
 
                 playlist.splice(targetMenuIndex, 1);
+
+                // Đồng bộ shuffleOrder theo đúng thay đổi vừa xảy ra trên playlist: bỏ
+                // index bị xoá, và lùi lại 1 mọi index đứng sau nó (vì mảng đã dịch)
+                if (shuffleInitialized) {
+                    shuffleOrder = shuffleOrder
+                        .filter(i => i !== targetMenuIndex)
+                        .map(i => i > targetMenuIndex ? i - 1 : i);
+                }
+
                 if (isPlayingDeleted) {
                     audio.pause(); audio.src = ''; currentIndex = -1;
                     trackNameEl.innerText = "Studio Standby";
@@ -2308,6 +2369,14 @@
                     };
                     playlist.push(newTrack);
                     lastAutoPlayIndex = playlist.length - 1;
+
+                    // Bài mới thêm: ném xuống cuối trong tab Playlist (đã đúng do .push ở
+                    // trên), còn trong tab Shuffle thì chèn vào 1 vị trí NGẪU NHIÊN trong
+                    // shuffleOrder (chỉ áp dụng nếu shuffleOrder đã từng được khởi tạo)
+                    if (shuffleInitialized) {
+                        const insertPos = Math.floor(Math.random() * (shuffleOrder.length + 1));
+                        shuffleOrder.splice(insertPos, 0, lastAutoPlayIndex);
+                    }
                 }
             }
 
@@ -2506,10 +2575,38 @@
             updatePlaylistUI(); 
         });
 
+        // Di chuyển track ở playlist-index "fromIndex" tới ngay trước track ở "toIndex",
+        // NHƯNG chỉ đổi vị trí bên trong shuffleOrder (không đụng gì tới mảng playlist
+        // thật) -> dùng khi kéo-thả sắp xếp lại đang ở tab Shuffle
+        function moveInShuffleOrder(fromIndex, toIndex) {
+            const posFrom = shuffleOrder.indexOf(fromIndex);
+            if (posFrom === -1) return;
+            const [moved] = shuffleOrder.splice(posFrom, 1);
+            let posTo = shuffleOrder.indexOf(toIndex);
+            if (posTo === -1) posTo = shuffleOrder.length;
+            shuffleOrder.splice(posTo, 0, moved);
+        }
+
         function updatePlaylistUI() {
             playlistContainer.innerHTML = '';
             let count = 0;
-            playlist.forEach((track, index) => {
+
+            // Xác định thứ tự index (thật, trỏ vào playlist) sẽ render, tuỳ tab đang xem
+            let renderOrder;
+            if (activePlTab === 'shuffle') {
+                if (!shuffleInitialized) generateShuffleOrder();
+                // Hiện thẳng đúng thứ tự thật của shuffleOrder -> bài đang phát nằm ở
+                // đúng vị trí thật của nó (vị trí 0 ngay sau khi vừa reshuffle), Next là
+                // chạy xuống đúng bài kế tiếp thật sự đang hiển thị ngay bên dưới
+                renderOrder = [...shuffleOrder];
+            } else {
+                renderOrder = playlist.map((_, i) => i);
+            }
+
+            renderOrder.forEach((index, displayPos) => {
+                const track = playlist[index];
+                if (!track) return; // an toàn, phòng lệch dữ liệu nhất thời
+
                 const normalizedName = removeVietnameseTones(track.name).toLowerCase();
                 const normalizedArtist = removeVietnameseTones(track.artist).toLowerCase();
                 const normalizedGenre = removeVietnameseTones(track.genre || '').toLowerCase();
@@ -2525,7 +2622,7 @@
                     item.dataset.index = index;
                     
                     item.innerHTML = `
-                        <span class="material-symbols-outlined icon-play" style="font-size:20px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'play_arrow'}</span>
+                        <span class="icon-play" style="font-family: inherit; font-size:14px; font-weight:800; width:22px; text-align:center; opacity:0.6; flex-shrink:0;">${index + 1}</span>
                         <span class="material-symbols-outlined icon-drag" style="font-size:20px" title="Nắm để kéo thả">drag_handle</span>
                         <div class="track-text">
                             <div style="font-weight:700; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
@@ -2570,13 +2667,31 @@
                             
                             const targetIndex = index;
                             if (dragSourceIndex !== -1 && dragSourceIndex !== targetIndex) {
-                                const playingTrack = currentIndex !== -1 ? playlist[currentIndex] : null;
-                                
-                                const draggedTrack = playlist.splice(dragSourceIndex, 1)[0];
-                                playlist.splice(targetIndex, 0, draggedTrack);
-                                
-                                if (playingTrack) currentIndex = playlist.indexOf(playingTrack);
-                                
+                                if (activePlTab === 'shuffle') {
+                                    // Ở tab Shuffle: chỉ sắp xếp lại thứ tự HÀNG ĐỢI shuffleOrder,
+                                    // không đụng gì tới playlist thật
+                                    moveInShuffleOrder(dragSourceIndex, targetIndex);
+                                } else {
+                                    const playingTrack = currentIndex !== -1 ? playlist[currentIndex] : null;
+                                    const draggedTrack = playlist.splice(dragSourceIndex, 1)[0];
+                                    playlist.splice(targetIndex, 0, draggedTrack);
+                                    if (playingTrack) currentIndex = playlist.indexOf(playingTrack);
+
+                                    // Playlist thật vừa đổi vị trí -> mọi index đang lưu trong
+                                    // shuffleOrder (nếu đã tồn tại) phải remap lại y hệt phép
+                                    // chuyển vị trí này, nếu không tab Shuffle sẽ trỏ lệch bài
+                                    if (shuffleInitialized) {
+                                        shuffleOrder = shuffleOrder.map(idx => {
+                                            if (idx === dragSourceIndex) return targetIndex;
+                                            if (dragSourceIndex < targetIndex) {
+                                                if (idx > dragSourceIndex && idx <= targetIndex) return idx - 1;
+                                            } else if (dragSourceIndex > targetIndex) {
+                                                if (idx >= targetIndex && idx < dragSourceIndex) return idx + 1;
+                                            }
+                                            return idx;
+                                        });
+                                    }
+                                }
                                 updatePlaylistUI();
                             }
                         });
@@ -2590,7 +2705,7 @@
                             });
                         });
                         
-                    } else {
+                    } else if (!isReorderMode) {
                         item.onclick = () => playTrack(index);
                     }
 
@@ -2683,10 +2798,7 @@
 
                 navigator.mediaSession.setActionHandler('play', () => playBtn.click());
                 navigator.mediaSession.setActionHandler('pause', () => playBtn.click());
-                navigator.mediaSession.setActionHandler('previoustrack', () => {
-                    // Nếu Shuffle đang bật, chặn nút Previous
-                    if (!isShuffle) document.getElementById('prev-btn').click();
-                });
+                navigator.mediaSession.setActionHandler('previoustrack', () => document.getElementById('prev-btn').click());
                 navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
                 navigator.mediaSession.setActionHandler('seekto', (details) => {
                     if (details.seekTime) audio.currentTime = details.seekTime;
@@ -2719,34 +2831,79 @@
         });
 
         document.getElementById('next-btn').addEventListener('click', () => {
-            if (isShuffle) playTrack(Math.floor(Math.random() * playlist.length));
-            else playTrack((currentIndex + 1) % playlist.length);
+            if (isShuffle) {
+                if (!shuffleInitialized) generateShuffleOrder();
+                if (shuffleOrder.length === 0) return;
+                let pos = shuffleOrder.indexOf(currentIndex);
+                pos = (pos + 1) % shuffleOrder.length;
+                playTrack(shuffleOrder[pos]);
+            } else {
+                playTrack((currentIndex + 1) % playlist.length);
+            }
         });
 
         document.getElementById('prev-btn').addEventListener('click', () => {
-            // Chặn quay lại khi đang ngẫu nhiên phát (Shuffle ON)
-            if (isShuffle) return;
-            let p = currentIndex - 1; if (p < 0) p = playlist.length - 1;
-            playTrack(p);
+            if (isShuffle) {
+                if (!shuffleInitialized) generateShuffleOrder();
+                if (shuffleOrder.length === 0) return;
+                let pos = shuffleOrder.indexOf(currentIndex);
+                pos = pos - 1; if (pos < 0) pos = shuffleOrder.length - 1;
+                playTrack(shuffleOrder[pos]);
+            } else {
+                let p = currentIndex - 1; if (p < 0) p = playlist.length - 1;
+                playTrack(p);
+            }
         });
 
-        // --- SHUFFLE BUTTON ACTION WITH PREV BUTTON INACTIVATION ---
+        // --- NÚT SHUFFLE: bật/tắt + chuyển đổi hiển thị tab Playlist/Shuffle ---
         document.getElementById('shuffle-btn').addEventListener('click', function() {
             isShuffle = !isShuffle; this.classList.toggle('active', isShuffle);
             localStorage.setItem('settings_shuffle', isShuffle);
-            
-            // Xử lý làm mờ và chặn tương tác nút Previous theo luật Shuffle của Phong
-            const prevBtn = document.getElementById('prev-btn');
+
+            const plTabs = document.getElementById('pl-tabs');
+            const reshuffleBtnEl = document.getElementById('reshuffle-btn');
+
             if (isShuffle) {
-                prevBtn.style.opacity = '0.4';
-                prevBtn.style.pointerEvents = 'none';
-                prevBtn.setAttribute('title', 'Chế độ ngẫu nhiên đang bật (Prev vô hiệu)');
+                // Bật (dù là lần đầu từ lúc khởi động, hay vừa tắt-bật lại) -> luôn random lại
+                generateShuffleOrder();
+                activePlTab = 'shuffle';
+                document.getElementById('pl-tab-playlist').classList.remove('active');
+                document.getElementById('pl-tab-shuffle').classList.add('active');
+                if (plTabs) plTabs.classList.add('expanded');
+                if (reshuffleBtnEl) reshuffleBtnEl.style.display = 'flex';
             } else {
-                prevBtn.style.opacity = '1';
-                prevBtn.style.pointerEvents = 'auto';
-                prevBtn.removeAttribute('title');
+                activePlTab = 'playlist';
+                document.getElementById('pl-tab-playlist').classList.add('active');
+                document.getElementById('pl-tab-shuffle').classList.remove('active');
+                if (plTabs) plTabs.classList.remove('expanded');
+                if (reshuffleBtnEl) reshuffleBtnEl.style.display = 'none';
             }
+
+            updatePlaylistUI();
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
+        });
+
+        // Chuyển tab Playlist <-> Shuffle (chỉ đổi CÁCH XEM, không đụng tới isShuffle)
+        document.getElementById('pl-tab-playlist').addEventListener('click', () => {
+            activePlTab = 'playlist';
+            document.getElementById('pl-tab-playlist').classList.add('active');
+            document.getElementById('pl-tab-shuffle').classList.remove('active');
+            document.getElementById('reshuffle-btn').style.display = 'none';
+            updatePlaylistUI();
+        });
+        document.getElementById('pl-tab-shuffle').addEventListener('click', () => {
+            activePlTab = 'shuffle';
+            document.getElementById('pl-tab-shuffle').classList.add('active');
+            document.getElementById('pl-tab-playlist').classList.remove('active');
+            document.getElementById('reshuffle-btn').style.display = 'flex';
+            if (!shuffleInitialized) generateShuffleOrder();
+            updatePlaylistUI();
+        });
+
+        // Nút Reshuffle: chỉ có tác dụng và hiển thị ở tab Shuffle
+        document.getElementById('reshuffle-btn').addEventListener('click', () => {
+            generateShuffleOrder();
+            updatePlaylistUI();
         });
 
         document.getElementById('repeat-btn').addEventListener('click', function() {
@@ -2758,9 +2915,39 @@
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
         });
 
+        // --- SPINNER LOADING TRÊN NÚT PLAY/PAUSE (áp dụng cho cả PiP) ---
+        // "loadstart"/"waiting" = đang tải/đang buffer -> hiện spinner thay icon play/pause
+        // "canplay"/"playing" = đã sẵn sàng phát được -> trả icon play/pause lại như cũ
+        function setPlayBtnLoading(isLoading) {
+            const btns = [playBtn];
+            if (customPipWindow) {
+                const pipPlayBtn = customPipWindow.document.getElementById('pip-play-btn');
+                if (pipPlayBtn) btns.push(pipPlayBtn);
+            }
+            btns.forEach(btn => {
+                const icon = btn.querySelector('.material-symbols-outlined');
+                const spinner = btn.querySelector('.play-btn-spinner');
+                if (!icon || !spinner) return;
+                icon.style.display = isLoading ? 'none' : '';
+                spinner.style.display = isLoading ? 'inline-flex' : 'none';
+            });
+        }
+        audio.addEventListener('loadstart', () => setPlayBtnLoading(true));
+        audio.addEventListener('waiting', () => setPlayBtnLoading(true));
+        audio.addEventListener('canplay', () => setPlayBtnLoading(false));
+        audio.addEventListener('playing', () => setPlayBtnLoading(false));
+
         audio.addEventListener('ended', () => {
-            if (repeatMode === 2) audio.play();
-            else if (repeatMode === 1 || currentIndex < playlist.length - 1) document.getElementById('next-btn').click();
+            if (repeatMode === 2) { audio.play(); return; }
+            if (repeatMode === 1) { document.getElementById('next-btn').click(); return; }
+            // Không lặp: chỉ tự next nếu chưa phải bài cuối cùng trong danh sách đang phát
+            // (thứ tự Playlist bình thường, hoặc thứ tự shuffleOrder nếu Shuffle đang bật)
+            if (isShuffle) {
+                const pos = shuffleOrder.indexOf(currentIndex);
+                if (pos !== -1 && pos < shuffleOrder.length - 1) document.getElementById('next-btn').click();
+            } else if (currentIndex < playlist.length - 1) {
+                document.getElementById('next-btn').click();
+            }
         });
 
         let audioCtx, analyser, dataArray;
@@ -3284,6 +3471,19 @@
                 `;
                 pipDoc.head.appendChild(style);
 
+                // Document PiP là 1 browsing context THẬT SỰ RIÊNG BIỆT (giống popup window),
+                // không tự thừa hưởng custom elements đã đăng ký ở trang chính -> phải import
+                // lại @material/web ngay trong document này thì <md-circular-progress> mới
+                // render đúng, không thì chỉ là 1 thẻ lạ rỗng không hiển thị gì.
+                try {
+                    const pipMwcScript = pipDoc.createElement('script');
+                    pipMwcScript.type = 'module';
+                    pipMwcScript.textContent = "import 'https://esm.run/@material/web/all.js';";
+                    pipDoc.head.appendChild(pipMwcScript);
+                } catch (mwcErr) {
+                    console.warn("Không import được Material Web Components vào cửa sổ PiP:", mwcErr);
+                }
+
                 pipDoc.body.innerHTML = `
                     <div id="pip-bg" class="pip-bg"></div>
                     <div class="pip-player-section">
@@ -3301,7 +3501,10 @@
                         <div class="pip-controls">
                             <button class="btn-m3" id="pip-shuffle-btn" title="Phát ngẫu nhiên"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
                             <button class="btn-m3" id="pip-prev-btn" title="Bài trước"><span class="material-symbols-outlined">skip_previous</span></button>
-                            <button class="btn-m3 btn-play" id="pip-play-btn" title="Phát/Tạm dừng"><span class="material-symbols-outlined">play_arrow</span></button>
+                            <button class="btn-m3 btn-play" id="pip-play-btn" title="Phát/Tạm dừng">
+                                <span class="material-symbols-outlined">play_arrow</span>
+                                <md-circular-progress class="play-btn-spinner" indeterminate style="display:none; --md-circular-progress-size: 24px;"></md-circular-progress>
+                            </button>
                             <button class="btn-m3" id="pip-next-btn" title="Bài tiếp theo"><span class="material-symbols-outlined">skip_next</span></button>
                             <button class="btn-m3" id="pip-repeat-btn" title="Lặp lại">
                                 <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
@@ -3503,7 +3706,7 @@
         // vào các mục tương ứng bên trong nó)
         const CL_PAGES = {
             about:    { url: 'about.html', title: 'About', errorLabel: 'About', showBack: false, showMadeBy: false },
-            whatsnew: { url: 'changelogAUDIOPLAYER_V20260830build124722.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
+            whatsnew: { url: 'changelogAUDIOPLAYER_V20260901build083006.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
             more:     { url: 'https://tuanphong3108.github.io/apps.html?is_embed=true', title: 'More apps', errorLabel: 'More apps', showBack: true, showMadeBy: true }
         };
         let clPage = 'about';
@@ -4630,10 +4833,10 @@
                 e.preventDefault();
                 document.getElementById('next-btn').click();
             }
-            // Phím Ctrl + Mũi tên Trái: Chuyển về bài trước đó (vô hiệu khi Shuffle đang bật)
+            // Phím Ctrl + Mũi tên Trái: Chuyển về bài trước đó
             else if (e.ctrlKey && e.code === 'ArrowLeft') {
                 e.preventDefault();
-                if (!isShuffle) document.getElementById('prev-btn').click();
+                document.getElementById('prev-btn').click();
             }
             // Phím Mũi tên Phải: Tua tiến 5 giây
             else if (e.code === 'ArrowRight') {
@@ -4683,7 +4886,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.08.30-build124722';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.09.01-build083006';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'
