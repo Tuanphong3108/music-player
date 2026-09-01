@@ -2110,8 +2110,6 @@
         let shuffleInitialized = false; // Đã từng tạo shuffleOrder chưa (để biết lúc nào cần random lại)
         let activePlTab = 'playlist';   // Tab đang xem trong khung playlist: 'playlist' | 'shuffle'
 
-        let shufflePinCurrentToTop = false; // Ghim bài đang phát lên đầu ĐÚNG 1 LẦN sau khi (re)shuffle
-
         function generateShuffleOrder() {
             shuffleOrder = playlist.map((_, i) => i);
             for (let i = shuffleOrder.length - 1; i > 0; i--) {
@@ -2119,7 +2117,6 @@
                 [shuffleOrder[i], shuffleOrder[j]] = [shuffleOrder[j], shuffleOrder[i]];
             }
             shuffleInitialized = true;
-            shufflePinCurrentToTop = true;
         }
 
         // Khôi phục giao diện nút Shuffle/Repeat theo trạng thái đã lưu ở lần dùng trước
@@ -2584,19 +2581,15 @@
 
             // Xác định thứ tự index (thật, trỏ vào playlist) sẽ render, tuỳ tab đang xem
             let renderOrder;
-            let pinnedThisRender = false;
             if (activePlTab === 'shuffle') {
                 if (!shuffleInitialized) generateShuffleOrder();
-                if (shufflePinCurrentToTop && currentIndex !== -1) {
-                    // Chỉ ghim đúng 1 lần ngay sau khi vừa (re)shuffle, rồi "tiêu thụ" cờ
-                    // này đi -> các lần render tiếp theo trả về đúng thứ tự thật của
-                    // shuffleOrder, để chạy tới cuối danh sách là dừng đúng khi repeat tắt
-                    renderOrder = [currentIndex, ...shuffleOrder.filter(i => i !== currentIndex)];
-                    shufflePinCurrentToTop = false;
-                    pinnedThisRender = true;
-                } else {
-                    renderOrder = [...shuffleOrder];
-                }
+                // Bài đang phát luôn ghim ở đầu tab Shuffle, phần còn lại giữ nguyên thứ
+                // tự ngẫu nhiên đã tạo. An toàn cho việc tự dừng ở cuối danh sách khi
+                // repeat tắt, vì logic đó dựa thẳng vào vị trí trong shuffleOrder, không
+                // liên quan gì tới cách hiển thị này.
+                renderOrder = currentIndex !== -1
+                    ? [currentIndex, ...shuffleOrder.filter(i => i !== currentIndex)]
+                    : [...shuffleOrder];
             } else {
                 renderOrder = playlist.map((_, i) => i);
             }
@@ -2630,7 +2623,7 @@
                     
                     // Bài đang ghim ở đầu tab Shuffle thì không cho kéo (nó không thật
                     // sự thuộc thứ tự ngẫu nhiên, chỉ đang được ghim hiển thị lên đầu)
-                    const isPinnedShuffleHead = activePlTab === 'shuffle' && pinnedThisRender && displayPos === 0;
+                    const isPinnedShuffleHead = activePlTab === 'shuffle' && index === currentIndex;
 
                     if (isReorderMode && !isPinnedShuffleHead) {
                         item.draggable = true;
