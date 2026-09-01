@@ -48,11 +48,11 @@
 | :--- | :--- |
 | **`Space`** | Tạm dừng / Tiếp tục phát nhạc |
 | **`←` / `→`** | Tua lùi / Tua tiến 5 giây |
-| **`Shift` + `←` / `→`** | Chuyển bài hát Trước / Tiếp theo |
+| **`Ctrl` + `←` / `→`** | Chuyển bài hát Trước / Tiếp theo |
 | **`↑` / `↓`** | Tăng / Giảm 5% âm lượng |
 | **`Ctrl` + `O`** | Mở hộp thoại chọn file nhạc từ máy tính |
 | **`M`** | Tắt / Bật âm thanh (Mute / Unmute) |
-| **`F`** | Bật / Tắt chế độ Toàn màn hình (Full Screen) |
+| **`F11`** | Bật / Tắt chế độ Toàn màn hình (Full Screen) |
 
 ---
 
