@@ -14,6 +14,8 @@
 
 ![Giao diện trình phát nhạc](screenshots/1.png)
 ![Giao diện metadata editor](screenshots/2.png)
+![Giao diện lyric](screenshots/3.jpg)
+
 
 ---
 
