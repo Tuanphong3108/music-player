@@ -12,8 +12,8 @@
 
 ## Preview
 
-![Giao diện trình phát nhạc](1.png)
-![Giao diện metadata editor](2.png)
+![Giao diện trình phát nhạc](screenshots/1.png)
+![Giao diện metadata editor](screenshots/2.png)
 
 ---
 
