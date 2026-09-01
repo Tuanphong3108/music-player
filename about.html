@@ -16,15 +16,14 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Marked.js để render Markdown từ README.md -->
+    <!-- Marked.js để render Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <!-- Thêm DOMPurify để làm sạch HTML -->
+    <!-- DOMPurify làm sạch HTML -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     
-    <!-- Thêm Highlight.js để tô màu code (Syntax Highlighting) -->
+    <!-- Highlight.js tô màu code syntax -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- Theme Light / Dark cho Highlight.js (sẽ toggle qua JS) -->
     <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" disabled>
 
@@ -101,7 +100,7 @@
             overflow-x: hidden;
         }
 
-        /* Material Symbols Fill on Hover Effect */
+        /* Material Symbols Hover Effect */
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             transition: font-variation-settings 0.25s cubic-bezier(0.2, 0, 0, 1);
@@ -150,24 +149,22 @@
             background: radial-gradient(circle, rgba(208, 188, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
+        /* Markdown Styling */
         .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
             color: var(--m3-on-surface);
             font-weight: 700;
             margin-top: 1.5em;
             margin-bottom: 0.75em;
         }
-        .markdown-content h1 { font-size: 1.75rem; border-bottom: 1px solid var(--m3-outline); padding-bottom: 0.3em; }
-        .markdown-content h2 { font-size: 1.5rem; border-bottom: 1px solid var(--m3-outline); padding-bottom: 0.3em; }
-        .markdown-content h3 { font-size: 1.25rem; }
-        .markdown-content p, .markdown-content ul, .markdown-content ol { margin-bottom: 1em; }
+        .markdown-content h1 { font-size: 1.6rem; border-bottom: 1px solid var(--m3-outline); padding-bottom: 0.3em; }
+        .markdown-content h2 { font-size: 1.35rem; border-bottom: 1px solid var(--m3-outline); padding-bottom: 0.3em; }
+        .markdown-content h3 { font-size: 1.15rem; }
+        .markdown-content p, .markdown-content ul, .markdown-content ol { margin-bottom: 1em; line-height: 1.6; }
         .markdown-content ul { list-style-type: disc; padding-left: 1.5em; }
         .markdown-content ol { list-style-type: decimal; padding-left: 1.5em; }
         .markdown-content a { color: var(--m3-primary); font-weight: 600; text-decoration: none; transition: text-decoration 0.2s; }
         .markdown-content a:hover { text-decoration: underline; }
+        
         /* Inline Code */
         .markdown-content code:not(.hljs) {
             background-color: var(--m3-surface-container-highest);
@@ -177,6 +174,7 @@
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.85em;
         }
+        
         /* Code Block */
         .markdown-content pre {
             background-color: var(--m3-surface-container-highest);
@@ -185,9 +183,10 @@
             overflow-x: auto;
             margin-bottom: 1em;
             border: 1px solid var(--m3-outline);
-            opacity: 0.9;
+            opacity: 0.95;
         }
         .markdown-content pre code { background: transparent; padding: 0; color: inherit; font-size: 0.85em; }
+        
         /* Blockquote */
         .markdown-content blockquote {
             border-left: 4px solid var(--m3-primary);
@@ -198,6 +197,23 @@
             border-radius: 0 12px 12px 0;
             font-style: italic;
         }
+        
+        /* Markdown Image Styling */
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 16px;
+            margin: 1em auto;
+            display: block;
+            border: 1px solid var(--m3-outline);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        .markdown-content img:hover {
+            transform: scale(1.015);
+        }
+        
         /* Table */
         .markdown-content table { border-collapse: collapse; width: 100%; margin-bottom: 1em; font-size: 0.9em; }
         .markdown-content th, .markdown-content td { border: 1px solid var(--m3-outline); padding: 8px 12px; text-align: left; }
@@ -205,13 +221,13 @@
 </head>
 <body class="w-full h-full min-h-screen bg-[var(--m3-surface)] text-[var(--m3-on-surface)] p-4 sm:p-6 flex flex-col justify-between items-center select-none relative overflow-x-hidden">
 
-    <!-- Ambient Ambient Glow Background -->
+    <!-- Ambient Glow Background -->
     <div class="ambient-glow"></div>
 
     <!-- MAIN VIEW CONTAINER -->
     <main id="mainView" class="w-full max-w-xl mx-auto flex flex-col items-center text-center space-y-5 my-auto view-transition opacity-100 translate-x-0 relative z-10">
         
-        <!-- Header Avatar & Credit (Nhỏ gọn) -->
+        <!-- Header Avatar & Credit -->
         <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-sm hover:border-[var(--m3-primary)]/40 transition-all duration-300">
             <img src="https://lh3.googleusercontent.com/a/ACg8ocK1ghp_0vaVGK6czFhTwIBo0asg1GAhSQ4xwdm9kL9kAmu8BneC=s0-c" 
                  alt="Phong VN Avatar" 
@@ -233,7 +249,7 @@
             </h1>
         </div>
 
-        <!-- Action Buttons (PostMessage) -->
+        <!-- Action Buttons -->
         <div class="flex flex-wrap items-center justify-center gap-3 w-full pt-1">
             <md-filled-button id="whatsNewBtn" style="--md-filled-button-container-shape: 20px;">
                 <span class="material-symbols-outlined" slot="icon">auto_awesome</span>
@@ -354,7 +370,7 @@
                 </div>
             </div>
 
-            <!-- Feature 6: README.md Fetch -->
+            <!-- Feature 6: README.md -->
             <div onclick="openFeatureDetail(6)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
                 <div class="flex items-center gap-3.5 pr-2">
                     <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
@@ -396,12 +412,12 @@
 
     </main>
 
-    <!-- FEATURE DETAIL VIEW CONTAINER (Tràn trang, không phải dialog) -->
+    <!-- FEATURE DETAIL VIEW CONTAINER -->
     <section id="detailView" class="fixed inset-0 z-50 w-full h-full bg-[var(--m3-surface)] flex flex-col items-center hidden opacity-0 translate-x-8 view-transition">
         
         <div class="w-full max-w-xl mx-auto h-full flex flex-col px-4 sm:px-6 pt-4 sm:pt-6">
             
-            <!-- Sticky Top Header with Back Button (Cố định ở đỉnh màn hình) -->
+            <!-- Sticky Top Header -->
             <div class="sticky top-0 z-20 bg-[var(--m3-surface)] pb-4 flex items-center gap-3 border-b border-[var(--m3-outline)]/15 shrink-0 transition-colors duration-300">
                 <button onclick="closeFeatureDetail()" class="p-2 rounded-full hover:bg-[var(--m3-surface-container-high)] text-[var(--m3-on-surface)] transition-colors flex items-center justify-center active:scale-95" title="Quay lại">
                     <span class="material-symbols-outlined text-2xl">arrow_back</span>
@@ -412,12 +428,11 @@
                 </div>
             </div>
 
-            <!-- Scrollable Detail Content Container (Khung nội dung cuộn bên dưới) -->
+            <!-- Scrollable Detail Content Container -->
             <div class="flex-1 overflow-y-auto py-5 space-y-4">
-                <!-- Detail Content Card -->
                 <div class="p-5 sm:p-6 rounded-3xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-lg text-left space-y-4">
                     <div id="detailDescription" class="markdown-content">
-                        <!-- Dynamic content will be injected here -->
+                        <!-- Dynamic content injected here -->
                     </div>
                 </div>
             </div>
@@ -426,10 +441,10 @@
     </section>
 
     <script>
-        // Cấu hình Marked.js kết hợp Highlight.js
+        // Config Marked.js with Highlight.js
         marked.setOptions({
-            gfm: true, // Hỗ trợ GitHub Flavored Markdown (Tables, Tasklists...)
-            breaks: true, // Tự động xuống dòng
+            gfm: true,
+            breaks: true,
             highlight: function(code, lang) {
                 if (lang && hljs.getLanguage(lang)) {
                     return hljs.highlight(code, { language: lang }).value;
@@ -521,13 +536,22 @@ SOFTWARE.
             const data = featuresData[index];
             if (!data) return;
 
+            const detailView = document.getElementById('detailView');
+            const mainView = document.getElementById('mainView');
+            
+            // Auto-scroll detail view to top when opening
+            const scrollContainer = detailView.querySelector('.overflow-y-auto');
+            if (scrollContainer) {
+                scrollContainer.scrollTop = 0;
+            }
+
             document.getElementById('detailIcon').textContent = data.icon;
             document.getElementById('detailTitle').textContent = data.title;
             
             const detailDescEl = document.getElementById('detailDescription');
 
             if (data.isReadme) {
-                // Hiển thị loading indicator GIF chuẩn của Phong
+                // Show loading indicator
                 detailDescEl.innerHTML = `
                     <div class="flex flex-col items-center justify-center py-10 space-y-3">
                         <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" 
@@ -537,7 +561,7 @@ SOFTWARE.
                     </div>
                 `;
 
-                // Fetch file README từ repo
+                // Fetch README from GitHub
                 fetch('https://tuanphong3108.github.io/music-player/README.md')
                     .then(res => {
                         if (!res.ok) throw new Error('Không thể tải file README.md');
@@ -545,26 +569,21 @@ SOFTWARE.
                     })
                     .then(markdown => {
                         if (window.marked && window.DOMPurify) {
-                            // Parse markdown sang HTML
                             const rawHtml = marked.parse(markdown);
-                            // Dọn dẹp HTML qua DOMPurify để bảo vệ XSS
                             const cleanHtml = DOMPurify.sanitize(rawHtml);
                             detailDescEl.innerHTML = cleanHtml;
 
-                            // Xử lý tự động link ảnh tương đối & thêm hiệu ứng tương tác
+                            // Handle images
                             detailDescEl.querySelectorAll('img').forEach(img => {
                                 const rawSrc = img.getAttribute('src');
                                 if (rawSrc && !rawSrc.startsWith('http://') && !rawSrc.startsWith('https://') && !rawSrc.startsWith('data:') && !rawSrc.startsWith('//')) {
-                                    // Tự kết hợp URL gốc của repo để ảnh tương đối load ngon lành
                                     const baseUrl = 'https://tuanphong3108.github.io/music-player/';
                                     img.src = baseUrl + rawSrc.replace(/^\.\//, '');
                                 }
                                 
-                                // Gán tooltip + sự kiện click để xem ảnh phóng to
                                 img.title = 'Bấm để mở ảnh gốc trong tab mới';
                                 img.onclick = () => window.open(img.src, '_blank');
                                 
-                                // Xử lý fallback nếu ảnh bị hỏng URL
                                 img.onerror = function() {
                                     this.onerror = null;
                                     this.alt = '⚠️ Không thể tải hình ảnh: ' + (rawSrc || 'Image');
@@ -573,6 +592,31 @@ SOFTWARE.
                                     this.style.borderRadius = '12px';
                                     this.style.fontSize = '12px';
                                 };
+                            });
+
+                            // Handle links
+                            detailDescEl.querySelectorAll('a').forEach(link => {
+                                const href = link.getAttribute('href');
+                                const linkText = link.textContent.trim().toLowerCase();
+
+                                // Route MIT License links directly to Tab 7 (LICENSE)
+                                if (linkText.includes('mit license') || (href && href.toLowerCase().includes('license'))) {
+                                    link.setAttribute('href', '#');
+                                    link.onclick = (e) => {
+                                        e.preventDefault();
+                                        openFeatureDetail(7);
+                                    };
+                                    return;
+                                }
+
+                                if (href && !href.startsWith('#')) {
+                                    link.setAttribute('target', '_blank');
+                                    link.setAttribute('rel', 'noopener noreferrer');
+                                    if (!href.startsWith('http://') && !href.startsWith('https://') && !href.startsWith('mailto:')) {
+                                        const baseUrl = 'https://tuanphong3108.github.io/music-player/';
+                                        link.href = baseUrl + href.replace(/^\.\//, '');
+                                    }
+                                }
                             });
 
                         } else {
@@ -591,70 +635,69 @@ SOFTWARE.
                 if (window.marked && window.DOMPurify) {
                     const rawHtml = marked.parse(data.description);
                     detailDescEl.innerHTML = DOMPurify.sanitize(rawHtml);
+
+                    detailDescEl.querySelectorAll('a').forEach(link => {
+                        const href = link.getAttribute('href');
+                        if (href && !href.startsWith('#')) {
+                            link.setAttribute('target', '_blank');
+                            link.setAttribute('rel', 'noopener noreferrer');
+                        }
+                    });
                 } else {
                     detailDescEl.innerText = data.description;
                 }
             }
 
-            const mainView = document.getElementById('mainView');
-            const detailView = document.getElementById('detailView');
-
-            // Animate Main Out
+            // Animate Main View Out
             mainView.classList.add('opacity-0', '-translate-x-8');
             
             setTimeout(() => {
                 mainView.classList.add('hidden');
                 detailView.classList.remove('hidden');
                 
-                // Trigger reflow for animation
-                void detailView.offsetWidth;
+                void detailView.offsetWidth; // Trigger reflow
                 
-                // Animate Detail In
+                // Animate Detail View In
                 detailView.classList.remove('opacity-0', 'translate-x-8');
                 detailView.classList.add('opacity-100', 'translate-x-0');
             }, 200);
         }
 
-        // Close Feature Detail Screen (Back to list)
+        // Close Feature Detail Screen
         function closeFeatureDetail() {
             const mainView = document.getElementById('mainView');
             const detailView = document.getElementById('detailView');
 
-            // Animate Detail Out
             detailView.classList.add('opacity-0', 'translate-x-8');
 
             setTimeout(() => {
                 detailView.classList.add('hidden');
                 mainView.classList.remove('hidden');
                 
-                // Trigger reflow
-                void mainView.offsetWidth;
+                void mainView.offsetWidth; // Trigger reflow
 
-                // Animate Main In
                 mainView.classList.remove('opacity-0', '-translate-x-8');
                 mainView.classList.add('opacity-100', 'translate-x-0');
             }, 200);
         }
 
-        // Listen for Theme Change Messages from Parent Frame
+        // Listen for Theme Messages from Parent Window
         window.addEventListener('message', (event) => {
             const data = event.data;
             const theme = typeof data === 'string' ? data : (data?.theme || data?.type);
 
             if (theme === 'light') {
                 document.documentElement.classList.remove('dark');
-                // Tự động đổi theme Code Highlight sang Light
                 document.getElementById('hljs-light').disabled = false;
                 document.getElementById('hljs-dark').disabled = true;
             } else if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
-                // Tự động đổi theme Code Highlight sang Dark
                 document.getElementById('hljs-light').disabled = true;
                 document.getElementById('hljs-dark').disabled = false;
             }
         });
 
-        // Send PostMessage to Parent App on Button Clicks
+        // Send PostMessage on Button Clicks
         document.getElementById('whatsNewBtn').addEventListener('click', () => {
             if (window.parent) {
                 window.parent.postMessage('whatsnew', '*');
