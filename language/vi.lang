@@ -7,10 +7,14 @@
 
 ## --- Thanh trên cùng ---
 topbar.install=Cài đặt ứng dụng
+topbar.install_tooltip=Cài đặt để có thể mở file trực tiếp từ máy tính
 topbar.settings=Cài đặt
 topbar.feedback=Gửi phản hồi
 topbar.about=About
 topbar.addmusic=Thêm nhạc
+topbar.addmusic_file=Chọn tệp nhạc (API File System)
+topbar.addmusic_folder=Chọn thư mục nhạc (API File System)
+topbar.addmusic_legacy=Thêm tệp kiểu truyền thống
 
 ## --- Điều khiển phát nhạc ---
 player.shuffle=Phát ngẫu nhiên
@@ -26,6 +30,9 @@ player.repeat=Lặp lại
 player.lyrics=Bật/Tắt Lời bài hát
 player.speed=Tốc độ phát
 player.mute=Tắt/Bật tiếng
+player.pip=Mở Trình phát thu nhỏ (PiP)
+player.no_track=Chưa có bài hát
+player.load_first_prompt=Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!
 
 ## --- Playlist ---
 playlist.title=Playlist
@@ -34,33 +41,78 @@ playlist.tab_playlist=Playlist
 playlist.tab_shuffle=Shuffle
 playlist.search_placeholder=Tìm tên bài, ca sĩ...
 contextmenu.delete=Xoá khỏi playlist
+contextmenu.add_lrc=Thêm lời lẻ (.lrc)
+
+## --- Reorder ---
+reorder.done_title=Hoàn tất
+reorder.done=HOÀN TẤT
+
+## --- Lyric & Drag zone ---
+lyric.placeholder=KÉO THẢ FILE AUDIO CÙNG FILE .LRC\nĐỂ ĐỒNG BỘ LỜI BÀI HÁT
 
 ## --- Dialog Thông tin khác ---
 moreinfo.title=Thông tin khác
+moreinfo.file_type=Tệp
+moreinfo.date_modified=Ngày sửa đổi
+moreinfo.duration=Thời lượng
+moreinfo.title_label=Tên bài hát
+moreinfo.artist_label=Nghệ sĩ
+moreinfo.album_label=Đĩa nhạc
+moreinfo.composer_label=Nhà soạn nhạc
+moreinfo.year_label=Năm
+moreinfo.unknown=Không rõ
+moreinfo.untitled=Chưa đặt tên
+moreinfo.today_at=Hôm nay lúc
+moreinfo.yesterday_at=Hôm qua lúc
+moreinfo.at=lúc
 
 ## --- Modal Chỉnh sửa (chọn Metadata / Thumbnail) ---
 editoptions.title=Chỉnh sửa bài hát
 editoptions.thumbnail=Sửa thumbnail
 editoptions.thumbnail_label=Sửa Thumbnail
 editoptions.metadata=Sửa thông tin bài hát
+editoptions.warning=Tính năng này là tính năng thử nghiệm, vui lòng sao lưu tệp nhạc của bạn trước khi thực hiện sửa đổi
 
-## --- Metadata Editor: cảnh báo tải lỗi ---
+## --- Metadata Editor: load-error warning ---
 metaeditor.timeout_title=Không thể tải trình chỉnh sửa
 
 ## --- Dialog xác nhận ghi đè ---
 confirmoverwrite.title=⚠ Bạn có chắc muốn ghi đè?
+confirmoverwrite.body=Hệ thống sẽ tiến hành ghi đè dữ liệu thẻ ID3 Metadata mới vào tệp tin âm nhạc này.
+confirmoverwrite.field_title=Tên: 
+confirmoverwrite.field_artist=Nghệ sĩ: 
+confirmoverwrite.field_album=Album: 
+confirmoverwrite.note=Sau khi lưu, tệp sẽ được cập nhật trực tiếp trong hệ thống.
 confirmoverwrite.cancel=Huỷ
 confirmoverwrite.save=Lưu thay đổi
 
 ## --- Sửa Thumbnail / Cắt & Xoay ---
 thumbnail.title=Sửa Thumbnail
+thumbnail.upload_title=Tải ảnh lên
+thumbnail.upload=Tải lên
+thumbnail.delete_title=Xoá thumbnail
+thumbnail.delete=Xoá thumbnail
 thumbnail.crop_title=Cắt & Xoay Thumbnail
+thumbnail.rotate_title=Xoay ảnh
+thumbnail.rotate=Xoay 90°
 thumbnail.confirm_title=Xác nhận ảnh bìa
+thumbnail.confirm_body=Bạn có muốn lưu ảnh cắt này làm ảnh bìa mới cho bài hát?
+thumbnail.save_title=Lưu thumbnail
+thumbnail.save=Lưu
+thumbnail.delete_confirm=Bạn có chắc chắn muốn xoá ảnh thumbnail của bài hát này?
+thumbnail.delete_success_overwrite=Đã xoá thumbnail và ghi đè trực tiếp vào file gốc thành công!
+thumbnail.delete_success_download=Đã xoá thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.
+thumbnail.delete_error=Lỗi xảy ra trong khi xoá thumbnail.
+thumbnail.save_success_overwrite=Đã lưu thumbnail và ghi đè trực tiếp vào file gốc thành công!
+thumbnail.save_success_download=Đã lưu thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.
+thumbnail.save_error=Xảy ra lỗi trong khi biên dịch thumbnail.
 
 ## --- Dialog Cài đặt ---
 settings.title=Cài đặt hệ thống
 settings.language=Ngôn ngữ
 settings.language_desc=Đổi ngôn ngữ hiển thị của toàn bộ ứng dụng
+settings.lang_vi=Tiếng Việt
+settings.lang_en=English
 settings.main_lyric=Hiện lời ở đầu trình phát chính
 settings.main_lyric_desc=Hiển thị lyrics dòng hiện tại ngay góc đầu vùng Canvas sóng nhạc
 settings.pip_lyric=Hiện lời ở Picture-in-picture (PiP)
@@ -80,6 +132,16 @@ settings.theme_light=Sáng
 settings.theme_dark=Tối
 settings.accent=Màu chủ đạo (Accent Color)
 settings.accent_desc=Lựa chọn màu sắc rực rỡ đại diện cho giao diện M3 của bạn
+settings.accent_purple=Tím (Purple)
+settings.accent_lime=Chanh (Lime)
+settings.accent_cyan=Lam (Cyan)
+settings.accent_white=Trắng (White)
+settings.accent_green=Lá (Green)
+settings.accent_blue=Dương (Blue)
+settings.accent_yellow=Vàng (Yellow)
+settings.accent_orange=Cam (Orange)
+settings.accent_red=Đỏ (Red)
+settings.accent_pink=Hồng (Pink)
 
 ## --- Dialog Gửi phản hồi ---
 feedback.title=Báo cáo lỗi hoặc gửi phản hồi
@@ -88,19 +150,29 @@ feedback.type_suggestion=Gợi ý tính năng
 feedback.placeholder=Nhập nội dung phản hồi của bạn...
 feedback.error_required=Vui lòng nhập nội dung phản hồi trước khi gửi.
 feedback.include_sysinfo=Gửi kèm thông tin hệ thống
+feedback.submit_title=Gửi phản hồi qua email
+feedback.submit_btn=Gửi phản hồi
 
 ## --- Hub About / What's New / More apps ---
 about.title=About
 about.back=Quay lại
 about.close=Đóng
+about.load_error=Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"
 
 ## --- Picture-in-Picture ---
 pip.expand=Thu gọn/Mở rộng
 pip.playlist=Danh sách phát
+pip.not_supported=Trình duyệt của bro chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)
+
+## --- Loading / Emergency report ---
+loading.report_title=Báo cáo lỗi khẩn cấp
+loading.report_btn=BÁO CÁO
 
 ## --- Metadata Editor (iframe) ---
 metaeditor.header_title=EDIT METADATA
 metaeditor.back=Quay lại
+metaeditor.loading=ĐANG KHỞI CHẠY TRÌNH CHỈNH SỬA...
+metaeditor.saving=Đang lưu...
 metaeditor.section_info=Thông tin bài hát
 metaeditor.field_title=Tên bài hát
 metaeditor.field_artist=Nghệ sĩ
@@ -122,9 +194,9 @@ metaeditor.unsaved_body=Bạn có thay đổi chưa được lưu. Nếu thoát 
 metaeditor.unsaved_keep_editing=Tiếp tục chỉnh sửa
 metaeditor.unsaved_discard=Bỏ thay đổi
 metaeditor.saved_title=✓ Đã lưu thành công
+metaeditor.saved_success=Đã lưu metadata thành công!
 metaeditor.fail_title=✕ Lỗi
 metaeditor.failed_title=Đã xảy ra lỗi
-metaeditor.timeout_title=Không thể tải trình chỉnh sửa
 metaeditor.timeout_body=Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bro có thể đóng lại thử sau, hoặc tiếp tục chờ.
 metaeditor.timeout_ok_title=Đóng trình chỉnh sửa
 metaeditor.timeout_continue=Vẫn tiếp tục
@@ -133,3 +205,5 @@ metaeditor.timeout_continue_title=Vẫn tiếp tục chờ/mở trình chỉnh s
 ## --- Khác ---
 misc.close=Đóng
 misc.ok=OK
+misc.cancel=Huỷ
+misc.confirm=Xác nhận

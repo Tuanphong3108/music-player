@@ -7,10 +7,14 @@
 
 ## --- Top bar ---
 topbar.install=Install app
+topbar.install_tooltip=Install to open files directly from your computer
 topbar.settings=Settings
 topbar.feedback=Send feedback
 topbar.about=About
 topbar.addmusic=Add music
+topbar.addmusic_file=Select music files (File System API)
+topbar.addmusic_folder=Select music folder (File System API)
+topbar.addmusic_legacy=Add files traditional way
 
 ## --- Player controls ---
 player.shuffle=Shuffle
@@ -26,6 +30,9 @@ player.repeat=Repeat
 player.lyrics=Show/Hide Lyrics
 player.speed=Playback speed
 player.mute=Mute/Unmute
+player.pip=Open Picture-in-Picture (PiP)
+player.no_track=No track loaded
+player.load_first_prompt=Please load a music file and play it to use the editor!
 
 ## --- Playlist ---
 playlist.title=Playlist
@@ -34,33 +41,78 @@ playlist.tab_playlist=Playlist
 playlist.tab_shuffle=Shuffle
 playlist.search_placeholder=Search title, artist...
 contextmenu.delete=Remove from playlist
+contextmenu.add_lrc=Add lyrics (.lrc)
+
+## --- Reorder ---
+reorder.done_title=Done
+reorder.done=DONE
+
+## --- Lyric & Drag zone ---
+lyric.placeholder=DRAG AND DROP AUDIO FILE WITH .LRC FILE\nTO SYNC LYRICS
 
 ## --- Other info dialog ---
 moreinfo.title=Other info
+moreinfo.file_type=File
+moreinfo.date_modified=Date modified
+moreinfo.duration=Duration
+moreinfo.title_label=Title
+moreinfo.artist_label=Artist
+moreinfo.album_label=Album
+moreinfo.composer_label=Composer
+moreinfo.year_label=Year
+moreinfo.unknown=Unknown
+moreinfo.untitled=Untitled
+moreinfo.today_at=Today at
+moreinfo.yesterday_at=Yesterday at
+moreinfo.at=at
 
 ## --- Edit modal (choose Metadata / Thumbnail) ---
 editoptions.title=Edit song
 editoptions.thumbnail=Edit thumbnail
 editoptions.thumbnail_label=Edit Thumbnail
 editoptions.metadata=Edit song info
+editoptions.warning=This is an experimental feature, please back up your music file before making modifications
 
 ## --- Metadata Editor: load-error warning ---
 metaeditor.timeout_title=Could not load the editor
 
 ## --- Overwrite confirmation dialog ---
 confirmoverwrite.title=⚠ Overwrite the original file?
+confirmoverwrite.body=The system will overwrite new ID3 Metadata tag data into this music file.
+confirmoverwrite.field_title=Title: 
+confirmoverwrite.field_artist=Artist: 
+confirmoverwrite.field_album=Album: 
+confirmoverwrite.note=After saving, the file will be updated directly in the system.
 confirmoverwrite.cancel=Cancel
 confirmoverwrite.save=Save changes
 
 ## --- Edit Thumbnail / Crop & Rotate ---
 thumbnail.title=Edit Thumbnail
+thumbnail.upload_title=Upload image
+thumbnail.upload=Upload
+thumbnail.delete_title=Delete thumbnail
+thumbnail.delete=Delete thumbnail
 thumbnail.crop_title=Crop & Rotate Thumbnail
+thumbnail.rotate_title=Rotate image
+thumbnail.rotate=Rotate 90°
 thumbnail.confirm_title=Confirm cover art
+thumbnail.confirm_body=Do you want to save this cropped image as the new cover art for the song?
+thumbnail.save_title=Save thumbnail
+thumbnail.save=Save
+thumbnail.delete_confirm=Are you sure you want to delete the thumbnail for this song?
+thumbnail.delete_success_overwrite=Successfully deleted thumbnail and overwritten original file!
+thumbnail.delete_success_download=Thumbnail deleted. Since the browser doesn't have permission to write directly to the original file, the updated MP3 file was automatically downloaded — please use the downloaded file to replace the original.
+thumbnail.delete_error=An error occurred while deleting the thumbnail.
+thumbnail.save_success_overwrite=Successfully saved thumbnail and overwritten original file!
+thumbnail.save_success_download=Thumbnail saved. Since the browser doesn't have permission to write directly to the original file, the updated MP3 file was automatically downloaded — please use the downloaded file to replace the original.
+thumbnail.save_error=An error occurred while building the thumbnail.
 
 ## --- Settings dialog ---
 settings.title=System settings
 settings.language=Language
 settings.language_desc=Change the display language of the whole app
+settings.lang_vi=Tiếng Việt
+settings.lang_en=English
 settings.main_lyric=Show lyrics on the main player
 settings.main_lyric_desc=Show the currently active lyric line right above the audio wave canvas
 settings.pip_lyric=Show lyrics in Picture-in-Picture (PiP)
@@ -80,6 +132,16 @@ settings.theme_light=Light
 settings.theme_dark=Dark
 settings.accent=Accent Color
 settings.accent_desc=Pick a vivid color to represent your M3 interface
+settings.accent_purple=Purple
+settings.accent_lime=Lime
+settings.accent_cyan=Cyan
+settings.accent_white=White
+settings.accent_green=Green
+settings.accent_blue=Blue
+settings.accent_yellow=Yellow
+settings.accent_orange=Orange
+settings.accent_red=Red
+settings.accent_pink=Pink
 
 ## --- Feedback dialog ---
 feedback.title=Report a bug or send feedback
@@ -88,19 +150,29 @@ feedback.type_suggestion=Suggest a feature
 feedback.placeholder=Type your feedback here...
 feedback.error_required=Please enter your feedback before sending.
 feedback.include_sysinfo=Include system information
+feedback.submit_title=Send feedback via email
+feedback.submit_btn=Send feedback
 
 ## --- About / What's New / More apps hub ---
 about.title=About
 about.back=Back
 about.close=Close
+about.load_error=Unable to load content, please try again by restarting the app or contacting Phong VN via the "Send feedback" feature
 
 ## --- Picture-in-Picture ---
 pip.expand=Collapse/Expand
 pip.playlist=Playlist
+pip.not_supported=Your browser does not support Document Picture-in-Picture yet. (Try using the latest Chrome!)
+
+## --- Loading / Emergency report ---
+loading.report_title=Emergency bug report
+loading.report_btn=REPORT
 
 ## --- Metadata Editor (iframe) ---
 metaeditor.header_title=EDIT METADATA
 metaeditor.back=Back
+metaeditor.loading=LAUNCHING EDITOR...
+metaeditor.saving=Saving...
 metaeditor.section_info=Song info
 metaeditor.field_title=Title
 metaeditor.field_artist=Artist
@@ -122,9 +194,9 @@ metaeditor.unsaved_body=You have unsaved changes. If you leave now, all edits wi
 metaeditor.unsaved_keep_editing=Keep editing
 metaeditor.unsaved_discard=Discard changes
 metaeditor.saved_title=✓ Saved successfully
+metaeditor.saved_success=Metadata saved successfully!
 metaeditor.fail_title=✕ Error
 metaeditor.failed_title=An error occurred
-metaeditor.timeout_title=Could not load the editor
 metaeditor.timeout_body=The song editor has taken more than 10 seconds to load. You can close it and try again later, or keep waiting.
 metaeditor.timeout_ok_title=Close the editor
 metaeditor.timeout_continue=Keep waiting
@@ -133,3 +205,5 @@ metaeditor.timeout_continue_title=Keep waiting for the editor to load
 ## --- Misc ---
 misc.close=Close
 misc.ok=OK
+misc.cancel=Cancel
+misc.confirm=Confirm
