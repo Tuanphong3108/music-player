@@ -64,8 +64,9 @@ const EMBED_CONFIG = {
   version: "v2026.09.01",
   build: "build083001",
 
-  // Mặc định ban đầu khi chưa nhận tin nhắn sẽ hiển thị theme này
+  // Mặc định ban đầu khi chưa nhận tin nhắn
   defaultTheme: "dark",
+  defaultLang: "vi",
 
   // 🌌 DARK MODE
   darkTheme: {
@@ -92,14 +93,49 @@ const EMBED_CONFIG = {
     "Đã nâng cấp Shuffle thành Advanced Shuffle",
     "Đánh số bài hát",
     "La peace"
+  ],
+
+  changelogItems_en: [
+    "Added 2 settings for reduced motion and smoother experience",
+    "Fixed several known issues",
+    "Just a small accessibility update 🤓☝️",
+    "Added About section",
+    "Added playback speed button",
+    "Upgraded Shuffle to Advanced Shuffle",
+    "Numbered tracks",
+    "La peace"
   ]
 };
 // =========================================================================
 // ⬆️ HẾT PHẦN CẤU HÌNH CỦA BRO ⬆️
 // =========================================================================
 
-    // Biến lưu giữ theme hiện tại ("dark" hoặc "light")
+    // Biến lưu giữ theme và ngôn ngữ hiện tại
     let currentTheme = EMBED_CONFIG.defaultTheme;
+    let currentLang = EMBED_CONFIG.defaultLang || "vi";
+
+    /**
+     * Render danh sách Changelog theo ngôn ngữ ("vi" hoặc "en")
+     */
+    function renderChangelog(lang) {
+      currentLang = (lang === 'en') ? 'en' : 'vi';
+      const activeTheme = currentTheme === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
+      const itemsToRender = (currentLang === 'en' && EMBED_CONFIG.changelogItems_en) 
+        ? EMBED_CONFIG.changelogItems_en 
+        : EMBED_CONFIG.changelogItems;
+
+      const container = document.getElementById('changelog-container');
+      if (!container) return;
+      container.innerHTML = ''; 
+
+      itemsToRender.forEach(item => {
+        const itemParagraph = document.createElement('p');
+        itemParagraph.className = 'changelog-item text-sm leading-relaxed font-semibold theme-transition';
+        itemParagraph.style.color = activeTheme.subTextColor;
+        itemParagraph.innerText = item;
+        container.appendChild(itemParagraph);
+      });
+    }
 
     /**
      * Hàm dùng để cập nhật màu sắc hiển thị dựa trên cấu hình màu tương ứng của theme
@@ -149,17 +185,8 @@ const EMBED_CONFIG = {
         </span>
       `;
 
-      // 2. Khởi tạo danh sách Changelog
-      const container = document.getElementById('changelog-container');
-      container.innerHTML = ''; 
-
-      EMBED_CONFIG.changelogItems.forEach(item => {
-        const itemParagraph = document.createElement('p');
-        itemParagraph.className = 'changelog-item text-sm leading-relaxed font-semibold theme-transition';
-        itemParagraph.style.color = activeTheme.subTextColor;
-        itemParagraph.innerText = item;
-        container.appendChild(itemParagraph);
-      });
+      // 2. Khởi tạo danh sách Changelog ban đầu
+      renderChangelog(currentLang);
 
       // 3. Thực thi áp dụng màu ban đầu
       applyThemeStyles(currentTheme);
@@ -167,13 +194,21 @@ const EMBED_CONFIG = {
 
     // LẮNG NGHE SỰ KIỆN POSTMESSAGE TỪ TRANG CHA HOẶC IFRAME CONTAINER
     window.addEventListener('message', (event) => {
-      // Nhận giá trị trực tiếp dạng String hoặc thông qua một Object { theme: "..." }
       const data = event.data;
-      
-      if (data === 'dark' || (data && data.theme === 'dark')) {
+      if (!data) return;
+
+      // 1. Cập nhật Theme nếu nhận "dark" / "light" hoặc { theme: "..." }
+      if (data === 'dark' || data.theme === 'dark') {
         applyThemeStyles('dark');
-      } else if (data === 'light' || (data && data.theme === 'light')) {
+      } else if (data === 'light' || data.theme === 'light') {
         applyThemeStyles('light');
+      }
+
+      // 2. Cập nhật Ngôn ngữ nếu nhận "vi" / "en" hoặc { lang: "..." } / { language: "..." }
+      if (data === 'vi' || data.lang === 'vi' || data.language === 'vi') {
+        renderChangelog('vi');
+      } else if (data === 'en' || data.lang === 'en' || data.language === 'en') {
+        renderChangelog('en');
       }
     });
 
