@@ -94,5 +94,42 @@ about.title=About
 about.back=Quay lại
 about.close=Đóng
 
+## --- Picture-in-Picture ---
+pip.expand=Thu gọn/Mở rộng
+pip.playlist=Danh sách phát
+
+## --- Metadata Editor (iframe) ---
+metaeditor.header_title=EDIT METADATA
+metaeditor.back=Quay lại
+metaeditor.section_info=Thông tin bài hát
+metaeditor.field_title=Tên bài hát
+metaeditor.field_artist=Nghệ sĩ
+metaeditor.field_album=Album
+metaeditor.field_genre=Thể loại (Genre)
+metaeditor.field_composer=Nhà soạn nhạc (Composer)
+metaeditor.section_lyric=Lyric
+metaeditor.field_lyric=Lyric Embed
+metaeditor.search_lyric=🔍 Tìm kiếm
+metaeditor.search_lyric_title=Tìm lyric trên lrclib.net
+metaeditor.upload_lrc=⬆ Tải lên .lrc
+metaeditor.upload_lrc_title=Tải lên file phụ đề .lrc
+metaeditor.cancel=Hủy
+metaeditor.cancel_title=Huỷ bỏ
+metaeditor.save=✓ Lưu
+metaeditor.save_title=Lưu thay đổi
+metaeditor.unsaved_title=⚠ Thay đổi chưa được lưu
+metaeditor.unsaved_body=Bạn có thay đổi chưa được lưu. Nếu thoát ngay bây giờ, mọi chỉnh sửa sẽ bị mất.
+metaeditor.unsaved_keep_editing=Tiếp tục chỉnh sửa
+metaeditor.unsaved_discard=Bỏ thay đổi
+metaeditor.saved_title=✓ Đã lưu thành công
+metaeditor.fail_title=✕ Lỗi
+metaeditor.failed_title=Đã xảy ra lỗi
+metaeditor.timeout_title=Không thể tải trình chỉnh sửa
+metaeditor.timeout_body=Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bro có thể đóng lại thử sau, hoặc tiếp tục chờ.
+metaeditor.timeout_ok_title=Đóng trình chỉnh sửa
+metaeditor.timeout_continue=Vẫn tiếp tục
+metaeditor.timeout_continue_title=Vẫn tiếp tục chờ/mở trình chỉnh sửa
+
 ## --- Khác ---
 misc.close=Đóng
+misc.ok=OK

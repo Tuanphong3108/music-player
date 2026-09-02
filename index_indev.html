@@ -741,10 +741,10 @@
                 <h2 style="font-size:16px; font-weight:700; font-family:'Minecraft';" data-i18n="metaeditor.timeout_title">Không thể tải trình chỉnh sửa</h2>
             </div>
             <div style="padding:20px; background: var(--md-sys-color-surface); display:flex; flex-direction:column; gap:18px;">
-                <p style="font-size:14px; color: var(--md-sys-color-on-surface); line-height:1.5; margin:0;">Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bro có thể đóng lại thử sau, hoặc tiếp tục chờ.</p>
+                <p style="font-size:14px; color: var(--md-sys-color-on-surface); line-height:1.5; margin:0;" data-i18n="metaeditor.timeout_body">Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bro có thể đóng lại thử sau, hoặc tiếp tục chờ.</p>
                 <div style="display:flex; gap:10px; justify-content:flex-end;">
-                    <button class="btn-m3" id="metadata-timeout-ok" title="Đóng trình chỉnh sửa" style="border-radius:12px; padding:0 16px; width:auto; height:40px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);">OK</button>
-                    <button class="btn-m3" id="metadata-timeout-continue" title="Vẫn tiếp tục chờ/mở trình chỉnh sửa" style="border-radius:12px; padding:0 16px; width:auto; height:40px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);">Vẫn tiếp tục</button>
+                    <button class="btn-m3" id="metadata-timeout-ok" title="Đóng trình chỉnh sửa" data-i18n-title="metaeditor.timeout_ok_title" style="border-radius:12px; padding:0 16px; width:auto; height:40px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" data-i18n="misc.ok">OK</button>
+                    <button class="btn-m3" id="metadata-timeout-continue" title="Vẫn tiếp tục chờ/mở trình chỉnh sửa" data-i18n-title="metaeditor.timeout_continue_title" style="border-radius:12px; padding:0 16px; width:auto; height:40px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" data-i18n="metaeditor.timeout_continue">Vẫn tiếp tục</button>
                 </div>
             </div>
         </div>
@@ -1631,39 +1631,39 @@
         <body>
 
         <div class="topbar" id="topbarEl">
-          <button class="btn-back" id="btnBack" title="Quay lại">&lt;</button>
-          <span class="topbar-title">EDIT METADATA</span>
+          <button class="btn-back" id="btnBack" title="Quay lại" data-i18n-title="metaeditor.back">&lt;</button>
+          <span class="topbar-title" data-i18n="metaeditor.header_title">EDIT METADATA</span>
         </div>
 
         <div class="page-body" id="mainContent">
-          <div class="section-header">Thông tin bài hát</div>
+          <div class="section-header" data-i18n="metaeditor.section_info">Thông tin bài hát</div>
           <div class="field-row">
-            <div class="field-label">Tên bài hát</div>
+            <div class="field-label" data-i18n="metaeditor.field_title">Tên bài hát</div>
             <input class="ore-input" type="text" id="fieldTitle" name="fieldTitle-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
-            <div class="field-label">Nghệ sĩ</div>
+            <div class="field-label" data-i18n="metaeditor.field_artist">Nghệ sĩ</div>
             <input class="ore-input" type="text" id="fieldArtist" name="fieldArtist-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
-            <div class="field-label">Album</div>
+            <div class="field-label" data-i18n="metaeditor.field_album">Album</div>
             <input class="ore-input" type="text" id="fieldAlbum" name="fieldAlbum-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
-            <div class="field-label">Thể loại (Genre)</div>
+            <div class="field-label" data-i18n="metaeditor.field_genre">Thể loại (Genre)</div>
             <input class="ore-input" type="text" id="fieldGenre" name="fieldGenre-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
-            <div class="field-label">Nhà soạn nhạc (Composer)</div>
+            <div class="field-label" data-i18n="metaeditor.field_composer">Nhà soạn nhạc (Composer)</div>
             <input class="ore-input" type="text" id="fieldComposer" name="fieldComposer-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
-          <div class="section-header" style="padding-top:12px;">Lyric</div>
+          <div class="section-header" style="padding-top:12px;" data-i18n="metaeditor.section_lyric">Lyric</div>
           <div class="field-row">
             <div class="lrc-row">
-              <div class="field-label">Lyric Embed</div>
+              <div class="field-label" data-i18n="metaeditor.field_lyric">Lyric Embed</div>
               <div style="display:flex; gap:8px;">
-                <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnSearchLrc" title="Tìm lyric trên lrclib.net">🔍 Tìm kiếm</button>
-                <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnUploadLrc" title="Tải lên file phụ đề .lrc">⬆ Tải lên .lrc</button>
+                <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnSearchLrc" title="Tìm lyric trên lrclib.net" data-i18n-title="metaeditor.search_lyric_title" data-i18n="metaeditor.search_lyric">🔍 Tìm kiếm</button>
+                <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnUploadLrc" title="Tải lên file phụ đề .lrc" data-i18n-title="metaeditor.upload_lrc_title" data-i18n="metaeditor.upload_lrc">⬆ Tải lên .lrc</button>
               </div>
             </div>
             <textarea class="ore-input" id="fieldLyric"></textarea>
@@ -1677,45 +1677,45 @@
         </div>
 
         <div class="action-bar" id="actionBar">
-          <button class="ore-btn ore-btn-ghost" id="btnCancel" title="Huỷ bỏ">Hủy</button>
-          <button class="ore-btn ore-btn-green" id="btnSave" title="Lưu thay đổi">✓ Lưu</button>
+          <button class="ore-btn ore-btn-ghost" id="btnCancel" title="Huỷ bỏ" data-i18n-title="metaeditor.cancel_title" data-i18n="metaeditor.cancel">Hủy</button>
+          <button class="ore-btn ore-btn-green" id="btnSave" title="Lưu thay đổi" data-i18n-title="metaeditor.save_title" data-i18n="metaeditor.save">✓ Lưu</button>
         </div>
 
         <div class="overlay hidden" id="overlayUnsaved">
           <div class="ore-dialog">
-            <div class="dialog-header">⚠ Thay đổi chưa được lưu</div>
-            <div class="dialog-body">
+            <div class="dialog-header" data-i18n="metaeditor.unsaved_title">⚠ Thay đổi chưa được lưu</div>
+            <div class="dialog-body" data-i18n="metaeditor.unsaved_body">
               Bạn có thay đổi chưa được lưu.<br>
               Nếu thoát ngay bây giờ, mọi chỉnh sửa sẽ bị mất.
             </div>
             <div class="dialog-footer">
-              <button class="ore-btn ore-btn-ghost ore-btn-sm" id="btnStay" title="Tiếp tục chỉnh sửa">Tiếp tục chỉnh sửa</button>
-              <button class="ore-btn ore-btn-red ore-btn-sm" id="btnDiscard" title="Bỏ thay đổi">Bỏ thay đổi</button>
+              <button class="ore-btn ore-btn-ghost ore-btn-sm" id="btnStay" title="Tiếp tục chỉnh sửa" data-i18n-title="metaeditor.unsaved_keep_editing" data-i18n="metaeditor.unsaved_keep_editing">Tiếp tục chỉnh sửa</button>
+              <button class="ore-btn ore-btn-red ore-btn-sm" id="btnDiscard" title="Bỏ thay đổi" data-i18n-title="metaeditor.unsaved_discard" data-i18n="metaeditor.unsaved_discard">Bỏ thay đổi</button>
             </div>
           </div>
         </div>
 
         <div class="overlay hidden" id="overlaySuccess">
           <div class="ore-dialog">
-            <div class="dialog-header">✓ Đã lưu thành công</div>
+            <div class="dialog-header" data-i18n="metaeditor.saved_title">✓ Đã lưu thành công</div>
             <div class="dialog-body" style="text-align:center;padding-top:20px;padding-bottom:6px;">
               <div class="check-circle">✓</div>
               <span id="saveSuccessText">Đã lưu metadata thành công!</span>
             </div>
             <div class="dialog-footer" style="justify-content:center;">
-              <button class="ore-btn ore-btn-green" id="btnOK" title="Đóng">OK</button>
+              <button class="ore-btn ore-btn-green" id="btnOK" title="Đóng" data-i18n-title="misc.close" data-i18n="misc.ok">OK</button>
             </div>
           </div>
         </div>
 
         <div class="overlay hidden" id="overlayFail">
           <div class="ore-dialog">
-            <div class="dialog-header">✕ Lỗi</div>
+            <div class="dialog-header" data-i18n="metaeditor.fail_title">✕ Lỗi</div>
             <div class="dialog-body" style="text-align:center;padding-top:22px;padding-bottom:10px;">
-              <div style="font-family:'Roboto','Segoe UI',sans-serif;font-size:15px;font-weight:700;color:#E53935;margin-bottom:4px;">Đã xảy ra lỗi</div>
+              <div style="font-family:'Roboto','Segoe UI',sans-serif;font-size:15px;font-weight:700;color:#E53935;margin-bottom:4px;" data-i18n="metaeditor.failed_title">Đã xảy ra lỗi</div>
             </div>
             <div class="dialog-footer" style="justify-content:center;">
-              <button class="ore-btn ore-btn-red" id="btnFailOK" title="Đóng">OK</button>
+              <button class="ore-btn ore-btn-red" id="btnFailOK" title="Đóng" data-i18n-title="misc.close" data-i18n="misc.ok">OK</button>
             </div>
           </div>
         </div>
@@ -3518,20 +3518,20 @@
                                 <h4 id="pip-title" class="pip-title">Studio Standby</h4>
                                 <p id="pip-artist" class="pip-artist">ENGINE IDLE | SYSTEM</p>
                             </div>
-                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;" title="Thu gọn/Mở rộng"><span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span></button>
+                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;" title="Thu gọn/Mở rộng" data-i18n-title="pip.expand"><span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span></button>
                         </div>
                         
                         <div id="pip-lyric" class="pip-lyric"></div>
 
                         <div class="pip-controls">
-                            <button class="btn-m3" id="pip-shuffle-btn" title="Phát ngẫu nhiên"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                            <button class="btn-m3" id="pip-prev-btn" title="Bài trước"><span class="material-symbols-outlined">skip_previous</span></button>
-                            <button class="btn-m3 btn-play" id="pip-play-btn" title="Phát/Tạm dừng">
+                            <button class="btn-m3" id="pip-shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
+                            <button class="btn-m3" id="pip-prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-outlined">skip_previous</span></button>
+                            <button class="btn-m3 btn-play" id="pip-play-btn" title="Phát/Tạm dừng" data-i18n-title="player.play_pause">
                                 <span class="material-symbols-outlined">play_arrow</span>
                                 <md-circular-progress class="play-btn-spinner" indeterminate style="display:none; --md-circular-progress-size: 24px;"></md-circular-progress>
                             </button>
-                            <button class="btn-m3" id="pip-next-btn" title="Bài tiếp theo"><span class="material-symbols-outlined">skip_next</span></button>
-                            <button class="btn-m3" id="pip-repeat-btn" title="Lặp lại">
+                            <button class="btn-m3" id="pip-next-btn" title="Bài tiếp theo" data-i18n-title="player.next"><span class="material-symbols-outlined">skip_next</span></button>
+                            <button class="btn-m3" id="pip-repeat-btn" title="Lặp lại" data-i18n-title="player.repeat">
                                 <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
                                 <div id="pip-repeat-badge" class="repeat-badge">1</div>
                             </button>
@@ -3540,8 +3540,8 @@
                     
                     <div class="pip-playlist-section" id="pip-playlist-section">
                         <div class="pip-playlist-header">
-                            <span style="font-size: 14px; font-weight: 600;">Danh sách phát</span>
-                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;" title="Đóng"><span class="material-symbols-outlined" style="font-size: 18px;">close</span></button>
+                            <span style="font-size: 14px; font-weight: 600;" data-i18n="pip.playlist">Danh sách phát</span>
+                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined" style="font-size: 18px;">close</span></button>
                         </div>
                         <div class="pip-playlist-container" id="pip-playlist-container"></div>
                     </div>
@@ -3549,12 +3549,14 @@
                     <div class="pip-cm-overlay" id="pip-cm-overlay"></div>
                     <div class="pip-context-menu" id="pip-context-menu">
                         <div class="pip-cm-title" id="pip-cm-title">Song Name</div>
-                        <button class="pip-cm-btn" id="pip-cm-delete" title="Xoá khỏi playlist">
+                        <button class="pip-cm-btn" id="pip-cm-delete" title="Xoá khỏi playlist" data-i18n-title="contextmenu.delete">
                             <span class="material-symbols-outlined">delete</span>
-                            Xoá khỏi playlist
+                            <span data-i18n="contextmenu.delete">Xoá khỏi playlist</span>
                         </button>
                     </div>
                 `;
+
+                applyTranslations(currentLangDict, pipDoc); // Áp ngôn ngữ hiện tại ngay khi vừa dựng xong PiP
 
                 pipDoc.getElementById('pip-play-btn').onclick = () => document.getElementById('play-btn').click();
                 pipDoc.getElementById('pip-prev-btn').onclick = () => document.getElementById('prev-btn').click();
@@ -3612,10 +3614,12 @@
         // --- STREAMING_CHUNK:Binding UI elements for settings and accents... ---
         // --- HỆ THỐNG NGÔN NGỮ (i18n) ---
         // Đọc file .lang kiểu Minecraft (key=value, "#" là comment), áp dụng lên mọi phần
-        // tử có data-i18n / data-i18n-title / data-i18n-placeholder. Chỉ bao phủ document
-        // chính (top bar, player, playlist, các dialog) — KHÔNG bao gồm cửa sổ PiP, iframe
-        // Metadata Editor, hay about.html/changelog.html/apps.html (đó là các document/file
-        // tách biệt, cần tự tích hợp riêng nếu muốn dịch luôn cả những phần đó).
+        // tử có data-i18n / data-i18n-title / data-i18n-placeholder. Bao phủ: document
+        // chính, cửa sổ PiP (customPipWindow.document) và iframe Metadata Editor
+        // (metadataIframe.contentDocument) — cả 2 đều same-origin nên gọi thẳng được,
+        // không cần postMessage. Riêng about.html/changelog.html/apps.html do bên khác
+        // (Gemini) quản lý nội dung, mình chỉ gửi kèm mã ngôn ngữ qua postMessage để bên
+        // đó tự xử lý, không đụng vào nội dung 2 file đó.
         let currentLangDict = {};
 
         function parseLangFile(text) {
@@ -3630,19 +3634,36 @@
             return dict;
         }
 
-        function applyTranslations(dict) {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
+        function applyTranslations(dict, root) {
+            root = root || document;
+            root.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (dict[key] !== undefined) el.innerText = dict[key];
             });
-            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            root.querySelectorAll('[data-i18n-title]').forEach(el => {
                 const key = el.getAttribute('data-i18n-title');
                 if (dict[key] !== undefined) el.setAttribute('title', dict[key]);
             });
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            root.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dict[key] !== undefined) el.setAttribute('placeholder', dict[key]);
             });
+        }
+
+        // Áp dụng ngôn ngữ hiện tại cho PiP (nếu đang mở) và Metadata Editor (nếu đã tải
+        // xong) — gọi lại mỗi khi đổi ngôn ngữ, và lúc mới mở/mới tải xong 2 cái đó
+        function applyTranslationsEverywhere() {
+            applyTranslations(currentLangDict, document);
+            try {
+                if (typeof customPipWindow !== 'undefined' && customPipWindow) {
+                    applyTranslations(currentLangDict, customPipWindow.document);
+                }
+            } catch (err) { /* Cửa sổ PiP có thể chưa sẵn sàng hoặc đã đóng, bỏ qua */ }
+            try {
+                if (typeof metadataIframe !== 'undefined' && metadataIframe && metadataIframe.contentDocument) {
+                    applyTranslations(currentLangDict, metadataIframe.contentDocument);
+                }
+            } catch (err) { /* metadataIframe có thể chưa kịp khởi tạo, bỏ qua */ }
         }
 
         async function loadLanguage(lang) {
@@ -3650,10 +3671,12 @@
                 const res = await fetch('./language/' + lang + '.lang');
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 currentLangDict = parseLangFile(await res.text());
-                applyTranslations(currentLangDict);
+                applyTranslationsEverywhere();
                 localStorage.setItem('settings_language', lang);
                 const langSelectEl = document.getElementById('setting-language');
                 if (langSelectEl) langSelectEl.value = lang;
+                // Đồng bộ luôn mã ngôn ngữ cho About/What's New/More apps nếu đang mở
+                if (typeof sendThemeToChangelog === 'function') sendThemeToChangelog();
             } catch (err) {
                 console.warn('Không tải được file ngôn ngữ "' + lang + '" (kiểm tra thư mục /language/ cạnh file index.html):', err);
             }
@@ -3810,6 +3833,10 @@
         function sendThemeToChangelog() {
             if (!clIframe.contentWindow) return;
             clIframe.contentWindow.postMessage(resolveThemeMode(settings.theme), '*');
+            // Về/What's New/More apps do bên Gemini quản lý nội dung -> chỉ gửi thêm mã
+            // ngôn ngữ hiện tại ("vi"/"en") qua postMessage để bên đó tự xử lý, không đụng
+            // vào nội dung about.html/changelog.html/apps.html
+            clIframe.contentWindow.postMessage(localStorage.getItem('settings_language') || 'vi', '*');
         }
 
         function showChangelogLoadError() {
@@ -4294,6 +4321,7 @@
         // Giờ mở/đóng chỉ là trượt qua trượt lại, document iframe sống xuyên suốt phiên.
         metadataIframe.onload = () => {
             metadataEditorReady = true;
+            applyTranslations(currentLangDict, metadataIframe.contentDocument);
             if (metadataEditorPendingOpen) {
                 metadataEditorPendingOpen = false;
                 sendLoadDataToEditor();

@@ -94,5 +94,42 @@ about.title=About
 about.back=Back
 about.close=Close
 
+## --- Picture-in-Picture ---
+pip.expand=Collapse/Expand
+pip.playlist=Playlist
+
+## --- Metadata Editor (iframe) ---
+metaeditor.header_title=EDIT METADATA
+metaeditor.back=Back
+metaeditor.section_info=Song info
+metaeditor.field_title=Title
+metaeditor.field_artist=Artist
+metaeditor.field_album=Album
+metaeditor.field_genre=Genre
+metaeditor.field_composer=Composer
+metaeditor.section_lyric=Lyric
+metaeditor.field_lyric=Lyric Embed
+metaeditor.search_lyric=🔍 Search
+metaeditor.search_lyric_title=Search for lyrics on lrclib.net
+metaeditor.upload_lrc=⬆ Upload .lrc
+metaeditor.upload_lrc_title=Upload an .lrc lyric file
+metaeditor.cancel=Cancel
+metaeditor.cancel_title=Cancel
+metaeditor.save=✓ Save
+metaeditor.save_title=Save changes
+metaeditor.unsaved_title=⚠ Unsaved changes
+metaeditor.unsaved_body=You have unsaved changes. If you leave now, all edits will be lost.
+metaeditor.unsaved_keep_editing=Keep editing
+metaeditor.unsaved_discard=Discard changes
+metaeditor.saved_title=✓ Saved successfully
+metaeditor.fail_title=✕ Error
+metaeditor.failed_title=An error occurred
+metaeditor.timeout_title=Could not load the editor
+metaeditor.timeout_body=The song editor has taken more than 10 seconds to load. You can close it and try again later, or keep waiting.
+metaeditor.timeout_ok_title=Close the editor
+metaeditor.timeout_continue=Keep waiting
+metaeditor.timeout_continue_title=Keep waiting for the editor to load
+
 ## --- Misc ---
 misc.close=Close
+misc.ok=OK
