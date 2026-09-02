@@ -253,161 +253,18 @@
         <div class="flex flex-wrap items-center justify-center gap-3 w-full pt-1">
             <md-filled-button id="whatsNewBtn" style="--md-filled-button-container-shape: 20px;">
                 <span class="material-symbols-outlined" slot="icon">auto_awesome</span>
-                What's New?
+                <span id="txtWhatsNew">What's New?</span>
             </md-filled-button>
 
             <md-outlined-button id="exploreMoreBtn" style="--md-outlined-button-container-shape: 20px;">
                 <span class="material-symbols-outlined" slot="icon">explore</span>
-                Khám phá thêm
+                <span id="txtExploreMore">Khám phá thêm</span>
             </md-outlined-button>
         </div>
 
         <!-- Feature Cards List -->
-        <div class="w-full space-y-2.5 text-left pt-2">
-            
-            <!-- Feature 0: Shortcuts -->
-            <div onclick="openFeatureDetail(0)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
-                <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
-                        <span class="material-symbols-outlined text-2xl">keyboard</span>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Hệ thống Phím tắt tiện lợi</h3>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--m3-primary)]/15 text-[var(--m3-primary)]">Hotkeys</span>
-                        </div>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Space, Mũi tên, Ctrl+O, phím M — Điều khiển trình phát nhạc cực nhanh không cần chuột.</p>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            </div>
-
-            <!-- Feature 1: Local Player & PWA -->
-            <div onclick="openFeatureDetail(1)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
-                <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
-                        <span class="material-symbols-outlined text-2xl">laptop_chromebook</span>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Trình phát nhạc cục bộ & PWA</h3>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Offline</span>
-                        </div>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Chạy 100% trên trình duyệt, kéo-thả file, hỗ trợ cài PWA mở trực tiếp.</p>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            </div>
-
-            <!-- Feature 2: ID3 Metadata Editor -->
-            <div onclick="openFeatureDetail(2)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
-                <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
-                        <span class="material-symbols-outlined text-2xl">edit_note</span>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Sửa Tag & Metadata MP3 trực tiếp</h3>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">Đặc biệt</span>
-                        </div>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Chỉnh Tên bài, Nghệ sĩ, Lyric, Bìa đĩa & ghi đè file thật qua File System Access API.</p>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            </div>
-
-            <!-- Feature 3: Synced Lyrics & Viewing Modes -->
-            <div onclick="openFeatureDetail(3)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
-                <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
-                        <span class="material-symbols-outlined text-2xl">lyrics</span>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Lời bài hát Sync & Chế độ xem</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Lyric đồng bộ thời gian thực, chế độ Picture-in-Picture & Fullscreen cực phiêu.</p>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            </div>
-
-            <!-- Feature 4: Material Design 3 & Performance -->
-            <div onclick="openFeatureDetail(4)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
-                <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
-                        <span class="material-symbols-outlined text-2xl">palette</span>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Giao diện MD3 & Tối ưu hiệu năng</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Theme màu đa dạng (Sáng/Tối/Hệ thống), tùy chọn giảm hiệu ứng cho máy yếu.</p>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            </div>
-
-            <!-- Feature 5: Smart Search & Feedback -->
-            <div onclick="openFeatureDetail(5)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
-                <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
-                        <span class="material-symbols-outlined text-2xl">manage_search</span>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Tìm kiếm thông minh & Phản hồi</h3>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Tìm nhạc không dấu siêu nhanh, hỗ trợ gửi báo lỗi & đóng góp ý kiến ngay trong app.</p>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            </div>
-
-            <!-- Feature 6: README.md -->
-            <div onclick="openFeatureDetail(6)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
-                <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
-                        <span class="material-symbols-outlined text-2xl">description</span>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Tài liệu README.md</h3>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400">GitHub</span>
-                        </div>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Xem chi tiết tài liệu hướng dẫn và thông tin dự án trực tiếp từ GitHub.</p>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            </div>
-
-            <!-- Feature 7: MIT License -->
-            <div onclick="openFeatureDetail(7)" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
-                <div class="flex items-center gap-3.5 pr-2">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
-                        <span class="material-symbols-outlined text-2xl">gavel</span>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">Bản quyền & Giấy phép (LICENSE)</h3>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400">MIT</span>
-                        </div>
-                        <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">Tóm tắt & Giấy phép mã nguồn mở MIT License © 2026 Phong VN.</p>
-                    </div>
-                </div>
-                <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
-                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                </div>
-            </div>
-
+        <div id="featureCardsContainer" class="w-full space-y-2.5 text-left pt-2">
+            <!-- Rendered dynamically by JS -->
         </div>
 
     </main>
@@ -429,7 +286,7 @@
             </div>
 
             <!-- Scrollable Detail Content Container -->
-            <div class="flex-1 overflow-y-auto py-5 space-y-4">
+            <div id="detailScrollArea" class="flex-1 overflow-y-auto py-5 space-y-4">
                 <div class="p-5 sm:p-6 rounded-3xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/20 shadow-lg text-left space-y-4">
                     <div id="detailDescription" class="markdown-content">
                         <!-- Dynamic content injected here -->
@@ -453,60 +310,300 @@
             }
         });
 
-        // Feature Data Store
-        const featuresData = [
-            {
-                title: "Hệ thống Phím tắt tiện lợi",
-                icon: "keyboard",
-                description: "Thao tác điều khiển nhạc nhanh chóng không cần dùng chuột với dải phím tắt phong phú:\n\n• **Space (Khoảng trắng)**: Tạm dừng / Tiếp tục phát nhạc.\n• **Mũi tên trái / phải (← / →)**: Tiến / Lùi 5 giây.\n• **Mũi tên lên / xuống (↑ / ↓)**: Tăng / Giảm âm lượng.\n• **Ctrl + O**: Mở hộp thoại chọn và tải file nhạc lên.\n• **Phím M**: Tắt hoặc bật lại âm thanh (Mute / Unmute).\n• **Phím F11**: Tắt hoặc bật chế độ toàn màn hình.\n• **Phím Ctrl + Phím mũi tên trái / phải (← / →)**: Chuyển sang bài tiếp theo hoặc bài trước đó."
-            },
-            {
-                title: "Trình phát nhạc cục bộ & PWA",
-                icon: "laptop_chromebook",
-                description: "Audio Player là trình phát nhạc cục bộ chạy hoàn toàn trên trình duyệt (100% Client-side, không cần cài đặt phần mềm phức tạp, không phụ thuộc vào server bên ngoài).\n\n• Mở nhạc cực nhanh bằng cách chọn file từ máy, kéo-thả trực tiếp vào giao diện.\n• Hỗ trợ cài đặt dưới dạng PWA (Progressive Web App), cho phép double-click mở file nhạc trực tiếp từ trình quản lý file của hệ điều hành.\n• Tích hợp đầy đủ các chế độ phát nâng cao: Shuffle (Phát ngẫu nhiên), Repeat (Lặp lại bài/danh sách), tua nhanh thời gian và hỗ trợ hệ thống phím tắt tiện lợi."
-            },
-            {
-                title: "Sửa Tag & Metadata MP3 trực tiếp",
-                icon: "edit_note",
-                description: "Điểm đặc biệt và mạnh mẽ nhất của Audio Player là bộ công cụ chỉnh sửa metadata trực tiếp lên file MP3 gốc:\n\n• Chỉnh sửa đầy đủ các thông tin ID3: Tên bài hát, Nghệ sĩ, Album, Genre (Thể loại), Composer (Nhà soạn nhạc).\n• Nhúng & đồng bộ Lyric theo thời gian thực (LRC format).\n• Công cụ cắt / xoay ảnh bìa (Cover Art) tích hợp trực tiếp.\n• Ghi đè thẳng vào file thật trên ổ đĩa nhờ File System Access API tiên tiến (thay vì chỉ lưu trên bản sao tạm thời như các web player thông thường)."
-            },
-            {
-                title: "Lời bài hát Sync & Chế độ xem",
-                icon: "lyrics",
-                description: "Trải nghiệm âm nhạc sống động với khả năng hiển thị lời bài hát và chế độ xem linh hoạt:\n\n• Hỗ trợ hiển thị lyric đồng bộ chạy theo từng câu chữ ngay tại màn hình chính.\n• Chế độ Picture-in-Picture (PiP): Giữ cửa sổ phát nhạc và lyric luôn nổi trên cùng để vừa làm việc vừa theo dõi bài hát.\n• Chế độ Full Screen riêng biệt với giao diện nghệ thuật tập trung tối đa vào trải nghiệm nghe nhạc."
-            },
-            {
-                title: "Giao diện MD3 & Tối ưu hiệu năng",
-                icon: "palette",
-                description: "Thiết kế hiện đại chuẩn Material Design 3 Expressive kết hợp tối ưu mượt mà:\n\n• Đa dạng theme màu tuỳ chỉnh linh hoạt (Sáng / Tối / Tự động theo Hệ thống).\n• Cung cấp các tuỳ chọn tối ưu hiệu năng chuyên sâu: Tắt bớt hiệu ứng chuyển động, giảm độ mờ (blur) giúp ứng dụng hoạt động siêu mượt trên các thiết bị cấu hình khiêm tốn."
-            },
-            {
-                title: "Tìm kiếm thông minh & Phản hồi",
-                icon: "manage_search",
-                description: "Bộ công cụ tìm kiếm và tương tác hoàn thiện:\n\n• Tìm kiếm playlist thông minh: Tự động bỏ qua dấu tiếng Việt, tìm sâu vào từng ngóc ngách thông tin như Thể loại (Genre) hay Nhà soạn nhạc (Composer).\n• Kênh phản hồi trực tiếp: Tích hợp sẵn form gửi góp ý và báo lỗi ngay bên trong app để người dùng dễ dàng đóng góp ý kiến cho nhà phát triển."
-            },
-            {
-                title: "Tài liệu README.md",
-                icon: "description",
-                isReadme: true
-            },
-            {
-                title: "Bản quyền & Giấy phép (LICENSE)",
-                icon: "gavel",
-                description: `### 📜 Tóm tắt Giấy phép MIT
+        let currentLang = 'vi';
 
-Phần mềm này được phát hành dưới giấy phép **MIT License**, một trong những giấy phép mã nguồn mở tự do, cởi mở và phổ biến nhất hiện nay:
+        // i18n Translations Dictionary
+        const i18n = {
+            vi: {
+                whatsNew: "What's New?",
+                exploreMore: "Khám phá thêm",
+                loadingReadme: "Đang tải README.md từ GitHub...",
+                readmeError: "Lỗi khi tải README.md:",
+                imageTooltip: "Bấm để mở ảnh gốc trong tab mới",
+                licenseCopySuccess: "Đã sao chép văn bản LICENSE!",
+                copyBtn: "Sao chép LICENSE",
+                summaryRightsTitle: "Quyền hạn",
+                summaryRightsDesc: "Tự do thương mại, sửa đổi, phân phối và sử dụng riêng tư.",
+                summaryCondTitle: "Điều kiện",
+                summaryCondDesc: "Phải giữ nguyên thông báo bản quyền MIT trong tất cả bản sao.",
+                summaryWarnTitle: "Bảo hành",
+                summaryWarnDesc: "Phần mềm được cung cấp nguyên bản, không bảo hành đi kèm.",
+                features: [
+                    {
+                        title: "Hệ thống Phím tắt tiện lợi",
+                        icon: "keyboard",
+                        badge: "Hotkeys",
+                        badgeColor: "bg-[var(--m3-primary)]/15 text-[var(--m3-primary)]",
+                        summary: "Space, Mũi tên, Ctrl+O, phím M, F11, Ctrl+Mũi tên — Điều khiển phát nhạc cực nhanh.",
+                        description: "Thao tác điều khiển nhạc nhanh chóng không cần dùng chuột với dải phím tắt phong phú:\n\n• **Space (Khoảng trắng)**: Tạm dừng / Tiếp tục phát nhạc.\n• **Mũi tên trái / phải (← / →)**: Tiến / Lùi 5 giây.\n• **Mũi tên lên / xuống (↑ / ↓)**: Tăng / Giảm âm lượng.\n• **Ctrl + O**: Mở hộp thoại chọn và tải file nhạc lên.\n• **Phím M**: Tắt hoặc bật lại âm thanh (Mute / Unmute).\n• **Phím F11**: Tắt hoặc bật chế độ toàn màn hình.\n• **Phím Ctrl + Phím mũi tên trái / phải (← / →)**: Chuyển sang bài tiếp theo hoặc bài trước đó."
+                    },
+                    {
+                        title: "Trình phát nhạc cục bộ & PWA",
+                        icon: "laptop_chromebook",
+                        badge: "Offline",
+                        badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                        summary: "Chạy 100% trên trình duyệt, kéo-thả file, hỗ trợ cài PWA mở trực tiếp.",
+                        description: "Audio Player là trình phát nhạc cục bộ chạy hoàn toàn trên trình duyệt (100% Client-side, không cần cài đặt phần mềm phức tạp, không phụ thuộc vào server bên ngoài).\n\n• Mở nhạc cực nhanh bằng cách chọn file từ máy, kéo-thả trực tiếp vào giao diện.\n• Hỗ trợ cài đặt dưới dạng PWA (Progressive Web App), cho phép double-click mở file nhạc trực tiếp từ trình quản lý file của hệ điều hành.\n• Tích hợp đầy đủ các chế độ phát nâng cao: Shuffle (Phát ngẫu nhiên), Repeat (Lặp lại bài/danh sách), tua nhanh thời gian và hỗ trợ hệ thống phím tắt tiện lợi."
+                    },
+                    {
+                        title: "Sửa Tag & Metadata MP3 trực tiếp",
+                        icon: "edit_note",
+                        badge: "Đặc biệt",
+                        badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+                        summary: "Chỉnh Tên bài, Nghệ sĩ, Lyric, Bìa đĩa & ghi đè file thật qua File System Access API.",
+                        description: "Điểm đặc biệt và mạnh mẽ nhất của Audio Player là bộ công cụ chỉnh sửa metadata trực tiếp lên file MP3 gốc:\n\n• Chỉnh sửa đầy đủ các thông tin ID3: Tên bài hát, Nghệ sĩ, Album, Genre (Thể loại), Composer (Nhà soạn nhạc).\n• Nhúng & đồng bộ Lyric theo thời gian thực (LRC format).\n• Công cụ cắt / xoay ảnh bìa (Cover Art) tích hợp trực tiếp.\n• Ghi đè thẳng vào file thật trên ổ đĩa nhờ File System Access API tiên tiến (thay vì chỉ lưu trên bản sao tạm thời như các web player thông thường)."
+                    },
+                    {
+                        title: "Lời bài hát Sync & Chế độ xem",
+                        icon: "lyrics",
+                        summary: "Lyric đồng bộ thời gian thực, chế độ Picture-in-Picture & Fullscreen cực phiêu.",
+                        description: "Trải nghiệm âm nhạc sống động với khả năng hiển thị lời bài hát và chế độ xem linh hoạt:\n\n• Hỗ trợ hiển thị lyric đồng bộ chạy theo từng câu chữ ngay tại màn hình chính.\n• Chế độ Picture-in-Picture (PiP): Giữ cửa sổ phát nhạc và lyric luôn nổi trên cùng để vừa làm việc vừa theo dõi bài hát.\n• Chế độ Full Screen riêng biệt với giao diện nghệ thuật tập trung tối đa vào trải nghiệm nghe nhạc."
+                    },
+                    {
+                        title: "Giao diện MD3 & Tối ưu hiệu năng",
+                        icon: "palette",
+                        summary: "Theme màu đa dạng (Sáng/Tối/Hệ thống), tùy chọn giảm hiệu ứng cho máy yếu.",
+                        description: "Thiết kế hiện đại chuẩn Material Design 3 Expressive kết hợp tối ưu mượt mà:\n\n• Đa dạng theme màu tuỳ chỉnh linh hoạt (Sáng / Tối / Tự động theo Hệ thống).\n• Cung cấp các tuỳ chọn tối ưu hiệu năng chuyên sâu: Tắt bớt hiệu ứng chuyển động, giảm độ mờ (blur) giúp ứng dụng hoạt động siêu mượt trên các thiết bị cấu hình khiêm tốn."
+                    },
+                    {
+                        title: "Tìm kiếm thông minh & Phản hồi",
+                        icon: "manage_search",
+                        summary: "Tìm nhạc không dấu siêu nhanh, hỗ trợ gửi báo lỗi & đóng góp ý kiến ngay trong app.",
+                        description: "Bộ công cụ tìm kiếm và tương tác hoàn thiện:\n\n• Tìm kiếm playlist thông minh: Tự động bỏ qua dấu tiếng Việt, tìm sâu vào từng ngóc ngách thông tin như Thể loại (Genre) hay Nhà soạn nhạc (Composer).\n• Kênh phản hồi trực tiếp: Tích hợp sẵn form gửi góp ý và báo lỗi ngay bên trong app để người dùng dễ dàng đóng góp ý kiến cho nhà phát triển."
+                    },
+                    {
+                        title: "Tài liệu README.md",
+                        icon: "description",
+                        badge: "GitHub",
+                        badgeColor: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+                        summary: "Xem chi tiết tài liệu hướng dẫn và thông tin dự án trực tiếp từ GitHub.",
+                        isReadme: true
+                    },
+                    {
+                        title: "Bản quyền & Giấy phép (LICENSE)",
+                        icon: "gavel",
+                        badge: "MIT",
+                        badgeColor: "bg-purple-500/15 text-purple-600 dark:text-purple-400",
+                        summary: "Tóm tắt & Giấy phép mã nguồn mở MIT License © 2026 Phong VN.",
+                        isLicense: true
+                    }
+                ]
+            },
+            en: {
+                whatsNew: "What's New?",
+                exploreMore: "Explore More",
+                loadingReadme: "Loading README_en.md from GitHub...",
+                readmeError: "Failed to load README.md:",
+                imageTooltip: "Click to open full resolution image in new tab",
+                licenseCopySuccess: "LICENSE text copied to clipboard!",
+                copyBtn: "Copy LICENSE",
+                summaryRightsTitle: "Permissions",
+                summaryRightsDesc: "Free for commercial use, modification, distribution, and private use.",
+                summaryCondTitle: "Conditions",
+                summaryCondDesc: "Must preserve copyright notice in all copies.",
+                summaryWarnTitle: "Limitations",
+                summaryWarnDesc: "Software provided 'as is', without warranty of any kind.",
+                features: [
+                    {
+                        title: "Convenient Keyboard Shortcuts",
+                        icon: "keyboard",
+                        badge: "Hotkeys",
+                        badgeColor: "bg-[var(--m3-primary)]/15 text-[var(--m3-primary)]",
+                        summary: "Space, Arrow keys, Ctrl+O, M, F11, Ctrl+Arrows — Control playback fast.",
+                        description: "Control your music playback swiftly without touching your mouse using a rich set of hotkeys:\n\n• **Spacebar**: Pause / Resume playback.\n• **Left / Right Arrows (← / →)**: Seek backward / forward 5 seconds.\n• **Up / Down Arrows (↑ / ↓)**: Increase / Decrease volume.\n• **Ctrl + O**: Open file picker to load audio files.\n• **M Key**: Mute or Unmute audio.\n• **F11 Key**: Toggle Fullscreen mode.\n• **Ctrl + Left / Right Arrows (← / →)**: Switch to Previous or Next track."
+                    },
+                    {
+                        title: "Local Music Player & PWA",
+                        icon: "laptop_chromebook",
+                        badge: "Offline",
+                        badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                        summary: "Runs 100% in browser, drag-and-drop, PWA support for direct file opening.",
+                        description: "Audio Player is a local audio player running completely in your browser (100% client-side, zero setup required, independent of external servers).\n\n• Open music instantly by selecting files or dragging & dropping into the interface.\n• Install as a PWA (Progressive Web App), enabling direct double-click playback from your OS file manager.\n• Full suite of playback modes: Shuffle, Repeat (Track/Playlist), fast seeking, and shortcuts."
+                    },
+                    {
+                        title: "Edit Tag & MP3 Metadata Directly",
+                        icon: "edit_note",
+                        badge: "Highlight",
+                        badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+                        summary: "Edit Title, Artist, Lyrics, Cover Art & write back to real file via File System Access API.",
+                        description: "The most powerful feature of Audio Player is direct metadata editing on actual MP3 files:\n\n• Complete ID3 tag editing: Track Title, Artist, Album, Genre, Composer.\n• Embed & synchronize real-time lyrics (LRC format).\n• Integrated Cover Art cropping and rotating tool.\n• Overwrite original files directly on disk via native File System Access API."
+                    },
+                    {
+                        title: "Synced Lyrics & Viewing Modes",
+                        icon: "lyrics",
+                        summary: "Real-time synced lyrics, Picture-in-Picture & Fullscreen immersive modes.",
+                        description: "Elevate your listening experience with synchronized lyrics and flexible viewing modes:\n\n• Real-time lyrics display synchronized line by line right on the main player.\n• Picture-in-Picture (PiP) mode: Keep player controls and lyrics floating on top while working.\n• Dedicated Fullscreen mode with clean artwork focused on music enjoyment."
+                    },
+                    {
+                        title: "MD3 Interface & Performance Tuning",
+                        icon: "palette",
+                        summary: "Flexible color themes (Light/Dark/System) & animation toggle for low-end devices.",
+                        description: "Modern Material Design 3 Expressive architecture with fluid optimization:\n\n• Diverse custom color themes (Light / Dark / Follow System).\n• Deep performance toggles: Disable heavy motion effects or background blurs to ensure silky performance on low-spec hardware."
+                    },
+                    {
+                        title: "Smart Search & Feedback Channel",
+                        icon: "manage_search",
+                        summary: "Lightning-fast search without diacritics, built-in feedback and bug reporting.",
+                        description: "Comprehensive search and user feedback tools:\n\n• Intelligent playlist search: Ignore accent marks, search deeply across Genre or Composer.\n• Direct feedback channel: Built-in form to report issues or send suggestions straight to the developer."
+                    },
+                    {
+                        title: "Documentation README.md",
+                        icon: "description",
+                        badge: "GitHub",
+                        badgeColor: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+                        summary: "Read full project guide and details fetched live from GitHub.",
+                        isReadme: true
+                    },
+                    {
+                        title: "License & Copyright",
+                        icon: "gavel",
+                        badge: "MIT",
+                        badgeColor: "bg-purple-500/15 text-purple-600 dark:text-purple-400",
+                        summary: "Open source summary & MIT License © 2026 Phong VN.",
+                        isLicense: true
+                    }
+                ]
+            }
+        };
 
-* ✅ **Miễn phí & Tự do hoàn toàn**: Bạn có quyền tự do sử dụng, sao chép, chỉnh sửa, hợp nhất, xuất bản, phân phối, cấp phép lại hoặc bán các bản sao của ứng dụng này cho bất kỳ mục đích nào (kể cả thương mại).
-* 📜 **Điều kiện duy nhất**: Tất cả các bản sao hoặc phần quan trọng của phần mềm phải bao gồm thông báo bản quyền gốc **\`Copyright (c) 2026 Phong VN\`** và văn bản giấy phép này.
-* 🛡️ **Tuyên bố miễn trừ trách nhiệm**: Phần mềm được cung cấp "NGUYÊN TRẠNG" (AS IS), tác giả không chịu trách nhiệm đối với bất kỳ sự cố hay rủi ro phát sinh nào.
+        // Render Cards List
+        function renderFeatureList() {
+            const container = document.getElementById('featureCardsContainer');
+            const data = i18n[currentLang];
+            
+            document.getElementById('txtWhatsNew').textContent = data.whatsNew;
+            document.getElementById('txtExploreMore').textContent = data.exploreMore;
 
----
+            container.innerHTML = data.features.map((feat, idx) => `
+                <div onclick="openFeatureDetail(${idx})" class="feature-card group flex items-center justify-between p-4 rounded-2xl bg-[var(--m3-surface-container)] border border-[var(--m3-outline)]/15 hover:border-[var(--m3-primary)]/50 hover:bg-[var(--m3-surface-container-high)] hover:scale-[1.01] transition-all duration-200 cursor-pointer shadow-sm active:scale-[0.98]">
+                    <div class="flex items-center gap-3.5 pr-2">
+                        <div class="w-10 h-10 rounded-xl bg-[var(--m3-primary)]/10 text-[var(--m3-primary)] flex items-center justify-center shrink-0 group-hover:bg-[var(--m3-primary)] group-hover:text-[var(--m3-on-primary)] transition-colors">
+                            <span class="material-symbols-outlined text-2xl">${feat.icon}</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-[var(--m3-on-surface)] group-hover:text-[var(--m3-primary)] transition-colors">${feat.title}</h3>
+                                ${feat.badge ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${feat.badgeColor}">${feat.badge}</span>` : ''}
+                            </div>
+                            <p class="text-xs text-[var(--m3-on-surface-variant)] line-clamp-1 mt-0.5">${feat.summary}</p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--m3-on-surface-variant)] group-hover:text-[var(--m3-primary)] group-hover:translate-x-1 transition-all shrink-0">
+                        <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-### 📄 Văn bản Giấy phép đầy đủ (Full MIT Text)
+        // Open Feature Detail
+        function openFeatureDetail(index) {
+            const langData = i18n[currentLang];
+            const feat = langData.features[index];
+            if (!feat) return;
 
-\`\`\`text
-MIT License
+            const detailView = document.getElementById('detailView');
+            const mainView = document.getElementById('mainView');
+            const scrollArea = document.getElementById('detailScrollArea');
+            
+            // Reset scroll position to top
+            if (scrollArea) scrollArea.scrollTop = 0;
+
+            document.getElementById('detailIcon').textContent = feat.icon;
+            document.getElementById('detailTitle').textContent = feat.title;
+            
+            const detailDescEl = document.getElementById('detailDescription');
+
+            if (feat.isReadme) {
+                // Show loading indicator
+                detailDescEl.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 space-y-3">
+                        <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" 
+                             alt="Loading..." 
+                             class="h-8 object-contain mix-blend-multiply dark:invert">
+                        <span class="text-xs font-medium text-[var(--m3-on-surface-variant)]">${langData.loadingReadme}</span>
+                    </div>
+                `;
+
+                const readmeFile = currentLang === 'en' ? 'README_en.md' : 'README.md';
+                fetch('https://tuanphong3108.github.io/music-player/' + readmeFile)
+                    .then(res => {
+                        if (!res.ok) throw new Error('Cannot fetch ' + readmeFile);
+                        return res.text();
+                    })
+                    .then(markdown => {
+                        if (window.marked && window.DOMPurify) {
+                            const rawHtml = marked.parse(markdown);
+                            const cleanHtml = DOMPurify.sanitize(rawHtml);
+                            detailDescEl.innerHTML = cleanHtml;
+
+                            // Handle Relative Images
+                            detailDescEl.querySelectorAll('img').forEach(img => {
+                                const rawSrc = img.getAttribute('src');
+                                if (rawSrc && !rawSrc.startsWith('http://') && !rawSrc.startsWith('https://') && !rawSrc.startsWith('data:') && !rawSrc.startsWith('//')) {
+                                    img.src = 'https://tuanphong3108.github.io/music-player/' + rawSrc.replace(/^\.\//, '');
+                                }
+                                img.title = langData.imageTooltip;
+                                img.onclick = () => window.open(img.src, '_blank');
+                            });
+
+                            // Handle Links & MIT Redirection to Tab 7
+                            detailDescEl.querySelectorAll('a').forEach(link => {
+                                const href = link.getAttribute('href');
+                                const linkText = link.textContent.trim().toLowerCase();
+
+                                if (linkText.includes('mit license') || (href && href.toLowerCase().includes('license'))) {
+                                    link.setAttribute('href', '#');
+                                    link.onclick = (e) => {
+                                        e.preventDefault();
+                                        openFeatureDetail(7);
+                                    };
+                                    return;
+                                }
+
+                                if (href && !href.startsWith('#')) {
+                                    link.setAttribute('target', '_blank');
+                                    link.setAttribute('rel', 'noopener noreferrer');
+                                    if (!href.startsWith('http://') && !href.startsWith('https://') && !href.startsWith('mailto:')) {
+                                        link.href = 'https://tuanphong3108.github.io/music-player/' + href.replace(/^\.\//, '');
+                                    }
+                                }
+                            });
+
+                        } else {
+                            detailDescEl.innerText = markdown;
+                        }
+                    })
+                    .catch(err => {
+                        detailDescEl.innerHTML = `
+                            <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
+                                <p class="font-bold">${langData.readmeError}</p>
+                                <p>${err.message}</p>
+                            </div>
+                        `;
+                    });
+            } else if (feat.isLicense) {
+                detailDescEl.innerHTML = `
+                    <div class="flex flex-col gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="p-3 rounded-2xl bg-[var(--m3-surface-container-high)] border border-[var(--m3-outline)]/20">
+                                <span class="material-symbols-outlined text-green-500 text-xl">check_circle</span>
+                                <h4 class="font-bold text-xs mt-1 text-[var(--m3-on-surface)]">${langData.summaryRightsTitle}</h4>
+                                <p class="text-[11px] text-[var(--m3-on-surface-variant)] mt-0.5">${langData.summaryRightsDesc}</p>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-[var(--m3-surface-container-high)] border border-[var(--m3-outline)]/20">
+                                <span class="material-symbols-outlined text-amber-500 text-xl">info</span>
+                                <h4 class="font-bold text-xs mt-1 text-[var(--m3-on-surface)]">${langData.summaryCondTitle}</h4>
+                                <p class="text-[11px] text-[var(--m3-on-surface-variant)] mt-0.5">${langData.summaryCondDesc}</p>
+                            </div>
+                            <div class="p-3 rounded-2xl bg-[var(--m3-surface-container-high)] border border-[var(--m3-outline)]/20">
+                                <span class="material-symbols-outlined text-blue-500 text-xl">shield</span>
+                                <h4 class="font-bold text-xs mt-1 text-[var(--m3-on-surface)]">${langData.summaryWarnTitle}</h4>
+                                <p class="text-[11px] text-[var(--m3-on-surface-variant)] mt-0.5">${langData.summaryWarnDesc}</p>
+                            </div>
+                        </div>
+
+                        <div class="relative group">
+                            <pre class="p-4 rounded-2xl bg-[var(--m3-surface-container-highest)] text-xs font-mono border border-[var(--m3-outline)]/30 overflow-x-auto whitespace-pre-wrap leading-relaxed text-[var(--m3-on-surface)]">MIT License
 
 Copyright (c) 2026 Phong VN
 
@@ -526,125 +623,16 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-\`\`\``
-            }
-        ];
-
-        // Open Feature Detail Screen
-        function openFeatureDetail(index) {
-            const data = featuresData[index];
-            if (!data) return;
-
-            const detailView = document.getElementById('detailView');
-            const mainView = document.getElementById('mainView');
-            
-            // Auto-scroll detail view to top when opening
-            const scrollContainer = detailView.querySelector('.overflow-y-auto');
-            if (scrollContainer) {
-                scrollContainer.scrollTop = 0;
-            }
-
-            document.getElementById('detailIcon').textContent = data.icon;
-            document.getElementById('detailTitle').textContent = data.title;
-            
-            const detailDescEl = document.getElementById('detailDescription');
-
-            if (data.isReadme) {
-                // Show loading indicator
-                detailDescEl.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-10 space-y-3">
-                        <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" 
-                             alt="Loading..." 
-                             class="h-8 object-contain mix-blend-multiply dark:invert">
-                        <span class="text-xs font-medium text-[var(--m3-on-surface-variant)]">Đang tải README.md từ GitHub...</span>
+SOFTWARE.</pre>
+                        </div>
                     </div>
                 `;
-
-                // Fetch README from GitHub
-                fetch('https://tuanphong3108.github.io/music-player/README.md')
-                    .then(res => {
-                        if (!res.ok) throw new Error('Không thể tải file README.md');
-                        return res.text();
-                    })
-                    .then(markdown => {
-                        if (window.marked && window.DOMPurify) {
-                            const rawHtml = marked.parse(markdown);
-                            const cleanHtml = DOMPurify.sanitize(rawHtml);
-                            detailDescEl.innerHTML = cleanHtml;
-
-                            // Handle images
-                            detailDescEl.querySelectorAll('img').forEach(img => {
-                                const rawSrc = img.getAttribute('src');
-                                if (rawSrc && !rawSrc.startsWith('http://') && !rawSrc.startsWith('https://') && !rawSrc.startsWith('data:') && !rawSrc.startsWith('//')) {
-                                    const baseUrl = 'https://tuanphong3108.github.io/music-player/';
-                                    img.src = baseUrl + rawSrc.replace(/^\.\//, '');
-                                }
-                                
-                                img.title = 'Bấm để mở ảnh gốc trong tab mới';
-                                img.onclick = () => window.open(img.src, '_blank');
-                                
-                                img.onerror = function() {
-                                    this.onerror = null;
-                                    this.alt = '⚠️ Không thể tải hình ảnh: ' + (rawSrc || 'Image');
-                                    this.style.padding = '1rem';
-                                    this.style.background = 'var(--m3-surface-container-highest)';
-                                    this.style.borderRadius = '12px';
-                                    this.style.fontSize = '12px';
-                                };
-                            });
-
-                            // Handle links
-                            detailDescEl.querySelectorAll('a').forEach(link => {
-                                const href = link.getAttribute('href');
-                                const linkText = link.textContent.trim().toLowerCase();
-
-                                // Route MIT License links directly to Tab 7 (LICENSE)
-                                if (linkText.includes('mit license') || (href && href.toLowerCase().includes('license'))) {
-                                    link.setAttribute('href', '#');
-                                    link.onclick = (e) => {
-                                        e.preventDefault();
-                                        openFeatureDetail(7);
-                                    };
-                                    return;
-                                }
-
-                                if (href && !href.startsWith('#')) {
-                                    link.setAttribute('target', '_blank');
-                                    link.setAttribute('rel', 'noopener noreferrer');
-                                    if (!href.startsWith('http://') && !href.startsWith('https://') && !href.startsWith('mailto:')) {
-                                        const baseUrl = 'https://tuanphong3108.github.io/music-player/';
-                                        link.href = baseUrl + href.replace(/^\.\//, '');
-                                    }
-                                }
-                            });
-
-                        } else {
-                            detailDescEl.innerText = markdown;
-                        }
-                    })
-                    .catch(err => {
-                        detailDescEl.innerHTML = `
-                            <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
-                                <p class="font-bold">Lỗi khi tải README.md:</p>
-                                <p>${err.message}</p>
-                            </div>
-                        `;
-                    });
             } else {
                 if (window.marked && window.DOMPurify) {
-                    const rawHtml = marked.parse(data.description);
+                    const rawHtml = marked.parse(feat.description);
                     detailDescEl.innerHTML = DOMPurify.sanitize(rawHtml);
-
-                    detailDescEl.querySelectorAll('a').forEach(link => {
-                        const href = link.getAttribute('href');
-                        if (href && !href.startsWith('#')) {
-                            link.setAttribute('target', '_blank');
-                            link.setAttribute('rel', 'noopener noreferrer');
-                        }
-                    });
                 } else {
-                    detailDescEl.innerText = data.description;
+                    detailDescEl.innerText = feat.description;
                 }
             }
 
@@ -657,7 +645,6 @@ SOFTWARE.
                 
                 void detailView.offsetWidth; // Trigger reflow
                 
-                // Animate Detail View In
                 detailView.classList.remove('opacity-0', 'translate-x-8');
                 detailView.classList.add('opacity-100', 'translate-x-0');
             }, 200);
@@ -681,38 +668,39 @@ SOFTWARE.
             }, 200);
         }
 
-        // Listen for Theme Messages from Parent Window
+        // PostMessage Event Listener
         window.addEventListener('message', (event) => {
             const data = event.data;
-            const theme = typeof data === 'string' ? data : (data?.theme || data?.type);
+            const msg = typeof data === 'string' ? data : (data?.theme || data?.lang || data?.type);
 
-            if (theme === 'light') {
+            if (msg === 'light') {
                 document.documentElement.classList.remove('dark');
                 document.getElementById('hljs-light').disabled = false;
                 document.getElementById('hljs-dark').disabled = true;
-            } else if (theme === 'dark') {
+            } else if (msg === 'dark') {
                 document.documentElement.classList.add('dark');
                 document.getElementById('hljs-light').disabled = true;
                 document.getElementById('hljs-dark').disabled = false;
+            } else if (msg === 'vi' || msg === 'en') {
+                currentLang = msg;
+                document.documentElement.lang = msg;
+                renderFeatureList();
             }
         });
 
-        // Send PostMessage on Button Clicks
+        // Send PostMessage on Action Clicks
         document.getElementById('whatsNewBtn').addEventListener('click', () => {
-            if (window.parent) {
-                window.parent.postMessage('whatsnew', '*');
-            } else {
-                window.postMessage('whatsnew', '*');
-            }
+            const target = window.parent !== window ? window.parent : window;
+            target.postMessage('whatsnew', '*');
         });
 
         document.getElementById('exploreMoreBtn').addEventListener('click', () => {
-            if (window.parent) {
-                window.parent.postMessage('explore more', '*');
-            } else {
-                window.postMessage('explore more', '*');
-            }
+            const target = window.parent !== window ? window.parent : window;
+            target.postMessage('explore more', '*');
         });
+
+        // Initial Render
+        renderFeatureList();
     </script>
 </body>
 </html>
