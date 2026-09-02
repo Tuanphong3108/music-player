@@ -1,0 +1,98 @@
+# =========================================================
+#  Audio Player — Language File
+#  Language: English (US)
+#  Format: Minecraft-style key=value, one entry per line
+#  Lines starting with "#" are comments and are ignored.
+# =========================================================
+
+## --- Top bar ---
+topbar.install=Install app
+topbar.settings=Settings
+topbar.feedback=Send feedback
+topbar.about=About
+topbar.addmusic=Add music
+
+## --- Player controls ---
+player.shuffle=Shuffle
+player.reshuffle=Reshuffle
+player.reorder=Edit list order
+player.fullscreen=Fullscreen
+player.edit=Edit info
+player.more_info=Other info
+player.previous=Previous track
+player.play_pause=Play/Pause
+player.next=Next track
+player.repeat=Repeat
+player.lyrics=Show/Hide Lyrics
+player.speed=Playback speed
+player.mute=Mute/Unmute
+
+## --- Playlist ---
+playlist.title=Playlist
+playlist.hide=Hide
+playlist.tab_playlist=Playlist
+playlist.tab_shuffle=Shuffle
+playlist.search_placeholder=Search title, artist...
+contextmenu.delete=Remove from playlist
+
+## --- Other info dialog ---
+moreinfo.title=Other info
+
+## --- Edit modal (choose Metadata / Thumbnail) ---
+editoptions.title=Edit song
+editoptions.thumbnail=Edit thumbnail
+editoptions.thumbnail_label=Edit Thumbnail
+editoptions.metadata=Edit song info
+
+## --- Metadata Editor: load-error warning ---
+metaeditor.timeout_title=Could not load the editor
+
+## --- Overwrite confirmation dialog ---
+confirmoverwrite.title=⚠ Overwrite the original file?
+confirmoverwrite.cancel=Cancel
+confirmoverwrite.save=Save changes
+
+## --- Edit Thumbnail / Crop & Rotate ---
+thumbnail.title=Edit Thumbnail
+thumbnail.crop_title=Crop & Rotate Thumbnail
+thumbnail.confirm_title=Confirm cover art
+
+## --- Settings dialog ---
+settings.title=System settings
+settings.language=Language
+settings.language_desc=Change the display language of the whole app
+settings.main_lyric=Show lyrics on the main player
+settings.main_lyric_desc=Show the currently active lyric line right above the audio wave canvas
+settings.pip_lyric=Show lyrics in Picture-in-Picture (PiP)
+settings.pip_lyric_desc=Sync lyric text straight to the compact PiP player
+settings.fs_lyric=Show lyrics in Fullscreen mode
+settings.fs_lyric_desc=Show the lyric line right below the title and artist in fullscreen mode
+settings.reduce_motion=Reduce motion effects
+settings.reduce_motion_desc=When enabled, transition effects between pages are removed (except the audio wave, which has its own separate setting)
+settings.reduce_effects=Reduce blur & motion effects (Advanced)
+settings.reduce_effects_desc=Reduces blur effects, motion, and removes the audio wave — useful for low-end devices.
+settings.wake_lock=Keep screen awake in Fullscreen mode
+settings.wake_lock_desc=Keeps the screen from automatically turning off or locking while in Fullscreen mode, so you can watch the lyrics or album art without interruption. Automatically turns off as soon as you exit Fullscreen.
+settings.theme=App theme
+settings.theme_desc=Adjust the light/dark color tone, or sync it with your system setting
+settings.theme_system=System
+settings.theme_light=Light
+settings.theme_dark=Dark
+settings.accent=Accent Color
+settings.accent_desc=Pick a vivid color to represent your M3 interface
+
+## --- Feedback dialog ---
+feedback.title=Report a bug or send feedback
+feedback.type_bug=Report a bug
+feedback.type_suggestion=Suggest a feature
+feedback.placeholder=Type your feedback here...
+feedback.error_required=Please enter your feedback before sending.
+feedback.include_sysinfo=Include system information
+
+## --- About / What's New / More apps hub ---
+about.title=About
+about.back=Back
+about.close=Close
+
+## --- Misc ---
+misc.close=Close

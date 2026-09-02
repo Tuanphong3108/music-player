@@ -738,7 +738,7 @@
         </div>
         <div id="metadata-loading-timeout-dialog" style="display:none; width:90%; max-width: 360px; border-radius:20px; overflow:hidden; background: var(--md-sys-color-surface-variant); box-shadow: 0 24px 48px rgba(0,0,0,0.5);">
             <div class="cl-header" style="padding:16px 20px;">
-                <h2 style="font-size:16px; font-weight:700; font-family:'Minecraft';">Không thể tải trình chỉnh sửa</h2>
+                <h2 style="font-size:16px; font-weight:700; font-family:'Minecraft';" data-i18n="metaeditor.timeout_title">Không thể tải trình chỉnh sửa</h2>
             </div>
             <div style="padding:20px; background: var(--md-sys-color-surface); display:flex; flex-direction:column; gap:18px;">
                 <p style="font-size:14px; color: var(--md-sys-color-on-surface); line-height:1.5; margin:0;">Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bro có thể đóng lại thử sau, hoặc tiếp tục chờ.</p>
@@ -754,7 +754,7 @@
     <div id="context-menu">
         <div class="cm-item danger" id="cm-delete">
             <span class="material-symbols-outlined">delete</span>
-            <span>Xoá khỏi playlist</span>
+            <span data-i18n="contextmenu.delete">Xoá khỏi playlist</span>
         </div>
         <div class="cm-item" id="cm-add-lrc">
             <span class="material-symbols-outlined">description</span>
@@ -768,13 +768,13 @@
             <div class="cl-header">
                 <div style="display:flex; align-items:center; overflow:hidden;">
                     <div id="cl-back-btn-wrap" style="width:0; overflow:hidden; flex-shrink:0; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1);">
-                        <button class="btn-m3" id="cl-back-btn" title="Quay lại" style="width:40px; height:40px; transform:scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+                        <button class="btn-m3" id="cl-back-btn" title="Quay lại" data-i18n-title="about.back" style="width:40px; height:40px; transform:scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);">
                             <span class="material-symbols-outlined">arrow_back</span>
                         </button>
                     </div>
-                    <h2 id="cl-title" style="white-space:nowrap;">About</h2>
+                    <h2 id="cl-title" style="white-space:nowrap;" data-i18n="about.title">About</h2>
                 </div>
-                <button class="btn-m3" id="cl-close-btn" title="Đóng"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="cl-close-btn" title="Đóng" data-i18n-title="about.close"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="cl-iframe-wrap">
                 <iframe src="about.html" class="cl-iframe"></iframe>
@@ -785,7 +785,7 @@
                     <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
                         <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
                         <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
-                        <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
+                        <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
                             <span class="material-symbols-outlined">feedback</span> Gửi phản hồi
                         </button>
                     </div>
@@ -799,16 +799,28 @@
     <div id="settings-overlay" class="cl-overlay" style="align-items: stretch; justify-content: stretch;">
         <div id="settings-dialog" class="cl-dialog" style="width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0;">
             <div class="cl-header" style="padding: 20px 32px;">
-                <h2 style="font-family: 'Minecraft', sans-serif; font-size: 24px; letter-spacing: 1px;">Cài đặt hệ thống</h2>
-                <button class="btn-m3" id="settings-close-btn" style="width: 52px; height: 52px;" title="Đóng"><span class="material-symbols-outlined" style="font-size: 28px;">close</span></button>
+                <h2 style="font-family: 'Minecraft', sans-serif; font-size: 24px; letter-spacing: 1px;" data-i18n="settings.title">Cài đặt hệ thống</h2>
+                <button class="btn-m3" id="settings-close-btn" style="width: 52px; height: 52px;" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined" style="font-size: 28px;">close</span></button>
             </div>
             <div style="flex: 1; padding: 40px 10%; display: flex; flex-direction: column; gap: 32px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); overflow-y: auto;">
                 
+                <!-- Dropdown Ngôn ngữ (luôn ở đầu danh sách) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.language">Ngôn ngữ</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.language_desc">Đổi ngôn ngữ hiển thị của toàn bộ ứng dụng</span>
+                    </div>
+                    <select id="setting-language" style="background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); padding: 12px 20px; border-radius: 16px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; transition: var(--m3-transition);">
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+
                 <!-- Switch 1 -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;">Hiện lời ở đầu trình phát chính</span>
-                        <span style="font-size: 12px; opacity: 0.6;">Hiển thị lyrics dòng hiện tại ngay góc đầu vùng Canvas sóng nhạc</span>
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.main_lyric">Hiện lời ở đầu trình phát chính</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.main_lyric_desc">Hiển thị lyrics dòng hiện tại ngay góc đầu vùng Canvas sóng nhạc</span>
                     </div>
                     <md-switch id="setting-main-lyric">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
@@ -819,8 +831,8 @@
                 <!-- Switch 2 -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;">Hiện lời ở Picture-in-picture (PiP)</span>
-                        <span style="font-size: 12px; opacity: 0.6;">Đồng bộ câu chữ của file lyric trực tiếp lên trình phát PiP thu nhỏ</span>
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.pip_lyric">Hiện lời ở Picture-in-picture (PiP)</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.pip_lyric_desc">Đồng bộ câu chữ của file lyric trực tiếp lên trình phát PiP thu nhỏ</span>
                     </div>
                     <md-switch id="setting-pip-lyric">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
@@ -831,8 +843,8 @@
                 <!-- Switch 3 -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;">Hiện lyric ở Full screen mode</span>
-                        <span style="font-size: 12px; opacity: 0.6;">Hiển thị lời bài hát ngay bên dưới tên và nghệ sĩ khi ở chế độ toàn màn hình</span>
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.fs_lyric">Hiện lyric ở Full screen mode</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.fs_lyric_desc">Hiển thị lời bài hát ngay bên dưới tên và nghệ sĩ khi ở chế độ toàn màn hình</span>
                     </div>
                     <md-switch id="setting-fs-lyric">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
@@ -843,8 +855,8 @@
                 <!-- Switch 4: Giảm hiệu ứng chuyển động -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;">Giảm hiệu ứng chuyển động</span>
-                        <span style="font-size: 12px; opacity: 0.6;">Khi bật lên, hiệu ứng chuyển động giữa các trang sẽ không còn (Ngoại trừ sóng âm, tắt ở cài đặt riêng)</span>
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.reduce_motion">Giảm hiệu ứng chuyển động</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.reduce_motion_desc">Khi bật lên, hiệu ứng chuyển động giữa các trang sẽ không còn (Ngoại trừ sóng âm, tắt ở cài đặt riêng)</span>
                     </div>
                     <md-switch id="setting-reduce-motion">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
@@ -855,10 +867,22 @@
                 <!-- Switch 5: Giảm hiệu ứng mờ và chuyển động (Nâng cao) -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;">Giảm hiệu ứng mờ và chuyển động (Nâng cao)</span>
-                        <span style="font-size: 12px; opacity: 0.6;">Sẽ giảm các hiệu ứng mờ, chuyển động và xóa sóng nhạc, hữu ích khi máy có cấu hình thấp vcl.</span>
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.reduce_effects">Giảm hiệu ứng mờ và chuyển động (Nâng cao)</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.reduce_effects_desc">Sẽ giảm các hiệu ứng mờ, chuyển động và xóa sóng nhạc, hữu ích khi máy có cấu hình thấp vcl.</span>
                     </div>
                     <md-switch id="setting-reduce-effects">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+
+                <!-- Switch 6: Luôn bật màn hình khi ở Fullscreen mode -->
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.wake_lock">Luôn bật màn hình khi ở Fullscreen mode</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.wake_lock_desc">Giữ màn hình không tự tắt/khoá trong lúc đang ở chế độ Full screen, để bạn xem lyric hoặc album art mà không bị gián đoạn. Tự tắt tính năng này ngay khi thoát Full screen.</span>
+                    </div>
+                    <md-switch id="setting-wake-lock">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
@@ -867,21 +891,21 @@
                 <!-- Dropdown Theme Selection (Dark dark renamed to Tối) -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;">Giao diện ứng dụng</span>
-                        <span style="font-size: 12px; opacity: 0.6;">Cân chỉnh tông màu nền sáng tối hoặc đồng bộ theo cấu hình máy</span>
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.theme">Giao diện ứng dụng</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.theme_desc">Cân chỉnh tông màu nền sáng tối hoặc đồng bộ theo cấu hình máy</span>
                     </div>
                     <select id="setting-theme" style="background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); padding: 12px 20px; border-radius: 16px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; transition: var(--m3-transition);">
-                        <option value="system">Hệ thống</option>
-                        <option value="light">Sáng</option>
-                        <option value="dark">Tối</option>
+                        <option value="system" data-i18n="settings.theme_system">Hệ thống</option>
+                        <option value="light" data-i18n="settings.theme_light">Sáng</option>
+                        <option value="dark" data-i18n="settings.theme_dark">Tối</option>
                     </select>
                 </div>
 
                 <!-- Dropdown Accent Selection (New Request) -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;">Màu chủ đạo (Accent Color)</span>
-                        <span style="font-size: 12px; opacity: 0.6;">Lựa chọn màu sắc rực rỡ đại diện cho giao diện M3 của bạn</span>
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.accent">Màu chủ đạo (Accent Color)</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.accent_desc">Lựa chọn màu sắc rực rỡ đại diện cho giao diện M3 của bạn</span>
                     </div>
                     <select id="setting-accent" style="background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); padding: 12px 20px; border-radius: 16px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; transition: var(--m3-transition);">
                         <option value="purple">Tím (Purple)</option>
@@ -905,25 +929,25 @@
     <div id="feedback-modal" class="cl-overlay">
         <div class="cl-dialog" style="max-width: 420px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Báo cáo lỗi hoặc gửi phản hồi</h2>
-                <button class="btn-m3" id="feedback-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="feedback.title">Báo cáo lỗi hoặc gửi phản hồi</h2>
+                <button class="btn-m3" id="feedback-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 18px; overflow-y: auto;">
                 <div style="display:flex; flex-direction:column; gap:12px;">
                     <div style="display:flex; align-items:center; gap:10px;">
                         <md-radio id="feedback-type-bug" name="feedback-type" value="Báo cáo lỗi" checked touch-target="wrapper"></md-radio>
-                        <label for="feedback-type-bug" style="font-size:14px; cursor:pointer;">Báo cáo lỗi</label>
+                        <label for="feedback-type-bug" style="font-size:14px; cursor:pointer;" data-i18n="feedback.type_bug">Báo cáo lỗi</label>
                     </div>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <md-radio id="feedback-type-suggestion" name="feedback-type" value="Gợi ý tính năng" touch-target="wrapper"></md-radio>
-                        <label for="feedback-type-suggestion" style="font-size:14px; cursor:pointer;">Gợi ý tính năng</label>
+                        <label for="feedback-type-suggestion" style="font-size:14px; cursor:pointer;" data-i18n="feedback.type_suggestion">Gợi ý tính năng</label>
                     </div>
                 </div>
-                <textarea id="feedback-content" placeholder="Nhập nội dung phản hồi của bạn..." style="width:100%; min-height:130px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); border-radius:12px; padding:12px; font-family: inherit; font-size:14px; resize: vertical; box-sizing:border-box;"></textarea>
-                <span id="feedback-error" style="display:none; color:#E53935; font-size:13px;">Vui lòng nhập nội dung phản hồi trước khi gửi.</span>
+                <textarea id="feedback-content" placeholder="Nhập nội dung phản hồi của bạn..." data-i18n-placeholder="feedback.placeholder" style="width:100%; min-height:130px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); border-radius:12px; padding:12px; font-family: inherit; font-size:14px; resize: vertical; box-sizing:border-box;"></textarea>
+                <span id="feedback-error" style="display:none; color:#E53935; font-size:13px;" data-i18n="feedback.error_required">Vui lòng nhập nội dung phản hồi trước khi gửi.</span>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <md-checkbox id="feedback-include-sysinfo" checked touch-target="wrapper"></md-checkbox>
-                    <label for="feedback-include-sysinfo" style="font-size:14px; cursor:pointer;">Gửi kèm thông tin hệ thống</label>
+                    <label for="feedback-include-sysinfo" style="font-size:14px; cursor:pointer;" data-i18n="feedback.include_sysinfo">Gửi kèm thông tin hệ thống</label>
                 </div>
                 <button class="btn-m3" id="feedback-submit" title="Gửi phản hồi qua email" style="width:100%; height:48px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px; justify-content:center;">
                     <span class="material-symbols-outlined">send</span> Gửi phản hồi
@@ -936,8 +960,8 @@
     <div id="more-info-modal" class="cl-overlay">
         <div class="cl-dialog" style="max-width: 400px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Thông tin khác</h2>
-                <button class="btn-m3" id="more-info-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="moreinfo.title">Thông tin khác</h2>
+                <button class="btn-m3" id="more-info-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div id="more-info-body" style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 22px; overflow-y: auto;">
                 <!-- Được JS điền động -->
@@ -949,19 +973,19 @@
     <div id="edit-options-modal" class="cl-overlay">
         <div class="cl-dialog" style="max-width: 380px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Chỉnh sửa bài hát</h2>
-                <button class="btn-m3" id="edit-options-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="editoptions.title">Chỉnh sửa bài hát</h2>
+                <button class="btn-m3" id="edit-options-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 16px;">
                 
-                <button class="btn-m3" id="btn-edit-thumbnail" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;" title="Sửa thumbnail">
+                <button class="btn-m3" id="btn-edit-thumbnail" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;" title="Sửa thumbnail" data-i18n-title="editoptions.thumbnail">
                     <span class="material-symbols-outlined">image</span>
-                    <span>Sửa Thumbnail</span>
+                    <span data-i18n="editoptions.thumbnail_label">Sửa Thumbnail</span>
                 </button>
 
-                <button class="btn-m3" id="btn-edit-metadata-fields" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;" title="Sửa thông tin bài hát">
+                <button class="btn-m3" id="btn-edit-metadata-fields" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;" title="Sửa thông tin bài hát" data-i18n-title="editoptions.metadata">
                     <span class="material-symbols-outlined">edit</span>
-                    <span>Sửa thông tin bài hát</span>
+                    <span data-i18n="editoptions.metadata">Sửa thông tin bài hát</span>
                 </button>
 
                 <div style="display: flex; gap: 10px; margin-top: 8px; color: #ff9800; font-size: 11px; line-height: 1.4; background: rgba(255, 152, 0, 0.1); padding: 12px; border-radius: 12px; align-items: center;">
@@ -977,7 +1001,7 @@
     <div id="confirm-overwrite-modal" class="cl-overlay" style="z-index: 5000;">
         <div class="cl-dialog" style="max-width: 400px; height: auto; max-height: 90%; border-radius: 20px;">
             <div class="cl-header" style="padding: 16px 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">⚠ Bạn có chắc muốn ghi đè?</h2>
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="confirmoverwrite.title">⚠ Bạn có chắc muốn ghi đè?</h2>
             </div>
             <div style="padding: 20px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-size: 14px; line-height: 1.5; display:flex; flex-direction:column; gap:12px;">
                 <p>Hệ thống sẽ tiến hành ghi đè dữ liệu thẻ ID3 Metadata mới vào tệp tin âm nhạc này.</p>
@@ -989,8 +1013,8 @@
                 <p style="font-size: 11px; opacity: 0.7; color: var(--md-sys-color-primary);">Sau khi lưu, tệp sẽ được cập nhật trực tiếp trong hệ thống.</p>
             </div>
             <div style="padding: 12px 20px; background: var(--md-sys-color-surface-variant); display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn-m3" id="confirm-overwrite-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ">Huỷ</button>
-                <button class="btn-m3" id="confirm-overwrite-save" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Lưu thay đổi">Lưu</button>
+                <button class="btn-m3" id="confirm-overwrite-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ" data-i18n-title="confirmoverwrite.cancel" data-i18n="confirmoverwrite.cancel">Huỷ</button>
+                <button class="btn-m3" id="confirm-overwrite-save" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Lưu thay đổi" data-i18n-title="confirmoverwrite.save" data-i18n="confirmoverwrite.save">Lưu</button>
             </div>
         </div>
     </div>
@@ -999,7 +1023,7 @@
     <div id="thumbnail-editor-modal" class="cl-overlay">
         <div class="cl-dialog" style="max-width: 380px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Sửa Thumbnail</h2>
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="thumbnail.title">Sửa Thumbnail</h2>
                 <button class="btn-m3" id="thumb-editor-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; align-items: center; gap: 20px;">
@@ -1023,7 +1047,7 @@
     <div id="crop-rotate-modal" class="cl-overlay" style="z-index: 4500;">
         <div class="cl-dialog" style="max-width: 400px; height: auto; max-height: 95%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Cắt & Xoay Thumbnail</h2>
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="thumbnail.crop_title">Cắt & Xoay Thumbnail</h2>
             </div>
             <div style="padding: 20px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; align-items: center; gap: 16px;">
                 
@@ -1058,7 +1082,7 @@
     <div id="save-thumb-confirm-modal" class="cl-overlay" style="z-index: 4600;">
         <div class="cl-dialog" style="max-width: 360px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
-                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'">Xác nhận ảnh bìa</h2>
+                <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="thumbnail.confirm_title">Xác nhận ảnh bìa</h2>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; align-items: center; gap: 16px;">
                 <img id="save-thumb-preview" src="" style="width: 150px; height: 150px; border-radius: 16px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border:1px solid var(--playlist-border);">
@@ -1084,17 +1108,17 @@
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
-                    <button class="btn-m3" id="install-btn" title="Cài đặt ứng dụng">
+                    <button class="btn-m3" id="install-btn" title="Cài đặt ứng dụng" data-i18n-title="topbar.install">
                         <span class="material-symbols-outlined">install_desktop</span>
                     </button>
                     <div class="install-tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
                 </div>
-                <button class="btn-m3" id="settings-btn" title="Cài đặt"><span class="material-symbols-outlined">settings</span></button>
-                <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi"><span class="material-symbols-outlined">feedback</span></button>
-                <button class="btn-m3" id="changelog-btn" title="About"><span class="material-symbols-outlined">info</span></button>
+                <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
+                <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
+                <button class="btn-m3" id="changelog-btn" title="About" data-i18n-title="topbar.about"><span class="material-symbols-outlined">info</span></button>
                 
                 <!-- Nút add_circle kích hoạt Dropdown API File System tiến tiến -->
-                <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc"><span class="material-symbols-outlined">add_circle</span></button>
+                <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined">add_circle</span></button>
                 
                 <!-- Dropdown M3 chọn tệp File System -->
                 <div class="m3-dropdown" id="add-music-dropdown">
@@ -1119,25 +1143,25 @@
                 <div class="playlist-header" onclick="togglePlaylist()">
                     <div class="expand-icon-group">
                         <span class="material-symbols-outlined expand-icon">expand_more</span>
-                        <span class="hide-text">Ẩn</span>
+                        <span class="hide-text" data-i18n="playlist.hide">Ẩn</span>
                     </div>
-                    <h3 id="pl-title">Playlist</h3>
+                    <h3 id="pl-title" data-i18n="playlist.title">Playlist</h3>
                     <p id="track-count">0</p>
                 </div>
 
                 <div id="pl-tabs" style="max-height:0; overflow:hidden; transition: max-height 0.35s cubic-bezier(0.34,1.56,0.64,1); display:flex; gap:8px; padding: 0 16px;">
-                    <button class="pl-tab-btn active" id="pl-tab-playlist" data-tab="playlist">Playlist</button>
-                    <button class="pl-tab-btn" id="pl-tab-shuffle" data-tab="shuffle">Shuffle</button>
+                    <button class="pl-tab-btn active" id="pl-tab-playlist" data-tab="playlist" data-i18n="playlist.tab_playlist">Playlist</button>
+                    <button class="pl-tab-btn" id="pl-tab-shuffle" data-tab="shuffle" data-i18n="playlist.tab_shuffle">Shuffle</button>
                 </div>
                 
                 <div class="search-container">
                     <div class="search-wrapper">
                         <span class="material-symbols-outlined search-icon">search</span>
-                        <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ...">
-                        <button class="btn-m3" id="reshuffle-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px; display:none;" title="Xáo lại danh sách Shuffle">
+                        <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ..." data-i18n-placeholder="playlist.search_placeholder">
+                        <button class="btn-m3" id="reshuffle-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px; display:none;" title="Xáo lại danh sách Shuffle" data-i18n-title="player.reshuffle">
                             <span class="material-symbols-outlined" style="font-size: 18px;">shuffle_on</span>
                         </button>
-                        <button class="btn-m3" id="reorder-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Chế độ sửa danh sách">
+                        <button class="btn-m3" id="reorder-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Chế độ sửa danh sách" data-i18n-title="player.reorder">
                             <span class="material-symbols-outlined" style="font-size: 18px;">sort</span>
                         </button>
                     </div>
@@ -1159,7 +1183,7 @@
                 <div id="top-active-lyric" class="top-active-lyric"></div>
                 
                 <!-- Full screen toggle button at bottom-right corner of visual stage -->
-                <button class="btn-m3" id="fullscreen-btn" style="position: absolute; bottom: 16px; right: 16px; z-index: 20; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); color:#fff; width:40px; height:40px;" title="Toàn màn hình">
+                <button class="btn-m3" id="fullscreen-btn" style="position: absolute; bottom: 16px; right: 16px; z-index: 20; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); color:#fff; width:40px; height:40px;" title="Toàn màn hình" data-i18n-title="player.fullscreen">
                     <span class="material-symbols-outlined" style="font-size: 20px;">fullscreen</span>
                 </button>
 
@@ -1205,10 +1229,10 @@
                         </div>
                         <!-- Nút Bút Chì Chỉnh Sửa Metadata + nút Thông tin khác, xếp dọc sát cạnh tên bài hát -->
                         <div style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;">
-                            <button class="btn-m3" id="edit-metadata-btn" style="width: 22px; height: 22px;" title="Chỉnh sửa thông tin">
+                            <button class="btn-m3" id="edit-metadata-btn" style="width: 22px; height: 22px;" title="Chỉnh sửa thông tin" data-i18n-title="player.edit">
                                 <span class="material-symbols-outlined" style="font-size: 15px;">edit</span>
                             </button>
-                            <button class="btn-m3" id="more-info-btn" style="width: 22px; height: 22px;" title="Thông tin khác" disabled>
+                            <button class="btn-m3" id="more-info-btn" style="width: 22px; height: 22px;" title="Thông tin khác" data-i18n-title="player.more_info" disabled>
                                 <span class="material-symbols-outlined" style="font-size: 15px;">info</span>
                             </button>
                         </div>
@@ -1218,22 +1242,22 @@
             </div>
             <div class="controls-group">
                 <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)"><span class="material-symbols-outlined" style="font-size: 20px;">picture_in_picture_alt</span></button>
-                <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                <button class="btn-m3" id="prev-btn" title="Bài trước"><span class="material-symbols-outlined">skip_previous</span></button>
-                <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng">
+                <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
+                <button class="btn-m3" id="prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-outlined">skip_previous</span></button>
+                <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng" data-i18n-title="player.play_pause">
                     <span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span>
                     <md-circular-progress class="play-btn-spinner" indeterminate style="display:none; --md-circular-progress-size: 28px;"></md-circular-progress>
                 </button>
-                <button class="btn-m3" id="next-btn" title="Bài tiếp theo"><span class="material-symbols-outlined">skip_next</span></button>
-                <button class="btn-m3" id="repeat-btn" title="Lặp lại">
+                <button class="btn-m3" id="next-btn" title="Bài tiếp theo" data-i18n-title="player.next"><span class="material-symbols-outlined">skip_next</span></button>
+                <button class="btn-m3" id="repeat-btn" title="Lặp lại" data-i18n-title="player.repeat">
                     <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
                     <div class="repeat-badge">1</div>
                 </button>
-                <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát">
+                <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát" data-i18n-title="player.lyrics">
                     <span class="material-symbols-outlined" style="font-size: 20px;">lyrics</span>
                 </button>
                 <div style="position:relative;">
-                    <button class="btn-m3" id="speed-btn" title="Tốc độ phát" style="font-family:'Minecraft'; font-size:12px; font-weight:700; width:auto; min-width:44px; padding:0 10px; border-radius:22px;">1x</button>
+                    <button class="btn-m3" id="speed-btn" title="Tốc độ phát" data-i18n-title="player.speed" style="font-family:'Minecraft'; font-size:12px; font-weight:700; width:auto; min-width:44px; padding:0 10px; border-radius:22px;">1x</button>
                     <div class="m3-dropdown" id="speed-dropdown" style="flex-direction:column; align-items:center; min-width:unset; padding:10px 12px;">
                         <canvas id="speed-preview-canvas" width="120" height="40" style="display:block;"></canvas>
                         <div id="speed-preview-label" style="font-family:'Minecraft'; font-size:13px; font-weight:700; color: var(--md-sys-color-primary); padding: 4px 0 8px; text-align:center;">1x</div>
@@ -1252,7 +1276,7 @@
             </div>
             <div class="volume-group">
                 <!-- Chuyển loa thường thành loa thông minh kiêm nút bật/tắt tiếng nhanh -->
-                <button class="btn-m3" id="mute-btn" style="width: 36px; height: 36px; margin-right: -4px;" title="Tắt/Bật tiếng"><span class="material-symbols-outlined" style="font-size: 20px;">volume_up</span></button>
+                <button class="btn-m3" id="mute-btn" style="width: 36px; height: 36px; margin-right: -4px;" title="Tắt/Bật tiếng" data-i18n-title="player.mute"><span class="material-symbols-outlined" style="font-size: 20px;">volume_up</span></button>
                 <input type="range" id="volume-slider" min="0" max="100" value="80">
             </div>
         </div>
@@ -1966,6 +1990,7 @@
             showFsLyric: localStorage.getItem('settings_show_fs_lyric') !== 'false',
             reduceMotion: localStorage.getItem('settings_reduce_motion') === 'true',   // Mặc định Off
             reduceEffects: localStorage.getItem('settings_reduce_effects') === 'true', // Mặc định Off
+            wakeLockEnabled: localStorage.getItem('settings_wake_lock') !== 'false', // Mặc định ON
             theme: localStorage.getItem('settings_theme') || 'dark',
             accent: localStorage.getItem('settings_accent') || 'purple'
         };
@@ -3585,6 +3610,64 @@
         });
 
         // --- STREAMING_CHUNK:Binding UI elements for settings and accents... ---
+        // --- HỆ THỐNG NGÔN NGỮ (i18n) ---
+        // Đọc file .lang kiểu Minecraft (key=value, "#" là comment), áp dụng lên mọi phần
+        // tử có data-i18n / data-i18n-title / data-i18n-placeholder. Chỉ bao phủ document
+        // chính (top bar, player, playlist, các dialog) — KHÔNG bao gồm cửa sổ PiP, iframe
+        // Metadata Editor, hay about.html/changelog.html/apps.html (đó là các document/file
+        // tách biệt, cần tự tích hợp riêng nếu muốn dịch luôn cả những phần đó).
+        let currentLangDict = {};
+
+        function parseLangFile(text) {
+            const dict = {};
+            text.split('\n').forEach(line => {
+                line = line.trim();
+                if (!line || line.startsWith('#')) return;
+                const eqIdx = line.indexOf('=');
+                if (eqIdx === -1) return;
+                dict[line.slice(0, eqIdx).trim()] = line.slice(eqIdx + 1);
+            });
+            return dict;
+        }
+
+        function applyTranslations(dict) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key] !== undefined) el.innerText = dict[key];
+            });
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                const key = el.getAttribute('data-i18n-title');
+                if (dict[key] !== undefined) el.setAttribute('title', dict[key]);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (dict[key] !== undefined) el.setAttribute('placeholder', dict[key]);
+            });
+        }
+
+        async function loadLanguage(lang) {
+            try {
+                const res = await fetch('./language/' + lang + '.lang');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                currentLangDict = parseLangFile(await res.text());
+                applyTranslations(currentLangDict);
+                localStorage.setItem('settings_language', lang);
+                const langSelectEl = document.getElementById('setting-language');
+                if (langSelectEl) langSelectEl.value = lang;
+            } catch (err) {
+                console.warn('Không tải được file ngôn ngữ "' + lang + '" (kiểm tra thư mục /language/ cạnh file index.html):', err);
+            }
+        }
+
+        const settingLanguage = document.getElementById('setting-language');
+        const savedLanguage = localStorage.getItem('settings_language') || 'vi';
+        settingLanguage.value = savedLanguage;
+        loadLanguage(savedLanguage); // Tải ngay lúc khởi động theo ngôn ngữ đã lưu (mặc định "vi")
+
+        settingLanguage.addEventListener('change', (e) => {
+            loadLanguage(e.target.value);
+        });
+
         // --- CHƯƠNG TRÌNH ĐIỀU KHIỂN SETTINGS ---
         const settingsBtn = document.getElementById('settings-btn');
         const settingsOverlay = document.getElementById('settings-overlay');
@@ -3596,6 +3679,7 @@
         const settingFsLyric = document.getElementById('setting-fs-lyric');
         const settingReduceMotion = document.getElementById('setting-reduce-motion');
         const settingReduceEffects = document.getElementById('setting-reduce-effects');
+        const settingWakeLock = document.getElementById('setting-wake-lock');
         const settingTheme = document.getElementById('setting-theme');
         const settingAccent = document.getElementById('setting-accent');
 
@@ -3603,6 +3687,7 @@
         settingPipLyric.selected = settings.showPipLyric;
         settingFsLyric.selected = settings.showFsLyric;
         settingReduceEffects.selected = settings.reduceEffects;
+        settingWakeLock.selected = settings.wakeLockEnabled;
         // "Nâng cao" đang bật thì force + khoá switch cơ bản luôn hiện đang bật, không cho tắt riêng
         settingReduceMotion.selected = settings.reduceMotion || settings.reduceEffects;
         settingReduceMotion.disabled = settings.reduceEffects;
@@ -3647,6 +3732,16 @@
             settingReduceMotion.disabled = settings.reduceEffects;
 
             applyMotionEffectSettings();
+        });
+
+        settingWakeLock.addEventListener('change', (e) => {
+            settings.wakeLockEnabled = e.target.selected;
+            localStorage.setItem('settings_wake_lock', settings.wakeLockEnabled);
+            // Nếu đang ở Full screen mà người dùng tắt/bật công tắc ngay lúc đó -> áp dụng ngay
+            if (document.body.classList.contains('fullscreen-active')) {
+                if (settings.wakeLockEnabled) requestWakeLock();
+                else releaseWakeLock();
+            }
         });
 
         settingTheme.addEventListener('change', (e) => {
@@ -4748,6 +4843,35 @@
             }
         }
 
+        // --- SCREEN WAKE LOCK: giữ màn hình không tự tắt/khoá khi đang ở Full screen ---
+        let wakeLockSentinel = null;
+
+        async function requestWakeLock() {
+            if (!('wakeLock' in navigator)) return;
+            try {
+                wakeLockSentinel = await navigator.wakeLock.request('screen');
+                wakeLockSentinel.addEventListener('release', () => { wakeLockSentinel = null; });
+            } catch (err) {
+                console.warn('Không xin được Wake Lock:', err);
+            }
+        }
+
+        async function releaseWakeLock() {
+            if (wakeLockSentinel) {
+                try { await wakeLockSentinel.release(); } catch (err) { /* đã tự nhả rồi thì bỏ qua */ }
+                wakeLockSentinel = null;
+            }
+        }
+
+        // Trình duyệt tự nhả Wake Lock khi tab bị ẩn đi (đổi tab, thu nhỏ...) theo đúng
+        // chuẩn API -> xin lại ngay khi tab hiện lại nếu vẫn đang ở Full screen và setting đang bật
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && document.body.classList.contains('fullscreen-active')
+                && settings.wakeLockEnabled && !wakeLockSentinel) {
+                requestWakeLock();
+            }
+        });
+
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement) {
                 document.body.classList.remove('fullscreen-active');
@@ -4765,10 +4889,16 @@
 
                 // Thoát Full screen: khôi phục đúng theme người dùng đã cài đặt trong Settings
                 applyTheme(settings.theme);
+
+                // Thoát Full screen thì luôn nhả Wake Lock, bất kể setting đang bật hay tắt
+                releaseWakeLock();
             } else {
                 // Vào Full screen: ép tạm sang chế độ Tối để xem cho đẹp/dịu mắt hơn, KHÔNG
                 // đụng vào settings.theme hay localStorage -> thoát ra là tự trả lại theme gốc
                 applyTheme('dark');
+
+                // Vào Full screen: xin Wake Lock nếu setting "Luôn bật màn hình" đang bật
+                if (settings.wakeLockEnabled) requestWakeLock();
             }
         });
 

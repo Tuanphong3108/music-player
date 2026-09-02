@@ -1,0 +1,98 @@
+# =========================================================
+#  Audio Player — File ngôn ngữ
+#  Ngôn ngữ: Tiếng Việt (mặc định)
+#  Định dạng: kiểu Minecraft key=value, mỗi dòng 1 mục
+#  Dòng bắt đầu bằng "#" là comment, sẽ bị bỏ qua.
+# =========================================================
+
+## --- Thanh trên cùng ---
+topbar.install=Cài đặt ứng dụng
+topbar.settings=Cài đặt
+topbar.feedback=Gửi phản hồi
+topbar.about=About
+topbar.addmusic=Thêm nhạc
+
+## --- Điều khiển phát nhạc ---
+player.shuffle=Phát ngẫu nhiên
+player.reshuffle=Xáo lại danh sách Shuffle
+player.reorder=Chế độ sửa danh sách
+player.fullscreen=Toàn màn hình
+player.edit=Chỉnh sửa thông tin
+player.more_info=Thông tin khác
+player.previous=Bài trước
+player.play_pause=Phát/Tạm dừng
+player.next=Bài tiếp theo
+player.repeat=Lặp lại
+player.lyrics=Bật/Tắt Lời bài hát
+player.speed=Tốc độ phát
+player.mute=Tắt/Bật tiếng
+
+## --- Playlist ---
+playlist.title=Playlist
+playlist.hide=Ẩn
+playlist.tab_playlist=Playlist
+playlist.tab_shuffle=Shuffle
+playlist.search_placeholder=Tìm tên bài, ca sĩ...
+contextmenu.delete=Xoá khỏi playlist
+
+## --- Dialog Thông tin khác ---
+moreinfo.title=Thông tin khác
+
+## --- Modal Chỉnh sửa (chọn Metadata / Thumbnail) ---
+editoptions.title=Chỉnh sửa bài hát
+editoptions.thumbnail=Sửa thumbnail
+editoptions.thumbnail_label=Sửa Thumbnail
+editoptions.metadata=Sửa thông tin bài hát
+
+## --- Metadata Editor: cảnh báo tải lỗi ---
+metaeditor.timeout_title=Không thể tải trình chỉnh sửa
+
+## --- Dialog xác nhận ghi đè ---
+confirmoverwrite.title=⚠ Bạn có chắc muốn ghi đè?
+confirmoverwrite.cancel=Huỷ
+confirmoverwrite.save=Lưu thay đổi
+
+## --- Sửa Thumbnail / Cắt & Xoay ---
+thumbnail.title=Sửa Thumbnail
+thumbnail.crop_title=Cắt & Xoay Thumbnail
+thumbnail.confirm_title=Xác nhận ảnh bìa
+
+## --- Dialog Cài đặt ---
+settings.title=Cài đặt hệ thống
+settings.language=Ngôn ngữ
+settings.language_desc=Đổi ngôn ngữ hiển thị của toàn bộ ứng dụng
+settings.main_lyric=Hiện lời ở đầu trình phát chính
+settings.main_lyric_desc=Hiển thị lyrics dòng hiện tại ngay góc đầu vùng Canvas sóng nhạc
+settings.pip_lyric=Hiện lời ở Picture-in-picture (PiP)
+settings.pip_lyric_desc=Đồng bộ câu chữ của file lyric trực tiếp lên trình phát PiP thu nhỏ
+settings.fs_lyric=Hiện lyric ở Full screen mode
+settings.fs_lyric_desc=Hiển thị lời bài hát ngay bên dưới tên và nghệ sĩ khi ở chế độ toàn màn hình
+settings.reduce_motion=Giảm hiệu ứng chuyển động
+settings.reduce_motion_desc=Khi bật lên, hiệu ứng chuyển động giữa các trang sẽ không còn (Ngoại trừ sóng âm, tắt ở cài đặt riêng)
+settings.reduce_effects=Giảm hiệu ứng mờ và chuyển động (Nâng cao)
+settings.reduce_effects_desc=Sẽ giảm các hiệu ứng mờ, chuyển động và xóa sóng nhạc, hữu ích khi máy có cấu hình thấp vcl.
+settings.wake_lock=Luôn bật màn hình khi ở Fullscreen mode
+settings.wake_lock_desc=Giữ màn hình không tự tắt/khoá trong lúc đang ở chế độ Full screen, để bạn xem lyric hoặc album art mà không bị gián đoạn. Tự tắt tính năng này ngay khi thoát Full screen.
+settings.theme=Giao diện ứng dụng
+settings.theme_desc=Cân chỉnh tông màu nền sáng tối hoặc đồng bộ theo cấu hình máy
+settings.theme_system=Hệ thống
+settings.theme_light=Sáng
+settings.theme_dark=Tối
+settings.accent=Màu chủ đạo (Accent Color)
+settings.accent_desc=Lựa chọn màu sắc rực rỡ đại diện cho giao diện M3 của bạn
+
+## --- Dialog Gửi phản hồi ---
+feedback.title=Báo cáo lỗi hoặc gửi phản hồi
+feedback.type_bug=Báo cáo lỗi
+feedback.type_suggestion=Gợi ý tính năng
+feedback.placeholder=Nhập nội dung phản hồi của bạn...
+feedback.error_required=Vui lòng nhập nội dung phản hồi trước khi gửi.
+feedback.include_sysinfo=Gửi kèm thông tin hệ thống
+
+## --- Hub About / What's New / More apps ---
+about.title=About
+about.back=Quay lại
+about.close=Đóng
+
+## --- Khác ---
+misc.close=Đóng
