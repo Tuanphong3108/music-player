@@ -2467,7 +2467,9 @@
             lyricOverlay.innerHTML = '';
             const track = playlist[currentIndex];
             if (!track || !track.lyrics || track.lyrics.length === 0) {
-                lyricOverlay.innerHTML = '<div class="lyric-placeholder">BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)<br><small style="font-size:8px">Chuột phải vào bài hát để nạp lẻ</small></div>';
+                const noLyricText = currentLangDict['lyric.no_lyric'] || 'BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)';
+                const hintText = currentLangDict['lyric.right_click_hint'] || 'Chuột phải vào bài hát để nạp lẻ';
+                lyricOverlay.innerHTML = `<div class="lyric-placeholder">${noLyricText}<br><small style="font-size:8px">${hintText}</small></div>`;
                 return;
             }
 
@@ -3654,6 +3656,7 @@
         // xong) — gọi lại mỗi khi đổi ngôn ngữ, và lúc mới mở/mới tải xong 2 cái đó
         function applyTranslationsEverywhere() {
             applyTranslations(currentLangDict, document);
+            if (typeof renderLyrics === 'function') renderLyrics();
             try {
                 if (typeof customPipWindow !== 'undefined' && customPipWindow) {
                     applyTranslations(currentLangDict, customPipWindow.document);
