@@ -49,8 +49,6 @@ reorder.done=HOÀN TẤT
 
 ## --- Lyric & Drag zone ---
 lyric.placeholder=KÉO THẢ FILE AUDIO CÙNG FILE .LRC\nĐỂ ĐỒNG BỘ LỜI BÀI HÁT
-lyric.no_lyric=BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)
-lyric.right_click_hint=Chuột phải vào bài hát để nạp lẻ
 
 ## --- Dialog Thông tin khác ---
 moreinfo.title=Thông tin khác

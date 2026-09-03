@@ -925,6 +925,31 @@
         </div>
     </div>
 
+    <!-- Modal: Select Language on First Visit -->
+    <div id="first-time-lang-modal" class="cl-overlay" style="z-index: 9999;">
+        <div class="cl-dialog" style="max-width: 420px; height: auto; border-radius: 28px; padding: 0; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.6);">
+            <div class="cl-header" style="padding: 20px 24px; text-align: center; justify-content: center; background: var(--md-sys-color-surface-variant); border-bottom: 1px solid var(--playlist-border);">
+                <h2 style="font-family: 'Minecraft', sans-serif; font-size: 17px; letter-spacing: 0.5px; margin: 0; text-align: center; width: 100%;">Choose a language / Chọn ngôn ngữ</h2>
+            </div>
+            <div style="padding: 28px 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 20px; align-items: center;">
+                <div style="display: flex; gap: 14px; width: 100%;">
+                    <button class="btn-m3" id="first-lang-en-btn" style="flex: 1; height: 56px; border-radius: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <svg width="24" height="18" viewBox="0 0 640 480" style="border-radius:3px; flex-shrink:0;"><g fill-rule="evenodd" stroke-width="1pt"><path fill="#bd3d44" d="M0 0h640v480H0z"/><path fill="#fff" d="M0 36.9h640v36.9H0zm0 73.8h640v36.9H0zm0 73.9h640v36.9H0zm0 73.8h640v36.9H0zm0 73.9h640v36.9H0zm0 73.8h640v36.9H0z"/><path fill="#192f5d" d="M0 0h280v258.5H0z"/><g fill="#fff"><g id="us-d"><g id="us-c"><g id="us-b"><g id="us-a"><path d="M24.8 19.3l-2.6 7.9 6.8-5-6.8-4.9 2.6 8z"/><use href="#us-a" x="40"/><use href="#us-a" x="80"/><use href="#us-a" x="120"/><use href="#us-a" x="160"/></g><use href="#us-b" x="20" y="21.5"/></g><use href="#us-c" y="43"/></g><use href="#us-d" y="86"/></g><use href="#us-d" y="129"/><path d="M24.8 234.3l-2.6 7.9 6.8-5-6.8-4.9 2.6 8z"/><use href="#us-a" x="40" y="215"/><use href="#us-a" x="80" y="215"/><use href="#us-a" x="120" y="215"/><use href="#us-a" x="160" y="215"/></g></g></svg>
+                        English
+                    </button>
+                    <button class="btn-m3" id="first-lang-vi-btn" style="flex: 1; height: 56px; border-radius: 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <svg width="24" height="18" viewBox="0 0 640 480" style="border-radius:3px; flex-shrink:0;"><path fill="#da251d" d="M0 0h640v480H0z"/><path fill="#ffff00" d="M361.5 354.5L320 324.3l-41.5 30.2 15.8-48.8-41.5-30.2h51.3L320 226.7l15.9 48.8h51.3l-41.5 30.2z"/></svg>
+                        Tiếng Việt
+                    </button>
+                </div>
+                <div style="font-size: 13px; opacity: 0.75; text-align: center; line-height: 1.5; color: var(--md-sys-color-on-surface);">
+                    <div>Có thể đổi sau ở trong Cài đặt &gt; Ngôn ngữ</div>
+                    <div style="font-size: 12px; opacity: 0.85; margin-top: 2px;">Can change this later in Settings &gt; Language</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Gửi phản hồi -->
     <div id="feedback-modal" class="cl-overlay">
         <div class="cl-dialog" style="max-width: 420px; height: auto; max-height: 90%; border-radius: 24px;">
@@ -3687,9 +3712,31 @@
         }
 
         const settingLanguage = document.getElementById('setting-language');
-        const savedLanguage = localStorage.getItem('settings_language') || 'vi';
-        settingLanguage.value = savedLanguage;
-        loadLanguage(savedLanguage); // Tải ngay lúc khởi động theo ngôn ngữ đã lưu (mặc định "vi")
+        const firstTimeLangModal = document.getElementById('first-time-lang-modal');
+        const firstLangEnBtn = document.getElementById('first-lang-en-btn');
+        const firstLangViBtn = document.getElementById('first-lang-vi-btn');
+
+        const savedLanguage = localStorage.getItem('settings_language');
+
+        if (!savedLanguage) {
+            // Lần đầu vào trang: hiện dialog chọn ngôn ngữ
+            firstTimeLangModal.classList.add('open');
+            settingLanguage.value = 'vi';
+            loadLanguage('vi'); // Tải bản Tiếng Việt làm mặc định tạm thời
+        } else {
+            settingLanguage.value = savedLanguage;
+            loadLanguage(savedLanguage);
+        }
+
+        firstLangEnBtn.addEventListener('click', () => {
+            loadLanguage('en');
+            firstTimeLangModal.classList.remove('open');
+        });
+
+        firstLangViBtn.addEventListener('click', () => {
+            loadLanguage('vi');
+            firstTimeLangModal.classList.remove('open');
+        });
 
         settingLanguage.addEventListener('change', (e) => {
             loadLanguage(e.target.value);

@@ -49,8 +49,6 @@ reorder.done=DONE
 
 ## --- Lyric & Drag zone ---
 lyric.placeholder=DRAG AND DROP AUDIO FILE WITH .LRC FILE\nTO SYNC LYRICS
-lyric.no_lyric=THIS SONG HAS NO LYRICS (.LRC)
-lyric.right_click_hint=Right-click on song to load lyrics
 
 ## --- Other info dialog ---
 moreinfo.title=Other info
