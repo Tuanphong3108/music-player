@@ -724,9 +724,9 @@
           script chính có lỗi giữa chừng thì đoạn này vẫn chạy) sẽ "nâng cấp" href này
           thành bản đầy đủ có version/thời gian nếu chạy thành công.
         -->
-        <a id="loading-report-btn" class="btn-m3" title="Báo cáo lỗi khẩn cấp" href="mailto:phongvn406@gmail.com"
+        <a id="loading-report-btn" class="btn-m3" title="Báo cáo lỗi khẩn cấp" data-i18n-title="loading.report_title" href="mailto:phongvn406@gmail.com"
            style="margin-top: 24px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; padding: 10px 22px; border-radius: 14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-family:'Minecraft'; font-size: 11px; letter-spacing: 1px; width: auto; height: auto;">
-            <span class="material-symbols-outlined" style="font-size:18px;">bug_report</span> BÁO CÁO
+            <span class="material-symbols-outlined" style="font-size:18px;">bug_report</span> <span data-i18n="loading.report_btn">BÁO CÁO</span>
         </a>
     </div>
 
@@ -734,7 +734,7 @@
     <div id="metadata-loading-overlay">
         <div id="metadata-loading-spinner" style="display:flex; flex-direction:column; gap:16px; justify-content:center; align-items:center;">
             <div style="width:48px; height:48px; border:4px solid rgba(255,255,255,0.1); border-top-color:var(--md-sys-color-primary); border-radius:50%; animation: spin 1s linear infinite;"></div>
-            <p style="font-family:'Minecraft'; color:#fff; font-size:12px; letter-spacing:1px;">ĐANG KHỞI CHẠY TRÌNH CHỈNH SỬA...</p>
+            <p style="font-family:'Minecraft'; color:#fff; font-size:12px; letter-spacing:1px;" data-i18n="metaeditor.loading">ĐANG KHỞI CHẠY TRÌNH CHỈNH SỬA...</p>
         </div>
         <div id="metadata-loading-timeout-dialog" style="display:none; width:90%; max-width: 360px; border-radius:20px; overflow:hidden; background: var(--md-sys-color-surface-variant); box-shadow: 0 24px 48px rgba(0,0,0,0.5);">
             <div class="cl-header" style="padding:16px 20px;">
@@ -758,7 +758,7 @@
         </div>
         <div class="cm-item" id="cm-add-lrc">
             <span class="material-symbols-outlined">description</span>
-            <span>Thêm lời lẻ (.lrc)</span>
+            <span data-i18n="contextmenu.add_lrc">Thêm lời lẻ (.lrc)</span>
         </div>
     </div>
 
@@ -784,9 +784,9 @@
                     </div>
                     <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
                         <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
-                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);">Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
+                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);" data-i18n="about.load_error">Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
                         <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
-                            <span class="material-symbols-outlined">feedback</span> Gửi phản hồi
+                            <span class="material-symbols-outlined">feedback</span> <span data-i18n="topbar.feedback">Gửi phản hồi</span>
                         </button>
                     </div>
                 </div>
@@ -811,8 +811,8 @@
                         <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.language_desc">Đổi ngôn ngữ hiển thị của toàn bộ ứng dụng</span>
                     </div>
                     <select id="setting-language" style="background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); padding: 12px 20px; border-radius: 16px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; transition: var(--m3-transition);">
-                        <option value="vi">Tiếng Việt</option>
-                        <option value="en">English</option>
+                        <option value="vi" data-i18n="settings.lang_vi">Tiếng Việt</option>
+                        <option value="en" data-i18n="settings.lang_en">English</option>
                     </select>
                 </div>
 
@@ -908,16 +908,16 @@
                         <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.accent_desc">Lựa chọn màu sắc rực rỡ đại diện cho giao diện M3 của bạn</span>
                     </div>
                     <select id="setting-accent" style="background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); padding: 12px 20px; border-radius: 16px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; transition: var(--m3-transition);">
-                        <option value="purple">Tím (Purple)</option>
-                        <option value="lime">Chanh (Lime)</option>
-                        <option value="cyan">Lam (Cyan)</option>
-                        <option value="white">Trắng (White)</option>
-                        <option value="green">Lá (Green)</option>
-                        <option value="blue">Dương (Blue)</option>
-                        <option value="yellow">Vàng (Yellow)</option>
-                        <option value="orange">Cam (Orange)</option>
-                        <option value="red">Đỏ (Red)</option>
-                        <option value="pink">Hồng (Pink)</option>
+                        <option value="purple" data-i18n="settings.accent_purple">Tím (Purple)</option>
+                        <option value="lime" data-i18n="settings.accent_lime">Chanh (Lime)</option>
+                        <option value="cyan" data-i18n="settings.accent_cyan">Lam (Cyan)</option>
+                        <option value="white" data-i18n="settings.accent_white">Trắng (White)</option>
+                        <option value="green" data-i18n="settings.accent_green">Lá (Green)</option>
+                        <option value="blue" data-i18n="settings.accent_blue">Dương (Blue)</option>
+                        <option value="yellow" data-i18n="settings.accent_yellow">Vàng (Yellow)</option>
+                        <option value="orange" data-i18n="settings.accent_orange">Cam (Orange)</option>
+                        <option value="red" data-i18n="settings.accent_red">Đỏ (Red)</option>
+                        <option value="pink" data-i18n="settings.accent_pink">Hồng (Pink)</option>
                     </select>
                 </div>
 
@@ -949,8 +949,8 @@
                     <md-checkbox id="feedback-include-sysinfo" checked touch-target="wrapper"></md-checkbox>
                     <label for="feedback-include-sysinfo" style="font-size:14px; cursor:pointer;" data-i18n="feedback.include_sysinfo">Gửi kèm thông tin hệ thống</label>
                 </div>
-                <button class="btn-m3" id="feedback-submit" title="Gửi phản hồi qua email" style="width:100%; height:48px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px; justify-content:center;">
-                    <span class="material-symbols-outlined">send</span> Gửi phản hồi
+                <button class="btn-m3" id="feedback-submit" title="Gửi phản hồi qua email" data-i18n-title="feedback.submit_title" style="width:100%; height:48px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px; justify-content:center;">
+                    <span class="material-symbols-outlined">send</span> <span data-i18n="feedback.submit_btn">Gửi phản hồi</span>
                 </button>
             </div>
         </div>
@@ -990,7 +990,7 @@
 
                 <div style="display: flex; gap: 10px; margin-top: 8px; color: #ff9800; font-size: 11px; line-height: 1.4; background: rgba(255, 152, 0, 0.1); padding: 12px; border-radius: 12px; align-items: center;">
                     <span class="material-symbols-outlined" style="font-size: 18px; flex-shrink: 0;">info</span>
-                    <span>Tính năng này là tính năng thử nghiệm, vui lòng sao lưu tệp nhạc của bạn trước khi thực hiện sửa đổi</span>
+                    <span data-i18n="editoptions.warning">Tính năng này là tính năng thử nghiệm, vui lòng sao lưu tệp nhạc của bạn trước khi thực hiện sửa đổi</span>
                 </div>
 
             </div>
@@ -1004,13 +1004,13 @@
                 <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="confirmoverwrite.title">⚠ Bạn có chắc muốn ghi đè?</h2>
             </div>
             <div style="padding: 20px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-size: 14px; line-height: 1.5; display:flex; flex-direction:column; gap:12px;">
-                <p>Hệ thống sẽ tiến hành ghi đè dữ liệu thẻ ID3 Metadata mới vào tệp tin âm nhạc này.</p>
+                <p data-i18n="confirmoverwrite.body">Hệ thống sẽ tiến hành ghi đè dữ liệu thẻ ID3 Metadata mới vào tệp tin âm nhạc này.</p>
                 <div style="background: var(--md-sys-color-surface-variant); padding: 12px; border-radius: 12px; font-size: 12px;">
                     <div style="font-weight:700;" id="overwrite-details-title">Tên: -</div>
                     <div id="overwrite-details-artist">Nghệ sĩ: -</div>
                     <div id="overwrite-details-album">Album: -</div>
                 </div>
-                <p style="font-size: 11px; opacity: 0.7; color: var(--md-sys-color-primary);">Sau khi lưu, tệp sẽ được cập nhật trực tiếp trong hệ thống.</p>
+                <p style="font-size: 11px; opacity: 0.7; color: var(--md-sys-color-primary);" data-i18n="confirmoverwrite.note">Sau khi lưu, tệp sẽ được cập nhật trực tiếp trong hệ thống.</p>
             </div>
             <div style="padding: 12px 20px; background: var(--md-sys-color-surface-variant); display: flex; justify-content: flex-end; gap: 8px;">
                 <button class="btn-m3" id="confirm-overwrite-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ" data-i18n-title="confirmoverwrite.cancel" data-i18n="confirmoverwrite.cancel">Huỷ</button>
@@ -1024,7 +1024,7 @@
         <div class="cl-dialog" style="max-width: 380px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
                 <h2 style="font-size: 16px; font-weight: 700; font-family:'Minecraft'" data-i18n="thumbnail.title">Sửa Thumbnail</h2>
-                <button class="btn-m3" id="thumb-editor-close" title="Đóng"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="thumb-editor-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; align-items: center; gap: 20px;">
                 
@@ -1034,9 +1034,9 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                    <button class="btn-m3" id="btn-thumb-upload" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:600;" title="Tải ảnh lên">Tải lên</button>
-                    <button class="btn-m3" id="btn-thumb-delete" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-error); color: #fff; font-weight:600; display: none;" title="Xoá thumbnail">Xoá thumbnail</button>
-                    <button class="btn-m3" id="btn-thumb-cancel" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight:600;" title="Huỷ">Huỷ</button>
+                    <button class="btn-m3" id="btn-thumb-upload" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:600;" title="Tải ảnh lên" data-i18n-title="thumbnail.upload_title" data-i18n="thumbnail.upload">Tải lên</button>
+                    <button class="btn-m3" id="btn-thumb-delete" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-error); color: #fff; font-weight:600; display: none;" title="Xoá thumbnail" data-i18n-title="thumbnail.delete_title" data-i18n="thumbnail.delete">Xoá thumbnail</button>
+                    <button class="btn-m3" id="btn-thumb-cancel" style="width: 100%; height: 44px; border-radius: 12px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight:600;" title="Huỷ" data-i18n-title="misc.cancel" data-i18n="misc.cancel">Huỷ</button>
                 </div>
 
             </div>
@@ -1063,17 +1063,17 @@
                         <span class="material-symbols-outlined" style="font-size:18px;">zoom_in</span>
                     </div>
 
-                    <button class="btn-m3" id="btn-crop-rotate" style="height: 40px; border-radius: 10px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600; width:100%;" title="Xoay ảnh">
+                    <button class="btn-m3" id="btn-crop-rotate" style="height: 40px; border-radius: 10px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600; width:100%;" title="Xoay ảnh" data-i18n-title="thumbnail.rotate_title">
                         <span class="material-symbols-outlined">rotate_right</span>
-                        <span>Xoay 90°</span>
+                        <span data-i18n="thumbnail.rotate">Xoay 90°</span>
                     </button>
 
                 </div>
 
             </div>
             <div style="padding: 12px 20px; background: var(--md-sys-color-surface-variant); display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn-m3" id="btn-crop-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ">Huỷ</button>
-                <button class="btn-m3" id="btn-crop-ok" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Xác nhận">OK</button>
+                <button class="btn-m3" id="btn-crop-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ" data-i18n-title="misc.cancel" data-i18n="misc.cancel">Huỷ</button>
+                <button class="btn-m3" id="btn-crop-ok" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Xác nhận" data-i18n-title="misc.confirm" data-i18n="misc.ok">OK</button>
             </div>
         </div>
     </div>
@@ -1086,11 +1086,11 @@
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; align-items: center; gap: 16px;">
                 <img id="save-thumb-preview" src="" style="width: 150px; height: 150px; border-radius: 16px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border:1px solid var(--playlist-border);">
-                <p style="font-size: 13px; text-align: center; color: var(--md-sys-color-on-surface);">Bạn có muốn lưu ảnh cắt này làm ảnh bìa mới cho bài hát?</p>
+                <p style="font-size: 13px; text-align: center; color: var(--md-sys-color-on-surface);" data-i18n="thumbnail.confirm_body">Bạn có muốn lưu ảnh cắt này làm ảnh bìa mới cho bài hát?</p>
             </div>
             <div style="padding: 12px 20px; background: var(--md-sys-color-surface-variant); display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn-m3" id="btn-save-thumb-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ">Huỷ</button>
-                <button class="btn-m3" id="btn-save-thumb-ok" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Lưu thumbnail">Lưu</button>
+                <button class="btn-m3" id="btn-save-thumb-cancel" style="border-radius:12px; padding: 0 16px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" title="Huỷ" data-i18n-title="misc.cancel" data-i18n="misc.cancel">Huỷ</button>
+                <button class="btn-m3" id="btn-save-thumb-ok" style="border-radius:12px; padding: 0 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" title="Lưu thumbnail" data-i18n-title="thumbnail.save_title" data-i18n="thumbnail.save">Lưu</button>
             </div>
         </div>
     </div>
@@ -1111,7 +1111,7 @@
                     <button class="btn-m3" id="install-btn" title="Cài đặt ứng dụng" data-i18n-title="topbar.install">
                         <span class="material-symbols-outlined">install_desktop</span>
                     </button>
-                    <div class="install-tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
+                    <div class="install-tooltip" data-i18n="topbar.install_tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
                 </div>
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
@@ -1124,15 +1124,15 @@
                 <div class="m3-dropdown" id="add-music-dropdown">
                     <div class="m3-dropdown-item" id="btn-fs-pick-files">
                         <span class="material-symbols-outlined">file_open</span>
-                        <span>Chọn tệp nhạc (API File System)</span>
+                        <span data-i18n="topbar.addmusic_file">Chọn tệp nhạc (API File System)</span>
                     </div>
                     <div class="m3-dropdown-item" id="btn-fs-pick-directory">
                         <span class="material-symbols-outlined">folder_open</span>
-                        <span>Chọn thư mục nhạc (API File System)</span>
+                        <span data-i18n="topbar.addmusic_folder">Chọn thư mục nhạc (API File System)</span>
                     </div>
                     <div class="m3-dropdown-item" id="btn-fs-pick-legacy">
                         <span class="material-symbols-outlined">upload_file</span>
-                        <span>Thêm tệp kiểu truyền thống</span>
+                        <span data-i18n="topbar.addmusic_legacy">Thêm tệp kiểu truyền thống</span>
                     </div>
                 </div>
             </div>
@@ -1203,7 +1203,7 @@
                 </div>
                 
                 <div class="lyric-overlay" id="lyric-overlay">
-                    <div class="lyric-placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
+                    <div class="lyric-placeholder" data-i18n="lyric.placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
                 </div>
             </div>
         </div>
@@ -1241,7 +1241,7 @@
                 </div>
             </div>
             <div class="controls-group">
-                <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)"><span class="material-symbols-outlined" style="font-size: 20px;">picture_in_picture_alt</span></button>
+                <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)" data-i18n-title="player.pip"><span class="material-symbols-outlined" style="font-size: 20px;">picture_in_picture_alt</span></button>
                 <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
                 <button class="btn-m3" id="prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-outlined">skip_previous</span></button>
                 <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng" data-i18n-title="player.play_pause">
@@ -1281,9 +1281,9 @@
             </div>
         </div>
 
-        <button id="reorder-done-btn" class="reorder-done-btn" title="Hoàn tất">
+        <button id="reorder-done-btn" class="reorder-done-btn" title="Hoàn tất" data-i18n-title="reorder.done_title">
             <span class="material-symbols-outlined">check</span>
-            HOÀN TẤT
+            <span data-i18n="reorder.done">HOÀN TẤT</span>
         </button>
     </div>
 
@@ -1673,7 +1673,7 @@
 
         <div class="saving-screen" id="savingScreen">
           <div class="spinner"></div>
-          <div class="saving-text">Đang lưu...</div>
+          <div class="saving-text" data-i18n="metaeditor.saving">Đang lưu...</div>
         </div>
 
         <div class="action-bar" id="actionBar">
@@ -1700,7 +1700,7 @@
             <div class="dialog-header" data-i18n="metaeditor.saved_title">✓ Đã lưu thành công</div>
             <div class="dialog-body" style="text-align:center;padding-top:20px;padding-bottom:6px;">
               <div class="check-circle">✓</div>
-              <span id="saveSuccessText">Đã lưu metadata thành công!</span>
+              <span id="saveSuccessText" data-i18n="metaeditor.saved_success">Đã lưu metadata thành công!</span>
             </div>
             <div class="dialog-footer" style="justify-content:center;">
               <button class="ore-btn ore-btn-green" id="btnOK" title="Đóng" data-i18n-title="misc.close" data-i18n="misc.ok">OK</button>
@@ -2467,7 +2467,9 @@
             lyricOverlay.innerHTML = '';
             const track = playlist[currentIndex];
             if (!track || !track.lyrics || track.lyrics.length === 0) {
-                lyricOverlay.innerHTML = '<div class="lyric-placeholder">BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)<br><small style="font-size:8px">Chuột phải vào bài hát để nạp lẻ</small></div>';
+                const noLyricText = currentLangDict['lyric.no_lyric'] || 'BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)';
+                const hintText = currentLangDict['lyric.right_click_hint'] || 'Chuột phải vào bài hát để nạp lẻ';
+                lyricOverlay.innerHTML = `<div class="lyric-placeholder">${noLyricText}<br><small style="font-size:8px">${hintText}</small></div>`;
                 return;
             }
 
@@ -3311,7 +3313,7 @@
                     bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
                 }
             } else {
-                titleEl.innerText = 'Chưa có bài hát';
+                titleEl.innerText = currentLangDict['player.no_track'] || 'Chưa có bài hát';
                 artistEl.innerText = 'Studio Standby';
                 bgEl.style.backgroundImage = 'none';
                 bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
@@ -3336,7 +3338,7 @@
 
         pipBtn.addEventListener('click', async () => {
             if (!('documentPictureInPicture' in window)) {
-                alert('Trình duyệt của bro chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)');
+                alert(currentLangDict['pip.not_supported'] || 'Trình duyệt của bro chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)');
                 return;
             }
 
@@ -3654,6 +3656,7 @@
         // xong) — gọi lại mỗi khi đổi ngôn ngữ, và lúc mới mở/mới tải xong 2 cái đó
         function applyTranslationsEverywhere() {
             applyTranslations(currentLangDict, document);
+            if (typeof renderLyrics === 'function') renderLyrics();
             try {
                 if (typeof customPipWindow !== 'undefined' && customPipWindow) {
                     applyTranslations(currentLangDict, customPipWindow.document);
@@ -4056,7 +4059,7 @@
         editMetadataBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (currentIndex === -1) {
-                alert("Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!");
+                alert(currentLangDict['player.load_first_prompt'] || "Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!");
                 return;
             }
             editOptionsModal.classList.add('open');
@@ -4179,21 +4182,23 @@
         const moreInfoBody = document.getElementById('more-info-body');
 
         function formatFileSizeVi(bytes) {
-            if (!bytes && bytes !== 0) return 'Không rõ';
+            if (!bytes && bytes !== 0) return currentLangDict['moreinfo.unknown'] || 'Không rõ';
             const mb = bytes / (1024 * 1024);
-            return mb.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MB';
+            const locale = savedLanguage === 'en' ? 'en-US' : 'vi-VN';
+            return mb.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MB';
         }
 
         function formatModifiedDateVi(timestamp) {
-            if (!timestamp) return 'Không rõ';
+            if (!timestamp) return currentLangDict['moreinfo.unknown'] || 'Không rõ';
             const d = new Date(timestamp);
             const now = new Date();
             const isSameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
             const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-            const timeStr = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-            if (isSameDay(d, now)) return `Hôm nay lúc ${timeStr}`;
-            if (isSameDay(d, yesterday)) return `Hôm qua lúc ${timeStr}`;
-            return `${d.toLocaleDateString('vi-VN')} lúc ${timeStr}`;
+            const locale = savedLanguage === 'en' ? 'en-US' : 'vi-VN';
+            const timeStr = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+            if (isSameDay(d, now)) return `${currentLangDict['moreinfo.today_at'] || 'Hôm nay lúc'} ${timeStr}`;
+            if (isSameDay(d, yesterday)) return `${currentLangDict['moreinfo.yesterday_at'] || 'Hôm qua lúc'} ${timeStr}`;
+            return `${d.toLocaleDateString(locale)} ${currentLangDict['moreinfo.at'] || 'lúc'} ${timeStr}`;
         }
 
         // Định dạng thời lượng kiểu HH:MM:SS, tự ẩn phần Giờ nếu bài hát dưới 1 tiếng
@@ -4221,15 +4226,17 @@
             const track = playlist[currentIndex];
             if (!track || moreInfoBtn.disabled) return;
 
+            const unknownStr = currentLangDict['moreinfo.unknown'] || 'Không rõ';
+            const fileStr = currentLangDict['moreinfo.file_type'] || 'Tệp';
             const rows = [];
-            rows.push(moreInfoRowHTML('music_note', (track.file && track.file.type) || `Tệp ${track.ext}`, formatFileSizeVi(track.file ? track.file.size : null)));
-            rows.push(moreInfoRowHTML('calendar_month', 'Ngày sửa đổi', formatModifiedDateVi(track.file ? track.file.lastModified : null)));
-            rows.push(moreInfoRowHTML('schedule', 'Thời lượng', formatDurationVi(audio.duration)));
-            rows.push(moreInfoRowHTML('edit', 'Tên bài hát', track.name || 'Không rõ'));
-            rows.push(moreInfoRowHTML('person', 'Nghệ sĩ', track.artist || 'Không rõ'));
-            rows.push(moreInfoRowHTML('album', 'Đĩa nhạc', track.album || 'Không rõ'));
-            rows.push(moreInfoRowHTML('edit_note', 'Nhà soạn nhạc', track.composer || 'Unknown'));
-            if (track.year) rows.push(moreInfoRowHTML('calendar_today', 'Năm', track.year));
+            rows.push(moreInfoRowHTML('music_note', (track.file && track.file.type) || `${fileStr} ${track.ext}`, formatFileSizeVi(track.file ? track.file.size : null)));
+            rows.push(moreInfoRowHTML('calendar_month', currentLangDict['moreinfo.date_modified'] || 'Ngày sửa đổi', formatModifiedDateVi(track.file ? track.file.lastModified : null)));
+            rows.push(moreInfoRowHTML('schedule', currentLangDict['moreinfo.duration'] || 'Thời lượng', formatDurationVi(audio.duration)));
+            rows.push(moreInfoRowHTML('edit', currentLangDict['moreinfo.title_label'] || 'Tên bài hát', track.name || unknownStr));
+            rows.push(moreInfoRowHTML('person', currentLangDict['moreinfo.artist_label'] || 'Nghệ sĩ', track.artist || unknownStr));
+            rows.push(moreInfoRowHTML('album', currentLangDict['moreinfo.album_label'] || 'Đĩa nhạc', track.album || unknownStr));
+            rows.push(moreInfoRowHTML('edit_note', currentLangDict['moreinfo.composer_label'] || 'Nhà soạn nhạc', track.composer || unknownStr));
+            if (track.year) rows.push(moreInfoRowHTML('calendar_today', currentLangDict['moreinfo.year_label'] || 'Năm', track.year));
 
             moreInfoBody.innerHTML = rows.join('');
             moreInfoModal.classList.add('open');
@@ -4383,9 +4390,14 @@
             }
             else if (d && d.type === 'save') {
                 pendingMetadata = d;
-                document.getElementById('overwrite-details-title').innerText = "Tên: " + (d.title || "Chưa đặt tên");
-                document.getElementById('overwrite-details-artist').innerText = "Nghệ sĩ: " + (d.artist || "Chưa đặt tên");
-                document.getElementById('overwrite-details-album').innerText = "Album: " + (d.album || "Chưa rõ");
+                const titlePrefix = currentLangDict['confirmoverwrite.field_title'] || "Tên: ";
+                const artistPrefix = currentLangDict['confirmoverwrite.field_artist'] || "Nghệ sĩ: ";
+                const albumPrefix = currentLangDict['confirmoverwrite.field_album'] || "Album: ";
+                const untitledStr = currentLangDict['moreinfo.untitled'] || "Chưa đặt tên";
+                const unknownStr = currentLangDict['moreinfo.unknown'] || "Chưa rõ";
+                document.getElementById('overwrite-details-title').innerText = titlePrefix + (d.title || untitledStr);
+                document.getElementById('overwrite-details-artist').innerText = artistPrefix + (d.artist || untitledStr);
+                document.getElementById('overwrite-details-album').innerText = albumPrefix + (d.album || unknownStr);
                 confirmOverwriteModal.classList.add('open');
             }
         });
@@ -4585,7 +4597,7 @@
             const track = playlist[currentIndex];
             if (!track) return;
             
-            if (confirm("Bạn có chắc chắn muốn xoá ảnh thumbnail của bài hát này?")) {
+            if (confirm(currentLangDict['thumbnail.delete_confirm'] || "Bạn có chắc chắn muốn xoá ảnh thumbnail của bài hát này?")) {
                 track.cover = null;
                 track.newCoverBuffer = null;
 
@@ -4608,10 +4620,10 @@
                     updatePlaylistUI();
                     if(typeof updatePiPUI === 'function') updatePiPUI();
                     alert(result.persisted
-                        ? "Đã xoá thumbnail và ghi đè trực tiếp vào file gốc thành công!"
-                        : "Đã xoá thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.");
+                        ? (currentLangDict['thumbnail.delete_success_overwrite'] || "Đã xoá thumbnail và ghi đè trực tiếp vào file gốc thành công!")
+                        : (currentLangDict['thumbnail.delete_success_download'] || "Đã xoá thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn."));
                 } else {
-                    alert("Lỗi xảy ra trong khi xoá thumbnail.");
+                    alert(currentLangDict['thumbnail.delete_error'] || "Lỗi xảy ra trong khi xoá thumbnail.");
                 }
             }
         });
@@ -4808,10 +4820,10 @@
                 updatePlaylistUI();
                 if(typeof updatePiPUI === 'function') updatePiPUI();
                 alert(result.persisted
-                    ? "Đã lưu thumbnail và ghi đè trực tiếp vào file gốc thành công!"
-                    : "Đã lưu thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.");
+                    ? (currentLangDict['thumbnail.save_success_overwrite'] || "Đã lưu thumbnail và ghi đè trực tiếp vào file gốc thành công!")
+                    : (currentLangDict['thumbnail.save_success_download'] || "Đã lưu thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn."));
             } else {
-                alert("Xảy ra lỗi trong khi biên dịch thumbnail.");
+                alert(currentLangDict['thumbnail.save_error'] || "Xảy ra lỗi trong khi biên dịch thumbnail.");
             }
         });
 
