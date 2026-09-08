@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hướng Dẫn Sử Dụng - Trình Phát Nhạc Phong VN</title>
+
+  <!-- Google Sans Flex & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --md-sys-color-background: #0f0d13;
+      --md-sys-color-on-background: #e9e0e8;
+      --md-sys-color-surface: #17141d;
+      --md-sys-color-surface-container: #231f2a;
+      --md-sys-color-surface-container-high: #2e2838;
+      --md-sys-color-primary: #d0bcff;
+      --md-sys-color-on-primary: #381e72;
+      --md-sys-color-primary-container: #4f378b;
+      --md-sys-color-on-primary-container: #eaddff;
+      --md-sys-color-secondary: #ccc2dc;
+      --md-sys-color-outline: #948f99;
+      --md-sys-color-outline-variant: #49454f;
+
+      --md-motion-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      --md-motion-easing: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+    }
+
+    body {
+      font-family: 'Google Sans Flex', sans-serif;
+      background-color: var(--md-sys-color-background);
+      color: var(--md-sys-color-on-background);
+    }
+
+    .material-symbols-outlined {
+      font-size: inherit;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+
+    .m3-card {
+      background-color: var(--md-sys-color-surface-container);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      transition: all 0.25s var(--md-motion-spring);
+    }
+    .m3-card:hover {
+      border-color: var(--md-sys-color-primary);
+      transform: translateY(-2px);
+    }
+
+    .m3-btn {
+      transition: all 0.2s var(--md-motion-spring);
+    }
+    .m3-btn:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+    .m3-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--md-sys-color-outline-variant);
+      border-radius: 99px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--md-sys-color-primary);
+    }
+
+    kbd {
+      background-color: var(--md-sys-color-surface-container-high);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      box-shadow: 0 2px 0 var(--md-sys-color-outline-variant);
+    }
+
+    /* Slide transition animations */
+    .slide-view {
+      transition: opacity 0.35s var(--md-motion-easing), transform 0.35s var(--md-motion-easing);
+    }
+    .slide-hidden-left {
+      opacity: 0;
+      transform: translateX(-40px) scale(0.98);
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+    }
+    .slide-hidden-right {
+      opacity: 0;
+      transform: translateX(40px) scale(0.98);
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+    }
+    .slide-active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      position: relative;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-between p-4 md:p-8">
+
+  <!-- Header Bar -->
+  <header class="w-full max-w-4xl mx-auto flex items-center justify-between shrink-0 mb-4 z-20">
+    <div class="flex items-center gap-3">
+      <img src="https://lh3.googleusercontent.com/a/ACg8ocK1ghp_0vaVGK6czFhTwIBo0asg1GAhSQ4xwdm9kL9kAmu8BneC=s0-c" 
+           alt="Phong VN Avatar" 
+           class="w-10 h-10 rounded-2xl object-cover ring-2 ring-[var(--md-sys-color-primary)]/50 shadow-md"
+           onerror="this.src='https://placehold.co/100x100/65558f/ffffff?text=PVN'" />
+      <div>
+        <h1 class="font-bold text-base tracking-wide leading-tight">Phong VN Player</h1>
+        <p class="text-xs text-[var(--md-sys-color-outline)]" id="header-subtitle">Hướng dẫn sử dụng</p>
+      </div>
+    </div>
+
+    <!-- Right Controls: Skip button & Language switcher -->
+    <div class="flex items-center gap-2">
+      <!-- Language Switcher -->
+      <button onclick="toggleLanguage()" class="m3-btn px-3 py-1.5 rounded-xl bg-[var(--md-sys-color-surface-container-high)] border border-[var(--md-sys-color-outline-variant)] text-xs font-semibold flex items-center gap-1.5 hover:bg-[var(--md-sys-color-primary-container)]">
+        <span class="material-symbols-outlined text-lg text-[var(--md-sys-color-primary)]">translate</span>
+        <span id="lang-indicator">VI</span>
+      </button>
+
+      <!-- Skip Tutorial Button -->
+      <button onclick="finishTutorial()" class="m3-btn px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-on-background)] hover:bg-[var(--md-sys-color-surface-container-high)]">
+        <span data-i18n="btn_skip">Bỏ qua</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Progress Bar Container -->
+  <div class="w-full max-w-4xl mx-auto mb-4 shrink-0">
+    <div class="flex justify-between items-center text-xs font-medium mb-1.5 text-[var(--md-sys-color-outline)]">
+      <span id="step-counter-text">Bước 1 / 5</span>
+      <span id="step-title-badge" class="text-[var(--md-sys-color-primary)] font-semibold">Chào mừng & Ngôn ngữ</span>
+    </div>
+    <!-- Progress Bar Track -->
+    <div class="w-full h-1.5 bg-[var(--md-sys-color-surface-container-high)] rounded-full overflow-hidden">
+      <div id="progress-fill" class="h-full bg-[var(--md-sys-color-primary)] transition-all duration-300 ease-out" style="width: 20%;"></div>
+    </div>
+  </div>
+
+  <!-- Main Interactive Slides Area -->
+  <main class="w-full max-w-4xl mx-auto flex-1 relative overflow-y-auto overflow-x-hidden flex flex-col justify-center my-auto py-2">
+    
+    <!-- SLIDE 1: Welcome & Language Choice -->
+    <div id="slide-1" class="slide-view slide-active w-full flex flex-col items-center justify-center text-center space-y-6">
+      <div class="w-20 h-20 rounded-3xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] flex items-center justify-center shadow-lg">
+        <span class="material-symbols-outlined text-4xl">album</span>
+      </div>
+      <div class="max-w-xl space-y-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold" data-i18n="s1_title">Chào Mừng Đến Với Phong VN Player</h2>
+        <p class="text-sm md:text-base text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s1_desc">
+          Trình phát nhạc cá nhân tốc độ cao, hỗ trợ chạy lời bài hát đồng bộ, tùy chỉnh giao diện Material Design 3 và chạy offline 100% trên thiết bị của bạn.
+        </p>
+      </div>
+
+      <!-- Language selector buttons -->
+      <div class="w-full max-w-md pt-2 space-y-3">
+        <p class="text-xs font-semibold text-[var(--md-sys-color-outline)] uppercase tracking-wider" data-i18n="s1_select_lang">Chọn ngôn ngữ hiển thị</p>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="setLanguage('vi')" id="lang-btn-vi" class="m3-btn p-4 rounded-2xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] border-2 border-[var(--md-sys-color-primary)] font-bold flex items-center justify-center gap-2">
+            <span class="text-xl">🇻🇳</span>
+            <span>Tiếng Việt</span>
+          </button>
+          <button onclick="setLanguage('en')" id="lang-btn-en" class="m3-btn p-4 rounded-2xl bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-background)] border-2 border-transparent hover:border-[var(--md-sys-color-outline)] font-bold flex items-center justify-center gap-2">
+            <span class="text-xl">🇺🇸</span>
+            <span>English</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Uploading & Drag & Drop -->
+    <div id="slide-2" class="slide-view slide-hidden-right w-full flex flex-col space-y-6">
+      <div class="text-center md:text-left space-y-1">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]">
+          <span class="material-symbols-outlined text-base">folder_open</span> <span data-i18n="s2_badge">Thao Tác Nhập Tệp</span>
+        </span>
+        <h2 class="text-2xl md:text-3xl font-extrabold" data-i18n="s2_title">Cách Mở & Tải Lên Nhạc</h2>
+        <p class="text-xs md:text-sm text-[var(--md-sys-color-outline)]" data-i18n="s2_subtitle">Dễ dàng thêm nhạc từ máy tính mà không cần tải lên máy chủ.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Method 1 -->
+        <div class="m3-card p-4 rounded-2xl space-y-2">
+          <div class="w-9 h-9 rounded-xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">create_new_folder</span>
+          </div>
+          <h3 class="font-bold text-sm" data-i18n="s2_m1_title">1. Mở tệp từ máy</h3>
+          <p class="text-xs text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s2_m1_desc">
+            Bấm nút "Mở Tệp" hoặc nhấn tổ hợp phím <kbd class="px-1 py-0.5 rounded text-[10px]">Ctrl + O</kbd> để chọn bài hát.
+          </p>
+        </div>
+
+        <!-- Method 2 -->
+        <div class="m3-card p-4 rounded-2xl space-y-2">
+          <div class="w-9 h-9 rounded-xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">touch_app</span>
+          </div>
+          <h3 class="font-bold text-sm" data-i18n="s2_m2_title">2. Kéo & Thả (Drag Drop)</h3>
+          <p class="text-xs text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s2_m2_desc">
+            Kéo tệp nhạc hoặc toàn bộ thư mục nhạc thả thẳng vào bất kỳ vị trí nào trên ứng dụng.
+          </p>
+        </div>
+
+        <!-- Method 3 -->
+        <div class="m3-card p-4 rounded-2xl space-y-2">
+          <div class="w-9 h-9 rounded-xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">audio_file</span>
+          </div>
+          <h3 class="font-bold text-sm" data-i18n="s2_m3_title">3. Định dạng hỗ trợ</h3>
+          <p class="text-xs text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s2_m3_desc">
+            Tương thích hoàn hảo với <span class="text-[var(--md-sys-color-primary)] font-semibold">MP3, WAV, FLAC, AAC, M4A, OGG</span>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Interactive Playground Dropzone -->
+      <div id="demo-dropzone" class="p-5 rounded-2xl border-2 border-dashed border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] flex flex-col items-center text-center space-y-2 transition-all cursor-pointer hover:border-[var(--md-sys-color-primary)]">
+        <span class="material-symbols-outlined text-4xl text-[var(--md-sys-color-primary)]">cloud_upload</span>
+        <p class="font-bold text-xs md:text-sm" data-i18n="s2_demo_title">Khu vực thử nghiệm Kéo & Thả</p>
+        <p class="text-[11px] text-[var(--md-sys-color-outline)]" data-i18n="s2_demo_desc">Thử kéo thả một bài hát mẫu vào khung này để kiểm tra phản hồi</p>
+        <div id="demo-status" class="text-xs font-bold text-[var(--md-sys-color-primary)] hidden">✨ Đã nhận diện tệp thử nghiệm!</div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Synced Lyrics (.LRC) -->
+    <div id="slide-3" class="slide-view slide-hidden-right w-full flex flex-col space-y-6">
+      <div class="text-center md:text-left space-y-1">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]">
+          <span class="material-symbols-outlined text-base">description</span> <span data-i18n="s3_badge">Lời Bài Hát Đồng Bộ</span>
+        </span>
+        <h2 class="text-2xl md:text-3xl font-extrabold" data-i18n="s3_title">Chế Độ Karaoke & Tệp Lời .LRC</h2>
+        <p class="text-xs md:text-sm text-[var(--md-sys-color-outline)]" data-i18n="s3_subtitle">Tự động khớp lời nhạc chạy chữ cuốn hút thời gian thực.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+        <!-- Explanations -->
+        <div class="space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] flex items-center justify-center shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-lg">sync</span>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm" data-i18n="s3_f1_title">Tự động nhận diện lời .LRC</h4>
+              <p class="text-xs text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s3_f1_desc">Đặt tệp `.lrc` cùng tên với tệp nhạc trong cùng thư mục, ứng dụng sẽ tự động tải lời.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] flex items-center justify-center shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-lg">ads_click</span>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm" data-i18n="s3_f2_title">Nhấn câu lyric để nhảy thời gian</h4>
+              <p class="text-xs text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s3_f2_desc">Chạm hoặc click vào câu nhạc bất kỳ trên màn hình lời bài hát để tua nhạc tới giây đó ngay lập tức.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] flex items-center justify-center shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-lg">subtitles</span>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm" data-i18n="s3_f3_title">Kéo thả tệp LRC thủ công</h4>
+              <p class="text-xs text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s3_f3_desc">Bạn cũng có thể thả trực tiếp tệp `.lrc` bất kỳ vào bài hát đang phát.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Lyric Mockup -->
+        <div class="m3-card p-5 rounded-3xl space-y-3 bg-[var(--md-sys-color-surface-container-high)]/60">
+          <div class="flex items-center justify-between text-xs text-[var(--md-sys-color-outline)] pb-2 border-b border-[var(--md-sys-color-outline-variant)]">
+            <span class="font-semibold text-[var(--md-sys-color-primary)]">Preview: Lyric Karaoke Sync</span>
+            <span>01:15 / 03:45</span>
+          </div>
+          <div class="space-y-2 text-xs">
+            <p class="text-[var(--md-sys-color-outline)] opacity-60">01:08 • Dòng lời bài hát đã phát qua...</p>
+            <div class="p-3 rounded-2xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] font-bold text-sm flex items-center gap-2 shadow-sm transform scale-[1.02] transition-transform">
+              <span class="material-symbols-outlined text-base text-[var(--md-sys-color-primary)]">play_arrow</span>
+              <span>01:15 • Dòng lyric hiện tại phát sáng & tự cuốn!</span>
+            </div>
+            <p class="text-[var(--md-sys-color-outline)] opacity-80">01:22 • Dòng lời bài hát chuẩn bị phát tiếp theo...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: System Shortcuts -->
+    <div id="slide-4" class="slide-view slide-hidden-right w-full flex flex-col space-y-4">
+      <div class="text-center md:text-left space-y-1">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]">
+          <span class="material-symbols-outlined text-base">keyboard</span> <span data-i18n="s4_badge">Thao Tác Nhanh</span>
+        </span>
+        <h2 class="text-2xl md:text-3xl font-extrabold" data-i18n="s4_title">Danh Sách Phím Tắt Hệ Thống</h2>
+        <p class="text-xs md:text-sm text-[var(--md-sys-color-outline)]" data-i18n="s4_subtitle">Điều khiển âm nhạc chuyên nghiệp không cần tới chuột.</p>
+      </div>
+
+      <!-- Grid Shortcuts -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[300px] overflow-y-auto pr-1">
+        
+        <div class="p-3 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-between">
+          <span class="text-xs font-medium" data-i18n="sc_play">Tạm dừng / Phát nhạc</span>
+          <kbd class="px-2 py-0.5 rounded text-xs font-mono font-bold">Space</kbd>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-between">
+          <span class="text-xs font-medium" data-i18n="sc_seek_forward">Tua tiến 5 giây</span>
+          <kbd class="px-2 py-0.5 rounded text-xs font-mono font-bold">→</kbd>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-between">
+          <span class="text-xs font-medium" data-i18n="sc_seek_back">Tua lùi 5 giây</span>
+          <kbd class="px-2 py-0.5 rounded text-xs font-mono font-bold">←</kbd>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-between">
+          <span class="text-xs font-medium" data-i18n="sc_vol_up">Tăng âm lượng</span>
+          <kbd class="px-2 py-0.5 rounded text-xs font-mono font-bold">↑</kbd>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-between">
+          <span class="text-xs font-medium" data-i18n="sc_vol_down">Giảm âm lượng</span>
+          <kbd class="px-2 py-0.5 rounded text-xs font-mono font-bold">↓</kbd>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-between">
+          <span class="text-xs font-medium" data-i18n="sc_open_file">Mở tệp nhạc mới</span>
+          <div class="flex gap-1">
+            <kbd class="px-1.5 py-0.5 rounded text-xs font-mono font-bold">Ctrl</kbd>
+            <span class="text-xs font-bold">+</span>
+            <kbd class="px-1.5 py-0.5 rounded text-xs font-mono font-bold">O</kbd>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-between">
+          <span class="text-xs font-medium" data-i18n="sc_lyric">Mở / Đóng giao diện Lời nhạc</span>
+          <kbd class="px-2 py-0.5 rounded text-xs font-mono font-bold">L</kbd>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)] flex items-center justify-between">
+          <span class="text-xs font-medium" data-i18n="sc_fullscreen">Bật / Tắt Toàn màn hình</span>
+          <kbd class="px-2 py-0.5 rounded text-xs font-mono font-bold">F11</kbd>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Advanced Features & Completion -->
+    <div id="slide-5" class="slide-view slide-hidden-right w-full flex flex-col items-center text-center space-y-6">
+      <div class="w-16 h-16 rounded-3xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] flex items-center justify-center shadow-md">
+        <span class="material-symbols-outlined text-3xl">auto_awesome</span>
+      </div>
+
+      <div class="max-w-xl space-y-2">
+        <h2 class="text-2xl md:text-3xl font-extrabold" data-i18n="s5_title">Bạn Đã Sẵn Sàng!</h2>
+        <p class="text-xs md:text-sm text-[var(--md-sys-color-outline)]" data-i18n="s5_subtitle">Khám phá các tính năng bổ trợ xuất sắc đi kèm trong trình phát nhạc.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full text-left">
+        <div class="m3-card p-3.5 rounded-2xl space-y-1">
+          <span class="material-symbols-outlined text-xl text-[var(--md-sys-color-primary)]">offline_bolt</span>
+          <h4 class="font-bold text-xs" data-i18n="s5_f1_title">Phát Nhạc Offline 100%</h4>
+          <p class="text-[11px] text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s5_f1_desc">Chạy trực tiếp tệp từ thiết bị mà không cần mạng hay tải lên server.</p>
+        </div>
+
+        <div class="m3-card p-3.5 rounded-2xl space-y-1">
+          <span class="material-symbols-outlined text-xl text-[var(--md-sys-color-primary)]">equalizer</span>
+          <h4 class="font-bold text-xs" data-i18n="s5_f2_title">Sóng Âm Visualizer</h4>
+          <p class="text-[11px] text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s5_f2_desc">Đồ họa sóng âm thời gian thực theo giai điệu bài hát.</p>
+        </div>
+
+        <div class="m3-card p-3.5 rounded-2xl space-y-1">
+          <span class="material-symbols-outlined text-xl text-[var(--md-sys-color-primary)]">history</span>
+          <h4 class="font-bold text-xs" data-i18n="s5_f3_title">Ghi Nhớ Phát Nhạc</h4>
+          <p class="text-[11px] text-[var(--md-sys-color-outline)] leading-relaxed" data-i18n="s5_f3_desc">Tự lưu lại vị trí đang phát dở cho lần bật ứng dụng sau.</p>
+        </div>
+      </div>
+
+      <button onclick="finishTutorial()" class="m3-btn w-full max-w-sm py-3.5 px-6 rounded-2xl bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold text-sm shadow-lg flex items-center justify-center gap-2">
+        <span data-i18n="btn_finish_cta">Thưởng Thức Âm Nhạc Ngay</span>
+        <span class="material-symbols-outlined text-lg">arrow_forward</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Footer Navigation controls -->
+  <footer class="w-full max-w-4xl mx-auto flex items-center justify-between shrink-0 pt-3 border-t border-[var(--md-sys-color-outline-variant)]/40 z-20">
+    <button id="btn-prev" onclick="prevSlide()" class="m3-btn px-4 py-2.5 rounded-2xl bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-background)] font-medium text-xs flex items-center gap-2 opacity-50 cursor-not-allowed" disabled>
+      <span class="material-symbols-outlined text-base">arrow_back</span>
+      <span data-i18n="btn_back">Quay lại</span>
+    </button>
+
+    <!-- Slide indicator dots -->
+    <div class="flex items-center gap-1.5" id="dots-container">
+      <div class="w-2.5 h-2.5 rounded-full bg-[var(--md-sys-color-primary)] transition-all duration-300"></div>
+      <div class="w-2.5 h-2.5 rounded-full bg-[var(--md-sys-color-outline-variant)] transition-all duration-300"></div>
+      <div class="w-2.5 h-2.5 rounded-full bg-[var(--md-sys-color-outline-variant)] transition-all duration-300"></div>
+      <div class="w-2.5 h-2.5 rounded-full bg-[var(--md-sys-color-outline-variant)] transition-all duration-300"></div>
+      <div class="w-2.5 h-2.5 rounded-full bg-[var(--md-sys-color-outline-variant)] transition-all duration-300"></div>
+    </div>
+
+    <button id="btn-next" onclick="nextSlide()" class="m3-btn px-5 py-2.5 rounded-2xl bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold text-xs flex items-center gap-2 shadow-sm">
+      <span id="btn-next-text" data-i18n="btn_next">Tiếp theo</span>
+      <span class="material-symbols-outlined text-base">arrow_forward</span>
+    </button>
+  </footer>
+
+  <script>
+    let currentSlideIndex = 1;
+    const totalSlides = 5;
+    let currentLang = 'vi';
+
+    const translations = {
+      vi: {
+        header_subtitle: "Hướng dẫn sử dụng",
+        btn_skip: "Bỏ qua",
+        btn_back: "Quay lại",
+        btn_next: "Tiếp theo",
+        btn_finish_cta: "Thưởng Thức Âm Nhạc Ngay",
+
+        s1_title: "Chào Mừng Đến Với Phong VN Player",
+        s1_desc: "Trình phát nhạc cá nhân tốc độ cao, hỗ trợ chạy lời bài hát đồng bộ, tùy chỉnh giao diện Material Design 3 và chạy offline 100% trên thiết bị của bạn.",
+        s1_select_lang: "Chọn ngôn ngữ hiển thị",
+
+        s2_badge: "Thao Tác Nhập Tệp",
+        s2_title: "Cách Mở & Tải Lên Nhạc",
+        s2_subtitle: "Dễ dàng thêm nhạc từ máy tính mà không cần tải lên máy chủ.",
+        s2_m1_title: "1. Mở tệp từ máy",
+        s2_m1_desc: "Bấm nút \"Mở Tệp\" hoặc nhấn tổ hợp phím Ctrl + O để chọn bài hát.",
+        s2_m2_title: "2. Kéo & Thả (Drag Drop)",
+        s2_m2_desc: "Kéo tệp nhạc hoặc toàn bộ thư mục nhạc thả thẳng vào bất kỳ vị trí nào trên ứng dụng.",
+        s2_m3_title: "3. Định dạng hỗ trợ",
+        s2_m3_desc: "Tương thích hoàn hảo với MP3, WAV, FLAC, AAC, M4A, OGG.",
+        s2_demo_title: "Khu vực thử nghiệm Kéo & Thả",
+        s2_demo_desc: "Thử kéo thả một bài hát mẫu vào khung này để kiểm tra phản hồi",
+
+        s3_badge: "Lời Bài Hát Đồng Bộ",
+        s3_title: "Chế Độ Karaoke & Tệp Lời .LRC",
+        s3_subtitle: "Tự động khớp lời nhạc chạy chữ cuốn hút thời gian thực.",
+        s3_f1_title: "Tự động nhận diện lời .LRC",
+        s3_f1_desc: "Đặt tệp .lrc cùng tên với tệp nhạc trong cùng thư mục, ứng dụng sẽ tự động tải lời.",
+        s3_f2_title: "Nhấn câu lyric để nhảy thời gian",
+        s3_f2_desc: "Chạm hoặc click vào câu nhạc bất kỳ trên màn hình lời bài hát để tua nhạc tới giây đó ngay lập tức.",
+        s3_f3_title: "Kéo thả tệp LRC thủ công",
+        s3_f3_desc: "Bạn cũng có thể thả trực tiếp tệp .lrc bất kỳ vào bài hát đang phát.",
+
+        s4_badge: "Thao Tác Nhanh",
+        s4_title: "Danh Sách Phím Tắt Hệ Thống",
+        s4_subtitle: "Điều khiển âm nhạc chuyên nghiệp không cần tới chuột.",
+        sc_play: "Tạm dừng / Phát nhạc",
+        sc_seek_forward: "Tua tiến 5 giây",
+        sc_seek_back: "Tua lùi 5 giây",
+        sc_vol_up: "Tăng âm lượng",
+        sc_vol_down: "Giảm âm lượng",
+        sc_open_file: "Mở tệp nhạc mới",
+        sc_lyric: "Mở / Đóng giao diện Lời nhạc",
+        sc_fullscreen: "Bật / Tắt Toàn màn hình",
+
+        s5_title: "Bạn Đã Sẵn Sàng!",
+        s5_subtitle: "Khám phá các tính năng bổ trợ xuất sắc đi kèm trong trình phát nhạc.",
+        s5_f1_title: "Phát Nhạc Offline 100%",
+        s5_f1_desc: "Chạy trực tiếp tệp từ thiết bị mà không cần mạng hay tải lên server.",
+        s5_f2_title: "Sóng Âm Visualizer",
+        s5_f2_desc: "Đồ họa sóng âm thời gian thực theo giai điệu bài hát.",
+        s5_f3_title: "Ghi Nhớ Phát Nhạc",
+        s5_f3_desc: "Tự lưu lại vị trí đang phát dở cho lần bật ứng dụng sau."
+      },
+      en: {
+        header_subtitle: "User Guide",
+        btn_skip: "Skip",
+        btn_back: "Back",
+        btn_next: "Next",
+        btn_finish_cta: "Start Listening Now",
+
+        s1_title: "Welcome to Phong VN Player",
+        s1_desc: "High performance personal audio player with real-time synchronized lyrics, Material Design 3 Expressive UI, and 100% offline playback.",
+        s1_select_lang: "Select Interface Language",
+
+        s2_badge: "Import Music Files",
+        s2_title: "How to Open & Import Music",
+        s2_subtitle: "Easily load songs directly from your local disk without cloud uploads.",
+        s2_m1_title: "1. Open Files",
+        s2_m1_desc: "Click the \"Open File\" button or press Ctrl + O to choose local audio tracks.",
+        s2_m2_title: "2. Drag & Drop",
+        s2_m2_desc: "Drag audio files or entire folder trees directly anywhere into the app.",
+        s2_m3_title: "3. Supported Formats",
+        s2_m3_desc: "Full compatibility with MP3, WAV, FLAC, AAC, M4A, OGG.",
+        s2_demo_title: "Drag & Drop Interactive Playground",
+        s2_demo_desc: "Try dragging a sample audio or lyric file into this zone to test reaction",
+
+        s3_badge: "Synced Lyrics",
+        s3_title: "Karaoke Mode & .LRC Lyric Files",
+        s3_subtitle: "Real-time scrolling lyrics synchronized with playback progress.",
+        s3_f1_title: "Auto-Detect .LRC Lyrics",
+        s3_f1_desc: "Place a .lrc file with matching name in the same audio folder for automatic pairing.",
+        s3_f2_title: "Tap Lyric Lines to Seek",
+        s3_f2_desc: "Click any lyric sentence in karaoke view to jump directly to that exact timestamp.",
+        s3_f3_title: "Manual LRC Drop",
+        s3_f3_desc: "You can drag and drop any .lrc file straight onto the currently playing song.",
+
+        s4_badge: "Hotkeys",
+        s4_title: "System Keyboard Shortcuts",
+        s4_subtitle: "Master your media playback hands-free without using a mouse.",
+        sc_play: "Play / Pause playback",
+        sc_seek_forward: "Seek forward 5 seconds",
+        sc_seek_back: "Seek backward 5 seconds",
+        sc_vol_up: "Increase Volume",
+        sc_vol_down: "Decrease Volume",
+        sc_open_file: "Open new audio files",
+        sc_lyric: "Show / Hide Lyric View",
+        sc_fullscreen: "Toggle Fullscreen Mode",
+
+        s5_title: "You Are All Set!",
+        s5_subtitle: "Discover built-in smart features designed for superior listening.",
+        s5_f1_title: "100% Offline Playback",
+        s5_f1_desc: "Plays local audio files directly without internet connection or server uploads.",
+        s5_f2_title: "Audio Spectrum Visualizer",
+        s5_f2_desc: "Real-time visual spectrum equalizer dancing to song beats.",
+        s5_f3_title: "Session Persistence",
+        s5_f3_desc: "Automatically restores your last playing position upon app relaunch."
+      }
+    };
+
+    const slideTitlesVi = ["Chào mừng", "Tải tệp", "Lời bài hát", "Phím tắt", "Hoàn tất"];
+    const slideTitlesEn = ["Welcome", "Import Files", "Synced Lyrics", "Shortcuts", "Finish"];
+
+    function updateSlideVisibility(previousIndex, newIndex) {
+      const isForward = newIndex > previousIndex;
+
+      for (let i = 1; i <= totalSlides; i++) {
+        const slideEl = document.getElementById(`slide-${i}`);
+        if (i === newIndex) {
+          slideEl.className = "slide-view slide-active w-full flex flex-col";
+          if (i === 1 || i === 5) {
+            slideEl.classList.add("items-center", "text-center");
+          }
+        } else if (i < newIndex) {
+          slideEl.className = "slide-view slide-hidden-left w-full flex flex-col";
+        } else {
+          slideEl.className = "slide-view slide-hidden-right w-full flex flex-col";
+        }
+      }
+
+      // Update progress bar & text
+      const progressPercent = (newIndex / totalSlides) * 100;
+      document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+      document.getElementById('step-counter-text').textContent = currentLang === 'vi' 
+        ? `Bước ${newIndex} / ${totalSlides}` 
+        : `Step ${newIndex} of ${totalSlides}`;
+
+      const titleList = currentLang === 'vi' ? slideTitlesVi : slideTitlesEn;
+      document.getElementById('step-title-badge').textContent = titleList[newIndex - 1];
+
+      // Update Prev / Next buttons
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const btnNextText = document.getElementById('btn-next-text');
+
+      if (newIndex === 1) {
+        btnPrev.disabled = true;
+        btnPrev.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        btnPrev.disabled = false;
+        btnPrev.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+
+      if (newIndex === totalSlides) {
+        btnNextText.setAttribute('data-i18n', 'btn_finish_cta');
+        btnNextText.textContent = translations[currentLang].btn_finish_cta;
+      } else {
+        btnNextText.setAttribute('data-i18n', 'btn_next');
+        btnNextText.textContent = translations[currentLang].btn_next;
+      }
+
+      // Update Dot Indicators
+      const dotsContainer = document.getElementById('dots-container');
+      Array.from(dotsContainer.children).forEach((dot, idx) => {
+        if (idx === newIndex - 1) {
+          dot.className = "w-6 h-2.5 rounded-full bg-[var(--md-sys-color-primary)] transition-all duration-300";
+        } else {
+          dot.className = "w-2.5 h-2.5 rounded-full bg-[var(--md-sys-color-outline-variant)] transition-all duration-300";
+        }
+      });
+    }
+
+    function nextSlide() {
+      if (currentSlideIndex < totalSlides) {
+        const prev = currentSlideIndex;
+        currentSlideIndex++;
+        updateSlideVisibility(prev, currentSlideIndex);
+      } else {
+        finishTutorial();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlideIndex > 1) {
+        const prev = currentSlideIndex;
+        currentSlideIndex--;
+        updateSlideVisibility(prev, currentSlideIndex);
+      }
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const targetWindow = window.parent !== window ? window.parent : window;
+      targetWindow.postMessage(lang, '*');
+      document.getElementById('lang-indicator').textContent = lang.toUpperCase();
+
+      // Highlight active language button in Slide 1
+      const btnVi = document.getElementById('lang-btn-vi');
+      const btnEn = document.getElementById('lang-btn-en');
+
+      if (lang === 'vi') {
+        btnVi.className = "m3-btn p-4 rounded-2xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] border-2 border-[var(--md-sys-color-primary)] font-bold flex items-center justify-center gap-2";
+        btnEn.className = "m3-btn p-4 rounded-2xl bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-background)] border-2 border-transparent hover:border-[var(--md-sys-color-outline)] font-bold flex items-center justify-center gap-2";
+      } else {
+        btnEn.className = "m3-btn p-4 rounded-2xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] border-2 border-[var(--md-sys-color-primary)] font-bold flex items-center justify-center gap-2";
+        btnVi.className = "m3-btn p-4 rounded-2xl bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-background)] border-2 border-transparent hover:border-[var(--md-sys-color-outline)] font-bold flex items-center justify-center gap-2";
+      }
+
+      applyTranslations();
+      updateSlideVisibility(currentSlideIndex, currentSlideIndex);
+    }
+
+    function toggleLanguage() {
+      setLanguage(currentLang === 'vi' ? 'en' : 'vi');
+    }
+
+    function applyTranslations() {
+      const langData = translations[currentLang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (langData[key]) {
+          el.textContent = langData[key];
+        }
+      });
+      document.getElementById('header-subtitle').textContent = langData.header_subtitle;
+    }
+
+    function finishTutorial() {
+      const targetWindow = window.parent !== window ? window.parent : window;
+      // Send chosen language code first
+      targetWindow.postMessage(currentLang, '*');
+      // Send completion signal
+      targetWindow.postMessage('tutorial done', '*');
+    }
+
+    // Drag & Drop Demo Playground Event Listeners
+    const dropzone = document.getElementById('demo-dropzone');
+    const statusText = document.getElementById('demo-status');
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-[var(--md-sys-color-primary)]', 'bg-[var(--md-sys-color-surface-container-high)]');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-[var(--md-sys-color-primary)]', 'bg-[var(--md-sys-color-surface-container-high)]');
+      }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      statusText.classList.remove('hidden');
+      setTimeout(() => {
+        statusText.classList.add('hidden');
+      }, 3500);
+    });
+
+    // Initialize UI
+    applyTranslations();
+  </script>
+</body>
+</html>
