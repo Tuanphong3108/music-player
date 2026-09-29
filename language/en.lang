@@ -15,6 +15,8 @@ topbar.addmusic=Add music
 topbar.addmusic_file=Select music files (File System API)
 topbar.addmusic_folder=Select music folder (File System API)
 topbar.addmusic_legacy=Add files traditional way
+topbar.audio_output=Audio Output
+topbar.audio_output_default=Default
 
 ## --- Player controls ---
 player.shuffle=Shuffle
@@ -49,6 +51,8 @@ reorder.done=DONE
 
 ## --- Lyric & Drag zone ---
 lyric.placeholder=DRAG AND DROP AUDIO FILE WITH .LRC FILE\nTO SYNC LYRICS
+lyric.no_lyrics_title=THIS SONG HAS NO LYRICS (.LRC)
+lyric.no_lyrics_desc=Right-click the song to load a separate .lrc file
 
 ## --- Other info dialog ---
 moreinfo.title=Other info
