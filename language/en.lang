@@ -15,8 +15,6 @@ topbar.addmusic=Add music
 topbar.addmusic_file=Select music files (File System API)
 topbar.addmusic_folder=Select music folder (File System API)
 topbar.addmusic_legacy=Add files traditional way
-topbar.audio_output=Audio Output
-topbar.audio_output_default=Default
 
 ## --- Player controls ---
 player.shuffle=Shuffle
@@ -35,6 +33,8 @@ player.mute=Mute/Unmute
 player.pip=Open Picture-in-Picture (PiP)
 player.no_track=No track loaded
 player.load_first_prompt=Please load a music file and play it to use the editor!
+player.output_device=Choose audio output device
+player.output_default=Default
 
 ## --- Playlist ---
 playlist.title=Playlist
@@ -51,8 +51,8 @@ reorder.done=DONE
 
 ## --- Lyric & Drag zone ---
 lyric.placeholder=DRAG AND DROP AUDIO FILE WITH .LRC FILE\nTO SYNC LYRICS
-lyric.no_lyrics_title=THIS SONG HAS NO LYRICS (.LRC)
-lyric.no_lyrics_desc=Right-click the song to load a separate .lrc file
+lyric.no_lyric=THIS SONG HAS NO LYRICS (.LRC)
+lyric.right_click_hint=Right-click on the song to load lyrics
 
 ## --- Other info dialog ---
 moreinfo.title=Other info
