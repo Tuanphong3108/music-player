@@ -150,7 +150,7 @@
      *  8. 'accessible' : Sẵn sàng truy cập (Tự chuyển hướng sang Indev Accessible).
      *  9. 'custom'     : Tự định nghĩa nội dung theo ý thích.
      */
-    const PAGE_STATUS = 'fixing'; 
+    const PAGE_STATUS = 'stabled'; 
 
     // Danh sách toàn bộ các mẫu thông báo sẵn có
     const STATUS_MAP = {
@@ -158,7 +158,7 @@
       stabled: {
         badge: 'STABLE RELEASED',
         title: 'THIS INDEV PAGE IS CLOSED',
-        desc: 'Tính năng thử nghiệm này đã hoàn thiện và được chuyển sang phiên bản chính thức (Stable). Cảm ơn bro đã tham gia trải nghiệm!',
+        desc: 'Tính năng thử nghiệm này đã hoàn thiện và được chuyển sang phiên bản chính thức (Stable).',
         icon: 'verified',
         buttonText: 'Quay về Stable',
         buttonIcon: 'verified',
@@ -193,7 +193,7 @@
       fixing: {
         badge: 'UNDER MAINTENANCE',
         title: 'INDEV IS BEING FIXED',
-        desc: 'Trang thử nghiệm đang trong quá trình nâng cấp, khắc phục sự cố hoặc sửa lỗi. Bro vui lòng quay lại sau!',
+        desc: 'Trang thử nghiệm đang trong quá trình nâng cấp, khắc phục sự cố hoặc sửa lỗi. Vui lòng quay lại sau!',
         icon: 'build',
         buttonText: 'Quay về Stable',
         buttonIcon: 'build_circle',
@@ -204,7 +204,7 @@
       moved: {
         badge: 'LOCATION MOVED',
         title: 'THIS PAGE HAS MOVED',
-        desc: 'Trang thử nghiệm này đã được di chuyển sang một liên kết hoặc phân vùng mới. Bro vui lòng truy cập qua bản Stable.',
+        desc: 'Trang thử nghiệm này đã được di chuyển sang một liên kết hoặc phân vùng mới. Vui lòng truy cập qua bản Stable.',
         icon: 'alt_route',
         buttonText: 'Trang Stable Mới',
         buttonIcon: 'open_in_new',
@@ -215,7 +215,7 @@
       testing: {
         badge: 'LIMITED BETA',
         title: 'RESTRICTED ACCESS',
-        desc: 'Tính năng Indev này hiện chỉ dành cho nhóm tester thử nghiệm nội bộ. Bro có thể trải nghiệm phiên bản Stable hiện tại.',
+        desc: 'Tính năng Indev này hiện chỉ dành cho nhóm tester thử nghiệm nội bộ. Bạn có thể trải nghiệm phiên bản Stable hiện tại.',
         icon: 'science',
         buttonText: 'Quay về Stable',
         buttonIcon: 'science',

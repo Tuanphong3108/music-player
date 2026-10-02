@@ -708,6 +708,24 @@
             transform: translate(-50%, -50%) !important;
             width: 80% !important;
         }
+
+        /* --- FIX NỀN & ACCENT COLOR CHO DROPDOWN CHỌN LOA (MD-MENU) --- */
+md-menu {
+    --md-menu-container-color: var(--md-sys-color-surface-variant);
+    --md-menu-container-elevation: 3;
+    --md-menu-container-shape: 16px;
+    border: 1px solid var(--playlist-border);
+    border-radius: 16px;
+}
+
+md-menu-item {
+    --md-menu-item-label-text-color: var(--md-sys-color-on-surface-variant);
+    --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
+    --md-menu-item-hover-label-text-color: var(--md-sys-color-on-surface);
+    --md-menu-item-selected-container-color: var(--md-sys-color-secondary-container);
+    --md-menu-item-selected-label-text-color: var(--md-sys-color-primary);
+    --md-menu-item-focus-label-text-color: var(--md-sys-color-primary);
+}
     </style>
 </head>
 <body>
@@ -1109,7 +1127,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.09.08-build125245</span>
+                <span>AUDIOPLAYER V2026.10.02-build212105</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1117,6 +1135,13 @@
                         <span class="material-symbols-outlined">install_desktop</span>
                     </button>
                     <div class="install-tooltip" data-i18n="topbar.install_tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
+                </div>
+                <div style="position:relative;">
+                    <button class="btn-m3" id="output-device-btn" title="Chọn thiết bị phát âm thanh" data-i18n-title="player.output_device" style="display:flex; align-items:center; justify-content:center; gap:1px; width:auto; padding:0 8px;">
+                        <span class="material-symbols-outlined" style="font-size:20px;">headphones</span>
+                        <span class="material-symbols-outlined" style="font-size:16px;">keyboard_arrow_down</span>
+                    </button>
+                    <md-menu id="output-device-menu" anchor="output-device-btn"></md-menu>
                 </div>
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
@@ -2472,7 +2497,6 @@
             lyricOverlay.innerHTML = '';
             const track = playlist[currentIndex];
             if (!track || !track.lyrics || track.lyrics.length === 0) {
-                lyricOverlay.innerHTML = '<div class="lyric-placeholder">BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)<br><small style="font-size:8px">Chuột phải vào bài hát để nạp lẻ</small></div>';
                 const noLyricText = currentLangDict['lyric.no_lyric'] || 'BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)';
                 const hintText = currentLangDict['lyric.right_click_hint'] || 'Chuột phải vào bài hát để nạp lẻ';
                 lyricOverlay.innerHTML = `<div class="lyric-placeholder">${noLyricText}<br><small style="font-size:8px">${hintText}</small></div>`;
@@ -2875,16 +2899,33 @@
             }
         });
 
+        // Khi Shuffle đang bật: bấm 1 lần Previous chỉ tua bài hiện tại về 0:00 (giống các
+        // trình phát nhạc khác khi đang random), bấm ĐÚP (trong 350ms) mới thật sự lùi về
+        // bài trước đó trong shuffleOrder. Khi Shuffle tắt thì giữ nguyên hành vi cũ.
+        let prevBtnClickTimer = null;
+        let prevBtnClickCount = 0;
         document.getElementById('prev-btn').addEventListener('click', () => {
-            if (isShuffle) {
+            if (!isShuffle) {
+                let p = currentIndex - 1; if (p < 0) p = playlist.length - 1;
+                playTrack(p);
+                return;
+            }
+
+            prevBtnClickCount++;
+            if (prevBtnClickCount === 1) {
+                prevBtnClickTimer = setTimeout(() => {
+                    audio.currentTime = 0;
+                    prevBtnClickCount = 0;
+                }, 350);
+            } else {
+                clearTimeout(prevBtnClickTimer);
+                prevBtnClickCount = 0;
+
                 if (!shuffleInitialized) generateShuffleOrder();
                 if (shuffleOrder.length === 0) return;
                 let pos = shuffleOrder.indexOf(currentIndex);
                 pos = pos - 1; if (pos < 0) pos = shuffleOrder.length - 1;
                 playTrack(shuffleOrder[pos]);
-            } else {
-                let p = currentIndex - 1; if (p < 0) p = playlist.length - 1;
-                playTrack(p);
             }
         });
 
@@ -2993,6 +3034,17 @@
             analyser.fftSize = 256;
             dataArray = new Uint8Array(analyser.frequencyBinCount);
             draw();
+
+            // Từ đây trở đi, âm thanh thật sự phát ra qua audioCtx.destination (không còn
+            // qua thẻ <audio> gốc nữa) -> phải áp lại thiết bị đã lưu NGAY TRÊN audioCtx,
+            // nếu không "thiết bị mặc định" cũ (lúc AudioContext mới khởi tạo) sẽ được dùng
+            // mãi mãi bất kể trước đó người dùng đã chọn thiết bị nào trong dropdown.
+            const savedSinkId = localStorage.getItem('settings_output_device');
+            if (savedSinkId && savedSinkId !== 'default' && typeof audioCtx.setSinkId === 'function') {
+                audioCtx.setSinkId(savedSinkId).catch(err => {
+                    console.warn('Không áp lại được thiết bị phát âm thanh đã lưu:', err);
+                });
+            }
         }
 
         function draw() {
@@ -3043,6 +3095,94 @@
         }
 
         seekSlider.addEventListener('input', (e) => audio.currentTime = (e.target.value / 100) * audio.duration);
+
+        // --- HỆ THỐNG CHỌN THIẾT BỊ PHÁT ÂM THANH (Audio Output Device) ---
+        const outputDeviceBtn = document.getElementById('output-device-btn');
+        const outputDeviceMenu = document.getElementById('output-device-menu');
+
+        async function selectOutputDevice(deviceId) {
+            localStorage.setItem('settings_output_device', deviceId);
+            const sinkValue = deviceId === 'default' ? '' : deviceId;
+            try {
+                if (audioCtx && typeof audioCtx.setSinkId === 'function') {
+                    // Đã phát nhạc ít nhất 1 lần -> audio đang được Web Audio API "giữ",
+                    // âm thanh ra loa thật sự qua audioCtx.destination, nên phải đổi sink ở đây
+                    await audioCtx.setSinkId(sinkValue);
+                } else if (typeof audio.setSinkId === 'function') {
+                    // Chưa từng phát nhạc -> audioCtx chưa tồn tại, thẻ <audio> vẫn đang tự
+                    // kiểm soát output của chính nó nên đổi trực tiếp ở đây vẫn có tác dụng
+                    await audio.setSinkId(sinkValue);
+                } else {
+                    console.warn('Trình duyệt này không hỗ trợ đổi thiết bị phát âm thanh (cần Chrome/Edge bản mới).');
+                }
+            } catch (err) {
+                console.warn('Không đổi được thiết bị phát âm thanh:', err);
+            }
+        }
+
+        async function populateOutputDeviceMenu() {
+            outputDeviceMenu.innerHTML = '';
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+
+            let devices = [];
+            try {
+                devices = await navigator.mediaDevices.enumerateDevices();
+            } catch (err) {
+                console.warn('Không liệt kê được thiết bị âm thanh:', err);
+                return;
+            }
+
+            // Tên thiết bị chỉ hiện đầy đủ khi trang có quyền media -> xin quyền micro tạm
+            // thời (không thu âm gì cả, chỉ để mở khoá tên loa) nếu tên đang bị trống
+            const hasLabels = devices.some(d => d.kind === 'audiooutput' && d.label);
+            if (!hasLabels) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(t => t.stop());
+                    devices = await navigator.mediaDevices.enumerateDevices();
+                } catch (err) {
+                    // Người dùng từ chối quyền hoặc trình duyệt không hỗ trợ -> vẫn hiện danh
+                    // sách nhưng có thể thiếu tên loa cụ thể, không sao cả
+                }
+            }
+
+            const outputs = devices.filter(d => d.kind === 'audiooutput');
+            const savedSinkId = localStorage.getItem('settings_output_device') || 'default';
+            const defaultDevice = outputs.find(d => d.deviceId === 'default');
+            const defaultLabelText = currentLangDict['player.output_default'] || 'Mặc định';
+            const defaultFullLabel = defaultDevice && defaultDevice.label
+                ? `${defaultLabelText} (${defaultDevice.label})`
+                : defaultLabelText;
+
+            const createItem = (deviceId, label, selected) => {
+                const item = document.createElement('md-menu-item');
+                item.innerHTML = `<div slot="headline">${label}</div>`;
+                if (selected) item.setAttribute('selected', '');
+                item.addEventListener('click', () => selectOutputDevice(deviceId));
+                return item;
+            };
+
+            outputDeviceMenu.appendChild(createItem('default', defaultFullLabel, savedSinkId === 'default'));
+            outputs
+                .filter(d => d.deviceId !== 'default' && d.deviceId !== 'communications')
+                .forEach(d => {
+                    outputDeviceMenu.appendChild(createItem(d.deviceId, d.label || ('Speaker ' + d.deviceId.slice(0, 6)), savedSinkId === d.deviceId));
+                });
+        }
+
+        outputDeviceBtn.addEventListener('click', async () => {
+            await populateOutputDeviceMenu();
+            outputDeviceMenu.open = !outputDeviceMenu.open;
+        });
+
+        // Khôi phục thiết bị đã lưu lúc khởi động (best-effort, ID thiết bị có thể đổi
+        // giữa các phiên/trình duyệt nên có thể không còn khớp, không sao cả nếu vậy)
+        (async () => {
+            const savedSinkId = localStorage.getItem('settings_output_device');
+            if (savedSinkId && savedSinkId !== 'default' && typeof audio.setSinkId === 'function') {
+                try { await audio.setSinkId(savedSinkId); } catch (err) { /* Thiết bị có thể không còn tồn tại nữa */ }
+            }
+        })();
 
         // --- HỆ THỐNG TỐC ĐỘ PHÁT ---
         const speedBtn = document.getElementById('speed-btn');
@@ -3856,7 +3996,7 @@
         // vào các mục tương ứng bên trong nó)
         const CL_PAGES = {
             about:    { url: 'about.html', title: 'About', errorLabel: 'About', showBack: false, showMadeBy: false },
-            whatsnew: { url: 'changelogAUDIOPLAYER_V2026.09.08-build125245.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
+            whatsnew: { url: 'changelogAUDIOPLAYER_V2026.10.02-build212105.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
             more:     { url: 'https://tuanphong3108.github.io/apps.html?is_embed=true', title: 'More apps', errorLabel: 'More apps', showBack: true, showMadeBy: true }
         };
         let clPage = 'about';
@@ -5085,7 +5225,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.09.08-build125245';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.02-build212105';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'
