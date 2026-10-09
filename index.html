@@ -708,24 +708,6 @@
             transform: translate(-50%, -50%) !important;
             width: 80% !important;
         }
-
-        /* --- FIX NỀN & ACCENT COLOR CHO DROPDOWN CHỌN LOA (MD-MENU) --- */
-md-menu {
-    --md-menu-container-color: var(--md-sys-color-surface-variant);
-    --md-menu-container-elevation: 3;
-    --md-menu-container-shape: 16px;
-    border: 1px solid var(--playlist-border);
-    border-radius: 16px;
-}
-
-md-menu-item {
-    --md-menu-item-label-text-color: var(--md-sys-color-on-surface-variant);
-    --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
-    --md-menu-item-hover-label-text-color: var(--md-sys-color-on-surface);
-    --md-menu-item-selected-container-color: var(--md-sys-color-secondary-container);
-    --md-menu-item-selected-label-text-color: var(--md-sys-color-primary);
-    --md-menu-item-focus-label-text-color: var(--md-sys-color-primary);
-}
     </style>
 </head>
 <body>
@@ -901,6 +883,18 @@ md-menu-item {
                         <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.wake_lock_desc">Giữ màn hình không tự tắt/khoá trong lúc đang ở chế độ Full screen, để bạn xem lyric hoặc album art mà không bị gián đoạn. Tự tắt tính năng này ngay khi thoát Full screen.</span>
                     </div>
                     <md-switch id="setting-wake-lock">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+
+                <!-- Switch: Màu chủ đạo theo bài đang phát -->
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.dynamic_accent">Thay đổi màu chủ đạo dựa trên bài đang phát</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.dynamic_accent_desc">Phân tích ảnh bìa (album art) của bài đang phát để lấy màu nổi bật nhất làm màu chủ đạo cho toàn bộ giao diện, kể cả thanh tiêu đề và PiP. Tự trả về màu bạn đã chọn khi bài không có ảnh bìa hoặc nhạc dừng quá 10 giây.</span>
+                    </div>
+                    <md-switch id="setting-dynamic-accent">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
@@ -1127,7 +1121,7 @@ md-menu-item {
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.10.02-build212105</span>
+                <span>AUDIOPLAYER V2026.10.09-build165002</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -2022,8 +2016,13 @@ md-menu-item {
             reduceEffects: localStorage.getItem('settings_reduce_effects') === 'true', // Mặc định Off
             wakeLockEnabled: localStorage.getItem('settings_wake_lock') !== 'false', // Mặc định ON
             theme: localStorage.getItem('settings_theme') || 'dark',
-            accent: localStorage.getItem('settings_accent') || 'purple'
+            accent: localStorage.getItem('settings_accent') || 'purple',
+            dynamicAccent: localStorage.getItem('settings_dynamic_accent') !== 'false' // Mặc định ON
         };
+
+        // Màu chủ đạo động (trích từ album art bài đang phát). null = dùng màu người dùng chọn
+        let dynamicAccentHex = null;
+        let dynamicAccentResetTimer = null;
 
         // Áp class reduce-motion/reduce-effects lên <html> theo đúng settings hiện tại
         function applyMotionEffectSettings() {
@@ -2036,8 +2035,86 @@ md-menu-item {
         applyMotionEffectSettings();
 
         // --- ÁP DỤNG MÀU SẮC CHỦ ĐẠO DỰA TRÊN THIẾT LẬP ---
+        // --- Tạo bảng màu M3 (xấp xỉ bằng HSL) từ 1 mã hex bất kỳ ---
+        function hexToHsl(hex) {
+            const n = parseInt(hex.slice(1), 16);
+            const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            const l = (max + min) / 2; let h = 0, sat = 0;
+            const d = max - min;
+            if (d > 0) {
+                sat = d / (1 - Math.abs(2 * l - 1));
+                if (max === r) h = ((g - b) / d) % 6;
+                else if (max === g) h = (b - r) / d + 2;
+                else h = (r - g) / d + 4;
+                h *= 60; if (h < 0) h += 360;
+            }
+            return [h, sat, l];
+        }
+        function hslToHex(h, sat, l) {
+            sat = Math.max(0, Math.min(1, sat)); l = Math.max(0, Math.min(1, l));
+            const c = (1 - Math.abs(2 * l - 1)) * sat;
+            const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+            const m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+            if (h < 60) [r, g, b] = [c, x, 0];
+            else if (h < 120) [r, g, b] = [x, c, 0];
+            else if (h < 180) [r, g, b] = [0, c, x];
+            else if (h < 240) [r, g, b] = [0, x, c];
+            else if (h < 300) [r, g, b] = [x, 0, c];
+            else [r, g, b] = [c, 0, x];
+            const to = v => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+            return '#' + to(r) + to(g) + to(b);
+        }
+        function buildPaletteFromHex(hex, mode) {
+            const [h, s0] = hexToHsl(hex);
+            const sp = s0 < 0.12 ? s0 : Math.max(0.3, Math.min(0.9, s0));   // màu chính
+            const sn = Math.min(0.14, s0 * 0.3);                           // nền/neutral nhuốm nhẹ
+            const sm = Math.min(0.28, s0 * 0.5);                           // secondary muted
+            if (mode === 'dark') {
+                return {
+                    primary: hslToHex(h, sp, 0.80), onPrimary: hslToHex(h, sp, 0.20),
+                    primaryContainer: hslToHex(h, sp, 0.30), onPrimaryContainer: hslToHex(h, sp, 0.90),
+                    secondaryContainer: hslToHex(h, sm, 0.23),
+                    surface: hslToHex(h, sn, 0.105), onSurface: hslToHex(h, sn, 0.90),
+                    surfaceVariant: hslToHex(h, sn, 0.29), onSurfaceVariant: hslToHex(h, sn, 0.80),
+                    outline: hslToHex(h, sn, 0.60),
+                    ambientGradient: `radial-gradient(circle at 80% 20%, ${hslToHex(h, Math.min(0.5, sp), 0.17)} 0%, ${hslToHex(h, sn, 0.105)} 60%, #000 100%)`
+                };
+            }
+            return {
+                primary: hslToHex(h, sp, 0.40), onPrimary: '#FFFFFF',
+                primaryContainer: hslToHex(h, Math.min(1, sp + 0.1), 0.90), onPrimaryContainer: hslToHex(h, sp, 0.14),
+                secondaryContainer: hslToHex(h, Math.min(0.5, sm + 0.2), 0.89),
+                surface: hslToHex(h, Math.min(1, sn + 0.3), 0.98), onSurface: hslToHex(h, sn, 0.11),
+                surfaceVariant: hslToHex(h, Math.min(0.3, sn + 0.1), 0.90), onSurfaceVariant: hslToHex(h, sn, 0.29),
+                outline: hslToHex(h, sn, 0.47),
+                ambientGradient: `radial-gradient(circle at 80% 20%, ${hslToHex(h, Math.min(1, sp + 0.1), 0.90)} 0%, ${hslToHex(h, Math.min(1, sn + 0.3), 0.98)} 60%, #fff 100%)`
+            };
+        }
+
+        // Lấy bảng màu đang hiệu lực (ưu tiên màu động nếu đang bật và có)
+        function getActivePalette(resolvedMode) {
+            if (settings.dynamicAccent && dynamicAccentHex) return buildPaletteFromHex(dynamicAccentHex, resolvedMode);
+            return accents[settings.accent] ? accents[settings.accent][resolvedMode] : accents.purple[resolvedMode];
+        }
+
+        // PiP luôn nền tối -> luôn dùng bảng màu dark của accent đang hiệu lực
+        function applyPipAccent() {
+            if (typeof customPipWindow === 'undefined' || !customPipWindow) return;
+            try {
+                const c = getActivePalette('dark');
+                const r = customPipWindow.document.documentElement.style;
+                r.setProperty('--pip-primary', c.primary);
+                r.setProperty('--pip-on-primary', c.onPrimary);
+                r.setProperty('--pip-container', c.primaryContainer);
+                r.setProperty('--pip-on-container', c.onPrimaryContainer);
+                r.setProperty('--pip-surface', c.surface);
+            } catch (e) {}
+        }
+
+        // --- ÁP DỤNG MÀU SẮC CHỦ ĐẠO DỰA TRÊN THIẾT LẬP ---
         function applyAccentColor(themeOverride) {
-            const activeAccent = settings.accent;
             const activeTheme = themeOverride || settings.theme;
             let resolvedMode = activeTheme;
             
@@ -2045,7 +2122,7 @@ md-menu-item {
                 resolvedMode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
             }
             
-            const colors = accents[activeAccent] ? accents[activeAccent][resolvedMode] : accents.purple[resolvedMode];
+            const colors = getActivePalette(resolvedMode);
             const root = document.documentElement;
             
             root.style.setProperty('--md-sys-color-primary', colors.primary);
@@ -2064,6 +2141,67 @@ md-menu-item {
 
             // Đồng bộ màu thanh header trình duyệt/PWA (theme-color) đúng theo accent đang chọn
             document.getElementById('theme-meta').setAttribute('content', colors.surface);
+
+            applyPipAccent();
+        }
+
+        // --- TRÍCH MÀU CHỦ ĐẠO TỪ ALBUM ART ---
+        function extractDominantColor(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const S = 48;
+                        const cv = document.createElement('canvas');
+                        cv.width = S; cv.height = S;
+                        const cx = cv.getContext('2d', { willReadFrequently: true });
+                        cx.drawImage(img, 0, 0, S, S);
+                        const d = cx.getImageData(0, 0, S, S).data;
+                        const BINS = 24;
+                        const bins = Array.from({ length: BINS }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
+                        let tr = 0, tg = 0, tb = 0, tn = 0;
+                        for (let i = 0; i < d.length; i += 4) {
+                            if (d[i + 3] < 128) continue;
+                            const r = d[i], g = d[i + 1], b = d[i + 2];
+                            tr += r; tg += g; tb += b; tn++;
+                            const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+                            const [h, sat, l] = hexToHsl(hex);
+                            if (l < 0.12 || l > 0.92 || sat < 0.2) continue; // bỏ đen/trắng/xám
+                            const w = sat * (1 - Math.abs(2 * l - 1));
+                            const bin = bins[Math.floor(h / 360 * BINS) % BINS];
+                            bin.w += w; bin.r += r * w; bin.g += g * w; bin.b += b * w;
+                        }
+                        let best = null;
+                        for (const b of bins) if (b.w > 0 && (!best || b.w > best.w)) best = b;
+                        let r, g, b;
+                        if (best && best.w > 0.5) { r = best.r / best.w; g = best.g / best.w; b = best.b / best.w; }
+                        else if (tn > 0) { r = tr / tn; g = tg / tn; b = tb / tn; } // ảnh gần như đơn sắc/xám
+                        else return resolve(null);
+                        resolve('#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join(''));
+                    } catch (e) { resolve(null); }
+                };
+                img.onerror = () => resolve(null);
+                img.src = src;
+            });
+        }
+
+        function clearDynamicAccentTimer() {
+            if (dynamicAccentResetTimer) { clearTimeout(dynamicAccentResetTimer); dynamicAccentResetTimer = null; }
+        }
+        function setDynamicAccent(hex) {
+            if (dynamicAccentHex === hex) return;
+            dynamicAccentHex = hex;
+            applyAccentColor(document.body.classList.contains('fullscreen-active') ? 'dark' : undefined);
+        }
+        // Gọi mỗi khi đổi bài / đổi ảnh bìa
+        async function refreshDynamicAccent(track) {
+            clearDynamicAccentTimer();
+            if (!settings.dynamicAccent || !track || !track.cover) { setDynamicAccent(null); return; }
+            const cover = track.cover;
+            if (track.accentFor !== cover) { track.accentHex = await extractDominantColor(cover); track.accentFor = cover; }
+            // Bỏ kết quả cũ nếu người dùng đã chuyển sang bài khác trong lúc phân tích
+            if (playlist[currentIndex] !== track) return;
+            setDynamicAccent(track.accentHex || null);
         }
 
         // --- ÁP DỤNG CHỦ ĐỀ SÁNG/TỐI THÍCH ỨNG ---
@@ -2801,6 +2939,8 @@ md-menu-item {
                 bgPreview.style.backgroundImage = 'none';
             }
 
+            refreshDynamicAccent(track);
+
             if (customPipWindow) {
                 const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
                 if (pipLyricEl) { pipLyricEl.innerHTML = ''; pipLyricEl.dataset.currentIdx = ''; }
@@ -3006,6 +3146,19 @@ md-menu-item {
                 spinner.style.display = isLoading ? 'inline-flex' : 'none';
             });
         }
+        // Màu động: dừng/tạm dừng >10s -> về màu gốc; phát lại -> áp lại màu bài đang phát
+        function scheduleDynamicAccentReset() {
+            clearDynamicAccentTimer();
+            if (!settings.dynamicAccent || !dynamicAccentHex) return;
+            dynamicAccentResetTimer = setTimeout(() => { setDynamicAccent(null); }, 10000);
+        }
+        audio.addEventListener('pause', scheduleDynamicAccentReset);
+        audio.addEventListener('ended', scheduleDynamicAccentReset);
+        audio.addEventListener('playing', () => {
+            clearDynamicAccentTimer();
+            const t = playlist[currentIndex];
+            if (settings.dynamicAccent && t && t.cover && !dynamicAccentHex) refreshDynamicAccent(t);
+        });
         audio.addEventListener('loadstart', () => setPlayBtnLoading(true));
         audio.addEventListener('waiting', () => setPlayBtnLoading(true));
         audio.addEventListener('canplay', () => setPlayBtnLoading(false));
@@ -3516,7 +3669,7 @@ md-menu-item {
                     body { 
                         margin: 0; padding: 0; width: 100%; height: 100vh;
                         font-family: 'Google Sans Flex', sans-serif; 
-                        background: #1C1B1F; color: #E6E1E5; 
+                        background: var(--pip-surface, #1C1B1F); color: #E6E1E5; 
                         overflow: hidden; user-select: none;
                         display: flex; flex-direction: column;
                     }
@@ -3545,13 +3698,13 @@ md-menu-item {
                     }
                     .pip-lyric {
                         flex: 1; display: ${settings.showPipLyric ? 'flex' : 'none'}; align-items: center; justify-content: center;
-                        text-align: center; font-size: 16px; font-weight: 700; color: #D0BCFF;
+                        text-align: center; font-size: 16px; font-weight: 700; color: var(--pip-primary, #D0BCFF);
                         padding: 0 16px; text-shadow: 0 2px 8px rgba(0,0,0,0.8);
                         overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
                         margin: 12px 0;
                     }
                     .bouncing-dots { display: inline-flex; align-items: flex-end; justify-content: center; height: 1em; gap: 4px; }
-                    .bouncing-dots .dot { animation: dot-jump 1s infinite; font-size: 1.2em; line-height: 0.5; color: #D0BCFF;}
+                    .bouncing-dots .dot { animation: dot-jump 1s infinite; font-size: 1.2em; line-height: 0.5; color: var(--pip-primary, #D0BCFF);}
                     .bouncing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
                     .bouncing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
                     @keyframes dot-jump {
@@ -3570,14 +3723,14 @@ md-menu-item {
                     }
                     .btn-m3:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
                     .btn-m3:active { transform: scale(0.9); }
-                    .btn-m3.active { color: #D0BCFF; background: rgba(255,255,255,0.1); }
+                    .btn-m3.active { color: var(--pip-primary, #D0BCFF); background: rgba(255,255,255,0.1); }
                     
                     .btn-play {
                         width: 56px; height: 56px; border-radius: 20px;
-                        background: #4F378B; color: #EADDFF;
+                        background: var(--pip-container, #4F378B); color: var(--pip-on-container, #EADDFF);
                         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
                     }
-                    .btn-play:hover { background: #D0BCFF; color: #381E72; }
+                    .btn-play:hover { background: var(--pip-primary, #D0BCFF); color: var(--pip-on-primary, #381E72); }
                     
                     .material-symbols-outlined {
                         font-family: 'Material Symbols Outlined';
@@ -3589,7 +3742,7 @@ md-menu-item {
                     
                     .repeat-badge {
                         position: absolute; font-size: 9px; font-weight: 900; 
-                        bottom: 6px; right: 6px; background: #D0BCFF; color: #381E72;
+                        bottom: 6px; right: 6px; background: var(--pip-primary, #D0BCFF); color: var(--pip-on-primary, #381E72);
                         width: 14px; height: 14px; border-radius: 4px; 
                         display: none; align-items: center; justify-content: center;
                     }
@@ -3611,7 +3764,7 @@ md-menu-item {
                         cursor: pointer; transition: 0.2s; margin-bottom: 4px;
                     }
                     .pip-song-item:hover { background: rgba(255,255,255,0.1); }
-                    .pip-song-item.active { background: #4F378B; color: #EADDFF; }
+                    .pip-song-item.active { background: var(--pip-container, #4F378B); color: var(--pip-on-container, #EADDFF); }
                     .pip-song-info { display: flex; flex-direction: column; overflow: hidden; }
                     .pip-song-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .pip-song-artist { font-size: 10px; opacity: 0.7; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -3633,7 +3786,7 @@ md-menu-item {
                         z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.3s;
                     }
                     .pip-cm-overlay.open { opacity: 1; pointer-events: auto; }
-                    .pip-cm-title { font-size: 15px; font-weight: 700; text-align: center; color: #EADDFF; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+                    .pip-cm-title { font-size: 15px; font-weight: 700; text-align: center; color: var(--pip-on-container, #EADDFF); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
                     .pip-cm-btn {
                         background: rgba(242, 184, 181, 0.1); color: #F2B8B5; border: none;
                         padding: 14px; border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 600;
@@ -3643,6 +3796,7 @@ md-menu-item {
                     .pip-cm-btn:active { background: rgba(242, 184, 181, 0.25); }
                 `;
                 pipDoc.head.appendChild(style);
+                applyPipAccent();
 
                 // Document PiP là 1 browsing context THẬT SỰ RIÊNG BIỆT (giống popup window),
                 // không tự thừa hưởng custom elements đã đăng ký ở trang chính -> phải import
@@ -3875,6 +4029,7 @@ md-menu-item {
         const settingReduceMotion = document.getElementById('setting-reduce-motion');
         const settingReduceEffects = document.getElementById('setting-reduce-effects');
         const settingWakeLock = document.getElementById('setting-wake-lock');
+        const settingDynamicAccent = document.getElementById('setting-dynamic-accent');
         const settingTheme = document.getElementById('setting-theme');
         const settingAccent = document.getElementById('setting-accent');
 
@@ -3883,6 +4038,7 @@ md-menu-item {
         settingFsLyric.selected = settings.showFsLyric;
         settingReduceEffects.selected = settings.reduceEffects;
         settingWakeLock.selected = settings.wakeLockEnabled;
+        settingDynamicAccent.selected = settings.dynamicAccent;
         // "Nâng cao" đang bật thì force + khoá switch cơ bản luôn hiện đang bật, không cho tắt riêng
         settingReduceMotion.selected = settings.reduceMotion || settings.reduceEffects;
         settingReduceMotion.disabled = settings.reduceEffects;
@@ -3936,6 +4092,19 @@ md-menu-item {
             if (document.body.classList.contains('fullscreen-active')) {
                 if (settings.wakeLockEnabled) requestWakeLock();
                 else releaseWakeLock();
+            }
+        });
+
+        settingDynamicAccent.addEventListener('change', (e) => {
+            settings.dynamicAccent = e.target.selected;
+            localStorage.setItem('settings_dynamic_accent', settings.dynamicAccent);
+            clearDynamicAccentTimer();
+            if (settings.dynamicAccent) {
+                const t = playlist[currentIndex];
+                if (t && t.cover && !audio.paused) refreshDynamicAccent(t);
+                else { dynamicAccentHex = null; applyAccentColor(); if (t && t.cover) refreshDynamicAccent(t); }
+            } else {
+                applyAccentColor();
             }
         });
 
@@ -3996,7 +4165,7 @@ md-menu-item {
         // vào các mục tương ứng bên trong nó)
         const CL_PAGES = {
             about:    { url: 'about.html', title: 'About', errorLabel: 'About', showBack: false, showMadeBy: false },
-            whatsnew: { url: 'changelogAUDIOPLAYER_V2026.10.02-build212105.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
+            whatsnew: { url: 'changelogAUDIOPLAYER_V2026.10.09-build165002.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
             more:     { url: 'https://tuanphong3108.github.io/apps.html?is_embed=true', title: 'More apps', errorLabel: 'More apps', showBack: true, showMadeBy: true }
         };
         let clPage = 'about';
@@ -4769,6 +4938,7 @@ md-menu-item {
             if (confirm(currentLangDict['thumbnail.delete_confirm'] || "Bạn có chắc chắn muốn xoá ảnh thumbnail của bài hát này?")) {
                 track.cover = null;
                 track.newCoverBuffer = null;
+                if (playlist[currentIndex] === track) refreshDynamicAccent(track);
 
                 const result = await writeAudioMetadata({
                     title: track.name,
@@ -4970,6 +5140,7 @@ md-menu-item {
 
             track.newCoverBuffer = arrayBuffer;
             track.cover = currentCroppedDataUrl;
+            if (playlist[currentIndex] === track && !audio.paused) refreshDynamicAccent(track);
 
             const result = await writeAudioMetadata({
                 title: track.name,
@@ -5225,7 +5396,7 @@ md-menu-item {
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.02-build212105';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.09-build165002';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'
