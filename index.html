@@ -764,9 +764,37 @@
             --md-menu-item-selected-label-text-weight: 700;
             max-width: calc(54ch + 76px);
         }
+
+        /* ===== Toast thiết bị đầu ra âm thanh (Top layer = lớp cao nhất) ===== */
+        #output-toast {
+            position: fixed; inset: auto; left: 50%; bottom: 28px; margin: 0; border: none;
+            padding: 10px 8px 10px 18px; border-radius: 16px; max-width: min(92vw, 520px);
+            background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+            font-family: 'Google Sans Flex', sans-serif; font-size: 14px; font-weight: 600;
+            box-shadow: 0 8px 28px rgba(0,0,0,.4);
+            overflow: visible; align-items: center; gap: 8px;
+            opacity: 0; transform: translateX(-50%) scale(.85);
+            transition: opacity .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1);
+        }
+        #output-toast:popover-open { display: flex; }
+        #output-toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
+        #output-toast.fade-out { opacity: 0; transition: opacity 1.8s ease; }
+        #output-toast.zoom-out { opacity: 0; transform: translateX(-50%) scale(.5); transition: opacity .22s ease, transform .22s ease; }
+        #output-toast .ot-text { overflow-wrap: anywhere; line-height: 1.35; }
+        #output-toast .ot-close {
+            flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+            background: transparent; color: inherit; display: flex; align-items: center; justify-content: center;
+        }
+        #output-toast .ot-close:hover { background: color-mix(in srgb, currentColor 16%, transparent); }
 </style>
 </head>
 <body>
+    <div id="output-toast" popover="manual" role="status" aria-live="polite">
+        <span class="material-symbols-outlined" style="font-size:20px;">headphones</span>
+        <span class="ot-text" id="output-toast-text"></span>
+        <button class="ot-close" id="output-toast-close" data-i18n-title="misc.close" title="Đóng"><span class="material-symbols-outlined" style="font-size:18px;">close</span></button>
+    </div>
+
 
     <!-- Loading Screen -->
     <div id="loading-overlay">
@@ -3309,6 +3337,63 @@
         const outputDeviceBtn = document.getElementById('output-device-btn');
         const outputDeviceMenu = document.getElementById('output-device-menu');
 
+
+        // --- TOAST "Đang sử dụng <đầu ra>" ---
+        const outputToast = document.getElementById('output-toast');
+        const outputToastText = document.getElementById('output-toast-text');
+        let outputToastTimer = null, outputToastFadeTimer = null, lastOutputName = null;
+
+        function hideOutputToast(mode) {
+            clearTimeout(outputToastTimer); clearTimeout(outputToastFadeTimer);
+            outputToast.classList.remove('show');
+            outputToast.classList.add(mode === 'zoom' ? 'zoom-out' : 'fade-out');
+            outputToastFadeTimer = setTimeout(() => {
+                try { outputToast.hidePopover(); } catch (e) {}
+                outputToast.classList.remove('zoom-out', 'fade-out');
+            }, mode === 'zoom' ? 250 : 1850);
+        }
+        function showOutputToast(name) {
+            const tpl = currentLangDict['toast.output_using'] || 'Đang sử dụng {device}';
+            outputToastText.textContent = tpl.replace('{device}', name);
+            clearTimeout(outputToastTimer); clearTimeout(outputToastFadeTimer);
+            outputToast.classList.remove('zoom-out', 'fade-out', 'show');
+            // Re-show để luôn nằm trên cùng top layer (kể cả trên dialog/menu mở sau)
+            try { if (outputToast.matches(':popover-open')) outputToast.hidePopover(); outputToast.showPopover(); } catch (e) {}
+            requestAnimationFrame(() => requestAnimationFrame(() => outputToast.classList.add('show')));
+            outputToastTimer = setTimeout(() => hideOutputToast('fade'), 5000);
+        }
+        document.getElementById('output-toast-close').addEventListener('click', () => hideOutputToast('zoom'));
+
+        async function getCurrentOutputName() {
+            const defLabel = currentLangDict['player.output_default'] || 'Mặc định';
+            try {
+                const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audiooutput');
+                const saved = localStorage.getItem('settings_output_device') || 'default';
+                const clean = l => (l || '').replace(/^(default|mặc định)\s*[-–]\s*/i, '');
+                if (saved !== 'default') {
+                    const d = devices.find(x => x.deviceId === saved);
+                    if (d && d.label) return clean(d.label);
+                }
+                const d = devices.find(x => x.deviceId === 'default') || devices[0];
+                return d && d.label ? clean(d.label) : defLabel;
+            } catch (e) { return defLabel; }
+        }
+        async function announceOutput(force) {
+            const name = await getCurrentOutputName();
+            if (!force && name === lastOutputName) return;
+            lastOutputName = name;
+            showOutputToast(name);
+        }
+        let outputChangeDebounce = null;
+        if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+            navigator.mediaDevices.addEventListener('devicechange', () => {
+                clearTimeout(outputChangeDebounce);
+                outputChangeDebounce = setTimeout(() => announceOutput(false), 600);
+            });
+        }
+        // Mới vào trang (chờ file ngôn ngữ tải xong cho chuỗi dịch)
+        setTimeout(() => announceOutput(true), 1200);
+
         async function selectOutputDevice(deviceId) {
             localStorage.setItem('settings_output_device', deviceId);
             const sinkValue = deviceId === 'default' ? '' : deviceId;
@@ -3327,6 +3412,7 @@
             } catch (err) {
                 console.warn('Không đổi được thiết bị phát âm thanh:', err);
             }
+            announceOutput(true);
         }
 
         async function populateOutputDeviceMenu() {
