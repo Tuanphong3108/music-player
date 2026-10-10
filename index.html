@@ -789,8 +789,17 @@
 </style>
 </head>
 <body>
+    <md-dialog id="confirm-dialog" type="alert" style="max-width:min(92vw,420px); font-family:'Google Sans Flex',sans-serif;">
+        <div slot="headline" id="confirm-dialog-title" data-i18n="misc.confirm">Xác nhận</div>
+        <form slot="content" id="confirm-dialog-form" method="dialog"><span id="confirm-dialog-text"></span></form>
+        <div slot="actions">
+            <md-text-button id="confirm-dialog-cancel" data-i18n="misc.cancel">Huỷ</md-text-button>
+            <md-filled-button id="confirm-dialog-ok" data-i18n="misc.confirm">Xác nhận</md-filled-button>
+        </div>
+    </md-dialog>
+
     <div id="output-toast" popover="manual" role="status" aria-live="polite">
-        <span class="material-symbols-outlined" style="font-size:20px;">headphones</span>
+        <span class="material-symbols-outlined" id="output-toast-icon" style="font-size:20px;">headphones</span>
         <span class="ot-text" id="output-toast-text"></span>
         <button class="ot-close" id="output-toast-close" data-i18n-title="misc.close" title="Đóng"><span class="material-symbols-outlined" style="font-size:18px;">close</span></button>
     </div>
@@ -2601,7 +2610,13 @@
                             if (tag.tags.album) album = tag.tags.album;
                             if (tag.tags.year) year = tag.tags.year;
                             if (tag.tags.genre) genre = tag.tags.genre;
-                            if (tag.tags.composer) composer = tag.tags.composer;
+                            {
+                                // jsmediatags không có shortcut "composer": ID3 nằm ở frame TCOM, MP4 ở ©wrt
+                                const c = tag.tags.composer || tag.tags.TCOM || tag.tags['©wrt'] || tag.tags.COMPOSER;
+                                if (c) composer = (typeof c === 'object' ? (c.data != null ? c.data : '') : c);
+                                if (Array.isArray(composer)) composer = composer.join(', ');
+                                composer = String(composer || '');
+                            }
                             // Hỗ trợ Lyric Embed cho các tệp nhạc phổ biến
                             if (tag.tags.USLT) {
                                 lyricsRaw = typeof tag.tags.USLT.data === 'object' ? tag.tags.USLT.data.lyrics : tag.tags.USLT.data;
@@ -3354,13 +3369,45 @@
         }
         function showOutputToast(name) {
             const tpl = currentLangDict['toast.output_using'] || 'Đang sử dụng {device}';
-            outputToastText.textContent = tpl.replace('{device}', name);
+            showToast(tpl.replace('{device}', name), 'headphones', 5000);
+        }
+
+        // Hộp thoại xác nhận Material (thay cho confirm() của trình duyệt) -> trả về Promise<boolean>
+        function confirmDialog(message, okText, title) {
+            return new Promise((resolve) => {
+                const dlg = document.getElementById('confirm-dialog');
+                const okBtn = document.getElementById('confirm-dialog-ok');
+                const cancelBtn = document.getElementById('confirm-dialog-cancel');
+                document.getElementById('confirm-dialog-text').textContent = message;
+                if (title) document.getElementById('confirm-dialog-title').textContent = title;
+                if (okText) okBtn.textContent = okText;
+                let result = false;
+                const onOk = () => { result = true; dlg.close(); };
+                const onCancel = () => { result = false; dlg.close(); };
+                const onClosed = () => {
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    dlg.removeEventListener('closed', onClosed);
+                    resolve(result);
+                };
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+                dlg.addEventListener('closed', onClosed);
+                dlg.show();
+            });
+        }
+
+        // Toast dùng chung toàn app (thay cho alert() của trình duyệt)
+        function showToast(message, icon, ms) {
+            document.getElementById('output-toast-icon').textContent = icon || 'info';
+            outputToastText.textContent = message;
+            if (!ms) ms = String(message).length > 90 ? 9000 : 5000;
             clearTimeout(outputToastTimer); clearTimeout(outputToastFadeTimer);
             outputToast.classList.remove('zoom-out', 'fade-out', 'show');
             // Re-show để luôn nằm trên cùng top layer (kể cả trên dialog/menu mở sau)
             try { if (outputToast.matches(':popover-open')) outputToast.hidePopover(); outputToast.showPopover(); } catch (e) {}
             requestAnimationFrame(() => requestAnimationFrame(() => outputToast.classList.add('show')));
-            outputToastTimer = setTimeout(() => hideOutputToast('fade'), 5000);
+            outputToastTimer = setTimeout(() => hideOutputToast('fade'), ms);
         }
         document.getElementById('output-toast-close').addEventListener('click', () => hideOutputToast('zoom'));
 
@@ -3779,7 +3826,7 @@
 
         pipBtn.addEventListener('click', async () => {
             if (!('documentPictureInPicture' in window)) {
-                alert(currentLangDict['pip.not_supported'] || 'Trình duyệt của bạn chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)');
+                showToast(currentLangDict['pip.not_supported'] || 'Trình duyệt của bạn chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)');
                 return;
             }
 
@@ -4543,7 +4590,7 @@
         editMetadataBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (currentIndex === -1) {
-                alert(currentLangDict['player.load_first_prompt'] || "Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!");
+                showToast(currentLangDict['player.load_first_prompt'] || "Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!");
                 return;
             }
             editOptionsModal.classList.add('open');
@@ -5085,7 +5132,7 @@
             const track = playlist[currentIndex];
             if (!track) return;
             
-            if (confirm(currentLangDict['thumbnail.delete_confirm'] || "Bạn có chắc chắn muốn xoá ảnh thumbnail của bài hát này?")) {
+            if (await confirmDialog(currentLangDict['thumbnail.delete_confirm'] || "Bạn có chắc chắn muốn xoá ảnh thumbnail của bài hát này?", currentLangDict['thumbnail.delete'] || "Xoá thumbnail", currentLangDict['misc.confirm'])) {
                 track.cover = null;
                 track.newCoverBuffer = null;
                 if (playlist[currentIndex] === track) refreshDynamicAccent(track);
@@ -5108,11 +5155,11 @@
                     bgPreview.style.backgroundImage = 'none';
                     updatePlaylistUI();
                     if(typeof updatePiPUI === 'function') updatePiPUI();
-                    alert(result.persisted
+                    showToast(result.persisted
                         ? (currentLangDict['thumbnail.delete_success_overwrite'] || "Đã xoá thumbnail và ghi đè trực tiếp vào file gốc thành công!")
                         : (currentLangDict['thumbnail.delete_success_download'] || "Đã xoá thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn."));
                 } else {
-                    alert(currentLangDict['thumbnail.delete_error'] || "Lỗi xảy ra trong khi xoá thumbnail.");
+                    showToast(currentLangDict['thumbnail.delete_error'] || "Lỗi xảy ra trong khi xoá thumbnail.");
                 }
             }
         });
@@ -5309,11 +5356,11 @@
                 
                 updatePlaylistUI();
                 if(typeof updatePiPUI === 'function') updatePiPUI();
-                alert(result.persisted
+                showToast(result.persisted
                     ? (currentLangDict['thumbnail.save_success_overwrite'] || "Đã lưu thumbnail và ghi đè trực tiếp vào file gốc thành công!")
                     : (currentLangDict['thumbnail.save_success_download'] || "Đã lưu thumbnail. Trình duyệt không có quyền ghi thẳng vào file gốc nên file MP3 đã cập nhật được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn."));
             } else {
-                alert(currentLangDict['thumbnail.save_error'] || "Xảy ra lỗi trong khi biên dịch thumbnail.");
+                showToast(currentLangDict['thumbnail.save_error'] || "Xảy ra lỗi trong khi biên dịch thumbnail.");
             }
         });
 
