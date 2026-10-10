@@ -34,6 +34,7 @@ player.pip=Mở Trình phát thu nhỏ (PiP)
 player.no_track=Chưa có bài hát
 player.load_first_prompt=Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!
 player.output_device=Chọn thiết bị phát âm thanh
+toast.output_using=Đang sử dụng {device}
 player.output_default=Mặc định
 
 ## --- Playlist ---
