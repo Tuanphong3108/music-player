@@ -10,7 +10,7 @@ topbar.install=Cài đặt ứng dụng
 topbar.install_tooltip=Cài đặt để có thể mở file trực tiếp từ máy tính
 topbar.settings=Cài đặt
 topbar.feedback=Gửi phản hồi
-topbar.about=Giới thiệu
+topbar.about=About
 topbar.addmusic=Thêm nhạc
 topbar.addmusic_file=Chọn tệp nhạc (API File System)
 topbar.addmusic_folder=Chọn thư mục nhạc (API File System)
@@ -169,7 +169,7 @@ about.load_error=Không thể tải nội dung, vui lòng thử lại bằng cá
 ## --- Picture-in-Picture ---
 pip.expand=Thu gọn/Mở rộng
 pip.playlist=Danh sách phát
-pip.not_supported=Trình duyệt của bro chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)
+pip.not_supported=Trình duyệt của bạn chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)
 
 ## --- Loading / Emergency report ---
 loading.report_title=Báo cáo lỗi khẩn cấp
@@ -204,7 +204,7 @@ metaeditor.saved_title=✓ Đã lưu thành công
 metaeditor.saved_success=Đã lưu metadata thành công!
 metaeditor.fail_title=✕ Lỗi
 metaeditor.failed_title=Đã xảy ra lỗi
-metaeditor.timeout_body=Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bro có thể đóng lại thử sau, hoặc tiếp tục chờ.
+metaeditor.timeout_body=Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bạn có thể đóng lại thử sau, hoặc tiếp tục chờ.
 metaeditor.timeout_ok_title=Đóng trình chỉnh sửa
 metaeditor.timeout_continue=Vẫn tiếp tục
 metaeditor.timeout_continue_title=Vẫn tiếp tục chờ/mở trình chỉnh sửa

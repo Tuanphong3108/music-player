@@ -689,7 +689,7 @@
         /* --- GIẢM HIỆU ỨNG MỜ VÀ CHUYỂN ĐỘNG (NÂNG CAO) ---
            Ngoài toàn bộ hiệu ứng ở trên, còn: bỏ backdrop-filter (blur kính mờ) khắp app,
            album art không blur nữa mà chỉ tối đi, ẩn hẳn sóng nhạc, và lyric chuyển vào
-           giữa màn hình thay vì nằm trên cao — tối ưu cho máy cấu hình thấp. */
+           giữa màn hình thay vì nằm trên cao — tối ưu cho máy cấu hình thấp vcl. */
         html.reduce-effects *,
         html.reduce-effects *::before,
         html.reduce-effects *::after {
@@ -825,7 +825,7 @@
                 <h2 style="font-size:16px; font-weight:700; font-family:'Minecraft';" data-i18n="metaeditor.timeout_title">Không thể tải trình chỉnh sửa</h2>
             </div>
             <div style="padding:20px; background: var(--md-sys-color-surface); display:flex; flex-direction:column; gap:18px;">
-                <p style="font-size:14px; color: var(--md-sys-color-on-surface); line-height:1.5; margin:0;" data-i18n="metaeditor.timeout_body">Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bro có thể đóng lại thử sau, hoặc tiếp tục chờ.</p>
+                <p style="font-size:14px; color: var(--md-sys-color-on-surface); line-height:1.5; margin:0;" data-i18n="metaeditor.timeout_body">Trình chỉnh sửa thông tin bài hát mất hơn 10 giây mà chưa tải xong. Bạn có thể đóng lại thử sau, hoặc tiếp tục chờ.</p>
                 <div style="display:flex; gap:10px; justify-content:flex-end;">
                     <button class="btn-m3" id="metadata-timeout-ok" title="Đóng trình chỉnh sửa" data-i18n-title="metaeditor.timeout_ok_title" style="border-radius:12px; padding:0 16px; width:auto; height:40px; background: transparent; color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border);" data-i18n="misc.ok">OK</button>
                     <button class="btn-m3" id="metadata-timeout-continue" title="Vẫn tiếp tục chờ/mở trình chỉnh sửa" data-i18n-title="metaeditor.timeout_continue_title" style="border-radius:12px; padding:0 16px; width:auto; height:40px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);" data-i18n="metaeditor.timeout_continue">Vẫn tiếp tục</button>
@@ -3779,7 +3779,7 @@
 
         pipBtn.addEventListener('click', async () => {
             if (!('documentPictureInPicture' in window)) {
-                alert(currentLangDict['pip.not_supported'] || 'Trình duyệt của bro chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)');
+                alert(currentLangDict['pip.not_supported'] || 'Trình duyệt của bạn chưa hỗ trợ Document Picture-in-Picture. (Thử dùng Chrome mới nhất nhé!)');
                 return;
             }
 
