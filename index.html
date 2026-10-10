@@ -4623,6 +4623,7 @@
 
             let body;
             if (feedbackIncludeSysinfo.checked) {
+                const onOff = v => v ? 'ON' : 'OFF';
                 const themeLabels = { system: 'System', light: 'Light', dark: 'Dark' };
                 const settingAccentEl = document.getElementById('setting-accent');
                 const accentLabel = settingAccentEl.displayText || settings.accent;
@@ -4631,9 +4632,14 @@
                     + 'Nội dung: ' + content + '\n'
                     + '────────────────────────────\n'
                     + 'Audio Player Version:\n' + getAppVersionText() + '\n'
-                    + 'Main Player Lyric: ' + (settings.showMainLyric ? 'ON' : 'OFF') + '\n'
-                    + 'PiP Lyric: ' + (settings.showPipLyric ? 'ON' : 'OFF') + '\n'
-                    + 'Fullscreen Lyric: ' + (settings.showFsLyric ? 'ON' : 'OFF') + '\n'
+                    + 'Language: ' + (localStorage.getItem('settings_language') || 'vi') + '\n'
+                    + 'Main Player Lyric: ' + onOff(settings.showMainLyric) + '\n'
+                    + 'PiP Lyric: ' + onOff(settings.showPipLyric) + '\n'
+                    + 'Fullscreen Lyric: ' + onOff(settings.showFsLyric) + '\n'
+                    + 'Reduce Motion: ' + onOff(settings.reduceMotion) + '\n'
+                    + 'Reduce Blur & Motion (Advanced): ' + onOff(settings.reduceEffects) + '\n'
+                    + 'Keep Screen Awake in Fullscreen: ' + onOff(settings.wakeLockEnabled) + '\n'
+                    + 'Dynamic Accent from Album Art: ' + onOff(settings.dynamicAccent) + '\n'
                     + 'Theme: ' + (themeLabels[settings.theme] || settings.theme) + '\n'
                     + 'Accent Color: ' + accentLabel + '\n'
                     + 'Browser:\n' + getBrowserInfo() + '\n'
