@@ -710,15 +710,23 @@
         }
     
         /* ===== Dropdown: Material Web (md-outlined-select / md-menu) khớp màu chủ đạo + sáng/tối ===== */
+        .m3-select, #output-device-menu {
+            --md-ref-typeface-plain: 'Google Sans Flex', sans-serif;
+            --md-ref-typeface-brand: 'Google Sans Flex', sans-serif;
+            --md-sys-typescale-body-large-font: 'Google Sans Flex', sans-serif;
+            --md-sys-typescale-label-large-font: 'Google Sans Flex', sans-serif;
+            font-family: 'Google Sans Flex', sans-serif;
+        }
         .m3-select {
-            width: calc(54ch + 76px);
+            width: auto; min-width: 0;
+            --md-outlined-select-text-field-input-text-font: 'Google Sans Flex', sans-serif;
+            --md-menu-item-label-text-font: 'Google Sans Flex', sans-serif;
             --md-outlined-select-text-field-container-shape: 16px;
             --md-outlined-select-text-field-outline-color: var(--md-sys-color-outline);
             --md-outlined-select-text-field-focus-outline-color: var(--md-sys-color-primary);
             --md-outlined-select-text-field-hover-outline-color: var(--md-sys-color-primary);
             --md-outlined-select-text-field-input-text-color: var(--md-sys-color-on-surface);
-            --md-outlined-select-text-field-input-text-font: inherit;
-            --md-outlined-select-text-field-input-text-weight: 600;
+                        --md-outlined-select-text-field-input-text-weight: 600;
             --md-outlined-select-text-field-trailing-icon-color: var(--md-sys-color-primary);
             --md-menu-container-color: var(--md-sys-color-surface-variant);
             --md-menu-container-shape: 16px;
@@ -731,12 +739,12 @@
             --md-menu-item-one-line-container-height: 44px;
             --md-menu-item-top-space: 8px;
             --md-menu-item-bottom-space: 8px;
-            --md-menu-item-label-text-font: inherit;
+            --md-menu-item-label-text-font: 'Google Sans Flex', sans-serif;
             --md-menu-item-label-text-weight: 600;
             --md-menu-item-selected-label-text-weight: 700;
         }
         .m3-select md-select-option, #output-device-menu md-menu-item {
-            max-width: calc(54ch + 76px);
+            width: max-content; max-width: calc(54ch + 76px); font-family: 'Google Sans Flex', sans-serif;
             --md-menu-item-one-line-container-height: 44px;
         }
         .m3-select md-select-option [slot="headline"], #output-device-menu [slot="headline"] {
@@ -751,7 +759,7 @@
             --md-menu-item-selected-label-text-color: var(--md-sys-color-on-primary-container);
             --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
             --md-menu-item-focus-state-layer-color: var(--md-sys-color-primary);
-            --md-menu-item-label-text-font: inherit;
+            --md-menu-item-label-text-font: 'Google Sans Flex', sans-serif;
             --md-menu-item-label-text-weight: 600;
             --md-menu-item-selected-label-text-weight: 700;
             max-width: calc(54ch + 76px);
