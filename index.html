@@ -708,7 +708,55 @@
             transform: translate(-50%, -50%) !important;
             width: 80% !important;
         }
-    </style>
+    
+        /* ===== Dropdown: Material Web (md-outlined-select / md-menu) khớp màu chủ đạo + sáng/tối ===== */
+        .m3-select {
+            width: calc(54ch + 76px);
+            --md-outlined-select-text-field-container-shape: 16px;
+            --md-outlined-select-text-field-outline-color: var(--md-sys-color-outline);
+            --md-outlined-select-text-field-focus-outline-color: var(--md-sys-color-primary);
+            --md-outlined-select-text-field-hover-outline-color: var(--md-sys-color-primary);
+            --md-outlined-select-text-field-input-text-color: var(--md-sys-color-on-surface);
+            --md-outlined-select-text-field-input-text-font: inherit;
+            --md-outlined-select-text-field-input-text-weight: 600;
+            --md-outlined-select-text-field-trailing-icon-color: var(--md-sys-color-primary);
+            --md-menu-container-color: var(--md-sys-color-surface-variant);
+            --md-menu-container-shape: 16px;
+            --md-menu-item-container-color: transparent;
+            --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
+            --md-menu-item-selected-container-color: var(--md-sys-color-primary-container);
+            --md-menu-item-selected-label-text-color: var(--md-sys-color-on-primary-container);
+            --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
+            --md-menu-item-focus-state-layer-color: var(--md-sys-color-primary);
+            --md-menu-item-one-line-container-height: 44px;
+            --md-menu-item-top-space: 8px;
+            --md-menu-item-bottom-space: 8px;
+            --md-menu-item-label-text-font: inherit;
+            --md-menu-item-label-text-weight: 600;
+            --md-menu-item-selected-label-text-weight: 700;
+        }
+        .m3-select md-select-option, #output-device-menu md-menu-item {
+            max-width: calc(54ch + 76px);
+            --md-menu-item-one-line-container-height: 44px;
+        }
+        .m3-select md-select-option [slot="headline"], #output-device-menu [slot="headline"] {
+            white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.3;
+        }
+        #output-device-menu {
+            --md-menu-container-color: var(--md-sys-color-surface-variant);
+            --md-menu-container-shape: 16px;
+            --md-menu-item-container-color: transparent;
+            --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
+            --md-menu-item-selected-container-color: var(--md-sys-color-primary-container);
+            --md-menu-item-selected-label-text-color: var(--md-sys-color-on-primary-container);
+            --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
+            --md-menu-item-focus-state-layer-color: var(--md-sys-color-primary);
+            --md-menu-item-label-text-font: inherit;
+            --md-menu-item-label-text-weight: 600;
+            --md-menu-item-selected-label-text-weight: 700;
+            max-width: calc(54ch + 76px);
+        }
+</style>
 </head>
 <body>
 
@@ -810,10 +858,10 @@
                         <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.language">Ngôn ngữ</span>
                         <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.language_desc">Đổi ngôn ngữ hiển thị của toàn bộ ứng dụng</span>
                     </div>
-                    <select id="setting-language" style="background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); padding: 12px 20px; border-radius: 16px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; transition: var(--m3-transition);">
-                        <option value="vi" data-i18n="settings.lang_vi">Tiếng Việt</option>
-                        <option value="en" data-i18n="settings.lang_en">English</option>
-                    </select>
+                    <md-outlined-select id="setting-language" class="m3-select">
+                        <md-select-option value="vi"><div slot="headline" data-i18n="settings.lang_vi">Tiếng Việt</div></md-select-option>
+                        <md-select-option value="en"><div slot="headline" data-i18n="settings.lang_en">English</div></md-select-option>
+                    </md-outlined-select>
                 </div>
 
                 <!-- Switch 1 -->
@@ -906,11 +954,11 @@
                         <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.theme">Giao diện ứng dụng</span>
                         <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.theme_desc">Cân chỉnh tông màu nền sáng tối hoặc đồng bộ theo cấu hình máy</span>
                     </div>
-                    <select id="setting-theme" style="background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); padding: 12px 20px; border-radius: 16px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; transition: var(--m3-transition);">
-                        <option value="system" data-i18n="settings.theme_system">Hệ thống</option>
-                        <option value="light" data-i18n="settings.theme_light">Sáng</option>
-                        <option value="dark" data-i18n="settings.theme_dark">Tối</option>
-                    </select>
+                    <md-outlined-select id="setting-theme" class="m3-select">
+                        <md-select-option value="system"><div slot="headline" data-i18n="settings.theme_system">Hệ thống</div></md-select-option>
+                        <md-select-option value="light"><div slot="headline" data-i18n="settings.theme_light">Sáng</div></md-select-option>
+                        <md-select-option value="dark"><div slot="headline" data-i18n="settings.theme_dark">Tối</div></md-select-option>
+                    </md-outlined-select>
                 </div>
 
                 <!-- Dropdown Accent Selection (New Request) -->
@@ -919,18 +967,18 @@
                         <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.accent">Màu chủ đạo (Accent Color)</span>
                         <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.accent_desc">Lựa chọn màu sắc rực rỡ đại diện cho giao diện M3 của bạn</span>
                     </div>
-                    <select id="setting-accent" style="background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); border: 1px solid var(--playlist-border); padding: 12px 20px; border-radius: 16px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; transition: var(--m3-transition);">
-                        <option value="purple" data-i18n="settings.accent_purple">Tím (Purple)</option>
-                        <option value="lime" data-i18n="settings.accent_lime">Chanh (Lime)</option>
-                        <option value="cyan" data-i18n="settings.accent_cyan">Lam (Cyan)</option>
-                        <option value="white" data-i18n="settings.accent_white">Trắng (White)</option>
-                        <option value="green" data-i18n="settings.accent_green">Lá (Green)</option>
-                        <option value="blue" data-i18n="settings.accent_blue">Dương (Blue)</option>
-                        <option value="yellow" data-i18n="settings.accent_yellow">Vàng (Yellow)</option>
-                        <option value="orange" data-i18n="settings.accent_orange">Cam (Orange)</option>
-                        <option value="red" data-i18n="settings.accent_red">Đỏ (Red)</option>
-                        <option value="pink" data-i18n="settings.accent_pink">Hồng (Pink)</option>
-                    </select>
+                    <md-outlined-select id="setting-accent" class="m3-select">
+                        <md-select-option value="purple"><div slot="headline" data-i18n="settings.accent_purple">Tím (Purple)</div></md-select-option>
+                        <md-select-option value="lime"><div slot="headline" data-i18n="settings.accent_lime">Chanh (Lime)</div></md-select-option>
+                        <md-select-option value="cyan"><div slot="headline" data-i18n="settings.accent_cyan">Lam (Cyan)</div></md-select-option>
+                        <md-select-option value="white"><div slot="headline" data-i18n="settings.accent_white">Trắng (White)</div></md-select-option>
+                        <md-select-option value="green"><div slot="headline" data-i18n="settings.accent_green">Lá (Green)</div></md-select-option>
+                        <md-select-option value="blue"><div slot="headline" data-i18n="settings.accent_blue">Dương (Blue)</div></md-select-option>
+                        <md-select-option value="yellow"><div slot="headline" data-i18n="settings.accent_yellow">Vàng (Yellow)</div></md-select-option>
+                        <md-select-option value="orange"><div slot="headline" data-i18n="settings.accent_orange">Cam (Orange)</div></md-select-option>
+                        <md-select-option value="red"><div slot="headline" data-i18n="settings.accent_red">Đỏ (Red)</div></md-select-option>
+                        <md-select-option value="pink"><div slot="headline" data-i18n="settings.accent_pink">Hồng (Pink)</div></md-select-option>
+                    </md-outlined-select>
                 </div>
 
             </div>
@@ -1121,7 +1169,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.10.09-build165002</span>
+                <span>AUDIOPLAYER V2026.09.08-build125245</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -3946,6 +3994,10 @@
                 const key = el.getAttribute('data-i18n-title');
                 if (dict[key] !== undefined) el.setAttribute('title', dict[key]);
             });
+            // md-select cache chữ hiển thị -> cập nhật lại sau khi dịch
+            root.querySelectorAll('md-outlined-select').forEach(sel => {
+                try { if (sel.selectedIndex >= 0) sel.selectIndex(sel.selectedIndex); } catch (e) {}
+            });
             root.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dict[key] !== undefined) el.setAttribute('placeholder', dict[key]);
@@ -4165,7 +4217,7 @@
         // vào các mục tương ứng bên trong nó)
         const CL_PAGES = {
             about:    { url: 'about.html', title: 'About', errorLabel: 'About', showBack: false, showMadeBy: false },
-            whatsnew: { url: 'changelogAUDIOPLAYER_V2026.10.09-build165002.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
+            whatsnew: { url: 'changelogAUDIOPLAYER_V2026.09.08-build125245.html', title: "What's New?", errorLabel: "What's New", showBack: true, showMadeBy: false },
             more:     { url: 'https://tuanphong3108.github.io/apps.html?is_embed=true', title: 'More apps', errorLabel: 'More apps', showBack: true, showMadeBy: true }
         };
         let clPage = 'about';
@@ -4479,9 +4531,7 @@
             if (feedbackIncludeSysinfo.checked) {
                 const themeLabels = { system: 'System', light: 'Light', dark: 'Dark' };
                 const settingAccentEl = document.getElementById('setting-accent');
-                const accentLabel = settingAccentEl.options[settingAccentEl.selectedIndex]
-                    ? settingAccentEl.options[settingAccentEl.selectedIndex].text
-                    : settings.accent;
+                const accentLabel = settingAccentEl.displayText || settings.accent;
 
                 body = 'Loại: ' + feedbackType + '\n'
                     + 'Nội dung: ' + content + '\n'
@@ -5396,7 +5446,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.09-build165002';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.09.08-build125245';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'
