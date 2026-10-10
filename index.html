@@ -786,6 +786,34 @@
             background: transparent; color: inherit; display: flex; align-items: center; justify-content: center;
         }
         #output-toast .ot-close:hover { background: color-mix(in srgb, currentColor 16%, transparent); }
+
+        /* ===== md-dialog xác nhận: khớp theme app + Google Sans Flex ===== */
+        #confirm-dialog {
+            --md-ref-typeface-plain: 'Google Sans Flex', sans-serif;
+            --md-ref-typeface-brand: 'Google Sans Flex', sans-serif;
+            --md-dialog-container-color: var(--md-sys-color-surface);
+            --md-dialog-container-shape: 24px;
+            --md-dialog-headline-color: var(--md-sys-color-on-surface);
+            --md-dialog-supporting-text-color: var(--md-sys-color-on-surface-variant);
+            --md-dialog-headline-font: 'Google Sans Flex', sans-serif;
+            --md-dialog-headline-weight: 700;
+            --md-dialog-supporting-text-font: 'Google Sans Flex', sans-serif;
+            --md-dialog-supporting-text-size: 15px;
+            --md-text-button-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-text-button-label-text-color: var(--md-sys-color-primary);
+            --md-text-button-hover-label-text-color: var(--md-sys-color-primary);
+            --md-text-button-focus-label-text-color: var(--md-sys-color-primary);
+            --md-text-button-pressed-label-text-color: var(--md-sys-color-primary);
+            --md-filled-button-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-filled-button-container-color: var(--md-sys-color-primary);
+            --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
+            --md-filled-button-hover-label-text-color: var(--md-sys-color-on-primary);
+            --md-filled-button-focus-label-text-color: var(--md-sys-color-on-primary);
+            --md-filled-button-pressed-label-text-color: var(--md-sys-color-on-primary);
+            font-family: 'Google Sans Flex', sans-serif;
+            color: var(--md-sys-color-on-surface);
+        }
+        #confirm-dialog::part(scrim) { background: #000; }
 </style>
 </head>
 <body>
