@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-11",
+  "vi": [
+    "Thêm thanh tìm kiếm trong Cài đặt",
+    "Chuyển mục About vào trong Cài đặt",
+    "Giao diện Cài đặt mới với thanh danh mục (sidebar) bên trái",
+    "Thay các thông báo của trình duyệt bằng Toast và Dialog của ứng dụng",
+    "Sửa lỗi Composer bị đổi thành Unknown sau khi tải lại tệp",
+    "Gửi kèm đầy đủ các tuỳ chọn Cài đặt trong thông tin hệ thống khi gửi phản hồi",
+    "Thêm thông báo \"Đang sử dụng <đầu ra>\" khi đổi hoặc mở ứng dụng với thiết bị âm thanh đầu ra",
+    "Dropdown được chuyển sang Material Web, khớp màu chủ đạo và giao diện sáng/tối"
+  ],
+  "en": [
+    "Added a search bar in Settings",
+    "Moved About into Settings",
+    "New Settings layout with a category sidebar on the left",
+    "Replaced browser pop-ups with in-app Toasts and Dialogs",
+    "Fixed Composer turning into Unknown after reloading a file",
+    "Feedback system info now includes all Settings options",
+    "Added a \"Now using <output>\" toast when the audio output changes or the app opens",
+    "Dropdowns now use Material Web and match the accent color and light/dark theme"
+  ]
+}
