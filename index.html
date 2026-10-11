@@ -2353,6 +2353,8 @@
             document.getElementById('theme-meta').setAttribute('content', colors.surface);
 
             applyPipAccent();
+            // Đồng bộ luôn màu cho trang What's New (nếu đã tải xong)
+            try { if (typeof sendThemeToChangelog === 'function' && typeof clLoaded !== 'undefined' && clLoaded) sendThemeToChangelog(); } catch (e) {}
         }
 
         // --- TRÍCH MÀU CHỦ ĐẠO TỪ ALBUM ART ---
@@ -4480,6 +4482,8 @@
         // Gửi theme hiện tại ("dark" hoặc "light") sang trang đang mở qua postMessage
         function sendThemeToChangelog() {
             if (!clIframe.contentWindow) return;
+            // Gửi bảng màu chủ đạo hiện tại (kể cả màu động theo Album Art) để What's New hợp màu app
+            try { clIframe.contentWindow.postMessage({ palette: getActivePalette(resolveThemeMode(settings.theme)) }, '*'); } catch (e) {}
             clIframe.contentWindow.postMessage(resolveThemeMode(settings.theme), '*');
             // Về/What's New/More apps do bên Gemini quản lý nội dung -> chỉ gửi thêm mã
             // ngôn ngữ hiện tại ("vi"/"en") qua postMessage để bên đó tự xử lý, không đụng

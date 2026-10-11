@@ -1,0 +1,111 @@
+{
+  "date": "2026-07-22",
+  "vi": [
+    {
+      "content": "Đổi tên ứng dụng từ Music Player thành Audio Player",
+      "icon": "music_note"
+    },
+    {
+      "content": "Thêm Metadata Editor (Experimental)",
+      "icon": "edit_note"
+    },
+    {
+      "content": "Thêm Thumbnail Editor (Experimental)",
+      "icon": "image"
+    },
+    {
+      "content": "Bắt đầu tích hợp giao diện Minecraft Ore UI",
+      "icon": "sports_esports"
+    },
+    {
+      "content": "Hỗ trợ đọc Lyric Embed từ file nhạc",
+      "icon": "mic"
+    },
+    {
+      "content": "Thêm Full Screen Mode mới",
+      "icon": "fullscreen"
+    },
+    {
+      "content": "Thêm Accent Color (10 màu)",
+      "icon": "palette"
+    },
+    {
+      "content": "Thêm nhiều phím tắt mới",
+      "icon": "keyboard"
+    },
+    {
+      "content": "What's New đã đồng bộ theme của Audio Player",
+      "icon": "newspaper"
+    },
+    {
+      "content": "Lưu lại trạng thái Shuffle/Repeat/Volume",
+      "icon": "volume_up"
+    },
+    {
+      "content": "Thêm nút 'Thông tin khác'",
+      "icon": "info"
+    },
+    {
+      "content": "Thêm nút gửi phản hồi",
+      "icon": "chat"
+    },
+    {
+      "content": "Cải thiện hiệu năng và sửa nhiều lỗi",
+      "icon": "bolt"
+    }
+  ],
+  "en": [
+    {
+      "content": "Renamed the app from Music Player to Audio Player",
+      "icon": "music_note"
+    },
+    {
+      "content": "Added Metadata Editor (Experimental)",
+      "icon": "edit_note"
+    },
+    {
+      "content": "Added Thumbnail Editor (Experimental)",
+      "icon": "image"
+    },
+    {
+      "content": "Started integrating the Minecraft Ore UI look",
+      "icon": "sports_esports"
+    },
+    {
+      "content": "Added support for reading embedded lyrics from music files",
+      "icon": "mic"
+    },
+    {
+      "content": "Added a new Full Screen Mode",
+      "icon": "fullscreen"
+    },
+    {
+      "content": "Added Accent Color (10 colors)",
+      "icon": "palette"
+    },
+    {
+      "content": "Added many new keyboard shortcuts",
+      "icon": "keyboard"
+    },
+    {
+      "content": "What's New now syncs with the Audio Player theme",
+      "icon": "newspaper"
+    },
+    {
+      "content": "Shuffle/Repeat/Volume state is now remembered",
+      "icon": "volume_up"
+    },
+    {
+      "content": "Added an 'Other info' button",
+      "icon": "info"
+    },
+    {
+      "content": "Added a send feedback button",
+      "icon": "chat"
+    },
+    {
+      "content": "Improved performance and fixed many bugs",
+      "icon": "bolt"
+    }
+  ]
+}
