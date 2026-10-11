@@ -1,72 +1,136 @@
-const CACHE_NAME = 'audio-player-v2026_10_11_075756';
+const CACHE_PREFIX = 'audio-player-';
+const CACHE_VERSION = 'v2026_10_11_1';
+const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
-// ===== FILE TĨNH PRECACHE =====
-const STATIC_ASSETS = [
+const APP_SHELL = [
   './',
   './index.html',
-  './changelog.html',
   './index_md1.html',
+  './index_indev.html',
+  './changelog.html',
+  './changelog_indev.html',
+  './about.html',
+  './getting_started.html',
+  './404.html',
   './manifest.json',
+  './manifest_md1.json',
   './minecraft.ttf',
   './MinecraftTen-VGORe.ttf',
-  './music_note.png',
-  'https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif',
-  'https://tuanphong3108.github.io/google-sans-do-not-access/minecraft.ttf'
+  './music_note.png'
 ];
 
-// ===== INSTALL =====
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
-  );
+const CDN_HOSTS = new Set([
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'cdnjs.cloudflare.com',
+  'cdn.jsdelivr.net',
+  'esm.run',
+  'tuanphong3108.github.io'
+]);
+
+const CACHEABLE_DESTINATIONS = new Set([
+  'script',
+  'style',
+  'font',
+  'image',
+  'worker'
+]);
+
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(SHELL_CACHE);
+    await cache.addAll(APP_SHELL);
+    await self.skipWaiting();
+  })());
 });
 
-// ===== ACTIVATE - DỌN RÁC CACHE CŨ =====
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      )
-    )
-  );
-  self.clients.claim();
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames
+      .filter(name => name.startsWith(CACHE_PREFIX) && name !== SHELL_CACHE && name !== RUNTIME_CACHE)
+      .map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
 });
 
-// ===== FETCH – CACHE MỌI THỨ ĐỂ DÙNG OFFLINE =====
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  e.respondWith(
-    caches.match(req).then(cached => {
-      if (cached) return cached;
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET' || request.headers.has('range')) return;
 
-      return fetch(req).then(res => {
-        // Chỉ cache request GET hợp lệ (tránh cache mấy cái rác)
-        if (req.method === 'GET' && res.status === 200) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
-        }
-        return res;
-      }).catch(() => {
-        if (req.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
-  );
+  const requestUrl = new URL(request.url);
+  const scopeUrl = new URL(self.registration.scope);
+  const isSameOrigin = requestUrl.origin === scopeUrl.origin;
+
+  if (request.mode === 'navigate' && isSameOrigin) {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
+
+  const isAllowedCdn = !isSameOrigin && CDN_HOSTS.has(requestUrl.hostname);
+  if (!CACHEABLE_DESTINATIONS.has(request.destination) || (!isSameOrigin && !isAllowedCdn)) return;
+
+  event.respondWith(cacheFirstAsset(request));
 });
 
-// ===== SINGLETON LOGIC - GỘP CỬA SỔ KHI BẤM FILE HOẶC ICON =====
-self.addEventListener('notificationclick', (event) => {
+async function networkFirstNavigation(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const shellCache = await caches.open(SHELL_CACHE);
+      await shellCache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cachedPage = await caches.match(request);
+    if (cachedPage) return cachedPage;
+
+    const indexUrl = new URL('./index.html', self.registration.scope);
+    const cachedIndex = await caches.match(indexUrl.href);
+    if (cachedIndex) return cachedIndex;
+
+    return new Response('Bạn đang offline và trang này chưa được lưu trên thiết bị.', {
+      status: 503,
+      statusText: 'Offline',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+  }
+}
+
+async function cacheFirstAsset(request) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) return cachedResponse;
+
+  const response = await fetch(request);
+  if (response.ok && (response.type === 'basic' || response.type === 'cors')) {
+    const runtimeCache = await caches.open(RUNTIME_CACHE);
+    await runtimeCache.put(request, response.clone());
+  }
+  return response;
+}
+
+self.addEventListener('notificationclick', event => {
   event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if ('focus' in client) return client.focus();
-        }
-        if (clients.openWindow) return clients.openWindow('./');
-      })
-  );
+  event.waitUntil((async () => {
+    const scopeUrl = new URL(self.registration.scope);
+    const requestedUrl = event.notification.data?.url;
+    let targetUrl = scopeUrl.href;
+
+    if (requestedUrl) {
+      const candidate = new URL(requestedUrl, scopeUrl);
+      if (candidate.origin === scopeUrl.origin && candidate.href.startsWith(scopeUrl.href)) {
+        targetUrl = candidate.href;
+      }
+    }
+
+    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windowClients) {
+      if (new URL(client.url).origin === scopeUrl.origin && 'focus' in client) {
+        if ('navigate' in client && client.url !== targetUrl) await client.navigate(targetUrl);
+        return client.focus();
+      }
+    }
+    return self.clients.openWindow(targetUrl);
+  })());
 });
