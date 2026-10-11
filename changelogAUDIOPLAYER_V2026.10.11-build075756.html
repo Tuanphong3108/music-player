@@ -61,8 +61,8 @@
 // =========================================================================
 const EMBED_CONFIG = {
   appName: "Audio Player",
-  version: "v2026.10.09",
-  build: "build165002",
+  version: "v2026.10.11",
+  build: "build075756",
 
   // Mặc định ban đầu khi chưa nhận tin nhắn
   defaultTheme: "dark",
@@ -85,32 +85,34 @@ const EMBED_CONFIG = {
   },
 
   changelogItems: [
-    "Thêm mục About",
-    "Thêm nút thay đổi tốc độ trình phát",
-    "Đã nâng cấp Shuffle thành Advanced Shuffle",
-    "Đánh số bài hát",
-    "Thêm ngôn ngữ tiếng Anh vào ứng dụng",
-    "Thêm tính năng luôn bật màn hình trong Full Screen Mode",
-    "Đã thêm màn hình chào mừng khi mở ứng dụng lần đầu tiên",
-    "Khi bật Shuffle thì Previous khi bấm sẽ về thời gian 0:00, bấm đúp để về bài trước đó",
+    "+ Thêm thanh tìm kiếm trong Cài đặt",
+    "+ Chuyển mục About vào trong Cài đặt",
+    "+ Giao diện Cài đặt mới với thanh danh mục (sidebar) bên trái",
+    "+ Thay các thông báo của trình duyệt bằng Toast và Dialog của ứng dụng",
+    "+ Sửa lỗi Composer bị đổi thành Unknown sau khi tải lại tệp",
+    "+ Gửi kèm đầy đủ các tuỳ chọn Cài đặt trong thông tin hệ thống khi gửi phản hồi",
+    "+ Thêm thông báo \"Đang sử dụng <đầu ra>\" khi đổi hoặc mở ứng dụng với thiết bị âm thanh đầu ra",
+    "+ Dropdown được chuyển sang Material Web, khớp màu chủ đạo và giao diện sáng/tối",
+    "PiP được đồng bộ màu chủ đạo",
+    "Thêm tính năng thay màu chủ đạo dựa trên Album Art",
     "Thêm tính năng chuyển đổi nguồn phát âm thanh",
-    "+ Thêm tính năng thay màu chủ đạo dựa trên Album Art",
-    "+ PiP được đồng bộ màu chủ đạo",
+    "Khi bật Shuffle thì Previous khi bấm sẽ về thời gian 0:00, bấm đúp để về bài trước đó",
     "   (*) '+' = tính năng được thêm trong phiên bản này"
   ],
 
   changelogItems_en: [
-    "Added About section",
-    "Added playback speed control button",
-    "Upgraded Shuffle to Advanced Shuffle",
-    "Added song numbering",
-    "Added English language support",
-    "Added Keep Screen On feature in Full Screen Mode",
-    "Added welcome screen for first-time app launch",
-    "When Shuffle is on, clicking Previous resets track to 0:00; double-click goes to previous track",
+    "+ Added a search bar in Settings",
+    "+ Moved About into Settings",
+    "+ New Settings layout with a category sidebar on the left",
+    "+ Replaced browser pop-ups with in-app Toasts and Dialogs",
+    "+ Fixed Composer turning into Unknown after reloading a file",
+    "+ Feedback system info now includes all Settings options",
+    "+ Added a \"Now using <output>\" toast when the audio output changes or the app opens",
+    "+ Dropdowns now use Material Web and match the accent color and light/dark theme",
+    "Synced PiP with dynamic accent color",
+    "Added accent color generation based on Album Art",
     "Added audio output source switching",
-    "+ Added accent color generation based on Album Art",
-    "+ Synced PiP with dynamic accent color",
+    "When Shuffle is on, clicking Previous resets track to 0:00; double-click goes to previous track",
     "   (*) '+' = added feature in this version"
   ],
 };
