@@ -1,58 +1,100 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>What's New?</title>
-  
-  <!-- Google Sans Flex Font -->
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <style>
-    /* Áp dụng font Google Sans Flex và hiệu ứng mượt khi chuyển đổi màu sắc */
+    :root {
+      --bg: #0f111a; --text: #fff; --sub: rgba(255,255,255,.8);
+      --card: rgba(255,255,255,.04); --border: rgba(255,255,255,.08);
+      --accent: #c4b5fd; --accent2: #f0abfc; --badge: rgba(255,255,255,.1);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
     body {
-      font-family: 'Google Sans Flex', sans-serif;
-      transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Google Sans Flex', sans-serif; background: var(--bg); color: var(--sub);
+      padding: 16px; user-select: none; overflow-x: hidden;
+      transition: background-color .4s cubic-bezier(.4,0,.2,1), color .4s cubic-bezier(.4,0,.2,1);
     }
-    
-    /* Hiệu ứng chuyển màu mượt cho các phần tử con */
-    .theme-transition {
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    body::before {
+      content: ""; position: fixed; inset: -20% -10% auto auto; width: 360px; height: 360px; pointer-events: none;
+      background: radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 65%);
+      filter: blur(20px); z-index: 0;
     }
-    
-    /* Tinh chỉnh thanh cuộn siêu thanh lịch */
-    ::-webkit-scrollbar {
-      width: 4px;
+    .wrap { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+    /* HERO */
+    .hero {
+      display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 22px;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent2) 14%, transparent));
+      border: 1px solid var(--border); animation: rise .5s cubic-bezier(.2,.8,.2,1) both;
     }
-    ::-webkit-scrollbar-track {
-      background: transparent;
+    .hero-icon {
+      width: 52px; height: 52px; border-radius: 16px; flex-shrink: 0; display: grid; place-items: center; color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 40%, transparent);
     }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(155, 155, 155, 0.2);
-      border-radius: 99px;
+    .hero-icon .ms { font-size: 30px; }
+    .hero-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .hero-kicker { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+    h1 { margin: 0; font-size: 20px; font-weight: 900; letter-spacing: -.01em; color: var(--text); display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+    .ver { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
+    .build { font: 600 10px/1 ui-monospace, Menlo, Consolas, monospace; padding: 4px 8px; border-radius: 8px; background: var(--badge); color: var(--text); opacity: .85; }
+
+    /* SECTION LABEL */
+    .section { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text); opacity: .9; }
+    .section::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+    .section .dot { width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+
+    /* LIST */
+    .list { display: flex; flex-direction: column; gap: 8px; }
+    .item {
+      display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 16px;
+      background: var(--card); border: 1px solid var(--border);
+      animation: rise .5s cubic-bezier(.2,.8,.2,1) both; transition: transform .2s, border-color .2s, background .3s;
     }
+    .item:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+    .item .ico {
+      width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center;
+      background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent);
+    }
+    .item .ico .ms { font-size: 19px; }
+    .item.is-new { border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 9%, var(--card)); }
+    .item.is-new .ico { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+    .item .txt { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; line-height: 1.5; color: var(--sub); padding-top: 5px; }
+    .tag {
+      flex-shrink: 0; margin-top: 5px; font-size: 9.5px; font-weight: 900; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px;
+      color: #fff; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .foot { font-size: 11.5px; font-weight: 600; opacity: .6; padding: 4px 6px 12px; display: flex; align-items: center; gap: 8px; animation: rise .5s both; }
+    .foot .tag { margin: 0; }
+
+    .ms { font-family: 'Material Symbols Rounded'; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga'; font-variation-settings: 'FILL' 1, 'wght' 500; }
+    .item .ico, .hero-icon { overflow: hidden; }
+    /* Dự phòng khi không tải được font icon: thay chữ ligature bằng dấu chấm */
+    .no-icons .ms { font-size: 0 !important; }
+    .no-icons .ms::before { content: "✦"; font-family: 'Google Sans Flex', sans-serif; font-size: 16px; }
+    .no-icons .hero-icon .ms::before { font-size: 26px; }
+    @keyframes rise { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(155,155,155,.25); border-radius: 99px; }
   </style>
 </head>
-<body class="h-full w-full flex flex-col p-4 justify-start select-none overflow-y-auto">
-
-  <!-- CONTAINER CHÍNH -->
-  <div class="w-full max-w-md mx-auto flex flex-col gap-3">
-    
-    <!-- PHẦN ĐẦU: TIÊU ĐỀ PHIÊN BẢN -->
-    <header class="flex flex-col gap-1">
-      <h1 id="app-title-version" class="text-lg font-black tracking-tight flex flex-wrap items-baseline gap-1.5 theme-transition">
-        <!-- Nội dung Header sẽ được render động ở đây -->
-      </h1>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="hero-icon"><span class="ms">auto_awesome</span></div>
+      <div class="hero-text">
+        <span class="hero-kicker" id="kicker">What's New</span>
+        <h1 id="app-title-version"></h1>
+      </div>
     </header>
-
-    <!-- PHẦN DƯỚI: DANH SÁCH CHANGELOG -->
-    <main id="changelog-container" class="flex flex-col gap-2.5 pl-1">
-      <!-- Các dòng cập nhật sẽ được render động ở đây -->
-    </main>
-    
+    <div class="section"><span class="dot"></span><span id="section-label">Mới nhất</span></div>
+    <main class="list" id="changelog-container"></main>
+    <div id="footnote"></div>
   </div>
 
   <script>
@@ -73,7 +115,11 @@ const EMBED_CONFIG = {
     bg: "#0f111a",
     mainTextColor: "#ffffff",
     subTextColor: "rgba(255,255,255,0.8)",
-    buildBadgeBg: "rgba(255,255,255,0.1)"
+    buildBadgeBg: "rgba(255,255,255,0.1)",
+    cardBg: "rgba(255,255,255,0.04)",
+    cardBorder: "rgba(255,255,255,0.08)",
+    accent: "#c4b5fd",
+    accent2: "#f0abfc"
   },
 
   // ☀️ LIGHT MODE
@@ -81,7 +127,11 @@ const EMBED_CONFIG = {
     bg: "#f8f9fa",
     mainTextColor: "#1a1a1a",
     subTextColor: "rgba(0,0,0,0.7)",
-    buildBadgeBg: "rgba(0,0,0,0.05)"
+    buildBadgeBg: "rgba(0,0,0,0.06)",
+    cardBg: "rgba(0,0,0,0.035)",
+    cardBorder: "rgba(0,0,0,0.08)",
+    accent: "#7c3aed",
+    accent2: "#c026d3"
   },
 
   changelogItems: [
@@ -120,110 +170,107 @@ const EMBED_CONFIG = {
 // ⬆️ HẾT PHẦN CẤU HÌNH CỦA BRO ⬆️
 // =========================================================================
 
-    // Biến lưu giữ theme và ngôn ngữ hiện tại
     let currentTheme = EMBED_CONFIG.defaultTheme;
     let currentLang = EMBED_CONFIG.defaultLang || "vi";
 
-    /**
-     * Render danh sách Changelog theo ngôn ngữ ("vi" hoặc "en")
-     */
+    const LABELS = {
+      vi: { kicker: "Có gì mới?", section: "Mới nhất → Cũ nhất", tag: "MỚI" },
+      en: { kicker: "What's New", section: "Latest → Oldest", tag: "NEW" }
+    };
+
+    // Chọn icon theo từ khoá trong nội dung dòng cập nhật
+    const ICON_RULES = [
+      [/tìm kiếm|search/i, 'search'], [/sidebar|danh mục|category/i, 'view_sidebar'],
+      [/about/i, 'info'], [/dropdown/i, 'arrow_drop_down_circle'], [/toast|dialog|thông báo|pop-up/i, 'notifications'],
+      [/composer|lỗi|fixed|bug/i, 'bug_report'], [/phản hồi|feedback/i, 'feedback'],
+      [/pip/i, 'picture_in_picture_alt'], [/màu|accent|album/i, 'palette'],
+      [/âm thanh|audio|output|đầu ra/i, 'headphones'], [/shuffle|previous/i, 'shuffle'],
+      [/ngôn ngữ|language|english|tiếng anh/i, 'translate'], [/tốc độ|speed/i, 'speed'],
+      [/màn hình|screen|full/i, 'fullscreen'], [/cài đặt|settings/i, 'settings']
+    ];
+    function pickIcon(text) {
+      for (const [re, name] of ICON_RULES) if (re.test(text)) return name;
+      return 'check_circle';
+    }
+
     function renderChangelog(lang) {
       currentLang = (lang === 'en') ? 'en' : 'vi';
-      const activeTheme = currentTheme === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
-      const itemsToRender = (currentLang === 'en' && EMBED_CONFIG.changelogItems_en) 
-        ? EMBED_CONFIG.changelogItems_en 
-        : EMBED_CONFIG.changelogItems;
+      document.documentElement.lang = currentLang;
+      const L = LABELS[currentLang];
+      document.getElementById('kicker').textContent = L.kicker;
+      document.getElementById('section-label').textContent = L.section;
 
-      const container = document.getElementById('changelog-container');
-      if (!container) return;
-      container.innerHTML = ''; 
+      const items = (currentLang === 'en' && EMBED_CONFIG.changelogItems_en) ? EMBED_CONFIG.changelogItems_en : EMBED_CONFIG.changelogItems;
+      const list = document.getElementById('changelog-container');
+      const foot = document.getElementById('footnote');
+      list.innerHTML = ''; foot.innerHTML = '';
 
-      itemsToRender.forEach(item => {
-        const itemParagraph = document.createElement('p');
-        itemParagraph.className = 'changelog-item text-sm leading-relaxed font-semibold theme-transition';
-        itemParagraph.style.color = activeTheme.subTextColor;
-        itemParagraph.innerText = item;
-        container.appendChild(itemParagraph);
+      let delay = 0.08;
+      items.forEach(raw => {
+        const text = raw.trim();
+        // Dòng chú thích có dấu sao -> hiển thị riêng ở cuối
+        if (text.startsWith('(*)')) {
+          const f = document.createElement('div');
+          f.className = 'foot';
+          f.innerHTML = '<span class="tag"></span><span></span>';
+          f.children[0].textContent = '+';
+          f.children[1].textContent = text.replace(/^\(\*\)\s*'\+'\s*=\s*/, '');
+          foot.appendChild(f);
+          return;
+        }
+        const isNew = text.startsWith('+');
+        const clean = isNew ? text.replace(/^\+\s*/, '') : text;
+        const el = document.createElement('div');
+        el.className = 'item' + (isNew ? ' is-new' : '');
+        el.style.animationDelay = (delay += 0.045) + 's';
+        const ico = document.createElement('div'); ico.className = 'ico';
+        const ms = document.createElement('span'); ms.className = 'ms'; ms.textContent = pickIcon(clean);
+        ico.appendChild(ms);
+        const t = document.createElement('div'); t.className = 'txt'; t.textContent = clean;
+        el.append(ico, t);
+        if (isNew) { const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = L.tag; el.appendChild(tag); }
+        list.appendChild(el);
       });
     }
 
-    /**
-     * Hàm dùng để cập nhật màu sắc hiển thị dựa trên cấu hình màu tương ứng của theme
-     */
     function applyThemeStyles(themeName) {
       currentTheme = themeName;
-      const theme = themeName === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
-
-      // 1. Áp dụng cho Body (Nền & Màu chữ mặc định)
-      document.body.style.backgroundColor = theme.bg;
-      document.body.style.color = theme.subTextColor;
-
-      // 2. Áp dụng cho tên App
-      const appNameSpan = document.getElementById('app-name-text');
-      if (appNameSpan) {
-        appNameSpan.style.color = theme.mainTextColor;
-      }
-
-      // 3. Áp dụng cho Nhãn Build (Build Badge)
-      const buildBadge = document.getElementById('build-badge');
-      if (buildBadge) {
-        buildBadge.style.backgroundColor = theme.buildBadgeBg;
-        buildBadge.style.color = theme.mainTextColor;
-      }
-
-      // 4. Áp dụng cho các dòng Changelog
-      const items = document.querySelectorAll('.changelog-item');
-      items.forEach(item => {
-        item.style.color = theme.subTextColor;
-      });
+      const t = themeName === 'light' ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
+      const r = document.documentElement.style;
+      r.setProperty('--bg', t.bg); r.setProperty('--text', t.mainTextColor); r.setProperty('--sub', t.subTextColor);
+      r.setProperty('--card', t.cardBg); r.setProperty('--border', t.cardBorder);
+      r.setProperty('--accent', t.accent); r.setProperty('--accent2', t.accent2); r.setProperty('--badge', t.buildBadgeBg);
     }
 
-    /**
-     * Khởi tạo và kết xuất cấu trúc DOM tĩnh dựa trên cấu hình
-     */
     function initEmbed() {
-      const activeTheme = currentTheme === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
-
-      // 1. Khởi tạo cấu trúc Tiêu đề & Phiên bản
-      const headerTitle = document.getElementById('app-title-version');
-      headerTitle.innerHTML = `
-        <span id="app-name-text" class="theme-transition" style="color: ${activeTheme.mainTextColor}">${EMBED_CONFIG.appName}</span> 
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-bold">${EMBED_CONFIG.version}</span>
-        <span id="build-badge" class="text-[10px] px-2 py-0.5 rounded-md font-mono theme-transition" 
-              style="background-color: ${activeTheme.buildBadgeBg}; color: ${activeTheme.mainTextColor}; opacity: 0.85;">
-          ${EMBED_CONFIG.build}
-        </span>
-      `;
-
-      // 2. Khởi tạo danh sách Changelog ban đầu
-      renderChangelog(currentLang);
-
-      // 3. Thực thi áp dụng màu ban đầu
+      document.getElementById('app-title-version').innerHTML =
+        '<span></span><span class="ver"></span><span class="build"></span>';
+      const h = document.getElementById('app-title-version').children;
+      h[0].textContent = EMBED_CONFIG.appName; h[1].textContent = EMBED_CONFIG.version; h[2].textContent = EMBED_CONFIG.build;
       applyThemeStyles(currentTheme);
+      renderChangelog(currentLang);
     }
 
-    // LẮNG NGHE SỰ KIỆN POSTMESSAGE TỪ TRANG CHA HOẶC IFRAME CONTAINER
+    // postMessage từ trang cha: "dark"/"light" và "vi"/"en"
     window.addEventListener('message', (event) => {
       const data = event.data;
       if (!data) return;
-
-      // 1. Cập nhật Theme nếu nhận "dark" / "light" hoặc { theme: "..." }
-      if (data === 'dark' || data.theme === 'dark') {
-        applyThemeStyles('dark');
-      } else if (data === 'light' || data.theme === 'light') {
-        applyThemeStyles('light');
-      }
-
-      // 2. Cập nhật Ngôn ngữ nếu nhận "vi" / "en" hoặc { lang: "..." } / { language: "..." }
-      if (data === 'vi' || data.lang === 'vi' || data.language === 'vi') {
-        renderChangelog('vi');
-      } else if (data === 'en' || data.lang === 'en' || data.language === 'en') {
-        renderChangelog('en');
-      }
+      if (data === 'dark' || data.theme === 'dark') applyThemeStyles('dark');
+      else if (data === 'light' || data.theme === 'light') applyThemeStyles('light');
+      if (data === 'vi' || data.lang === 'vi' || data.language === 'vi') renderChangelog('vi');
+      else if (data === 'en' || data.lang === 'en' || data.language === 'en') renderChangelog('en');
     });
 
-    // Thực thi render ngay khi tải trang xong
-    window.onload = initEmbed;
+    initEmbed();
+
+    // Kiểm tra font icon có tải được không, nếu không thì dùng ký hiệu dự phòng
+    (function () {
+      const fail = () => document.documentElement.classList.add('no-icons');
+      try {
+        document.fonts.load('24px "Material Symbols Rounded"', 'search').then(f => { if (!f.length) fail(); }).catch(fail);
+        setTimeout(() => { if (!document.fonts.check('24px "Material Symbols Rounded"')) fail(); }, 3000);
+      } catch (e) { fail(); }
+    })();
   </script>
 </body>
 </html>
