@@ -6,6 +6,10 @@
       "icon": "search"
     },
     {
+      "content": "Cải tiến lại giao diện của About và What's New?",
+      "icon": "auto_awesome"
+    },
+    {
       "content": "Chuyển mục About vào trong Cài đặt",
       "icon": "info"
     },
@@ -38,6 +42,10 @@
     {
       "content": "Added a search bar in Settings",
       "icon": "search"
+    },
+    {
+      "content": "Revamped the 'About' and 'What's New' interfaces",
+      "icon": "auto_awesome"
     },
     {
       "content": "Moved About into Settings",
