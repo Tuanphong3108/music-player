@@ -814,6 +814,77 @@
             color: var(--md-sys-color-on-surface);
         }
         #confirm-dialog::part(scrim) { background: #000; }
+
+        /* ===== Settings: sidebar danh mục + nội dung bên phải ===== */
+        .st-body { flex: 1; display: flex; min-height: 0; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); }
+        .st-sidebar {
+            width: 280px; flex-shrink: 0; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px;
+            border-right: 1px solid var(--playlist-border); overflow-y: auto;
+        }
+        .st-tab {
+            display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 18px; border: none; cursor: pointer;
+            border-radius: 28px; background: transparent; color: var(--md-sys-color-on-surface);
+            font-family: 'Google Sans Flex', sans-serif; font-size: 15px; font-weight: 600; text-align: left;
+            transition: background .2s, color .2s;
+        }
+        .st-tab:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent); }
+        .st-tab.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-primary-container); }
+        .st-tab.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; color: var(--md-sys-color-primary); }
+        .st-tab-spacer { flex: 1; min-height: 12px; }
+        .st-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
+        .st-pane { display: none; flex-direction: column; gap: 32px; padding: 32px 6%; }
+        .st-pane.active { display: flex; }
+        .st-pane-title { margin: 0; font-size: 22px; font-weight: 700; font-family: 'Google Sans Flex', sans-serif; }
+        .st-pane > div:last-child { border-bottom: none !important; padding-bottom: 0 !important; }
+        .st-pane-about { padding: 0; gap: 0; flex: 1; min-height: 0; }
+        .st-pane-about .cl-header { padding: 12px 20px; }
+        .st-pane-about .cl-iframe-wrap { flex: 1; min-height: 0; }
+        @media (max-width: 760px) {
+            .st-body { flex-direction: column; }
+            .st-sidebar { width: 100%; flex-direction: row; overflow-x: auto; overflow-y: hidden; border-right: none; border-bottom: 1px solid var(--playlist-border); padding: 8px; }
+            .st-tab { width: auto; flex-shrink: 0; padding: 10px 14px; white-space: nowrap; }
+            .st-tab-spacer { display: none; }
+            .st-pane { padding: 20px 16px; }
+        }
+
+        /* ===== Thanh tìm kiếm Settings + chế độ Search ===== */
+        .st-search {
+            flex: 1; max-width: 520px; margin: 0 auto; display: flex; align-items: center; gap: 10px;
+            height: 48px; padding: 0 16px; border-radius: 28px; cursor: text;
+            background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface-variant);
+            border: 1px solid transparent; transition: border-color .2s, background .2s, max-width .35s ease;
+        }
+        .st-search:focus-within { border-color: var(--md-sys-color-primary); max-width: 720px; }
+        .st-search input {
+            flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: var(--md-sys-color-on-surface);
+            font-family: 'Google Sans Flex', sans-serif; font-size: 15px; font-weight: 600;
+        }
+        .st-search input::placeholder { color: var(--md-sys-color-on-surface-variant); opacity: .7; }
+        .st-search-clear { display: none; border: none; background: transparent; color: inherit; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; padding: 0; align-items: center; justify-content: center; }
+        .st-search-clear:hover { background: color-mix(in srgb, currentColor 14%, transparent); }
+        .st-search-clear .material-symbols-outlined { font-size: 18px; }
+        .st-search.has-text .st-search-clear { display: flex; }
+        #settings-close-btn { transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s, width .3s, margin .3s; }
+        .st-title-search { display: none; }
+        #settings-dialog.searching .st-title-normal { display: none; }
+        #settings-dialog.searching .st-title-search { display: inline; }
+        #settings-dialog.searching #settings-close-btn { transform: scale(0); opacity: 0; width: 0 !important; margin-left: -16px; pointer-events: none; }
+        #settings-dialog.searching #st-back-wrap { width: 52px !important; }
+        #settings-dialog.searching #st-search-back { transform: scale(1) !important; }
+        .st-sidebar { transition: margin-left .35s cubic-bezier(.2,.8,.2,1), opacity .25s; }
+        .st-body.searching .st-sidebar { margin-left: -280px; opacity: 0; pointer-events: none; }
+        .st-search-empty { display: none; padding: 48px 6%; text-align: center; opacity: .6; font-weight: 600; }
+        .st-body.searching.no-results .st-search-empty { display: block; }
+        .st-body.searching .st-pane:not(.st-pane-about) { display: flex; }
+        .st-body.searching .st-pane-about { display: none; }
+        .st-body.searching .st-pane.no-match { display: none; }
+        .st-row-hidden { display: none !important; }
+        @media (max-width: 760px) {
+            .st-body.searching .st-sidebar { margin-left: 0; max-height: 0; padding: 0; border: none; overflow: hidden; }
+            #settings-header { padding: 12px 16px !important; gap: 8px !important; }
+            .st-title-normal, #settings-header h2 { font-size: 16px !important; }
+            #settings-dialog:not(.searching) #settings-header h2 { display: none; }
+        }
 </style>
 </head>
 <body>
@@ -884,48 +955,41 @@
     </div>
 
     <!-- Modal About / What's New / More apps (dùng chung 1 dialog, điều hướng qua postMessage) -->
-    <div id="changelog-overlay" class="cl-overlay">
-        <div id="changelog-dialog" class="cl-dialog">
-            <div class="cl-header">
-                <div style="display:flex; align-items:center; overflow:hidden;">
-                    <div id="cl-back-btn-wrap" style="width:0; overflow:hidden; flex-shrink:0; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1);">
-                        <button class="btn-m3" id="cl-back-btn" title="Quay lại" data-i18n-title="about.back" style="width:40px; height:40px; transform:scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);">
-                            <span class="material-symbols-outlined">arrow_back</span>
-                        </button>
-                    </div>
-                    <h2 id="cl-title" style="white-space:nowrap;" data-i18n="about.title">About</h2>
-                </div>
-                <button class="btn-m3" id="cl-close-btn" title="Đóng" data-i18n-title="about.close"><span class="material-symbols-outlined">close</span></button>
-            </div>
-            <div class="cl-iframe-wrap">
-                <iframe src="about.html" class="cl-iframe"></iframe>
-                <div id="cl-loading-overlay">
-                    <div id="cl-loading-spinner" style="display:flex; flex-direction:column; gap:16px; justify-content:center; align-items:center;">
-                        <md-circular-progress indeterminate></md-circular-progress>
-                    </div>
-                    <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
-                        <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
-                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);" data-i18n="about.load_error">Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
-                        <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
-                            <span class="material-symbols-outlined">feedback</span> <span data-i18n="topbar.feedback">Gửi phản hồi</span>
-                        </button>
-                    </div>
-                </div>
-                <div id="cl-madeby-bar" style="position:absolute; left:0; right:0; bottom:0; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); padding:14px; text-align:center; font-size:13px; font-weight:700; font-family:'Minecraft'; letter-spacing:1px; z-index:11;">Made by Phong VN</div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal Settings (Full Screen Scale with Adaptive Color selection) -->
     <div id="settings-overlay" class="cl-overlay" style="align-items: stretch; justify-content: stretch;">
         <div id="settings-dialog" class="cl-dialog" style="width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0;">
-            <div class="cl-header" style="padding: 20px 32px;">
-                <h2 style="font-family: 'Minecraft', sans-serif; font-size: 24px; letter-spacing: 1px;" data-i18n="settings.title">Cài đặt hệ thống</h2>
+            <div class="cl-header" id="settings-header" style="padding: 16px 32px; gap: 16px;">
+                <div style="display:flex; align-items:center; overflow:hidden; flex-shrink:0;">
+                    <div id="st-back-wrap" style="width:0; overflow:hidden; flex-shrink:0; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+                        <button class="btn-m3" id="st-search-back" title="Quay lại" data-i18n-title="about.back" style="width:44px; height:44px; transform:scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                        </button>
+                    </div>
+                    <h2 style="font-family: 'Minecraft', sans-serif; font-size: 24px; letter-spacing: 1px; white-space:nowrap;">
+                        <span class="st-title-normal" data-i18n="settings.title">Cài đặt hệ thống</span>
+                        <span class="st-title-search" data-i18n="settings.search_title">Tìm kiếm cài đặt</span>
+                    </h2>
+                </div>
+                <label class="st-search" for="st-search-input">
+                    <span class="material-symbols-outlined">search</span>
+                    <input id="st-search-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" name="settings-search-nofill" placeholder="Tìm kiếm cài đặt..." data-i18n-placeholder="settings.search_placeholder">
+                    <button type="button" id="st-search-clear" class="st-search-clear" tabindex="-1"><span class="material-symbols-outlined">close</span></button>
+                </label>
                 <button class="btn-m3" id="settings-close-btn" style="width: 52px; height: 52px;" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined" style="font-size: 28px;">close</span></button>
             </div>
-            <div style="flex: 1; padding: 40px 10%; display: flex; flex-direction: column; gap: 32px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); overflow-y: auto;">
-                
-                <!-- Dropdown Ngôn ngữ (luôn ở đầu danh sách) -->
+            <div class="st-body">
+                <nav class="st-sidebar">
+                    <button class="st-tab active" data-tab="general"><span class="material-symbols-outlined">tune</span><span data-i18n="settings.cat_general">Chung</span></button>
+                    <button class="st-tab" data-tab="appearance"><span class="material-symbols-outlined">palette</span><span data-i18n="settings.cat_appearance">Giao diện</span></button>
+                    <button class="st-tab" data-tab="lyrics"><span class="material-symbols-outlined">lyrics</span><span data-i18n="settings.cat_lyrics">Lyric</span></button>
+                    <button class="st-tab" data-tab="performance"><span class="material-symbols-outlined">speed</span><span data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</span></button>
+                    <div class="st-tab-spacer"></div>
+                    <button class="st-tab" data-tab="about"><span class="material-symbols-outlined">info</span><span data-i18n="about.title">About</span></button>
+                </nav>
+                <div class="st-content">
+                <div id="st-search-empty" class="st-search-empty" data-i18n="settings.search_empty">Không tìm thấy cài đặt nào phù hợp</div>
+                <div class="st-pane active" data-pane="general">
+                    <h3 class="st-pane-title" data-i18n="settings.cat_general">Chung</h3>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.language">Ngôn ngữ</span>
@@ -937,67 +1001,6 @@
                     </md-outlined-select>
                 </div>
 
-                <!-- Switch 1 -->
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.main_lyric">Hiện lời ở đầu trình phát chính</span>
-                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.main_lyric_desc">Hiển thị lyrics dòng hiện tại ngay góc đầu vùng Canvas sóng nhạc</span>
-                    </div>
-                    <md-switch id="setting-main-lyric">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
-                    </md-switch>
-                </div>
-
-                <!-- Switch 2 -->
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.pip_lyric">Hiện lời ở Picture-in-picture (PiP)</span>
-                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.pip_lyric_desc">Đồng bộ câu chữ của file lyric trực tiếp lên trình phát PiP thu nhỏ</span>
-                    </div>
-                    <md-switch id="setting-pip-lyric">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
-                    </md-switch>
-                </div>
-
-                <!-- Switch 3 -->
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.fs_lyric">Hiện lyric ở Full screen mode</span>
-                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.fs_lyric_desc">Hiển thị lời bài hát ngay bên dưới tên và nghệ sĩ khi ở chế độ toàn màn hình</span>
-                    </div>
-                    <md-switch id="setting-fs-lyric">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
-                    </md-switch>
-                </div>
-
-                <!-- Switch 4: Giảm hiệu ứng chuyển động -->
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.reduce_motion">Giảm hiệu ứng chuyển động</span>
-                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.reduce_motion_desc">Khi bật lên, hiệu ứng chuyển động giữa các trang sẽ không còn (Ngoại trừ sóng âm, tắt ở cài đặt riêng)</span>
-                    </div>
-                    <md-switch id="setting-reduce-motion">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
-                    </md-switch>
-                </div>
-
-                <!-- Switch 5: Giảm hiệu ứng mờ và chuyển động (Nâng cao) -->
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.reduce_effects">Giảm hiệu ứng mờ và chuyển động (Nâng cao)</span>
-                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.reduce_effects_desc">Sẽ giảm các hiệu ứng mờ, chuyển động và xóa sóng nhạc, hữu ích khi máy có cấu hình thấp vcl.</span>
-                    </div>
-                    <md-switch id="setting-reduce-effects">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
-                    </md-switch>
-                </div>
-
-                <!-- Switch 6: Luôn bật màn hình khi ở Fullscreen mode -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.wake_lock">Luôn bật màn hình khi ở Fullscreen mode</span>
@@ -1008,20 +1011,9 @@
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
                 </div>
-
-                <!-- Switch: Màu chủ đạo theo bài đang phát -->
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.dynamic_accent">Thay đổi màu chủ đạo dựa trên bài đang phát</span>
-                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.dynamic_accent_desc">Phân tích ảnh bìa (album art) của bài đang phát để lấy màu nổi bật nhất làm màu chủ đạo cho toàn bộ giao diện, kể cả thanh tiêu đề và PiP. Tự trả về màu bạn đã chọn khi bài không có ảnh bìa hoặc nhạc dừng quá 10 giây.</span>
-                    </div>
-                    <md-switch id="setting-dynamic-accent">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
-                    </md-switch>
                 </div>
-
-                <!-- Dropdown Theme Selection (Dark dark renamed to Tối) -->
+                <div class="st-pane" data-pane="appearance">
+                    <h3 class="st-pane-title" data-i18n="settings.cat_appearance">Giao diện</h3>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.theme">Giao diện ứng dụng</span>
@@ -1034,7 +1026,6 @@
                     </md-outlined-select>
                 </div>
 
-                <!-- Dropdown Accent Selection (New Request) -->
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.accent">Màu chủ đạo (Accent Color)</span>
@@ -1054,6 +1045,105 @@
                     </md-outlined-select>
                 </div>
 
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.dynamic_accent">Thay đổi màu chủ đạo dựa trên bài đang phát</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.dynamic_accent_desc">Phân tích ảnh bìa (album art) của bài đang phát để lấy màu nổi bật nhất làm màu chủ đạo cho toàn bộ giao diện, kể cả thanh tiêu đề và PiP. Tự trả về màu bạn đã chọn khi bài không có ảnh bìa hoặc nhạc dừng quá 10 giây.</span>
+                    </div>
+                    <md-switch id="setting-dynamic-accent">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+                </div>
+                <div class="st-pane" data-pane="lyrics">
+                    <h3 class="st-pane-title" data-i18n="settings.cat_lyrics">Lyric</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.main_lyric">Hiện lời ở đầu trình phát chính</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.main_lyric_desc">Hiển thị lyrics dòng hiện tại ngay góc đầu vùng Canvas sóng nhạc</span>
+                    </div>
+                    <md-switch id="setting-main-lyric">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.pip_lyric">Hiện lời ở Picture-in-picture (PiP)</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.pip_lyric_desc">Đồng bộ câu chữ của file lyric trực tiếp lên trình phát PiP thu nhỏ</span>
+                    </div>
+                    <md-switch id="setting-pip-lyric">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.fs_lyric">Hiện lyric ở Full screen mode</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.fs_lyric_desc">Hiển thị lời bài hát ngay bên dưới tên và nghệ sĩ khi ở chế độ toàn màn hình</span>
+                    </div>
+                    <md-switch id="setting-fs-lyric">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+                </div>
+                <div class="st-pane" data-pane="performance">
+                    <h3 class="st-pane-title" data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.reduce_motion">Giảm hiệu ứng chuyển động</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.reduce_motion_desc">Khi bật lên, hiệu ứng chuyển động giữa các trang sẽ không còn (Ngoại trừ sóng âm, tắt ở cài đặt riêng)</span>
+                    </div>
+                    <md-switch id="setting-reduce-motion">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.reduce_effects">Giảm hiệu ứng mờ và chuyển động (Nâng cao)</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.reduce_effects_desc">Sẽ giảm các hiệu ứng mờ, chuyển động và xóa sóng nhạc, hữu ích khi máy có cấu hình thấp vcl.</span>
+                    </div>
+                    <md-switch id="setting-reduce-effects">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+                </div>
+                <div class="st-pane st-pane-about" data-pane="about">
+                    <div class="cl-header">
+                <div style="display:flex; align-items:center; overflow:hidden;">
+                    <div id="cl-back-btn-wrap" style="width:0; overflow:hidden; flex-shrink:0; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+                        <button class="btn-m3" id="cl-back-btn" title="Quay lại" data-i18n-title="about.back" style="width:40px; height:40px; transform:scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                        </button>
+                    </div>
+                    <h2 id="cl-title" style="white-space:nowrap;" data-i18n="about.title">About</h2>
+                </div>
+            </div>
+                    <div class="cl-iframe-wrap">
+                <iframe src="about.html" class="cl-iframe"></iframe>
+                <div id="cl-loading-overlay">
+                    <div id="cl-loading-spinner" style="display:flex; flex-direction:column; gap:16px; justify-content:center; align-items:center;">
+                        <md-circular-progress indeterminate></md-circular-progress>
+                    </div>
+                    <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
+                        <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
+                        <p id="cl-loading-error-text" style="font-size:14px; line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);" data-i18n="about.load_error">Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
+                        <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
+                            <span class="material-symbols-outlined">feedback</span> <span data-i18n="topbar.feedback">Gửi phản hồi</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="cl-madeby-bar" style="position:absolute; left:0; right:0; bottom:0; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); padding:14px; text-align:center; font-size:13px; font-weight:700; font-family:'Minecraft'; letter-spacing:1px; z-index:11;">Made by Phong VN</div>
+            </div>
+                </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1260,7 +1350,6 @@
                 </div>
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
-                <button class="btn-m3" id="changelog-btn" title="About" data-i18n-title="topbar.about"><span class="material-symbols-outlined">info</span></button>
                 
                 <!-- Nút add_circle kích hoạt Dropdown API File System tiến tiến -->
                 <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined">add_circle</span></button>
@@ -4355,6 +4444,7 @@
 
         settingsCloseBtn.addEventListener('click', () => {
             settingsOverlay.classList.remove('open');
+            setTimeout(() => { if (typeof resetSettingsNavigation === 'function') resetSettingsNavigation(); }, 450);
             setTimeout(() => {
                 settingsBtn.classList.add('cl-bounce-anim');
                 setTimeout(() => settingsBtn.classList.remove('cl-bounce-anim'), 600);
@@ -4366,11 +4456,7 @@
         });
 
         // --- HỆ THỐNG CHANGELOG MODAL ---
-        const clBtn = document.getElementById('changelog-btn');
-        const clOverlay = document.getElementById('changelog-overlay');
-        const clDialog = document.getElementById('changelog-dialog');
-        const clCloseBtn = document.getElementById('cl-close-btn');
-        const clIframe = document.querySelector('#changelog-dialog .cl-iframe');
+        const clIframe = document.querySelector('.st-pane-about .cl-iframe');
         const clLoadingOverlay = document.getElementById('cl-loading-overlay');
         const clLoadingSpinner = document.getElementById('cl-loading-spinner');
         const clLoadingError = document.getElementById('cl-loading-error');
@@ -4457,19 +4543,13 @@
         // Nhận lệnh điều hướng từ bên trong iframe (About tự gửi ra khi người dùng bấm
         // vào mục "What's New" hoặc "Explore more" bên trong nó)
         window.addEventListener('message', (e) => {
-            if (!clOverlay.classList.contains('open')) return;
+            if (!settingsOverlay.classList.contains('open') || currentSettingsTab !== 'about') return;
             if (e.data === 'whatsnew') clNavigateTo('whatsnew');
             else if (e.data === 'explore more') clNavigateTo('more');
         });
 
-        clBtn.addEventListener('click', () => {
-            const rect = clBtn.getBoundingClientRect();
-            const btnCx = rect.left + rect.width / 2;
-            const btnCy = rect.top + rect.height / 2;
-            const originX = btnCx - window.innerWidth / 2;
-            const originY = btnCy - window.innerHeight / 2;
-            clDialog.style.transformOrigin = `calc(50% + ${originX}px) calc(50% + ${originY}px)`;
-
+        // Hiện trang About khi người dùng chọn mục About ở sidebar Settings
+        function onAboutTabShown() {
             // Phủ lớp loading mỗi lần mở, trừ khi trang hiện tại đã tải xong từ trước
             if (clLoaded) {
                 clLoadingOverlay.classList.add('hidden');
@@ -4477,35 +4557,84 @@
             } else {
                 hideChangelogLoadError();
                 clLoadingOverlay.classList.remove('hidden');
-
                 // Quá 5 giây mà trang vẫn chưa tải xong -> báo lỗi kèm nút Gửi phản hồi
                 if (clLoadTimeoutId) clearTimeout(clLoadTimeoutId);
                 clLoadTimeoutId = setTimeout(() => {
                     if (!clLoaded) showChangelogLoadError();
                 }, 5000);
             }
-
-            clOverlay.classList.add('open');
-        });
+        }
 
         document.getElementById('cl-error-feedback-btn').addEventListener('click', () => {
-            clOverlay.classList.remove('open');
+            settingsCloseBtn.click();
             feedbackBtn.click();
         });
 
-        clCloseBtn.addEventListener('click', () => {
-            clOverlay.classList.remove('open');
-            // Đóng dialog thì tự quay về About, để lần mở sau luôn bắt đầu lại từ About
+        // --- SIDEBAR DANH MỤC CỦA SETTINGS ---
+        let currentSettingsTab = 'general';
+        function switchSettingsTab(key) {
+            currentSettingsTab = key;
+            document.querySelectorAll('.st-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === key));
+            document.querySelectorAll('.st-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === key));
+            const content = document.querySelector('.st-content');
+            if (content) content.scrollTop = 0;
+            if (key === 'about') onAboutTabShown();
+        }
+        document.querySelectorAll('.st-tab').forEach(t => t.addEventListener('click', () => switchSettingsTab(t.dataset.tab)));
+
+        // --- TÌM KIẾM TRONG SETTINGS ---
+        const stSearchInput = document.getElementById('st-search-input');
+        const stSearchBox = document.querySelector('.st-search');
+        const stBody = document.querySelector('.st-body');
+        function stNorm(str) { return removeVietnameseTones(String(str || '')).toLowerCase().trim(); }
+        function enterSettingsSearch() {
+            settingsDialog.classList.add('searching');
+            stBody.classList.add('searching');
+            runSettingsSearch();
+        }
+        function exitSettingsSearch() {
+            stSearchInput.value = '';
+            stSearchBox.classList.remove('has-text');
+            settingsDialog.classList.remove('searching');
+            stBody.classList.remove('searching', 'no-results');
+            document.querySelectorAll('.st-pane').forEach(p => p.classList.remove('no-match'));
+            document.querySelectorAll('.st-row-hidden').forEach(r => r.classList.remove('st-row-hidden'));
+            stSearchInput.blur();
+        }
+        function runSettingsSearch() {
+            const q = stNorm(stSearchInput.value);
+            stSearchBox.classList.toggle('has-text', stSearchInput.value.length > 0);
+            let total = 0;
+            document.querySelectorAll('.st-pane:not(.st-pane-about)').forEach(pane => {
+                const paneTitle = stNorm(pane.querySelector('.st-pane-title')?.textContent);
+                let shown = 0;
+                Array.from(pane.children).forEach(row => {
+                    if (row.classList.contains('st-pane-title')) return;
+                    // Khớp theo tên + mô tả của cài đặt, hoặc tên danh mục chứa nó
+                    const hit = !q || stNorm(row.textContent).includes(q) || paneTitle.includes(q);
+                    row.classList.toggle('st-row-hidden', !hit);
+                    if (hit) shown++;
+                });
+                pane.classList.toggle('no-match', shown === 0);
+                total += shown;
+            });
+            stBody.classList.toggle('no-results', total === 0);
+        }
+        stSearchInput.addEventListener('focus', enterSettingsSearch);
+        stSearchBox.addEventListener('click', () => { if (!settingsDialog.classList.contains('searching')) enterSettingsSearch(); });
+        stSearchInput.addEventListener('input', runSettingsSearch);
+        document.getElementById('st-search-clear').addEventListener('click', (e) => {
+            e.preventDefault(); stSearchInput.value = ''; runSettingsSearch(); stSearchInput.focus();
+        });
+        document.getElementById('st-search-back').addEventListener('click', exitSettingsSearch);
+        stSearchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); exitSettingsSearch(); } });
+
+        // Đóng Settings: quay về mục đầu và About quay lại trang chính để lần sau mở lại từ đầu
+        function resetSettingsNavigation() {
+            exitSettingsSearch();
             if (clPage !== 'about') clNavigateTo('about');
-            setTimeout(() => {
-                clBtn.classList.add('cl-bounce-anim');
-                setTimeout(() => clBtn.classList.remove('cl-bounce-anim'), 600);
-            }, 400); 
-        });
-        
-        clOverlay.addEventListener('click', (e) => {
-            if (e.target === clOverlay) clCloseBtn.click();
-        });
+            switchSettingsTab('general');
+        }
 
         // --- HỆ THỐNG PWA INSTALL ---
         let deferredPrompt;

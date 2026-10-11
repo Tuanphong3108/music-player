@@ -114,6 +114,13 @@ thumbnail.save_error=Xảy ra lỗi trong khi biên dịch thumbnail.
 
 ## --- Dialog Cài đặt ---
 settings.title=Cài đặt hệ thống
+settings.cat_general=Chung
+settings.cat_appearance=Giao diện
+settings.cat_lyrics=Lyric
+settings.cat_performance=Hiệu năng & hiệu ứng
+settings.search_title=Tìm kiếm cài đặt
+settings.search_placeholder=Tìm kiếm cài đặt...
+settings.search_empty=Không tìm thấy cài đặt nào phù hợp
 settings.language=Ngôn ngữ
 settings.language_desc=Đổi ngôn ngữ hiển thị của toàn bộ ứng dụng
 settings.lang_vi=Tiếng Việt

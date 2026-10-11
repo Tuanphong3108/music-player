@@ -114,6 +114,13 @@ thumbnail.save_error=An error occurred while building the thumbnail.
 
 ## --- Settings dialog ---
 settings.title=System settings
+settings.cat_general=General
+settings.cat_appearance=Appearance
+settings.cat_lyrics=Lyrics
+settings.cat_performance=Performance & effects
+settings.search_title=Search Settings
+settings.search_placeholder=Search settings...
+settings.search_empty=No matching settings found
 settings.language=Language
 settings.language_desc=Change the display language of the whole app
 settings.lang_vi=Tiếng Việt
