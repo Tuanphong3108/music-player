@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's New?</title>
+  
+  <!-- Google Sans Flex Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Áp dụng font Google Sans Flex và hiệu ứng mượt khi chuyển đổi màu sắc */
+    body {
+      font-family: 'Google Sans Flex', sans-serif;
+      transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Hiệu ứng chuyển màu mượt cho các phần tử con */
+    .theme-transition {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Tinh chỉnh thanh cuộn siêu thanh lịch */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(155, 155, 155, 0.2);
+      border-radius: 99px;
+    }
+  </style>
+</head>
+<body class="h-full w-full flex flex-col p-4 justify-start select-none overflow-y-auto">
+
+  <!-- CONTAINER CHÍNH -->
+  <div class="w-full max-w-md mx-auto flex flex-col gap-3">
+    
+    <!-- PHẦN ĐẦU: TIÊU ĐỀ PHIÊN BẢN -->
+    <header class="flex flex-col gap-1">
+      <h1 id="app-title-version" class="text-lg font-black tracking-tight flex flex-wrap items-baseline gap-1.5 theme-transition">
+        <!-- Nội dung Header sẽ được render động ở đây -->
+      </h1>
+    </header>
+
+    <!-- PHẦN DƯỚI: DANH SÁCH CHANGELOG -->
+    <main id="changelog-container" class="flex flex-col gap-2.5 pl-1">
+      <!-- Các dòng cập nhật sẽ được render động ở đây -->
+    </main>
+    
+  </div>
+
+  <script>
+// =========================================================================
+// ⬇️ BRO PHONG THAY ĐỔI TOÀN BỘ NỘI DUNG & MÀU SẮC TẠI ĐÂY LÀ OK ⬇️
+// =========================================================================
+const EMBED_CONFIG = {
+  appName: "Audio Player",
+  version: "v2026.10.09",
+  build: "build165002",
+
+  // Mặc định ban đầu khi chưa nhận tin nhắn
+  defaultTheme: "dark",
+  defaultLang: "vi",
+
+  // 🌌 DARK MODE
+  darkTheme: {
+    bg: "#0f111a",
+    mainTextColor: "#ffffff",
+    subTextColor: "rgba(255,255,255,0.8)",
+    buildBadgeBg: "rgba(255,255,255,0.1)"
+  },
+
+  // ☀️ LIGHT MODE
+  lightTheme: {
+    bg: "#f8f9fa",
+    mainTextColor: "#1a1a1a",
+    subTextColor: "rgba(0,0,0,0.7)",
+    buildBadgeBg: "rgba(0,0,0,0.05)"
+  },
+
+  changelogItems: [
+    "Thêm mục About",
+    "Thêm nút thay đổi tốc độ trình phát",
+    "Đã nâng cấp Shuffle thành Advanced Shuffle",
+    "Đánh số bài hát",
+    "Thêm ngôn ngữ tiếng Anh vào ứng dụng",
+    "Thêm tính năng luôn bật màn hình trong Full Screen Mode",
+    "Đã thêm màn hình chào mừng khi mở ứng dụng lần đầu tiên",
+    "Khi bật Shuffle thì Previous khi bấm sẽ về thời gian 0:00, bấm đúp để về bài trước đó",
+    "Thêm tính năng chuyển đổi nguồn phát âm thanh",
+    "+ Thêm tính năng thay màu chủ đạo dựa trên Album Art",
+    "+ PiP được đồng bộ màu chủ đạo",
+    "   (*) '+' = tính năng được thêm trong phiên bản này"
+  ],
+
+  changelogItems_en: [
+    "Added About section",
+    "Added playback speed control button",
+    "Upgraded Shuffle to Advanced Shuffle",
+    "Added song numbering",
+    "Added English language support",
+    "Added Keep Screen On feature in Full Screen Mode",
+    "Added welcome screen for first-time app launch",
+    "When Shuffle is on, clicking Previous resets track to 0:00; double-click goes to previous track",
+    "Added audio output source switching",
+    "+ Added accent color generation based on Album Art",
+    "+ Synced PiP with dynamic accent color",
+    "   (*) '+' = added feature in this version"
+  ],
+};
+// =========================================================================
+// ⬆️ HẾT PHẦN CẤU HÌNH CỦA BRO ⬆️
+// =========================================================================
+
+    // Biến lưu giữ theme và ngôn ngữ hiện tại
+    let currentTheme = EMBED_CONFIG.defaultTheme;
+    let currentLang = EMBED_CONFIG.defaultLang || "vi";
+
+    /**
+     * Render danh sách Changelog theo ngôn ngữ ("vi" hoặc "en")
+     */
+    function renderChangelog(lang) {
+      currentLang = (lang === 'en') ? 'en' : 'vi';
+      const activeTheme = currentTheme === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
+      const itemsToRender = (currentLang === 'en' && EMBED_CONFIG.changelogItems_en) 
+        ? EMBED_CONFIG.changelogItems_en 
+        : EMBED_CONFIG.changelogItems;
+
+      const container = document.getElementById('changelog-container');
+      if (!container) return;
+      container.innerHTML = ''; 
+
+      itemsToRender.forEach(item => {
+        const itemParagraph = document.createElement('p');
+        itemParagraph.className = 'changelog-item text-sm leading-relaxed font-semibold theme-transition';
+        itemParagraph.style.color = activeTheme.subTextColor;
+        itemParagraph.innerText = item;
+        container.appendChild(itemParagraph);
+      });
+    }
+
+    /**
+     * Hàm dùng để cập nhật màu sắc hiển thị dựa trên cấu hình màu tương ứng của theme
+     */
+    function applyThemeStyles(themeName) {
+      currentTheme = themeName;
+      const theme = themeName === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
+
+      // 1. Áp dụng cho Body (Nền & Màu chữ mặc định)
+      document.body.style.backgroundColor = theme.bg;
+      document.body.style.color = theme.subTextColor;
+
+      // 2. Áp dụng cho tên App
+      const appNameSpan = document.getElementById('app-name-text');
+      if (appNameSpan) {
+        appNameSpan.style.color = theme.mainTextColor;
+      }
+
+      // 3. Áp dụng cho Nhãn Build (Build Badge)
+      const buildBadge = document.getElementById('build-badge');
+      if (buildBadge) {
+        buildBadge.style.backgroundColor = theme.buildBadgeBg;
+        buildBadge.style.color = theme.mainTextColor;
+      }
+
+      // 4. Áp dụng cho các dòng Changelog
+      const items = document.querySelectorAll('.changelog-item');
+      items.forEach(item => {
+        item.style.color = theme.subTextColor;
+      });
+    }
+
+    /**
+     * Khởi tạo và kết xuất cấu trúc DOM tĩnh dựa trên cấu hình
+     */
+    function initEmbed() {
+      const activeTheme = currentTheme === "light" ? EMBED_CONFIG.lightTheme : EMBED_CONFIG.darkTheme;
+
+      // 1. Khởi tạo cấu trúc Tiêu đề & Phiên bản
+      const headerTitle = document.getElementById('app-title-version');
+      headerTitle.innerHTML = `
+        <span id="app-name-text" class="theme-transition" style="color: ${activeTheme.mainTextColor}">${EMBED_CONFIG.appName}</span> 
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-bold">${EMBED_CONFIG.version}</span>
+        <span id="build-badge" class="text-[10px] px-2 py-0.5 rounded-md font-mono theme-transition" 
+              style="background-color: ${activeTheme.buildBadgeBg}; color: ${activeTheme.mainTextColor}; opacity: 0.85;">
+          ${EMBED_CONFIG.build}
+        </span>
+      `;
+
+      // 2. Khởi tạo danh sách Changelog ban đầu
+      renderChangelog(currentLang);
+
+      // 3. Thực thi áp dụng màu ban đầu
+      applyThemeStyles(currentTheme);
+    }
+
+    // LẮNG NGHE SỰ KIỆN POSTMESSAGE TỪ TRANG CHA HOẶC IFRAME CONTAINER
+    window.addEventListener('message', (event) => {
+      const data = event.data;
+      if (!data) return;
+
+      // 1. Cập nhật Theme nếu nhận "dark" / "light" hoặc { theme: "..." }
+      if (data === 'dark' || data.theme === 'dark') {
+        applyThemeStyles('dark');
+      } else if (data === 'light' || data.theme === 'light') {
+        applyThemeStyles('light');
+      }
+
+      // 2. Cập nhật Ngôn ngữ nếu nhận "vi" / "en" hoặc { lang: "..." } / { language: "..." }
+      if (data === 'vi' || data.lang === 'vi' || data.language === 'vi') {
+        renderChangelog('vi');
+      } else if (data === 'en' || data.lang === 'en' || data.language === 'en') {
+        renderChangelog('en');
+      }
+    });
+
+    // Thực thi render ngay khi tải trang xong
+    window.onload = initEmbed;
+  </script>
+</body>
+</html>
