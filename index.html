@@ -815,6 +815,72 @@
         }
         #confirm-dialog::part(scrim) { background: #000; }
 
+        /* ===== Hẹn giờ tạm dừng ===== */
+        #sleep-btn { position: relative; display:flex; align-items:center; justify-content:center; }
+        #sleep-btn.sleep-active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        #sleep-badge { display:none; margin-left:4px; font-size:12px; font-weight:700; font-family:'Google Sans Flex',sans-serif; }
+        #sleep-btn.sleep-active #sleep-badge { display:inline; }
+        #sleep-menu {
+            --md-ref-typeface-plain: 'Google Sans Flex', sans-serif;
+            --md-menu-container-color: var(--md-sys-color-surface-variant);
+            --md-menu-container-shape: 16px;
+            --md-menu-item-container-color: transparent;
+            --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
+            --md-menu-item-selected-container-color: var(--md-sys-color-primary-container);
+            --md-menu-item-selected-label-text-color: var(--md-sys-color-on-primary-container);
+            --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
+            --md-menu-item-focus-state-layer-color: var(--md-sys-color-primary);
+            --md-menu-item-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-menu-item-label-text-weight: 600;
+            --md-menu-item-selected-label-text-weight: 700;
+            font-family: 'Google Sans Flex', sans-serif;
+        }
+        #sleep-dialog {
+            --md-ref-typeface-plain: 'Google Sans Flex', sans-serif;
+            --md-ref-typeface-brand: 'Google Sans Flex', sans-serif;
+            --md-dialog-container-color: var(--md-sys-color-surface);
+            --md-dialog-container-shape: 24px;
+            --md-dialog-headline-color: var(--md-sys-color-on-surface);
+            --md-dialog-supporting-text-color: var(--md-sys-color-on-surface-variant);
+            --md-dialog-headline-font: 'Google Sans Flex', sans-serif;
+            --md-dialog-headline-weight: 700;
+            --md-dialog-supporting-text-font: 'Google Sans Flex', sans-serif;
+            --md-dialog-supporting-text-size: 15px;
+            --md-text-button-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-text-button-label-text-color: var(--md-sys-color-primary);
+            --md-text-button-hover-label-text-color: var(--md-sys-color-primary);
+            --md-text-button-focus-label-text-color: var(--md-sys-color-primary);
+            --md-text-button-pressed-label-text-color: var(--md-sys-color-primary);
+            --md-filled-button-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-filled-button-container-color: var(--md-sys-color-primary);
+            --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
+            --md-filled-button-hover-label-text-color: var(--md-sys-color-on-primary);
+            --md-filled-button-focus-label-text-color: var(--md-sys-color-on-primary);
+            --md-filled-button-pressed-label-text-color: var(--md-sys-color-on-primary);
+            --md-radio-icon-color: var(--md-sys-color-outline);
+            --md-radio-selected-icon-color: var(--md-sys-color-primary);
+            --md-radio-selected-hover-icon-color: var(--md-sys-color-primary);
+            --md-radio-selected-focus-icon-color: var(--md-sys-color-primary);
+            --md-radio-selected-pressed-icon-color: var(--md-sys-color-primary);
+            --md-outlined-text-field-input-text-font: 'Google Sans Flex', sans-serif;
+            --md-outlined-text-field-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-outlined-text-field-supporting-text-font: 'Google Sans Flex', sans-serif;
+            --md-outlined-text-field-container-shape: 16px;
+            --md-outlined-text-field-outline-color: var(--md-sys-color-outline);
+            --md-outlined-text-field-hover-outline-color: var(--md-sys-color-primary);
+            --md-outlined-text-field-focus-outline-color: var(--md-sys-color-primary);
+            --md-outlined-text-field-input-text-color: var(--md-sys-color-on-surface);
+            --md-outlined-text-field-caret-color: var(--md-sys-color-primary);
+            --md-outlined-text-field-input-text-placeholder-color: var(--md-sys-color-on-surface-variant);
+            font-family: 'Google Sans Flex', sans-serif;
+            color: var(--md-sys-color-on-surface);
+        }
+        #sleep-dialog::part(scrim) { background: #000; }
+        #sleep-dialog .sleep-radios { display:flex; gap:20px; margin-bottom:16px; flex-wrap:wrap; }
+        #sleep-dialog .sleep-radios label { display:flex; align-items:center; gap:4px; cursor:pointer; font-weight:600; font-size:15px; color: var(--md-sys-color-on-surface); }
+        #sleep-dialog .sleep-label { font-size:14px; font-weight:600; margin-bottom:8px; color: var(--md-sys-color-on-surface); }
+        #sleep-input { width:100%; }
+
         /* ===== Settings: sidebar danh mục + nội dung bên phải ===== */
         .st-body { flex: 1; display: flex; min-height: 0; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); }
         .st-sidebar {
@@ -894,6 +960,22 @@
         <div slot="actions">
             <md-text-button id="confirm-dialog-cancel" data-i18n="misc.cancel">Huỷ</md-text-button>
             <md-filled-button id="confirm-dialog-ok" data-i18n="misc.confirm">Xác nhận</md-filled-button>
+        </div>
+    </md-dialog>
+
+    <md-dialog id="sleep-dialog" style="max-width:min(92vw,420px); font-family:'Google Sans Flex',sans-serif;">
+        <div slot="headline" data-i18n="sleep.title">Hẹn giờ tạm dừng</div>
+        <form slot="content" id="sleep-form" method="dialog">
+            <div class="sleep-radios">
+                <label><md-radio name="sleep-type" value="time" checked></md-radio><span data-i18n="sleep.type_time">Thời gian</span></label>
+                <label><md-radio name="sleep-type" value="tracks"></md-radio><span data-i18n="sleep.type_tracks">Số bài</span></label>
+            </div>
+            <div class="sleep-label" id="sleep-field-label">Hãy nhập thời gian:</div>
+            <md-outlined-text-field id="sleep-input" type="number" min="1" step="any" placeholder="Nhập số phút..."></md-outlined-text-field>
+        </form>
+        <div slot="actions">
+            <md-text-button id="sleep-cancel" data-i18n="misc.cancel">Huỷ</md-text-button>
+            <md-filled-button id="sleep-ok" data-i18n="sleep.set">Đặt hẹn giờ</md-filled-button>
         </div>
     </md-dialog>
 
@@ -1332,7 +1414,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.10.11-build075756</span>
+                <span>AUDIOPLAYER V2026.10.12-build213730</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1347,6 +1429,20 @@
                         <span class="material-symbols-outlined" style="font-size:16px;">keyboard_arrow_down</span>
                     </button>
                     <md-menu id="output-device-menu" anchor="output-device-btn"></md-menu>
+                </div>
+                <div style="position:relative;">
+                    <button class="btn-m3" id="sleep-btn" title="Hẹn giờ tạm dừng" data-i18n-title="sleep.title" style="width:auto; padding:0 8px;">
+                        <span class="material-symbols-outlined" style="font-size:20px;">timer</span><span id="sleep-badge"></span>
+                    </button>
+                    <md-menu id="sleep-menu" anchor="sleep-btn">
+                        <md-menu-item data-sleep="off"><div slot="headline" data-i18n="sleep.off">Không</div></md-menu-item>
+                        <md-menu-item data-sleep="15"><div slot="headline" data-i18n="sleep.m15">15 phút</div></md-menu-item>
+                        <md-menu-item data-sleep="30"><div slot="headline" data-i18n="sleep.m30">30 phút</div></md-menu-item>
+                        <md-menu-item data-sleep="45"><div slot="headline" data-i18n="sleep.m45">45 phút</div></md-menu-item>
+                        <md-menu-item data-sleep="60"><div slot="headline" data-i18n="sleep.h1">1 tiếng</div></md-menu-item>
+                        <md-menu-item data-sleep="120"><div slot="headline" data-i18n="sleep.h2">2 tiếng</div></md-menu-item>
+                        <md-menu-item data-sleep="custom"><div slot="headline" data-i18n="sleep.custom">Tùy chỉnh...</div></md-menu-item>
+                    </md-menu>
                 </div>
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
@@ -3339,6 +3435,7 @@
         });
 
         document.getElementById('repeat-btn').addEventListener('click', function() {
+            if (repeatLockSaved !== null) return; // đang khoá lặp 1 bài vì mở editor
             repeatMode = (repeatMode + 1) % 3;
             this.classList.toggle('active', repeatMode > 0);
             this.classList.toggle('repeat-one', repeatMode === 2);
@@ -3383,6 +3480,10 @@
         audio.addEventListener('playing', () => setPlayBtnLoading(false));
 
         audio.addEventListener('ended', () => {
+            if (sleepState && sleepState.type === 'tracks') {
+                if (--sleepState.remaining <= 0) { fireSleep(); return; }
+                updateSleepUI();
+            }
             if (repeatMode === 2) { audio.play(); return; }
             if (repeatMode === 1) { document.getElementById('next-btn').click(); return; }
             // Không lặp: chỉ tự next nếu chưa phải bài cuối cùng trong danh sách đang phát
@@ -3630,6 +3731,139 @@
                     outputDeviceMenu.appendChild(createItem(d.deviceId, d.label || ('Speaker ' + d.deviceId.slice(0, 6)), savedSinkId === d.deviceId));
                 });
         }
+
+
+        // ===== Tạm thời lặp 1 bài khi mở Metadata/Thumbnail editor (tránh lỗi đổi bài giữa chừng) =====
+        let repeatLockSaved = null;
+        function applyRepeatUI() {
+            const b = document.getElementById('repeat-btn');
+            b.classList.toggle('active', repeatMode > 0);
+            b.classList.toggle('repeat-one', repeatMode === 2);
+            b.querySelector('.repeat-badge').innerText = repeatMode === 2 ? '1' : '';
+            if (typeof updatePiPUI === 'function') updatePiPUI();
+        }
+        function isEditorOpen() {
+            const ifr = document.getElementById('metadata-iframe');
+            if (ifr && ifr.style.right && ifr.style.right !== '-100vw') return true;
+            return ['thumbnail-editor-modal', 'crop-rotate-modal', 'save-thumb-confirm-modal']
+                .some(id => { const el = document.getElementById(id); return el && el.classList.contains('open'); });
+        }
+        function syncRepeatLock() {
+            const open = isEditorOpen();
+            if (open && repeatLockSaved === null) {
+                repeatLockSaved = repeatMode;
+                if (repeatMode !== 2) {
+                    repeatMode = 2; applyRepeatUI();
+                    showToast(currentLangDict['toast.repeat_locked'] || 'Đang chỉnh sửa: tạm thời lặp lại 1 bài', 'repeat_one', 4000);
+                }
+            } else if (!open && repeatLockSaved !== null) {
+                const prev = repeatLockSaved; repeatLockSaved = null;
+                if (repeatMode !== prev) {
+                    repeatMode = prev; applyRepeatUI();
+                    showToast(currentLangDict['toast.repeat_restored'] || 'Đã khôi phục chế độ lặp trước đó', 'repeat', 4000);
+                }
+            }
+        }
+        {
+            const mo = new MutationObserver(syncRepeatLock);
+            ['metadata-iframe', 'thumbnail-editor-modal', 'crop-rotate-modal', 'save-thumb-confirm-modal'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) mo.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+            });
+        }
+
+        // ===== Hẹn giờ tạm dừng =====
+        const sleepBtn = document.getElementById('sleep-btn');
+        const sleepMenu = document.getElementById('sleep-menu');
+        const sleepBadge = document.getElementById('sleep-badge');
+        const sleepDialog = document.getElementById('sleep-dialog');
+        const sleepInput = document.getElementById('sleep-input');
+        let sleepState = null, sleepTick = null;
+        const slT = (k, f) => currentLangDict[k] || f;
+        const fmtN = n => String(Math.round(n * 100) / 100);
+
+        function updateSleepUI() {
+            sleepBtn.classList.toggle('sleep-active', !!sleepState);
+            if (!sleepState) { sleepBadge.textContent = ''; return; }
+            if (sleepState.type === 'time') {
+                const m = Math.max(1, Math.ceil((sleepState.endAt - Date.now()) / 60000));
+                sleepBadge.textContent = m + (currentLangDict['sleep.unit_min'] || 'p');
+            } else sleepBadge.textContent = sleepState.remaining + (currentLangDict['sleep.unit_track'] || ' bài');
+        }
+        function clearSleep() { sleepState = null; clearInterval(sleepTick); sleepTick = null; updateSleepUI(); }
+        function fireSleep() {
+            clearSleep();
+            try { audio.pause(); } catch (e) {}
+            showToast(slT('toast.sleep_fired', 'Đã tạm dừng theo hẹn giờ'), 'bedtime', 6000);
+        }
+        function setSleepTime(min, preset) {
+            clearSleep();
+            sleepState = { type: 'time', endAt: Date.now() + min * 60000, preset: preset || 'custom' };
+            sleepTick = setInterval(() => {
+                if (!sleepState) return;
+                if (Date.now() >= sleepState.endAt) fireSleep(); else updateSleepUI();
+            }, 1000);
+            updateSleepUI();
+            showToast(slT('toast.sleep_time_set', 'Sẽ tạm dừng sau {n} phút').replace('{n}', fmtN(min)), 'timer', 4000);
+        }
+        function setSleepTracks(n) {
+            clearSleep();
+            sleepState = { type: 'tracks', remaining: n, preset: 'custom' };
+            updateSleepUI();
+            showToast(slT('toast.sleep_tracks_set', 'Sẽ tạm dừng sau {n} bài').replace('{n}', n), 'timer', 4000);
+        }
+        function sleepDialogSync() {
+            const isTracks = Array.from(document.querySelectorAll('#sleep-dialog md-radio')).find(r => r.checked)?.value === 'tracks';
+            document.getElementById('sleep-field-label').textContent = isTracks
+                ? slT('sleep.label_tracks', 'Nhập số bài sau khi phát sẽ tạm dừng:') : slT('sleep.label_time', 'Hãy nhập thời gian:');
+            sleepInput.placeholder = isTracks
+                ? slT('sleep.ph_tracks', 'Nhập số tự nhiên khác 0...') : slT('sleep.ph_time', 'Nhập số phút...');
+            sleepInput.step = isTracks ? '1' : 'any';
+            sleepInput.error = false; sleepInput.errorText = '';
+            sleepInput.value = '';
+        }
+        document.querySelectorAll('#sleep-dialog md-radio').forEach(r => r.addEventListener('change', sleepDialogSync));
+        function submitSleepDialog() {
+            const isTracks = Array.from(document.querySelectorAll('#sleep-dialog md-radio')).find(r => r.checked)?.value === 'tracks';
+            const raw = String(sleepInput.value).trim();
+            const num = Number(raw);
+            let ok = raw !== '' && isFinite(num) && num > 0;
+            if (isTracks) ok = ok && /^\d+$/.test(raw);
+            if (!ok) {
+                sleepInput.error = true;
+                sleepInput.errorText = isTracks ? slT('sleep.err_tracks', 'Hãy nhập số tự nhiên khác 0') : slT('sleep.err_time', 'Hãy nhập số phút lớn hơn 0');
+                return;
+            }
+            sleepDialog.close();
+            if (isTracks) setSleepTracks(num); else setSleepTime(num, 'custom');
+        }
+        document.getElementById('sleep-ok').addEventListener('click', submitSleepDialog);
+        document.getElementById('sleep-cancel').addEventListener('click', () => sleepDialog.close());
+        sleepInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submitSleepDialog(); } });
+        document.getElementById('sleep-form').addEventListener('submit', e => e.preventDefault());
+
+        sleepMenu.querySelectorAll('md-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const v = item.dataset.sleep;
+                if (v === 'off') {
+                    if (sleepState) { clearSleep(); showToast(slT('toast.sleep_off', 'Đã tắt hẹn giờ tạm dừng'), 'timer_off', 3500); }
+                } else if (v === 'custom') {
+                    sleepDialogSync();
+                    const first = document.querySelector('#sleep-dialog md-radio[value="time"]'); if (first) first.checked = true;
+                    sleepDialogSync();
+                    sleepDialog.show();
+                    setTimeout(() => { try { sleepInput.focus(); } catch (e) {} }, 300);
+                } else setSleepTime(parseInt(v, 10), v);
+            });
+        });
+        sleepBtn.addEventListener('click', () => {
+            sleepMenu.querySelectorAll('md-menu-item').forEach(item => {
+                const v = item.dataset.sleep;
+                const sel = sleepState ? (v === sleepState.preset) : v === 'off';
+                item.toggleAttribute('selected', sel);
+            });
+            sleepMenu.open = !sleepMenu.open;
+        });
 
         outputDeviceBtn.addEventListener('click', async () => {
             await populateOutputDeviceMenu();
@@ -5754,7 +5988,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.11-build075756';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.12-build213730';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'
