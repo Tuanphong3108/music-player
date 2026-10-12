@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'audio-player-';
-const CACHE_VERSION = 'v2026_10_11_1';
+const CACHE_VERSION = 'v2026_10_12_213730';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 

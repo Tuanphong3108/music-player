@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-12",
+  "vi": [
+    {
+      "content": "Đã thêm nút hẹn giờ với các mốc thời gian có sẵn và tùy chỉnh",
+      "icon": "timer"
+    },
+    {
+      "content": "Tạm thời bật Repeat 1 bài khi mở Metadata Editor để tránh khi đè nhầm file",
+      "icon": "repeat_one"
+    }
+  ],
+  "en": [
+    {
+      "content": "Added a sleep timer button with preset and custom options",
+      "icon": "timer"
+    },
+    {
+      "content": "Temporarily enable Repeat 1 track while the Metadata Editor is open to avoid overwriting the wrong file",
+      "icon": "repeat_one"
+    }
+  ]
+}
