@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-13",
+  "vi": [
+    {
+      "content": "Thêm thanh trượt tùy chỉnh kích thước giao diện và chữ từ 50% đến 200%",
+      "icon": "zoom_in"
+    },
+    {
+      "content": "Thêm Dropdown đổi phông chữ với 21 phông phổ biến (Google Sans Flex là mặc định)",
+      "icon": "font_download"
+    },
+    {
+      "content": "Phông chữ được áp dụng cho cả PiP, About và Changelog",
+      "icon": "text_fields"
+    }
+  ],
+  "en": [
+    {
+      "content": "Added a slider to scale the interface and text from 50% to 200%",
+      "icon": "zoom_in"
+    },
+    {
+      "content": "Added a font dropdown with 21 popular fonts (Google Sans Flex is the default)",
+      "icon": "font_download"
+    },
+    {
+      "content": "The chosen font also applies to PiP, About and Changelog",
+      "icon": "text_fields"
+    }
+  ]
+}

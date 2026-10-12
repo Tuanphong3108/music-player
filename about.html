@@ -744,9 +744,24 @@ SOFTWARE.</pre>
             r.setProperty('--m3-surface-container-highest', 'color-mix(in srgb, ' + p.surface + ', ' + p.onSurface + ' 15%)');
         }
 
+
+        // Phông chữ do app cha gửi sang qua postMessage: { font: { name, stack, href } }
+        function applyAppFont(f) {
+            if (!f || !f.stack) return;
+            var link = document.getElementById('app-font-link');
+            if (f.href) {
+                if (!link) { link = document.createElement('link'); link.id = 'app-font-link'; link.rel = 'stylesheet'; document.head.appendChild(link); }
+                if (link.getAttribute('href') !== f.href) link.setAttribute('href', f.href);
+            } else if (link) link.remove();
+            var st = document.getElementById('app-font-style');
+            if (!st) { st = document.createElement('style'); st.id = 'app-font-style'; document.head.appendChild(st); }
+            st.textContent = ':root{--md-ref-typeface-plain:' + f.stack + ';--md-ref-typeface-brand:' + f.stack + '}'
+                + 'body,body *:not(.material-symbols-outlined):not(.ms):not(code):not(pre):not(kbd){font-family:' + f.stack + ' !important}';
+        }
         // PostMessage Event Listener
         window.addEventListener('message', (event) => {
             const data = event.data;
+            if (data && typeof data === 'object' && data.font) { applyAppFont(data.font); return; }
             // Bảng màu chủ đạo (kể cả màu động theo Album Art) do app cha gửi sang
             if (data && typeof data === 'object' && data.palette) { applyPalette(data.palette); return; }
             const msg = typeof data === 'string' ? data : (data?.theme || data?.lang || data?.type);

@@ -31,6 +31,10 @@
 
         /* --- THEME ADAPTIVE (LIGHT/DARK) --- */
         :root {
+            --app-font: 'Google Sans Flex', sans-serif;
+            --ui-scale: 1;
+            --vw: calc(100vw / var(--ui-scale));
+            --vh: calc(100vh / var(--ui-scale));
             /* Default Dark Mode colors */
             --md-sys-color-primary: #D0BCFF;
             --md-sys-color-on-primary: #381E72;
@@ -152,10 +156,11 @@
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
+        html { zoom: var(--ui-scale); }
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);
-            font-family: 'Google Sans Flex', sans-serif; overflow: hidden;
+            font-family: var(--app-font); overflow: hidden;
             user-select: none;
         }
 
@@ -197,7 +202,7 @@
         .cm-item.danger { color: var(--md-sys-color-error); }
 
         .app-container {
-            display: flex; flex-direction: column; height: 100vh;
+            display: flex; flex-direction: column; height: var(--vh);
             max-width: 1400px; margin: 0 auto; padding: 16px; gap: 12px;
             position: relative;
         }
@@ -314,8 +319,8 @@
         body.fullscreen-active .top-bar { display: none !important; }
         body.fullscreen-active .visual-stage {
             border-radius: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
+            width: var(--vw) !important;
+            height: var(--vh) !important;
             position: fixed !important;
             inset: 0 !important;
             z-index: 1500 !important;
@@ -326,7 +331,7 @@
             bottom: 24px !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
-            width: calc(100vw - 64px) !important;
+            width: calc(var(--vw) - 64px) !important;
             max-width: 1000px !important;
             z-index: 1600 !important;
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s !important;
@@ -580,7 +585,7 @@
             border: none; display: flex; align-items: center; justify-content: center; gap: 8px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.4); cursor: pointer; z-index: 2000;
             transition: bottom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s;
-            font-family: 'Google Sans Flex', sans-serif; font-weight: 700; font-size: 16px;
+            font-family: var(--app-font); font-weight: 700; font-size: 16px;
         }
         .reorder-done-btn:hover { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); transform: translateX(-50%) scale(1.05); }
         .reorder-done-btn:active { transform: translateX(-50%) scale(0.95); }
@@ -711,16 +716,16 @@
     
         /* ===== Dropdown: Material Web (md-outlined-select / md-menu) khớp màu chủ đạo + sáng/tối ===== */
         .m3-select, #output-device-menu {
-            --md-ref-typeface-plain: 'Google Sans Flex', sans-serif;
-            --md-ref-typeface-brand: 'Google Sans Flex', sans-serif;
-            --md-sys-typescale-body-large-font: 'Google Sans Flex', sans-serif;
-            --md-sys-typescale-label-large-font: 'Google Sans Flex', sans-serif;
-            font-family: 'Google Sans Flex', sans-serif;
+            --md-ref-typeface-plain: var(--app-font);
+            --md-ref-typeface-brand: var(--app-font);
+            --md-sys-typescale-body-large-font: var(--app-font);
+            --md-sys-typescale-label-large-font: var(--app-font);
+            font-family: var(--app-font);
         }
         .m3-select {
             width: auto; min-width: 0;
-            --md-outlined-select-text-field-input-text-font: 'Google Sans Flex', sans-serif;
-            --md-menu-item-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-outlined-select-text-field-input-text-font: var(--app-font);
+            --md-menu-item-label-text-font: var(--app-font);
             --md-outlined-select-text-field-container-shape: 16px;
             --md-outlined-select-text-field-outline-color: var(--md-sys-color-outline);
             --md-outlined-select-text-field-focus-outline-color: var(--md-sys-color-primary);
@@ -739,12 +744,12 @@
             --md-menu-item-one-line-container-height: 44px;
             --md-menu-item-top-space: 8px;
             --md-menu-item-bottom-space: 8px;
-            --md-menu-item-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-menu-item-label-text-font: var(--app-font);
             --md-menu-item-label-text-weight: 600;
             --md-menu-item-selected-label-text-weight: 700;
         }
         .m3-select md-select-option, #output-device-menu md-menu-item {
-            width: max-content; max-width: calc(54ch + 76px); font-family: 'Google Sans Flex', sans-serif;
+            width: max-content; max-width: calc(54ch + 76px); font-family: var(--app-font);
             --md-menu-item-one-line-container-height: 44px;
         }
         .m3-select md-select-option [slot="headline"], #output-device-menu [slot="headline"] {
@@ -759,7 +764,7 @@
             --md-menu-item-selected-label-text-color: var(--md-sys-color-on-primary-container);
             --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
             --md-menu-item-focus-state-layer-color: var(--md-sys-color-primary);
-            --md-menu-item-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-menu-item-label-text-font: var(--app-font);
             --md-menu-item-label-text-weight: 600;
             --md-menu-item-selected-label-text-weight: 700;
             max-width: calc(54ch + 76px);
@@ -770,7 +775,7 @@
             position: fixed; inset: auto; left: 50%; bottom: 28px; margin: 0; border: none;
             padding: 10px 8px 10px 18px; border-radius: 16px; max-width: min(92vw, 520px);
             background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
-            font-family: 'Google Sans Flex', sans-serif; font-size: 14px; font-weight: 600;
+            font-family: var(--app-font); font-size: 14px; font-weight: 600;
             box-shadow: 0 8px 28px rgba(0,0,0,.4);
             overflow: visible; align-items: center; gap: 8px;
             opacity: 0; transform: translateX(-50%) scale(.85);
@@ -789,28 +794,28 @@
 
         /* ===== md-dialog xác nhận: khớp theme app + Google Sans Flex ===== */
         #confirm-dialog {
-            --md-ref-typeface-plain: 'Google Sans Flex', sans-serif;
-            --md-ref-typeface-brand: 'Google Sans Flex', sans-serif;
+            --md-ref-typeface-plain: var(--app-font);
+            --md-ref-typeface-brand: var(--app-font);
             --md-dialog-container-color: var(--md-sys-color-surface);
             --md-dialog-container-shape: 24px;
             --md-dialog-headline-color: var(--md-sys-color-on-surface);
             --md-dialog-supporting-text-color: var(--md-sys-color-on-surface-variant);
-            --md-dialog-headline-font: 'Google Sans Flex', sans-serif;
+            --md-dialog-headline-font: var(--app-font);
             --md-dialog-headline-weight: 700;
-            --md-dialog-supporting-text-font: 'Google Sans Flex', sans-serif;
+            --md-dialog-supporting-text-font: var(--app-font);
             --md-dialog-supporting-text-size: 15px;
-            --md-text-button-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-text-button-label-text-font: var(--app-font);
             --md-text-button-label-text-color: var(--md-sys-color-primary);
             --md-text-button-hover-label-text-color: var(--md-sys-color-primary);
             --md-text-button-focus-label-text-color: var(--md-sys-color-primary);
             --md-text-button-pressed-label-text-color: var(--md-sys-color-primary);
-            --md-filled-button-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-filled-button-label-text-font: var(--app-font);
             --md-filled-button-container-color: var(--md-sys-color-primary);
             --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
             --md-filled-button-hover-label-text-color: var(--md-sys-color-on-primary);
             --md-filled-button-focus-label-text-color: var(--md-sys-color-on-primary);
             --md-filled-button-pressed-label-text-color: var(--md-sys-color-on-primary);
-            font-family: 'Google Sans Flex', sans-serif;
+            font-family: var(--app-font);
             color: var(--md-sys-color-on-surface);
         }
         #confirm-dialog::part(scrim) { background: #000; }
@@ -818,10 +823,10 @@
         /* ===== Hẹn giờ tạm dừng ===== */
         #sleep-btn { position: relative; display:flex; align-items:center; justify-content:center; }
         #sleep-btn.sleep-active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
-        #sleep-badge { display:none; margin-left:4px; font-size:12px; font-weight:700; font-family:'Google Sans Flex',sans-serif; }
+        #sleep-badge { display:none; margin-left:4px; font-size:12px; font-weight:700; font-family:var(--app-font); }
         #sleep-btn.sleep-active #sleep-badge { display:inline; }
         #sleep-menu {
-            --md-ref-typeface-plain: 'Google Sans Flex', sans-serif;
+            --md-ref-typeface-plain: var(--app-font);
             --md-menu-container-color: var(--md-sys-color-surface-variant);
             --md-menu-container-shape: 16px;
             --md-menu-item-container-color: transparent;
@@ -830,28 +835,28 @@
             --md-menu-item-selected-label-text-color: var(--md-sys-color-on-primary-container);
             --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
             --md-menu-item-focus-state-layer-color: var(--md-sys-color-primary);
-            --md-menu-item-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-menu-item-label-text-font: var(--app-font);
             --md-menu-item-label-text-weight: 600;
             --md-menu-item-selected-label-text-weight: 700;
-            font-family: 'Google Sans Flex', sans-serif;
+            font-family: var(--app-font);
         }
         #sleep-dialog {
-            --md-ref-typeface-plain: 'Google Sans Flex', sans-serif;
-            --md-ref-typeface-brand: 'Google Sans Flex', sans-serif;
+            --md-ref-typeface-plain: var(--app-font);
+            --md-ref-typeface-brand: var(--app-font);
             --md-dialog-container-color: var(--md-sys-color-surface);
             --md-dialog-container-shape: 24px;
             --md-dialog-headline-color: var(--md-sys-color-on-surface);
             --md-dialog-supporting-text-color: var(--md-sys-color-on-surface-variant);
-            --md-dialog-headline-font: 'Google Sans Flex', sans-serif;
+            --md-dialog-headline-font: var(--app-font);
             --md-dialog-headline-weight: 700;
-            --md-dialog-supporting-text-font: 'Google Sans Flex', sans-serif;
+            --md-dialog-supporting-text-font: var(--app-font);
             --md-dialog-supporting-text-size: 15px;
-            --md-text-button-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-text-button-label-text-font: var(--app-font);
             --md-text-button-label-text-color: var(--md-sys-color-primary);
             --md-text-button-hover-label-text-color: var(--md-sys-color-primary);
             --md-text-button-focus-label-text-color: var(--md-sys-color-primary);
             --md-text-button-pressed-label-text-color: var(--md-sys-color-primary);
-            --md-filled-button-label-text-font: 'Google Sans Flex', sans-serif;
+            --md-filled-button-label-text-font: var(--app-font);
             --md-filled-button-container-color: var(--md-sys-color-primary);
             --md-filled-button-label-text-color: var(--md-sys-color-on-primary);
             --md-filled-button-hover-label-text-color: var(--md-sys-color-on-primary);
@@ -862,9 +867,9 @@
             --md-radio-selected-hover-icon-color: var(--md-sys-color-primary);
             --md-radio-selected-focus-icon-color: var(--md-sys-color-primary);
             --md-radio-selected-pressed-icon-color: var(--md-sys-color-primary);
-            --md-outlined-text-field-input-text-font: 'Google Sans Flex', sans-serif;
-            --md-outlined-text-field-label-text-font: 'Google Sans Flex', sans-serif;
-            --md-outlined-text-field-supporting-text-font: 'Google Sans Flex', sans-serif;
+            --md-outlined-text-field-input-text-font: var(--app-font);
+            --md-outlined-text-field-label-text-font: var(--app-font);
+            --md-outlined-text-field-supporting-text-font: var(--app-font);
             --md-outlined-text-field-container-shape: 16px;
             --md-outlined-text-field-outline-color: var(--md-sys-color-outline);
             --md-outlined-text-field-hover-outline-color: var(--md-sys-color-primary);
@@ -872,7 +877,7 @@
             --md-outlined-text-field-input-text-color: var(--md-sys-color-on-surface);
             --md-outlined-text-field-caret-color: var(--md-sys-color-primary);
             --md-outlined-text-field-input-text-placeholder-color: var(--md-sys-color-on-surface-variant);
-            font-family: 'Google Sans Flex', sans-serif;
+            font-family: var(--app-font);
             color: var(--md-sys-color-on-surface);
         }
         #sleep-dialog::part(scrim) { background: #000; }
@@ -890,7 +895,7 @@
         .st-tab {
             display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 18px; border: none; cursor: pointer;
             border-radius: 28px; background: transparent; color: var(--md-sys-color-on-surface);
-            font-family: 'Google Sans Flex', sans-serif; font-size: 15px; font-weight: 600; text-align: left;
+            font-family: var(--app-font); font-size: 15px; font-weight: 600; text-align: left;
             transition: background .2s, color .2s;
         }
         .st-tab:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent); }
@@ -900,7 +905,7 @@
         .st-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
         .st-pane { display: none; flex-direction: column; gap: 32px; padding: 32px 6%; }
         .st-pane.active { display: flex; }
-        .st-pane-title { margin: 0; font-size: 22px; font-weight: 700; font-family: 'Google Sans Flex', sans-serif; }
+        .st-pane-title { margin: 0; font-size: 22px; font-weight: 700; font-family: var(--app-font); }
         .st-pane > div:last-child { border-bottom: none !important; padding-bottom: 0 !important; }
         .st-pane-about { padding: 0; gap: 0; flex: 1; min-height: 0; }
         .st-pane-about .cl-header { padding: 12px 20px; }
@@ -923,7 +928,7 @@
         .st-search:focus-within { border-color: var(--md-sys-color-primary); max-width: 720px; }
         .st-search input {
             flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: var(--md-sys-color-on-surface);
-            font-family: 'Google Sans Flex', sans-serif; font-size: 15px; font-weight: 600;
+            font-family: var(--app-font); font-size: 15px; font-weight: 600;
         }
         .st-search input::placeholder { color: var(--md-sys-color-on-surface-variant); opacity: .7; }
         .st-search-clear { display: none; border: none; background: transparent; color: inherit; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; padding: 0; align-items: center; justify-content: center; }
@@ -954,7 +959,7 @@
 </style>
 </head>
 <body>
-    <md-dialog id="confirm-dialog" type="alert" style="max-width:min(92vw,420px); font-family:'Google Sans Flex',sans-serif;">
+    <md-dialog id="confirm-dialog" type="alert" style="max-width:min(92vw,420px); font-family:var(--app-font);">
         <div slot="headline" id="confirm-dialog-title" data-i18n="misc.confirm">Xác nhận</div>
         <form slot="content" id="confirm-dialog-form" method="dialog"><span id="confirm-dialog-text"></span></form>
         <div slot="actions">
@@ -963,7 +968,7 @@
         </div>
     </md-dialog>
 
-    <md-dialog id="sleep-dialog" style="max-width:min(92vw,420px); font-family:'Google Sans Flex',sans-serif;">
+    <md-dialog id="sleep-dialog" style="max-width:min(92vw,420px); font-family:var(--app-font);">
         <div slot="headline" data-i18n="sleep.title">Hẹn giờ tạm dừng</div>
         <form slot="content" id="sleep-form" method="dialog">
             <div class="sleep-radios">
@@ -1039,7 +1044,7 @@
     <!-- Modal About / What's New / More apps (dùng chung 1 dialog, điều hướng qua postMessage) -->
     <!-- Modal Settings (Full Screen Scale with Adaptive Color selection) -->
     <div id="settings-overlay" class="cl-overlay" style="align-items: stretch; justify-content: stretch;">
-        <div id="settings-dialog" class="cl-dialog" style="width: 100vw; max-width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0;">
+        <div id="settings-dialog" class="cl-dialog" style="width: var(--vw); max-width: var(--vw); height: var(--vh); max-height: var(--vh); border-radius: 0;">
             <div class="cl-header" id="settings-header" style="padding: 16px 32px; gap: 16px;">
                 <div style="display:flex; align-items:center; overflow:hidden; flex-shrink:0;">
                     <div id="st-back-wrap" style="width:0; overflow:hidden; flex-shrink:0; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1);">
@@ -1137,6 +1142,50 @@
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
                 </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.ui_scale">Kích thước giao diện và chữ</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.ui_scale_desc">Phóng to hoặc thu nhỏ toàn bộ giao diện và chữ, từ 50% đến 200% (100% là kích thước mặc định)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+                        <md-slider id="setting-ui-scale" min="50" max="200" step="5" value="100" labeled style="width:200px; --md-slider-active-track-color: var(--md-sys-color-primary); --md-slider-handle-color: var(--md-sys-color-primary); --md-slider-label-container-color: var(--md-sys-color-primary); --md-slider-label-label-text-color: var(--md-sys-color-on-primary); --md-slider-inactive-track-color: var(--md-sys-color-surface-variant);"></md-slider>
+                        <span id="ui-scale-value" style="min-width:48px; text-align:right; font-size:14px; font-weight:700;">100%</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-top: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.font">Phông chữ</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.font_desc">Đổi phông chữ của toàn bộ ứng dụng (cần mạng để tải phông lần đầu)</span>
+                    </div>
+                    <md-outlined-select id="setting-font" class="m3-select">
+                        <md-select-option value="default"><div slot="headline" data-i18n="settings.font_default">Google Sans Flex (Mặc định)</div></md-select-option>
+                        <md-select-option value="Roboto"><div slot="headline">Roboto</div></md-select-option>
+                        <md-select-option value="Open Sans"><div slot="headline">Open Sans</div></md-select-option>
+                        <md-select-option value="Noto Sans"><div slot="headline">Noto Sans</div></md-select-option>
+                        <md-select-option value="Inter"><div slot="headline">Inter</div></md-select-option>
+                        <md-select-option value="Montserrat"><div slot="headline">Montserrat</div></md-select-option>
+                        <md-select-option value="Nunito"><div slot="headline">Nunito</div></md-select-option>
+                        <md-select-option value="Quicksand"><div slot="headline">Quicksand</div></md-select-option>
+                        <md-select-option value="Be Vietnam Pro"><div slot="headline">Be Vietnam Pro</div></md-select-option>
+                        <md-select-option value="Lexend"><div slot="headline">Lexend</div></md-select-option>
+                        <md-select-option value="Raleway"><div slot="headline">Raleway</div></md-select-option>
+                        <md-select-option value="Source Sans 3"><div slot="headline">Source Sans 3</div></md-select-option>
+                        <md-select-option value="Work Sans"><div slot="headline">Work Sans</div></md-select-option>
+                        <md-select-option value="Space Grotesk"><div slot="headline">Space Grotesk</div></md-select-option>
+                        <md-select-option value="Comfortaa"><div slot="headline">Comfortaa</div></md-select-option>
+                        <md-select-option value="Times New Roman"><div slot="headline">Times New Roman</div></md-select-option>
+                        <md-select-option value="Roboto Slab"><div slot="headline">Roboto Slab</div></md-select-option>
+                        <md-select-option value="Noto Serif"><div slot="headline">Noto Serif</div></md-select-option>
+                        <md-select-option value="Lora"><div slot="headline">Lora</div></md-select-option>
+                        <md-select-option value="Merriweather"><div slot="headline">Merriweather</div></md-select-option>
+                        <md-select-option value="Playfair Display"><div slot="headline">Playfair Display</div></md-select-option>
+                        <md-select-option value="Dancing Script"><div slot="headline">Dancing Script</div></md-select-option>
+                        <md-select-option value="Roboto Mono"><div slot="headline">Roboto Mono</div></md-select-option>
+                        <md-select-option value="JetBrains Mono"><div slot="headline">JetBrains Mono</div></md-select-option>
+                    </md-outlined-select>
+                </div>
                 </div>
                 <div class="st-pane" data-pane="lyrics">
                     <h3 class="st-pane-title" data-i18n="settings.cat_lyrics">Lyric</h3>
@@ -1231,8 +1280,8 @@
     </div>
 
     <!-- Full Web Getting Started Overlay Iframe (getting_started.html) -->
-    <div id="getting-started-overlay" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 99999; background: #0f0d13;">
-        <iframe id="getting-started-iframe" style="width: 100vw; height: 100vh; border: none; display: block;" src="about:blank"></iframe>
+    <div id="getting-started-overlay" style="display: none; position: fixed; inset: 0; width: var(--vw); height: var(--vh); z-index: 99999; background: #0f0d13;">
+        <iframe id="getting-started-iframe" style="width: var(--vw); height: var(--vh); border: none; display: block;" src="about:blank"></iframe>
     </div>
 
     <!-- Modal: Gửi phản hồi -->
@@ -1406,7 +1455,7 @@
     </div>
 
     <!-- Embedded Metadata Frame (Hidden initially at right offscreen) -->
-    <iframe id="metadata-iframe" style="position: fixed; top: 0; right: -100vw; width: 100vw; height: 100vh; border: none; z-index: 4000; transition: right 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); background: transparent;" srcdoc=""></iframe>
+    <iframe id="metadata-iframe" style="position: fixed; top: 0; right: calc(-1 * var(--vw)); width: var(--vw); height: var(--vh); border: none; z-index: 4000; transition: right 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); background: transparent;" srcdoc=""></iframe>
 
     <div class="ambient-bg"></div>
 
@@ -1414,7 +1463,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.10.12-build213730</span>
+                <span>AUDIOPLAYER V2026.10.13-build060253</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -2325,6 +2374,77 @@
             accent: localStorage.getItem('settings_accent') || 'purple',
             dynamicAccent: localStorage.getItem('settings_dynamic_accent') !== 'false' // Mặc định ON
         };
+
+
+        // ===== Kích thước giao diện + Phông chữ =====
+        const FONT_LIST = [
+            ['Roboto','sans-serif'],['Open Sans','sans-serif'],['Noto Sans','sans-serif'],['Inter','sans-serif'],
+            ['Montserrat','sans-serif'],['Nunito','sans-serif'],['Quicksand','sans-serif'],['Be Vietnam Pro','sans-serif'],
+            ['Lexend','sans-serif'],['Raleway','sans-serif'],['Source Sans 3','sans-serif'],['Work Sans','sans-serif'],
+            ['Space Grotesk','sans-serif'],['Comfortaa','sans-serif'],['Times New Roman','serif','system'],['Roboto Slab','serif'],['Noto Serif','serif'],
+            ['Lora','serif'],['Merriweather','serif'],['Playfair Display','serif'],['Dancing Script','cursive'],
+            ['Roboto Mono','monospace'],['JetBrains Mono','monospace']
+        ];
+        function fontStack(name) {
+            const f = FONT_LIST.find(x => x[0] === name);
+            return f ? `'${name}', ${f[2] ? 'Times, ' : ''}'Google Sans Flex', ${f[1]}` : "'Google Sans Flex', sans-serif";
+        }
+        // Kiểm tra phông đã cài sẵn trong máy chưa (so độ rộng chữ với phông dự phòng mặc định)
+        const _localFontCache = {};
+        function fontIsLocal(name) {
+            if (name in _localFontCache) return _localFontCache[name];
+            let found = false;
+            try {
+                const ctx = document.createElement('canvas').getContext('2d');
+                const sample = 'mmmmmmmmmmlliWÀỆẶ0123456789';
+                found = ['monospace', 'serif', 'sans-serif'].some(base => {
+                    ctx.font = `72px ${base}`; const w0 = ctx.measureText(sample).width;
+                    ctx.font = `72px '${name}', ${base}`; return ctx.measureText(sample).width !== w0;
+                });
+            } catch (e) {}
+            return (_localFontCache[name] = found);
+        }
+        function fontHref(name) {
+            return `https://fonts.googleapis.com/css2?family=${name.replace(/ /g, '+')}:wght@400;500;600;700;800&display=swap`;
+        }
+        function fontPayload() {
+            const name = localStorage.getItem('settings_font') || 'default';
+            const ok = FONT_LIST.some(f => f[0] === name);
+            return { name: ok ? name : 'default', stack: fontStack(ok ? name : 'default'), href: (ok && !FONT_LIST.find(f => f[0] === name)[2] && !fontIsLocal(name)) ? fontHref(name) : null };
+        }
+        function loadGoogleFont(doc, name) {
+            const f = FONT_LIST.find(x => x[0] === name);
+            if (!f || f[2] === 'system' || fontIsLocal(name)) return; // có sẵn trong máy -> dùng luôn, không tải mạng
+            const id = 'gfont-' + name.replace(/\s+/g, '-');
+            if (doc.getElementById(id)) return;
+            const link = doc.createElement('link');
+            link.id = id; link.rel = 'stylesheet';
+            const fam = name.replace(/ /g, '+');
+            link.href = fontHref(name);
+            // Một số phông không có đủ các độ đậm -> thử lại chỉ với bản thường
+            link.onerror = () => { link.onerror = null; link.href = `https://fonts.googleapis.com/css2?family=${fam}&display=swap`; };
+            doc.head.appendChild(link);
+        }
+        function applyFontToDoc(doc) {
+            if (!doc || !doc.documentElement) return;
+            const name = localStorage.getItem('settings_font') || 'default';
+            if (name !== 'default') loadGoogleFont(doc, name);
+            doc.documentElement.style.setProperty('--app-font', fontStack(name));
+        }
+        function applyFontEverywhere() {
+            applyFontToDoc(document);
+            try { if (customPipWindow) applyFontToDoc(customPipWindow.document); } catch (e) {}
+            try { if (typeof sendThemeToChangelog === 'function' && typeof clLoaded !== 'undefined' && clLoaded) sendThemeToChangelog(); } catch (e) {}
+        }
+        function applyUiScale(pct) {
+            document.documentElement.style.setProperty('--ui-scale', String(pct / 100));
+        }
+        {
+            let pct = parseInt(localStorage.getItem('settings_ui_scale'), 10);
+            if (!(pct >= 50 && pct <= 200)) pct = 100;
+            applyUiScale(pct);
+            applyFontEverywhere();
+        }
 
         // Màu chủ đạo động (trích từ album art bài đang phát). null = dùng màu người dùng chọn
         let dynamicAccentHex = null;
@@ -3744,7 +3864,7 @@
         }
         function isEditorOpen() {
             const ifr = document.getElementById('metadata-iframe');
-            if (ifr && ifr.style.right && ifr.style.right !== '-100vw') return true;
+            if (ifr && (ifr.style.right === '0' || ifr.style.right === '0px')) return true;
             return ['thumbnail-editor-modal', 'crop-rotate-modal', 'save-thumb-confirm-modal']
                 .some(id => { const el = document.getElementById(id); return el && el.classList.contains('open'); });
         }
@@ -4201,6 +4321,7 @@
                 } catch(e) { console.warn("Hệ điều hành này không cho ép góc PiP programmatically."); }
 
                 const pipDoc = customPipWindow.document;
+                setTimeout(() => applyFontToDoc(pipDoc), 0);
 
                 const style = pipDoc.createElement('style');
                 style.textContent = `
@@ -4210,7 +4331,7 @@
                     * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
                     body { 
                         margin: 0; padding: 0; width: 100%; height: 100vh;
-                        font-family: 'Google Sans Flex', sans-serif; 
+                        font-family: var(--app-font); 
                         background: var(--pip-surface, #1C1B1F); color: #E6E1E5; 
                         overflow: hidden; user-select: none;
                         display: flex; flex-direction: column;
@@ -4668,6 +4789,29 @@
             applyAccentColor();
         });
 
+
+        // --- Kích thước giao diện (áp dụng khi thả thanh trượt để tránh giật) + Phông chữ ---
+        {
+            const slider = document.getElementById('setting-ui-scale');
+            const label = document.getElementById('ui-scale-value');
+            let pct = parseInt(localStorage.getItem('settings_ui_scale'), 10);
+            if (!(pct >= 50 && pct <= 200)) pct = 100;
+            slider.value = pct; label.textContent = pct + '%';
+            slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
+            slider.addEventListener('change', () => {
+                localStorage.setItem('settings_ui_scale', slider.value);
+                applyUiScale(parseInt(slider.value, 10));
+            });
+
+            const fontSel = document.getElementById('setting-font');
+            const savedFont = localStorage.getItem('settings_font') || 'default';
+            fontSel.value = FONT_LIST.some(f => f[0] === savedFont) ? savedFont : 'default';
+            fontSel.addEventListener('change', (e) => {
+                localStorage.setItem('settings_font', e.target.value);
+                applyFontEverywhere();
+            });
+        }
+
         settingsBtn.addEventListener('click', () => {
             const rect = settingsBtn.getBoundingClientRect();
             const btnCx = rect.left + rect.width / 2;
@@ -4718,6 +4862,7 @@
             if (!clIframe.contentWindow) return;
             // Gửi bảng màu chủ đạo hiện tại (kể cả màu động theo Album Art) để What's New hợp màu app
             try { clIframe.contentWindow.postMessage({ palette: getActivePalette(resolveThemeMode(settings.theme)) }, '*'); } catch (e) {}
+            try { clIframe.contentWindow.postMessage({ font: fontPayload() }, '*'); } catch (e) {}
             clIframe.contentWindow.postMessage(resolveThemeMode(settings.theme), '*');
             // Về/What's New/More apps do bên Gemini quản lý nội dung -> chỉ gửi thêm mã
             // ngôn ngữ hiện tại ("vi"/"en") qua postMessage để bên đó tự xử lý, không đụng
@@ -5075,6 +5220,8 @@
                     + '────────────────────────────\n'
                     + 'Audio Player Version:\n' + getAppVersionText() + '\n'
                     + 'Language: ' + (localStorage.getItem('settings_language') || 'vi') + '\n'
+                    + 'UI scale: ' + (localStorage.getItem('settings_ui_scale') || '100') + '%\n'
+                    + 'Font: ' + (localStorage.getItem('settings_font') || 'default') + '\n'
                     + 'Main Player Lyric: ' + onOff(settings.showMainLyric) + '\n'
                     + 'PiP Lyric: ' + onOff(settings.showPipLyric) + '\n'
                     + 'Fullscreen Lyric: ' + onOff(settings.showFsLyric) + '\n'
@@ -5315,7 +5462,7 @@
             // tức thì. Việc dọn form về rỗng do chính iframe tự làm sau ~1s (đã xử lý
             // bên trong template, đồng bộ với thời lượng animation trượt ra).
             else if (d === 'close') {
-                metadataIframe.style.right = '-100vw'; 
+                metadataIframe.style.right = 'calc(-1 * var(--vw))'; 
                 refreshCurrentTrackUI(); // Cập nhật tên/nghệ sĩ/lời bài hát tại chỗ tức thì
             }
             else if (d && d.type === 'save') {
@@ -5988,7 +6135,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.12-build213730';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.13-build060253';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'

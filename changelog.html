@@ -180,7 +180,7 @@ let lastPalette = null;
 
 const T = {
   vi: { kicker:'Nhật ký cập nhật', hero:'Có gì mới?', list:'Các phiên bản', detail:'Có gì mới', latest:'MỚI NHẤT', updates:n=>n+' cập nhật', loading:'Đang tải…', error:'Không tải được changelog. Vui lòng thử lại sau.', retry:'Thử lại', empty:'Phiên bản này chưa có nội dung.' },
-  en: { kicker:'Changelog', hero:"What's new?", list:'Versions', detail:"What's new", latest:'LATEST', updates:n=>n+(n===1?' update':' updates'), loading:'Loading…', error:'Could not load the changelog. Please try again later.', retry:'Retry', empty:'This version has no notes.' }
+  en: { kicker:'Changelog', hero:"What's new", list:'Versions', detail:"What's new", latest:'LATEST', updates:n=>n+(n===1?' update':' updates'), loading:'Loading…', error:'Could not load the changelog. Please try again later.', retry:'Retry', empty:'This version has no notes.' }
 };
 const L = () => T[currentLang];
 
@@ -324,8 +324,23 @@ function applyThemeStyles(name) {
 function setLang(l) { currentLang = l === 'en' ? 'en' : 'vi'; renderStatic(); if (versionIds.length) renderList(); }
 
 // postMessage từ trang cha: "dark"/"light", "vi"/"en", hoặc { palette: {...} }
+
+        // Phông chữ do app cha gửi sang qua postMessage: { font: { name, stack, href } }
+        function applyAppFont(f) {
+            if (!f || !f.stack) return;
+            var link = document.getElementById('app-font-link');
+            if (f.href) {
+                if (!link) { link = document.createElement('link'); link.id = 'app-font-link'; link.rel = 'stylesheet'; document.head.appendChild(link); }
+                if (link.getAttribute('href') !== f.href) link.setAttribute('href', f.href);
+            } else if (link) link.remove();
+            var st = document.getElementById('app-font-style');
+            if (!st) { st = document.createElement('style'); st.id = 'app-font-style'; document.head.appendChild(st); }
+            st.textContent = ':root{--md-ref-typeface-plain:' + f.stack + ';--md-ref-typeface-brand:' + f.stack + '}'
+                + 'body,body *:not(.material-symbols-outlined):not(.ms):not(code):not(pre):not(kbd){font-family:' + f.stack + ' !important}';
+        }
 window.addEventListener('message', ev => {
   const d = ev.data; if (!d) return;
+  if (typeof d === 'object' && d.font) applyAppFont(d.font);
   if (d.palette && typeof d.palette === 'object') { lastPalette = d.palette; applyPalette(lastPalette); }
   if (d === 'dark' || d.theme === 'dark') applyThemeStyles('dark'); else if (d === 'light' || d.theme === 'light') applyThemeStyles('light');
   if (d === 'vi' || d.lang === 'vi' || d.language === 'vi') setLang('vi'); else if (d === 'en' || d.lang === 'en' || d.language === 'en') setLang('en');
