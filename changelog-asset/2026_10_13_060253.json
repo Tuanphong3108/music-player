@@ -12,6 +12,14 @@
     {
       "content": "Phông chữ được áp dụng cho cả PiP, About và Changelog",
       "icon": "text_fields"
+    },
+    {
+      "content": "Thêm tùy chọn \"Tùy chỉnh...\" để thêm phông chữ từ Google Fonts (mã nhúng <link>), liên kết https:// hoặc tải tệp phông chữ lên",
+      "icon": "add_circle"
+    },
+    {
+      "content": "Thêm mục \"Quản lý phông chữ\": thêm, xóa và sắp xếp danh sách phông chữ",
+      "icon": "tune"
     }
   ],
   "en": [
@@ -26,6 +34,14 @@
     {
       "content": "The chosen font also applies to PiP, About and Changelog",
       "icon": "text_fields"
+    },
+    {
+      "content": "Added a \"Custom...\" option to add fonts from Google Fonts (embed <link> code), an https:// link, or by uploading a font file",
+      "icon": "add_circle"
+    },
+    {
+      "content": "Added \"Manage fonts\": add, delete and sort the font list",
+      "icon": "tune"
     }
   ]
 }

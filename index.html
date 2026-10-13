@@ -841,7 +841,11 @@
             --md-menu-item-selected-label-text-weight: 700;
             font-family: var(--app-font);
         }
-        #sleep-dialog {
+        #sleep-dialog, #font-add-dialog, #font-pick-dialog, #font-manage-dialog {
+            --md-outlined-button-label-text-font: var(--app-font);
+            --md-outlined-button-label-text-color: var(--md-sys-color-primary);
+            --md-outlined-button-outline-color: var(--md-sys-color-outline);
+            --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant);
             --md-ref-typeface-plain: var(--app-font);
             --md-ref-typeface-brand: var(--app-font);
             --md-dialog-container-color: var(--md-sys-color-surface);
@@ -881,9 +885,24 @@
             font-family: var(--app-font);
             color: var(--md-sys-color-on-surface);
         }
-        #sleep-dialog::part(scrim) { background: #000; }
-        #sleep-dialog .sleep-radios { display:flex; gap:20px; margin-bottom:16px; flex-wrap:wrap; }
-        #sleep-dialog .sleep-radios label { display:flex; align-items:center; gap:4px; cursor:pointer; font-weight:600; font-size:15px; color: var(--md-sys-color-on-surface); }
+        #sleep-dialog::part(scrim), #font-add-dialog::part(scrim), #font-pick-dialog::part(scrim), #font-manage-dialog::part(scrim) { background: #000; }
+        /* ===== Dialog phông chữ (thêm / chọn / quản lý) ===== */
+        #font-add-dialog .fnt-help, #font-pick-dialog .fnt-help { font-size: 13px; line-height: 1.5; opacity: .8; margin-bottom: 12px; }
+        #font-add-dialog md-outlined-text-field, #font-add-dialog .fnt-panel { width: 100%; }
+        #font-add-dialog .fnt-panel[hidden] { display: none; }
+        #font-add-dialog .fnt-filebar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        #font-add-dialog .fnt-error { color: var(--md-sys-color-error, #F2B8B5); font-size: 13px; font-weight: 600; margin-top: 12px; }
+        #font-pick-dialog .fnt-picklist { display: flex; flex-direction: column; gap: 4px; }
+        #font-pick-dialog .fnt-picklist label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; font-size: 15px; padding: 2px 0; }
+        #font-manage-dialog .fnt-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+        #font-manage-dialog .fnt-list { display: flex; flex-direction: column; max-height: min(50vh, 420px); overflow-y: auto; border: 1px solid var(--playlist-border); border-radius: 16px; }
+        #font-manage-dialog .fnt-row { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 16px; border-bottom: 1px solid var(--playlist-border); min-height: 48px; }
+        #font-manage-dialog .fnt-row:last-child { border-bottom: none; }
+        #font-manage-dialog .fnt-row-name { flex: 1; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #font-manage-dialog .fnt-row-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 8px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); margin-right: 4px; }
+
+        #sleep-dialog .sleep-radios, #font-add-dialog .sleep-radios { display:flex; gap:20px; margin-bottom:16px; flex-wrap:wrap; }
+        #sleep-dialog .sleep-radios label, #font-add-dialog .sleep-radios label { display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:15px; color: var(--md-sys-color-on-surface); }
         #sleep-dialog .sleep-label { font-size:14px; font-weight:600; margin-bottom:8px; color: var(--md-sys-color-on-surface); }
         #sleep-input { width:100%; }
 
@@ -982,6 +1001,67 @@
         <div slot="actions">
             <md-text-button id="sleep-cancel" data-i18n="misc.cancel">Huỷ</md-text-button>
             <md-filled-button id="sleep-ok" data-i18n="sleep.set">Đặt hẹn giờ</md-filled-button>
+        </div>
+    </md-dialog>
+
+    <md-dialog id="font-add-dialog" style="max-width:min(94vw,520px); font-family:var(--app-font);">
+        <div slot="headline" data-i18n="font.add_title">Thêm phông chữ tùy chỉnh</div>
+        <form slot="content" id="font-add-form" method="dialog" onsubmit="return false;">
+            <div class="sleep-radios">
+                <label><md-radio name="font-src" value="google" checked></md-radio><span data-i18n="font.src_google">Google Fonts</span></label>
+                <label><md-radio name="font-src" value="url"></md-radio><span data-i18n="font.src_url">Liên kết tùy chỉnh</span></label>
+                <label><md-radio name="font-src" value="file"></md-radio><span data-i18n="font.src_file">Tải phông chữ lên</span></label>
+            </div>
+            <div class="fnt-panel" data-panel="google">
+                <div class="fnt-help" data-i18n="font.google_help">Vào Google Fonts &gt; Chọn Font &gt; nhấn Get Font &gt; Nhấn Web &gt; chọn "&lt;link&gt;" &gt; Nhấn Copy, rồi dán mã vào ô bên dưới.</div>
+                <md-outlined-text-field id="font-google-input" type="textarea" rows="5" label="Web Embed Code" placeholder='&lt;link href="https://fonts.googleapis.com/css2?family=Bitcount+Ink:wght@100..900&amp;display=swap" rel="stylesheet"&gt;'></md-outlined-text-field>
+            </div>
+            <div class="fnt-panel" data-panel="url" hidden>
+                <div class="fnt-help" data-i18n="font.url_help">Dán liên kết tới tệp CSS phông chữ hoặc tệp phông chữ trực tiếp (.woff2, .woff, .ttf, .otf).</div>
+                <md-outlined-text-field id="font-url-input" type="url" label="https://..." placeholder="https://"></md-outlined-text-field>
+                <md-outlined-text-field id="font-url-name" type="text" data-i18n-label="font.name_label" label="Tên phông chữ (tuỳ chọn, cho tệp phông trực tiếp)" style="margin-top:12px;"></md-outlined-text-field>
+            </div>
+            <div class="fnt-panel" data-panel="file" hidden>
+                <div class="fnt-help" data-i18n="font.file_help">Chọn tệp phông chữ (.ttf, .otf, .woff, .woff2) từ máy của bạn. Phông được lưu trên thiết bị này.</div>
+                <div class="fnt-filebar">
+                    <md-outlined-button id="font-file-btn" type="button"><span class="material-symbols-outlined" slot="icon">upload_file</span><span data-i18n="font.file_choose">Chọn tệp phông chữ</span></md-outlined-button>
+                    <span id="font-file-label" class="fnt-help" style="margin:0;">Chưa chọn tệp nào</span>
+                </div>
+                <input type="file" id="font-file-input" accept=".ttf,.otf,.woff,.woff2,font/*" hidden>
+                <md-outlined-text-field id="font-file-name" type="text" data-i18n-label="font.name_label" label="Tên phông chữ (tuỳ chọn)" style="margin-top:12px;"></md-outlined-text-field>
+            </div>
+            <div id="font-add-error" class="fnt-error"></div>
+        </form>
+        <div slot="actions">
+            <md-text-button id="font-add-cancel" data-i18n="misc.cancel">Huỷ</md-text-button>
+            <md-filled-button id="font-add-ok" data-i18n="font.add_ok">Thêm</md-filled-button>
+        </div>
+    </md-dialog>
+
+    <md-dialog id="font-pick-dialog" style="max-width:min(92vw,420px); font-family:var(--app-font);">
+        <div slot="headline" data-i18n="font.pick_title">Chọn phông chữ để sử dụng</div>
+        <form slot="content" method="dialog" onsubmit="return false;">
+            <div class="fnt-help" id="font-pick-desc"></div>
+            <div id="font-pick-list" class="fnt-picklist"></div>
+        </form>
+        <div slot="actions">
+            <md-text-button id="font-pick-later" data-i18n="font.pick_later">Để sau</md-text-button>
+            <md-filled-button id="font-pick-ok" data-i18n="font.pick_ok">Dùng phông này</md-filled-button>
+        </div>
+    </md-dialog>
+
+    <md-dialog id="font-manage-dialog" style="max-width:min(94vw,520px); font-family:var(--app-font);">
+        <div slot="headline" data-i18n="settings.font_manage">Quản lý phông chữ</div>
+        <form slot="content" method="dialog" onsubmit="return false;">
+            <div class="fnt-toolbar">
+                <md-outlined-button id="font-manage-add" type="button"><span class="material-symbols-outlined" slot="icon">add</span><span data-i18n="font.manage_add">Thêm phông chữ</span></md-outlined-button>
+                <md-outlined-button id="font-manage-sort" type="button"><span class="material-symbols-outlined" slot="icon">sort_by_alpha</span><span data-i18n="font.manage_sort">Sắp xếp A–Z</span></md-outlined-button>
+                <md-text-button id="font-manage-reset" type="button" data-i18n="font.manage_reset">Khôi phục mặc định</md-text-button>
+            </div>
+            <div id="font-manage-list" class="fnt-list"></div>
+        </form>
+        <div slot="actions">
+            <md-filled-button id="font-manage-done" data-i18n="font.manage_done">Xong</md-filled-button>
         </div>
     </md-dialog>
 
@@ -1161,30 +1241,6 @@
                         <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.font_desc">Đổi phông chữ của toàn bộ ứng dụng (cần mạng để tải phông lần đầu)</span>
                     </div>
                     <md-outlined-select id="setting-font" class="m3-select">
-                        <md-select-option value="default"><div slot="headline" data-i18n="settings.font_default">Google Sans Flex (Mặc định)</div></md-select-option>
-                        <md-select-option value="Roboto"><div slot="headline">Roboto</div></md-select-option>
-                        <md-select-option value="Open Sans"><div slot="headline">Open Sans</div></md-select-option>
-                        <md-select-option value="Noto Sans"><div slot="headline">Noto Sans</div></md-select-option>
-                        <md-select-option value="Inter"><div slot="headline">Inter</div></md-select-option>
-                        <md-select-option value="Montserrat"><div slot="headline">Montserrat</div></md-select-option>
-                        <md-select-option value="Nunito"><div slot="headline">Nunito</div></md-select-option>
-                        <md-select-option value="Quicksand"><div slot="headline">Quicksand</div></md-select-option>
-                        <md-select-option value="Be Vietnam Pro"><div slot="headline">Be Vietnam Pro</div></md-select-option>
-                        <md-select-option value="Lexend"><div slot="headline">Lexend</div></md-select-option>
-                        <md-select-option value="Raleway"><div slot="headline">Raleway</div></md-select-option>
-                        <md-select-option value="Source Sans 3"><div slot="headline">Source Sans 3</div></md-select-option>
-                        <md-select-option value="Work Sans"><div slot="headline">Work Sans</div></md-select-option>
-                        <md-select-option value="Space Grotesk"><div slot="headline">Space Grotesk</div></md-select-option>
-                        <md-select-option value="Comfortaa"><div slot="headline">Comfortaa</div></md-select-option>
-                        <md-select-option value="Times New Roman"><div slot="headline">Times New Roman</div></md-select-option>
-                        <md-select-option value="Roboto Slab"><div slot="headline">Roboto Slab</div></md-select-option>
-                        <md-select-option value="Noto Serif"><div slot="headline">Noto Serif</div></md-select-option>
-                        <md-select-option value="Lora"><div slot="headline">Lora</div></md-select-option>
-                        <md-select-option value="Merriweather"><div slot="headline">Merriweather</div></md-select-option>
-                        <md-select-option value="Playfair Display"><div slot="headline">Playfair Display</div></md-select-option>
-                        <md-select-option value="Dancing Script"><div slot="headline">Dancing Script</div></md-select-option>
-                        <md-select-option value="Roboto Mono"><div slot="headline">Roboto Mono</div></md-select-option>
-                        <md-select-option value="JetBrains Mono"><div slot="headline">JetBrains Mono</div></md-select-option>
                     </md-outlined-select>
                 </div>
                 </div>
@@ -2378,17 +2434,35 @@
 
 
         // ===== Kích thước giao diện + Phông chữ =====
-        const FONT_LIST = [
+        const tF = (k, f) => (typeof currentLangDict !== 'undefined' && currentLangDict[k]) || f;
+        const BUILTIN_FONTS = [
             ['Roboto','sans-serif'],['Open Sans','sans-serif'],['Noto Sans','sans-serif'],['Inter','sans-serif'],
             ['Montserrat','sans-serif'],['Nunito','sans-serif'],['Quicksand','sans-serif'],['Be Vietnam Pro','sans-serif'],
             ['Lexend','sans-serif'],['Raleway','sans-serif'],['Source Sans 3','sans-serif'],['Work Sans','sans-serif'],
             ['Space Grotesk','sans-serif'],['Comfortaa','sans-serif'],['Times New Roman','serif','system'],['Roboto Slab','serif'],['Noto Serif','serif'],
             ['Lora','serif'],['Merriweather','serif'],['Playfair Display','serif'],['Dancing Script','cursive'],
             ['Roboto Mono','monospace'],['JetBrains Mono','monospace']
-        ];
+        ].map(f => ({ name: f[0], kind: 'builtin', generic: f[1], system: f[2] === 'system' }));
+
+        // Danh sách phông chữ (có thứ tự) lưu trong localStorage; phông "file" tải lên lưu blob trong IndexedDB
+        function loadFontEntries() {
+            try {
+                const arr = JSON.parse(localStorage.getItem('settings_font_entries'));
+                if (Array.isArray(arr) && arr.every(e => e && typeof e.name === 'string' && e.kind)) return arr;
+            } catch (e) {}
+            return BUILTIN_FONTS.map(f => Object.assign({}, f));
+        }
+        let fontEntries = loadFontEntries();
+        function saveFontEntries() { try { localStorage.setItem('settings_font_entries', JSON.stringify(fontEntries)); } catch (e) {} }
+        const fontKey = n => String(n).trim().toLowerCase();
+        const cleanFontName = n => String(n || '').replace(/['"\\<>{};]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+        function findEntry(name) { return fontEntries.find(e => fontKey(e.name) === fontKey(name)); }
+        const fontBlobUrls = {};   // tên phông "file" -> blob URL (tạo lúc khởi động)
+
         function fontStack(name) {
-            const f = FONT_LIST.find(x => x[0] === name);
-            return f ? `'${name}', ${f[2] ? 'Times, ' : ''}'Google Sans Flex', ${f[1]}` : "'Google Sans Flex', sans-serif";
+            const f = findEntry(name);
+            if (!f) return "'Google Sans Flex', sans-serif";
+            return `'${f.name}', ${f.system ? 'Times, ' : ''}'Google Sans Flex', ${f.generic || 'sans-serif'}`;
         }
         // Kiểm tra phông đã cài sẵn trong máy chưa (so độ rộng chữ với phông dự phòng mặc định)
         const _localFontCache = {};
@@ -2408,28 +2482,56 @@
         function fontHref(name) {
             return `https://fonts.googleapis.com/css2?family=${name.replace(/ /g, '+')}:wght@400;500;600;700;800&display=swap`;
         }
-        function fontPayload() {
-            const name = localStorage.getItem('settings_font') || 'default';
-            const ok = FONT_LIST.some(f => f[0] === name);
-            return { name: ok ? name : 'default', stack: fontStack(ok ? name : 'default'), href: (ok && !FONT_LIST.find(f => f[0] === name)[2] && !fontIsLocal(name)) ? fontHref(name) : null };
+        // Link CSS cần tải cho 1 phông (null nếu có sẵn trong máy / phông hệ thống / phông "file")
+        function entryHref(e) {
+            if (!e) return null;
+            if (e.kind === 'builtin') return (e.system || fontIsLocal(e.name)) ? null : fontHref(e.name);
+            if (e.kind === 'google') return fontIsLocal(e.name) ? null : e.href;
+            if (e.kind === 'css') return e.href;
+            return null;
         }
-        function loadGoogleFont(doc, name) {
-            const f = FONT_LIST.find(x => x[0] === name);
-            if (!f || f[2] === 'system' || fontIsLocal(name)) return; // có sẵn trong máy -> dùng luôn, không tải mạng
-            const id = 'gfont-' + name.replace(/\s+/g, '-');
-            if (doc.getElementById(id)) return;
-            const link = doc.createElement('link');
-            link.id = id; link.rel = 'stylesheet';
-            const fam = name.replace(/ /g, '+');
-            link.href = fontHref(name);
-            // Một số phông không có đủ các độ đậm -> thử lại chỉ với bản thường
-            link.onerror = () => { link.onerror = null; link.href = `https://fonts.googleapis.com/css2?family=${fam}&display=swap`; };
-            doc.head.appendChild(link);
+        // CSS @font-face cho phông nạp từ tệp (liên kết trực tiếp / tải lên)
+        function entryFaceCss(e) {
+            if (!e) return '';
+            const src = e.kind === 'url' ? e.src : (e.kind === 'file' ? fontBlobUrls[e.name] : null);
+            return src ? `@font-face{font-family:'${e.name}';src:url("${src}");font-display:swap}` : '';
+        }
+        function selectedFontName() {
+            const n = localStorage.getItem('settings_font') || 'default';
+            return findEntry(n) ? findEntry(n).name : 'default';
+        }
+        function fontPayload() {
+            const name = selectedFontName();
+            const e = name === 'default' ? null : findEntry(name);
+            return { name, stack: fontStack(name), href: entryHref(e), faceCss: entryFaceCss(e) };
+        }
+        const slugF = s => String(s).replace(/[^a-z0-9]+/gi, '-');
+        function loadFontIntoDoc(doc, e) {
+            const href = entryHref(e);
+            if (href) {
+                const id = 'gfont-' + slugF(e.name);
+                if (!doc.getElementById(id)) {
+                    const link = doc.createElement('link');
+                    link.id = id; link.rel = 'stylesheet'; link.href = href;
+                    if (e.kind === 'builtin') {
+                        // Một số phông không có đủ các độ đậm -> thử lại chỉ với bản thường
+                        link.onerror = () => { link.onerror = null; link.href = `https://fonts.googleapis.com/css2?family=${e.name.replace(/ /g, '+')}&display=swap`; };
+                    }
+                    doc.head.appendChild(link);
+                }
+            }
+            const face = entryFaceCss(e);
+            if (face) {
+                const id = 'gface-' + slugF(e.name);
+                let st = doc.getElementById(id);
+                if (!st) { st = doc.createElement('style'); st.id = id; doc.head.appendChild(st); }
+                if (st.textContent !== face) st.textContent = face;
+            }
         }
         function applyFontToDoc(doc) {
             if (!doc || !doc.documentElement) return;
-            const name = localStorage.getItem('settings_font') || 'default';
-            if (name !== 'default') loadGoogleFont(doc, name);
+            const name = selectedFontName();
+            if (name !== 'default') loadFontIntoDoc(doc, findEntry(name));
             doc.documentElement.style.setProperty('--app-font', fontStack(name));
         }
         function applyFontEverywhere() {
@@ -2445,6 +2547,338 @@
             if (!(pct >= 50 && pct <= 200)) pct = 100;
             applyUiScale(pct);
             applyFontEverywhere();
+        }
+
+        // ----- IndexedDB lưu tệp phông chữ tải lên -----
+        function fontDB() {
+            return new Promise((res, rej) => {
+                const r = indexedDB.open('audioplayer_fonts', 1);
+                r.onupgradeneeded = () => r.result.createObjectStore('fonts');
+                r.onsuccess = () => res(r.result);
+                r.onerror = () => rej(r.error);
+            });
+        }
+        async function fontIdb(mode, fn) {
+            const db = await fontDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction('fonts', mode);
+                const rq = fn(tx.objectStore('fonts'));
+                tx.oncomplete = () => { db.close(); res(rq && rq.result); };
+                tx.onerror = () => { db.close(); rej(tx.error); };
+            });
+        }
+        async function restoreFileFonts() {
+            let changed = false;
+            for (const e of fontEntries) {
+                if (e.kind !== 'file' || fontBlobUrls[e.name]) continue;
+                try {
+                    const blob = await fontIdb('readonly', st => st.get(e.name));
+                    if (blob) { fontBlobUrls[e.name] = URL.createObjectURL(blob); changed = true; }
+                } catch (err) {}
+            }
+            if (changed) applyFontEverywhere();
+        }
+        restoreFileFonts();
+
+        // ----- Phân tích mã nhúng Google Fonts: lấy danh sách phông + link riêng cho từng phông -----
+        function parseGoogleEmbed(text) {
+            const urls = [];
+            const re = /href\s*=\s*["']([^"']*fonts\.googleapis\.com\/css[^"']*)["']/gi;
+            let m;
+            while ((m = re.exec(text))) urls.push(m[1].replace(/&amp;/g, '&'));
+            if (!urls.length) {
+                const t = String(text).trim();
+                if (/^https:\/\/fonts\.googleapis\.com\/css/i.test(t)) urls.push(t);
+            }
+            const out = [];
+            urls.forEach(u => {
+                let url; try { url = new URL(u); } catch (e) { return; }
+                const isV2 = /\/css2/.test(url.pathname);
+                url.search.replace(/^\?/, '').split('&').forEach(item => {
+                    if (!/^family=/i.test(item)) return;
+                    const val = item.slice(7);
+                    const parts = isV2 ? [val] : val.split('|');
+                    parts.forEach(part => {
+                        const rawName = part.split(':')[0];
+                        const name = cleanFontName(decodeURIComponent(rawName.replace(/\+/g, ' ')));
+                        if (!name || out.some(o => fontKey(o.name) === fontKey(name))) return;
+                        out.push({ name, href: `https://fonts.googleapis.com/${isV2 ? 'css2' : 'css'}?family=${part}&display=swap` });
+                    });
+                });
+            });
+            return out;
+        }
+        async function fetchCssText(href) {
+            const r = await fetch(href);
+            if (!r.ok) throw new Error('http ' + r.status);
+            return r.text();
+        }
+        class FontErr extends Error { constructor(key, fb) { super(key); this.key = key; this.fb = fb; } }
+
+        async function importGoogle(text) {
+            const parsed = parseGoogleEmbed(text);
+            if (!parsed.length) throw new FontErr('font.err_no_link', 'Không tìm thấy liên kết Google Fonts hợp lệ trong mã bạn dán');
+            // Phông đã có trong danh sách thì bỏ qua bước tải
+            for (const p of parsed) {
+                if (findEntry(p.name)) continue;
+                try { await fetchCssText(p.href); }
+                catch (e) { throw new FontErr('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng'); }
+            }
+            return parsed.map(p => ({ name: p.name, kind: 'google', generic: 'sans-serif', href: p.href }));
+        }
+        async function importUrl(raw, nameInput) {
+            let u;
+            try { u = new URL(String(raw).trim()); } catch (e) {}
+            if (!u || u.protocol !== 'https:') throw new FontErr('font.err_url', 'Liên kết không hợp lệ (cần bắt đầu bằng https://)');
+            const path = u.pathname.toLowerCase();
+            if (/\.(woff2?|ttf|otf)$/.test(path)) {
+                const base = decodeURIComponent(u.pathname.split('/').pop().replace(/\.[^.]+$/, ''));
+                const name = cleanFontName(nameInput || base);
+                if (!name) throw new FontErr('font.err_no_family', 'Không tìm thấy tên phông chữ trong liên kết');
+                if (findEntry(name)) throw new FontErr('font.err_exists', 'Đã có phông chữ tên này trong danh sách, hãy đặt tên khác');
+                try { const f = new FontFace(name, `url("${u.href}")`); await f.load(); }
+                catch (e) { throw new FontErr('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng'); }
+                return [{ name, kind: 'url', src: u.href }];
+            }
+            let css;
+            try { css = await fetchCssText(u.href); }
+            catch (e) { throw new FontErr('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng'); }
+            const names = [];
+            const re = /font-family\s*:\s*(['"]?)([^;'"}]+)\1/gi;
+            let m;
+            while ((m = re.exec(css))) { const n = cleanFontName(m[2]); if (n && !names.some(x => fontKey(x) === fontKey(n))) names.push(n); }
+            if (!names.length) throw new FontErr('font.err_no_family', 'Không tìm thấy tên phông chữ trong liên kết');
+            return names.map(n => ({ name: n, kind: 'css', href: u.href }));
+        }
+        async function importFile(file, nameInput) {
+            if (!file) throw new FontErr('font.err_no_file', 'Hãy chọn một tệp phông chữ');
+            const name = cleanFontName(nameInput || file.name.replace(/\.[^.]+$/, ''));
+            if (!name) throw new FontErr('font.err_no_family', 'Không tìm thấy tên phông chữ trong liên kết');
+            if (findEntry(name)) throw new FontErr('font.err_exists', 'Đã có phông chữ tên này trong danh sách, hãy đặt tên khác');
+            const buf = await file.arrayBuffer();
+            try { const f = new FontFace(name, buf); await f.load(); }
+            catch (e) { throw new FontErr('font.err_invalid_file', 'Tệp phông chữ không hợp lệ hoặc không đọc được'); }
+            const blob = new Blob([buf], { type: file.type || 'font/ttf' });
+            try { await fontIdb('readwrite', st => st.put(blob, name)); } catch (e) {}
+            fontBlobUrls[name] = URL.createObjectURL(blob);
+            return [{ name, kind: 'file' }];
+        }
+
+        // ----- Thêm vào danh sách / chọn / xoá / sắp xếp -----
+        function selectFont(name) {
+            localStorage.setItem('settings_font', name);
+            renderFontSelect();
+            applyFontEverywhere();
+        }
+        // Trả về { names: [tất cả phông trong liên kết], added: [phông mới] }
+        function addFontEntries(entries) {
+            const names = [], added = [];
+            entries.forEach(e => {
+                const ex = findEntry(e.name);
+                if (ex) { names.push(ex.name); return; }
+                fontEntries.push(e); added.push(e.name); names.push(e.name);
+            });
+            saveFontEntries();
+            return { names, added };
+        }
+        async function deleteFontEntry(name) {
+            const e = findEntry(name); if (!e) return;
+            fontEntries = fontEntries.filter(x => x !== e);
+            saveFontEntries();
+            if (e.kind === 'file') {
+                try { await fontIdb('readwrite', st => st.delete(e.name)); } catch (err) {}
+                if (fontBlobUrls[e.name]) { URL.revokeObjectURL(fontBlobUrls[e.name]); delete fontBlobUrls[e.name]; }
+            }
+            if (fontKey(localStorage.getItem('settings_font') || '') === fontKey(name)) { localStorage.setItem('settings_font', 'default'); applyFontEverywhere(); }
+            renderFontSelect();
+            showToast(tF('toast.font_deleted', 'Đã xóa phông chữ {name}').replace('{name}', name), 'delete', 3500);
+        }
+        function moveFontEntry(name, dir) {
+            const i = fontEntries.findIndex(e => fontKey(e.name) === fontKey(name)), j = i + dir;
+            if (i < 0 || j < 0 || j >= fontEntries.length) return;
+            [fontEntries[i], fontEntries[j]] = [fontEntries[j], fontEntries[i]];
+            saveFontEntries(); renderFontSelect();
+        }
+        function sortFontEntries() {
+            fontEntries.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+            saveFontEntries(); renderFontSelect();
+        }
+        async function resetFontEntries() {
+            for (const e of fontEntries.filter(x => x.kind === 'file')) {
+                try { await fontIdb('readwrite', st => st.delete(e.name)); } catch (err) {}
+                if (fontBlobUrls[e.name]) { URL.revokeObjectURL(fontBlobUrls[e.name]); delete fontBlobUrls[e.name]; }
+            }
+            fontEntries = BUILTIN_FONTS.map(f => Object.assign({}, f));
+            saveFontEntries();
+            if (!findEntry(localStorage.getItem('settings_font') || '')) localStorage.setItem('settings_font', 'default');
+            renderFontSelect(); applyFontEverywhere();
+            showToast(tF('toast.font_reset', 'Đã khôi phục danh sách phông chữ mặc định'), 'restart_alt', 3500);
+        }
+
+        // ----- Dropdown phông chữ trong Cài đặt -----
+        function renderFontSelect() {
+            const sel = document.getElementById('setting-font');
+            if (!sel) return;
+            sel.innerHTML = '';
+            const mk = (value, text, i18n, icon) => {
+                const o = document.createElement('md-select-option');
+                o.value = value;
+                if (icon) { const ic = document.createElement('span'); ic.slot = 'start'; ic.className = 'material-symbols-outlined'; ic.style.fontSize = '20px'; ic.textContent = icon; o.appendChild(ic); }
+                const h = document.createElement('div'); h.slot = 'headline'; h.textContent = text;
+                if (i18n) h.setAttribute('data-i18n', i18n);
+                o.appendChild(h); return o;
+            };
+            sel.appendChild(mk('default', tF('settings.font_default', 'Google Sans Flex (Mặc định)'), 'settings.font_default'));
+            fontEntries.forEach(e => sel.appendChild(mk(e.name, e.name)));
+            const div = document.createElement('md-divider'); div.setAttribute('role', 'separator'); div.tabIndex = -1; sel.appendChild(div);
+            sel.appendChild(mk('__custom', tF('settings.font_custom', 'Tùy chỉnh...'), 'settings.font_custom', 'add'));
+            sel.appendChild(mk('__manage', tF('settings.font_manage', 'Quản lý phông chữ'), 'settings.font_manage', 'tune'));
+            sel.value = selectedFontName();
+            renderFontManageList();
+        }
+
+        // ----- Dialog: Thêm phông chữ tùy chỉnh / Chọn phông / Quản lý phông chữ -----
+        function initFontUI() {
+            const sel = document.getElementById('setting-font');
+            const addDlg = document.getElementById('font-add-dialog');
+            const pickDlg = document.getElementById('font-pick-dialog');
+            const manageDlg = document.getElementById('font-manage-dialog');
+            const radios = () => Array.from(addDlg.querySelectorAll('md-radio[name="font-src"]'));
+            const curSrc = () => (radios().find(r => r.checked) || {}).value || 'google';
+            const errEl = document.getElementById('font-add-error');
+            const okBtn = document.getElementById('font-add-ok');
+            const fileInput = document.getElementById('font-file-input');
+            const fileLabel = document.getElementById('font-file-label');
+            const googleInput = document.getElementById('font-google-input');
+            const urlInput = document.getElementById('font-url-input');
+            const urlName = document.getElementById('font-url-name');
+            const fileName = document.getElementById('font-file-name');
+            let reopenManage = false;
+
+            function syncPanels() {
+                const s = curSrc();
+                addDlg.querySelectorAll('.fnt-panel').forEach(p => { p.hidden = p.dataset.panel !== s; });
+                errEl.textContent = '';
+            }
+            radios().forEach(r => r.addEventListener('change', syncPanels));
+
+            function openAdd(fromManage) {
+                reopenManage = !!fromManage;
+                googleInput.value = ''; urlInput.value = ''; urlName.value = ''; fileName.value = ''; fileInput.value = '';
+                fileLabel.textContent = tF('font.file_none', 'Chưa chọn tệp nào');
+                const first = radios().find(r => r.value === 'google'); if (first) first.checked = true;
+                syncPanels(); okBtn.disabled = false; okBtn.textContent = tF('font.add_ok', 'Thêm');
+                addDlg.show();
+            }
+            addDlg.addEventListener('closed', () => {
+                if (reopenManage) { reopenManage = false; renderFontManageList(); manageDlg.show(); }
+            });
+            document.getElementById('font-add-cancel').addEventListener('click', () => addDlg.close());
+            document.getElementById('font-file-btn').addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => {
+                const f = fileInput.files[0];
+                fileLabel.textContent = f ? f.name : tF('font.file_none', 'Chưa chọn tệp nào');
+                if (f && !fileName.value) fileName.value = cleanFontName(f.name.replace(/\.[^.]+$/, ''));
+            });
+
+            function openPick(names) {
+                const list = document.getElementById('font-pick-list');
+                list.innerHTML = '';
+                names.forEach((n, i) => {
+                    const lab = document.createElement('label');
+                    const r = document.createElement('md-radio'); r.name = 'font-pick'; r.value = n; if (i === 0) r.checked = true;
+                    const sp = document.createElement('span'); sp.textContent = n;
+                    lab.appendChild(r); lab.appendChild(sp); list.appendChild(lab);
+                });
+                document.getElementById('font-pick-desc').textContent = tF('font.pick_desc', 'Đã thêm {n} phông chữ từ liên kết. Bạn muốn dùng phông nào?').replace('{n}', names.length);
+                pickDlg.show();
+            }
+            document.getElementById('font-pick-ok').addEventListener('click', () => {
+                const r = Array.from(pickDlg.querySelectorAll('md-radio')).find(x => x.checked);
+                pickDlg.close();
+                if (r) selectFont(r.value);
+            });
+            document.getElementById('font-pick-later').addEventListener('click', () => pickDlg.close());
+
+            async function submitAdd() {
+                const s = curSrc();
+                errEl.textContent = ''; okBtn.disabled = true; okBtn.textContent = tF('font.adding', 'Đang tải...');
+                try {
+                    let entries;
+                    if (s === 'google') entries = await importGoogle(googleInput.value);
+                    else if (s === 'url') entries = await importUrl(urlInput.value, urlName.value);
+                    else entries = await importFile(fileInput.files[0], fileName.value);
+                    const { names, added } = addFontEntries(entries);
+                    renderFontSelect();
+                    // Chờ phông tải xong một chút để lần chọn đầu hiển thị đúng ngay
+                    try { await Promise.race([document.fonts.load(`16px '${names[0]}'`), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
+                    if (names.length === 1) {
+                        selectFont(names[0]);
+                        showToast(added.length
+                            ? tF('toast.font_added', 'Đã thêm phông chữ {name}').replace('{name}', names[0])
+                            : tF('toast.font_exists_selected', 'Phông chữ {name} đã có trong danh sách, đã chọn lại').replace('{name}', names[0]), 'font_download', 4000);
+                        addDlg.close();
+                    } else {
+                        reopenManage = false;
+                        addDlg.close();
+                        setTimeout(() => openPick(names), 350);
+                    }
+                } catch (e) {
+                    const key = e && e.key;
+                    errEl.textContent = key ? tF(key, e.fb) : tF('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng');
+                } finally {
+                    okBtn.disabled = false; okBtn.textContent = tF('font.add_ok', 'Thêm');
+                }
+            }
+            okBtn.addEventListener('click', submitAdd);
+
+            // Quản lý phông chữ
+            document.getElementById('font-manage-add').addEventListener('click', () => {
+                manageDlg.close();
+                setTimeout(() => openAdd(true), 250);
+            });
+            document.getElementById('font-manage-sort').addEventListener('click', sortFontEntries);
+            document.getElementById('font-manage-reset').addEventListener('click', async () => {
+                if (await confirmDialog(tF('font.reset_confirm', 'Khôi phục danh sách phông chữ về mặc định? Các phông chữ tùy chỉnh đã thêm sẽ bị xóa.'))) resetFontEntries();
+            });
+            document.getElementById('font-manage-done').addEventListener('click', () => manageDlg.close());
+
+            // Dropdown
+            renderFontSelect();
+            sel.addEventListener('change', (e) => {
+                const v = e.target.value;
+                if (v === '__custom' || v === '__manage') {
+                    sel.value = selectedFontName();
+                    if (v === '__custom') openAdd(false); else { renderFontManageList(); manageDlg.show(); }
+                    return;
+                }
+                selectFont(v);
+            });
+        }
+
+        function renderFontManageList() {
+            const list = document.getElementById('font-manage-list');
+            if (!list) return;
+            list.innerHTML = '';
+            const row = (name, tag, entry, idx) => {
+                const d = document.createElement('div'); d.className = 'fnt-row';
+                const n = document.createElement('span'); n.className = 'fnt-row-name'; n.textContent = name; d.appendChild(n);
+                if (entry && entry.kind !== 'builtin') { const k = document.createElement('span'); k.className = 'fnt-row-tag'; k.textContent = entry.kind === 'google' ? 'Google Fonts' : (entry.kind === 'file' ? tF('font.src_file_short', 'Tệp') : 'URL'); d.appendChild(k); }
+                if (tag) { const k = document.createElement('span'); k.className = 'fnt-row-tag'; k.textContent = tag; d.appendChild(k); }
+                if (entry) {
+                    const ib = (icon, title, fn, dis) => {
+                        const b = document.createElement('md-icon-button'); b.title = title; b.disabled = !!dis;
+                        const s = document.createElement('span'); s.className = 'material-symbols-outlined'; s.textContent = icon; b.appendChild(s);
+                        b.addEventListener('click', fn); d.appendChild(b);
+                    };
+                    ib('arrow_upward', tF('font.move_up', 'Lên'), () => moveFontEntry(entry.name, -1), idx === 0);
+                    ib('arrow_downward', tF('font.move_down', 'Xuống'), () => moveFontEntry(entry.name, 1), idx === fontEntries.length - 1);
+                    ib('delete', tF('font.delete', 'Xóa'), () => deleteFontEntry(entry.name));
+                }
+                list.appendChild(d);
+            };
+            row('Google Sans Flex', tF('font.manage_default_tag', 'Mặc định'), null);
+            fontEntries.forEach((e, i) => row(e.name, '', e, i));
         }
 
         // Màu chủ đạo động (trích từ album art bài đang phát). null = dùng màu người dùng chọn
@@ -4653,6 +5087,10 @@
             root.querySelectorAll('md-outlined-select').forEach(sel => {
                 try { if (sel.selectedIndex >= 0) sel.selectIndex(sel.selectedIndex); } catch (e) {}
             });
+            root.querySelectorAll('[data-i18n-label]').forEach(el => {
+                const key = el.getAttribute('data-i18n-label');
+                if (dict[key] !== undefined) el.setAttribute('label', dict[key]);
+            });
             root.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (dict[key] !== undefined) el.setAttribute('placeholder', dict[key]);
@@ -4843,13 +5281,7 @@
                 applyUiScale(parseInt(slider.value, 10));
             });
 
-            const fontSel = document.getElementById('setting-font');
-            const savedFont = localStorage.getItem('settings_font') || 'default';
-            fontSel.value = FONT_LIST.some(f => f[0] === savedFont) ? savedFont : 'default';
-            fontSel.addEventListener('change', (e) => {
-                localStorage.setItem('settings_font', e.target.value);
-                applyFontEverywhere();
-            });
+            initFontUI();
         }
 
         settingsBtn.addEventListener('click', () => {
