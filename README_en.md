@@ -80,4 +80,8 @@ No Node.js or complex build tools required! You can run and install the app in s
 
 Distributed under the [MIT License](https://github.com/Tuanphong3108/music-player/blob/main/LICENSE).
 
+### Free and Open-Source Software (FOSS) Project
+
+This is a free and open-source project created by Phong VN. Check out the project repository here: [Audio Player Repository](https://github.com/Tuanphong3108/music-player)
+
 Built with ❤️ by [Phong VN](https://tuanphong3108.github.io).
