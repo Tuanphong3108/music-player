@@ -2667,8 +2667,23 @@
         // ----- Thêm vào danh sách / chọn / xoá / sắp xếp -----
         function selectFont(name) {
             localStorage.setItem('settings_font', name);
-            renderFontSelect();
+            syncFontSelect();   // chỉ cập nhật lựa chọn, KHÔNG dựng lại danh sách (dựng lại khi menu đang đóng làm ô chọn bị trống)
             applyFontEverywhere();
+        }
+        // Đồng bộ giá trị + chữ hiển thị của ô chọn với phông đang dùng
+        function syncFontSelect() {
+            const sel = document.getElementById('setting-font');
+            if (!sel) return;
+            const val = selectedFontName();
+            const run = () => {
+                const opts = Array.from(sel.querySelectorAll('md-select-option'));
+                const idx = opts.findIndex(o => o.value === val);
+                try { if (idx >= 0) sel.selectIndex(idx); else sel.value = val; } catch (e) { sel.value = val; }
+            };
+            run();
+            // Menu có thể đang chạy hiệu ứng đóng -> đồng bộ lại sau khi xong
+            requestAnimationFrame(run);
+            setTimeout(run, 350);
         }
         // Trả về { names: [tất cả phông trong liên kết], added: [phông mới] }
         function addFontEntries(entries) {
@@ -2734,6 +2749,7 @@
             sel.appendChild(mk('__custom', tF('settings.font_custom', 'Tùy chỉnh...'), 'settings.font_custom', 'add'));
             sel.appendChild(mk('__manage', tF('settings.font_manage', 'Quản lý phông chữ'), 'settings.font_manage', 'tune'));
             sel.value = selectedFontName();
+            syncFontSelect();
             renderFontManageList();
         }
 
@@ -2848,7 +2864,7 @@
             sel.addEventListener('change', (e) => {
                 const v = e.target.value;
                 if (v === '__custom' || v === '__manage') {
-                    sel.value = selectedFontName();
+                    syncFontSelect();
                     if (v === '__custom') openAdd(false); else { renderFontManageList(); manageDlg.show(); }
                     return;
                 }
