@@ -841,7 +841,7 @@
             --md-menu-item-selected-label-text-weight: 700;
             font-family: var(--app-font);
         }
-        #sleep-dialog, #font-add-dialog, #font-pick-dialog, #font-manage-dialog {
+        #sleep-dialog, #font-add-dialog, #font-pick-dialog, #font-manage-dialog, #font-edit-dialog {
             --md-outlined-button-label-text-font: var(--app-font);
             --md-outlined-button-label-text-color: var(--md-sys-color-primary);
             --md-outlined-button-outline-color: var(--md-sys-color-outline);
@@ -885,7 +885,11 @@
             font-family: var(--app-font);
             color: var(--md-sys-color-on-surface);
         }
-        #sleep-dialog::part(scrim), #font-add-dialog::part(scrim), #font-pick-dialog::part(scrim), #font-manage-dialog::part(scrim) { background: #000; }
+        #sleep-dialog::part(scrim), #font-add-dialog::part(scrim), #font-pick-dialog::part(scrim), #font-manage-dialog::part(scrim), #font-edit-dialog::part(scrim) { background: #000; }
+        #font-edit-dialog .fnt-help { font-size: 13px; line-height: 1.5; opacity: .8; margin-bottom: 12px; }
+        #font-edit-dialog md-outlined-text-field { width: 100%; }
+        #font-edit-dialog [hidden] { display: none; }
+        #font-edit-dialog .fnt-error { color: var(--md-sys-color-error, #F2B8B5); font-size: 13px; font-weight: 600; margin-top: 12px; }
         /* ===== Dialog phông chữ (thêm / chọn / quản lý) ===== */
         #font-add-dialog .fnt-help, #font-pick-dialog .fnt-help { font-size: 13px; line-height: 1.5; opacity: .8; margin-bottom: 12px; }
         #font-add-dialog md-outlined-text-field, #font-add-dialog .fnt-panel { width: 100%; }
@@ -1047,6 +1051,22 @@
         <div slot="actions">
             <md-text-button id="font-pick-later" data-i18n="font.pick_later">Để sau</md-text-button>
             <md-filled-button id="font-pick-ok" data-i18n="font.pick_ok">Dùng phông này</md-filled-button>
+        </div>
+    </md-dialog>
+
+    <md-dialog id="font-edit-dialog" style="max-width:min(94vw,520px); font-family:var(--app-font);">
+        <div slot="headline" data-i18n="font.edit_title">Sửa phông chữ</div>
+        <form slot="content" method="dialog" onsubmit="return false;">
+            <div class="fnt-help" id="font-edit-help"></div>
+            <md-outlined-text-field id="font-edit-name" type="text" data-i18n-label="font.edit_name" label="Tên phông chữ"></md-outlined-text-field>
+            <div id="font-edit-link-wrap" style="margin-top:12px;">
+                <md-outlined-text-field id="font-edit-link" type="textarea" rows="3" data-i18n-label="font.edit_link" label="Liên kết"></md-outlined-text-field>
+            </div>
+            <div id="font-edit-error" class="fnt-error"></div>
+        </form>
+        <div slot="actions">
+            <md-text-button id="font-edit-cancel" data-i18n="misc.cancel">Huỷ</md-text-button>
+            <md-filled-button id="font-edit-ok" data-i18n="font.edit_save">Lưu</md-filled-button>
         </div>
     </md-dialog>
 
@@ -2436,19 +2456,29 @@
         // ===== Kích thước giao diện + Phông chữ =====
         const tF = (k, f) => (typeof currentLangDict !== 'undefined' && currentLangDict[k]) || f;
         const BUILTIN_FONTS = [
+            ['Arial','sans-serif','system','Helvetica, '],['Segoe UI','sans-serif','system','system-ui, '],
             ['Roboto','sans-serif'],['Open Sans','sans-serif'],['Noto Sans','sans-serif'],['Inter','sans-serif'],
             ['Montserrat','sans-serif'],['Nunito','sans-serif'],['Quicksand','sans-serif'],['Be Vietnam Pro','sans-serif'],
             ['Lexend','sans-serif'],['Raleway','sans-serif'],['Source Sans 3','sans-serif'],['Work Sans','sans-serif'],
-            ['Space Grotesk','sans-serif'],['Comfortaa','sans-serif'],['Times New Roman','serif','system'],['Roboto Slab','serif'],['Noto Serif','serif'],
+            ['Space Grotesk','sans-serif'],['Comfortaa','sans-serif'],['Times New Roman','serif','system','Times, '],['Roboto Slab','serif'],['Noto Serif','serif'],
             ['Lora','serif'],['Merriweather','serif'],['Playfair Display','serif'],['Dancing Script','cursive'],
             ['Roboto Mono','monospace'],['JetBrains Mono','monospace']
-        ].map(f => ({ name: f[0], kind: 'builtin', generic: f[1], system: f[2] === 'system' }));
+        ].map(f => ({ name: f[0], kind: 'builtin', generic: f[1], system: f[2] === 'system', fb: f[3] || '' }));
 
         // Danh sách phông chữ (có thứ tự) lưu trong localStorage; phông "file" tải lên lưu blob trong IndexedDB
         function loadFontEntries() {
             try {
                 const arr = JSON.parse(localStorage.getItem('settings_font_entries'));
-                if (Array.isArray(arr) && arr.every(e => e && typeof e.name === 'string' && e.kind)) return arr;
+                if (Array.isArray(arr) && arr.every(e => e && typeof e.name === 'string' && e.kind)) {
+                    // Phông mặc định không xoá được -> luôn đảm bảo đủ (bổ sung phông mặc định mới ở bản cập nhật)
+                    BUILTIN_FONTS.forEach((b, bi) => {
+                        if (arr.some(e => e.name.toLowerCase() === b.name.toLowerCase())) return;
+                        let at = 0;
+                        for (let k = bi - 1; k >= 0; k--) { const j = arr.findIndex(e => e.name === BUILTIN_FONTS[k].name); if (j >= 0) { at = j + 1; break; } }
+                        arr.splice(at, 0, Object.assign({}, b));
+                    });
+                    return arr;
+                }
             } catch (e) {}
             return BUILTIN_FONTS.map(f => Object.assign({}, f));
         }
@@ -2457,12 +2487,14 @@
         const fontKey = n => String(n).trim().toLowerCase();
         const cleanFontName = n => String(n || '').replace(/['"\\<>{};]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
         function findEntry(name) { return fontEntries.find(e => fontKey(e.name) === fontKey(name)); }
-        const fontBlobUrls = {};   // tên phông "file" -> blob URL (tạo lúc khởi động)
+        const famOf = e => (e && (e.family || e.name)) || '';   // tên font-family thật (tên hiển thị có thể được đổi)
+        const fontBlobUrls = {};   // font-family của phông "file" -> blob URL (tạo lúc khởi động)
 
         function fontStack(name) {
             const f = findEntry(name);
             if (!f) return "'Google Sans Flex', sans-serif";
-            return `'${f.name}', ${f.system ? 'Times, ' : ''}'Google Sans Flex', ${f.generic || 'sans-serif'}`;
+            const def = BUILTIN_FONTS.find(b => b.name === f.name);
+            return `'${famOf(f)}', ${f.system ? ((def && def.fb) || '') : ''}'Google Sans Flex', ${f.generic || 'sans-serif'}`;
         }
         // Kiểm tra phông đã cài sẵn trong máy chưa (so độ rộng chữ với phông dự phòng mặc định)
         const _localFontCache = {};
@@ -2486,15 +2518,15 @@
         function entryHref(e) {
             if (!e) return null;
             if (e.kind === 'builtin') return (e.system || fontIsLocal(e.name)) ? null : fontHref(e.name);
-            if (e.kind === 'google') return fontIsLocal(e.name) ? null : e.href;
+            if (e.kind === 'google') return fontIsLocal(famOf(e)) ? null : e.href;
             if (e.kind === 'css') return e.href;
             return null;
         }
         // CSS @font-face cho phông nạp từ tệp (liên kết trực tiếp / tải lên)
         function entryFaceCss(e) {
             if (!e) return '';
-            const src = e.kind === 'url' ? e.src : (e.kind === 'file' ? fontBlobUrls[e.name] : null);
-            return src ? `@font-face{font-family:'${e.name}';src:url("${src}");font-display:swap}` : '';
+            const src = e.kind === 'url' ? e.src : (e.kind === 'file' ? fontBlobUrls[famOf(e)] : null);
+            return src ? `@font-face{font-family:'${famOf(e)}';src:url("${src}");font-display:swap}` : '';
         }
         function selectedFontName() {
             const n = localStorage.getItem('settings_font') || 'default';
@@ -2509,8 +2541,10 @@
         function loadFontIntoDoc(doc, e) {
             const href = entryHref(e);
             if (href) {
-                const id = 'gfont-' + slugF(e.name);
-                if (!doc.getElementById(id)) {
+                const id = 'gfont-' + slugF(famOf(e));
+                const existing = doc.getElementById(id);
+                if (existing && existing.getAttribute('href') !== href) existing.setAttribute('href', href);
+                if (!existing) {
                     const link = doc.createElement('link');
                     link.id = id; link.rel = 'stylesheet'; link.href = href;
                     if (e.kind === 'builtin') {
@@ -2522,7 +2556,7 @@
             }
             const face = entryFaceCss(e);
             if (face) {
-                const id = 'gface-' + slugF(e.name);
+                const id = 'gface-' + slugF(famOf(e));
                 let st = doc.getElementById(id);
                 if (!st) { st = doc.createElement('style'); st.id = id; doc.head.appendChild(st); }
                 if (st.textContent !== face) st.textContent = face;
@@ -2570,10 +2604,10 @@
         async function restoreFileFonts() {
             let changed = false;
             for (const e of fontEntries) {
-                if (e.kind !== 'file' || fontBlobUrls[e.name]) continue;
+                if (e.kind !== 'file' || fontBlobUrls[famOf(e)]) continue;
                 try {
-                    const blob = await fontIdb('readonly', st => st.get(e.name));
-                    if (blob) { fontBlobUrls[e.name] = URL.createObjectURL(blob); changed = true; }
+                    const blob = await fontIdb('readonly', st => st.get(famOf(e)));
+                    if (blob) { fontBlobUrls[famOf(e)] = URL.createObjectURL(blob); changed = true; }
                 } catch (err) {}
             }
             if (changed) applyFontEverywhere();
@@ -2624,7 +2658,7 @@
                 try { await fetchCssText(p.href); }
                 catch (e) { throw new FontErr('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng'); }
             }
-            return parsed.map(p => ({ name: p.name, kind: 'google', generic: 'sans-serif', href: p.href }));
+            return parsed.map(p => ({ name: p.name, family: p.name, kind: 'google', generic: 'sans-serif', href: p.href }));
         }
         async function importUrl(raw, nameInput) {
             let u;
@@ -2638,7 +2672,7 @@
                 if (findEntry(name)) throw new FontErr('font.err_exists', 'Đã có phông chữ tên này trong danh sách, hãy đặt tên khác');
                 try { const f = new FontFace(name, `url("${u.href}")`); await f.load(); }
                 catch (e) { throw new FontErr('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng'); }
-                return [{ name, kind: 'url', src: u.href }];
+                return [{ name, family: name, kind: 'url', src: u.href }];
             }
             let css;
             try { css = await fetchCssText(u.href); }
@@ -2648,7 +2682,7 @@
             let m;
             while ((m = re.exec(css))) { const n = cleanFontName(m[2]); if (n && !names.some(x => fontKey(x) === fontKey(n))) names.push(n); }
             if (!names.length) throw new FontErr('font.err_no_family', 'Không tìm thấy tên phông chữ trong liên kết');
-            return names.map(n => ({ name: n, kind: 'css', href: u.href }));
+            return names.map(n => ({ name: n, family: n, kind: 'css', href: u.href }));
         }
         async function importFile(file, nameInput) {
             if (!file) throw new FontErr('font.err_no_file', 'Hãy chọn một tệp phông chữ');
@@ -2661,7 +2695,7 @@
             const blob = new Blob([buf], { type: file.type || 'font/ttf' });
             try { await fontIdb('readwrite', st => st.put(blob, name)); } catch (e) {}
             fontBlobUrls[name] = URL.createObjectURL(blob);
-            return [{ name, kind: 'file' }];
+            return [{ name, family: name, kind: 'file' }];
         }
 
         // ----- Thêm vào danh sách / chọn / xoá / sắp xếp -----
@@ -2697,12 +2731,12 @@
             return { names, added };
         }
         async function deleteFontEntry(name) {
-            const e = findEntry(name); if (!e) return;
+            const e = findEntry(name); if (!e || e.kind === 'builtin') return;
             fontEntries = fontEntries.filter(x => x !== e);
             saveFontEntries();
             if (e.kind === 'file') {
-                try { await fontIdb('readwrite', st => st.delete(e.name)); } catch (err) {}
-                if (fontBlobUrls[e.name]) { URL.revokeObjectURL(fontBlobUrls[e.name]); delete fontBlobUrls[e.name]; }
+                try { await fontIdb('readwrite', st => st.delete(famOf(e))); } catch (err) {}
+                if (fontBlobUrls[famOf(e)]) { URL.revokeObjectURL(fontBlobUrls[famOf(e)]); delete fontBlobUrls[famOf(e)]; }
             }
             if (fontKey(localStorage.getItem('settings_font') || '') === fontKey(name)) { localStorage.setItem('settings_font', 'default'); applyFontEverywhere(); }
             renderFontSelect();
@@ -2720,8 +2754,8 @@
         }
         async function resetFontEntries() {
             for (const e of fontEntries.filter(x => x.kind === 'file')) {
-                try { await fontIdb('readwrite', st => st.delete(e.name)); } catch (err) {}
-                if (fontBlobUrls[e.name]) { URL.revokeObjectURL(fontBlobUrls[e.name]); delete fontBlobUrls[e.name]; }
+                try { await fontIdb('readwrite', st => st.delete(famOf(e))); } catch (err) {}
+                if (fontBlobUrls[famOf(e)]) { URL.revokeObjectURL(fontBlobUrls[famOf(e)]); delete fontBlobUrls[famOf(e)]; }
             }
             fontEntries = BUILTIN_FONTS.map(f => Object.assign({}, f));
             saveFontEntries();
@@ -2827,7 +2861,7 @@
                     const { names, added } = addFontEntries(entries);
                     renderFontSelect();
                     // Chờ phông tải xong một chút để lần chọn đầu hiển thị đúng ngay
-                    try { await Promise.race([document.fonts.load(`16px '${names[0]}'`), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
+                    try { await Promise.race([document.fonts.load(`16px '${famOf(findEntry(names[0]))}'`), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
                     if (names.length === 1) {
                         selectFont(names[0]);
                         showToast(added.length
@@ -2847,6 +2881,80 @@
                 }
             }
             okBtn.addEventListener('click', submitAdd);
+
+            // ----- Sửa phông chữ nhập ngoài (phông tải từ tệp chỉ được đổi tên) -----
+            const editDlg = document.getElementById('font-edit-dialog');
+            const editName = document.getElementById('font-edit-name');
+            const editLink = document.getElementById('font-edit-link');
+            const editLinkWrap = document.getElementById('font-edit-link-wrap');
+            const editHelp = document.getElementById('font-edit-help');
+            const editErr = document.getElementById('font-edit-error');
+            const editOk = document.getElementById('font-edit-ok');
+            let editing = null, reopenFromEdit = false;
+            window.openFontEdit = function (name) {
+                const e = findEntry(name); if (!e || e.kind === 'builtin') return;
+                editing = e; editErr.textContent = '';
+                editName.value = e.name;
+                const isFile = e.kind === 'file';
+                editLinkWrap.hidden = isFile;
+                editHelp.textContent = isFile ? tF('font.edit_file_help', 'Phông chữ tải lên từ tệp chỉ có thể đổi tên.')
+                    : (e.kind === 'google' ? tF('font.edit_google_help', 'Có thể dán mã nhúng <link> hoặc liên kết Google Fonts.') : tF('font.edit_url_help', 'Liên kết https:// tới tệp CSS hoặc tệp phông chữ.'));
+                editLink.value = e.kind === 'url' ? e.src : (e.href || '');
+                editOk.disabled = false; editOk.textContent = tF('font.edit_save', 'Lưu');
+                reopenFromEdit = true;
+                manageDlg.close();
+                setTimeout(() => editDlg.show(), 250);
+            };
+            editDlg.addEventListener('closed', () => { if (reopenFromEdit) { reopenFromEdit = false; renderFontManageList(); manageDlg.show(); } });
+            document.getElementById('font-edit-cancel').addEventListener('click', () => editDlg.close());
+            async function saveEdit() {
+                const e = editing; if (!e) return;
+                editErr.textContent = ''; editOk.disabled = true; editOk.textContent = tF('font.adding', 'Đang tải...');
+                try {
+                    const newName = cleanFontName(editName.value);
+                    if (!newName) throw new FontErr('font.err_name_empty', 'Hãy nhập tên phông chữ');
+                    const other = findEntry(newName);
+                    if (other && other !== e) throw new FontErr('font.err_exists', 'Đã có phông chữ tên này trong danh sách, hãy đặt tên khác');
+                    const patch = {};
+                    const fam = famOf(e);
+                    if (e.kind === 'google') {
+                        const p = parseGoogleEmbed(editLink.value)[0];
+                        if (!p) throw new FontErr('font.err_no_link', 'Không tìm thấy liên kết Google Fonts hợp lệ trong mã bạn dán');
+                        if (p.href !== e.href) {
+                            try { await fetchCssText(p.href); } catch (er) { throw new FontErr('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng'); }
+                            patch.href = p.href; patch.family = p.name;
+                        }
+                    } else if (e.kind === 'css') {
+                        let u; try { u = new URL(editLink.value.trim()); } catch (er) {}
+                        if (!u || u.protocol !== 'https:') throw new FontErr('font.err_url', 'Liên kết không hợp lệ (cần bắt đầu bằng https://)');
+                        if (u.href !== e.href) {
+                            let css; try { css = await fetchCssText(u.href); } catch (er) { throw new FontErr('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng'); }
+                            const names = []; const re = /font-family\s*:\s*(['"]?)([^;'"}]+)\1/gi; let m;
+                            while ((m = re.exec(css))) { const n = cleanFontName(m[2]); if (n && !names.includes(n)) names.push(n); }
+                            if (!names.length) throw new FontErr('font.err_no_family', 'Không tìm thấy tên phông chữ trong liên kết hoặc tệp');
+                            patch.href = u.href; patch.family = names.includes(fam) ? fam : names[0];
+                        }
+                    } else if (e.kind === 'url') {
+                        let u; try { u = new URL(editLink.value.trim()); } catch (er) {}
+                        if (!u || u.protocol !== 'https:') throw new FontErr('font.err_url', 'Liên kết không hợp lệ (cần bắt đầu bằng https://)');
+                        if (u.href !== e.src) {
+                            try { await new FontFace(fam, `url("${u.href}")`).load(); } catch (er) { throw new FontErr('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng'); }
+                            patch.src = u.href;
+                        }
+                    }
+                    const wasSelected = fontKey(localStorage.getItem('settings_font') || '') === fontKey(e.name);
+                    e.family = patch.family || fam;
+                    Object.assign(e, patch);
+                    e.name = newName;
+                    saveFontEntries();
+                    if (wasSelected) localStorage.setItem('settings_font', newName);
+                    renderFontSelect(); applyFontEverywhere();
+                    editDlg.close();
+                } catch (er) {
+                    editErr.textContent = er && er.key ? tF(er.key, er.fb) : tF('font.err_fetch', 'Không tải được phông chữ. Hãy kiểm tra liên kết và kết nối mạng');
+                } finally { editOk.disabled = false; editOk.textContent = tF('font.edit_save', 'Lưu'); }
+            }
+            editOk.addEventListener('click', saveEdit);
 
             // Quản lý phông chữ
             document.getElementById('font-manage-add').addEventListener('click', () => {
@@ -2887,9 +2995,11 @@
                         const s = document.createElement('span'); s.className = 'material-symbols-outlined'; s.textContent = icon; b.appendChild(s);
                         b.addEventListener('click', fn); d.appendChild(b);
                     };
+                    const imported = entry.kind !== 'builtin';
+                    if (imported) ib('edit', tF('font.edit', 'Sửa'), () => window.openFontEdit(entry.name));
                     ib('arrow_upward', tF('font.move_up', 'Lên'), () => moveFontEntry(entry.name, -1), idx === 0);
                     ib('arrow_downward', tF('font.move_down', 'Xuống'), () => moveFontEntry(entry.name, 1), idx === fontEntries.length - 1);
-                    ib('delete', tF('font.delete', 'Xóa'), () => deleteFontEntry(entry.name));
+                    if (imported) ib('delete', tF('font.delete', 'Xóa'), () => deleteFontEntry(entry.name));
                 }
                 list.appendChild(d);
             };
