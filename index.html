@@ -749,8 +749,13 @@
             --md-menu-item-selected-label-text-weight: 700;
         }
         .m3-select md-select-option, #output-device-menu md-menu-item {
+<<<<<<< HEAD
             width: max-content; max-width: calc(54ch + 76px); font-family: var(--app-font);
             --md-menu-item-one-line-container-height: 44px;
+=======
+            width: max-content; max-width: calc((54ch + 76px) * var(--ui-scale)); font-family: var(--app-font);
+            --md-menu-item-one-line-container-height: calc(44px * var(--ui-scale));
+>>>>>>> 29feef0 (Auto sync: 2026-10-13 16:51:30)
         }
         .m3-select md-select-option [slot="headline"], #output-device-menu [slot="headline"] {
             white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.3;
@@ -767,9 +772,24 @@
             --md-menu-item-label-text-font: var(--app-font);
             --md-menu-item-label-text-weight: 600;
             --md-menu-item-selected-label-text-weight: 700;
-            max-width: calc(54ch + 76px);
+            max-width: calc((54ch + 76px) * var(--ui-scale));
         }
 
+
+        /* ===== Menu/dropdown khi đổi kích thước giao diện (CSS zoom làm lệch toạ độ định vị của md-menu):
+           bù ngược zoom cho chính menu để nó định vị đúng, nhân lại kích thước chữ/hàng theo --ui-scale,
+           và giới hạn chiều cao để danh sách dài (phông chữ...) không tràn ra khỏi màn hình ===== */
+        #output-device-menu, #sleep-menu {
+            display: block; zoom: calc(1 / var(--ui-scale));
+            --md-menu-item-one-line-container-height: calc(44px * var(--ui-scale));
+            --md-menu-item-label-text-size: calc(16px * var(--ui-scale));
+            max-height: calc(100vh - 100px);
+        }
+        .m3-select::part(menu) {
+            display: block; zoom: calc(1 / var(--ui-scale));
+            max-height: min(380px, calc(100vh - 100px));
+        }
+        .m3-select { --md-menu-item-label-text-size: calc(16px * var(--ui-scale)); }
         /* ===== Toast thiết bị đầu ra âm thanh (Top layer = lớp cao nhất) ===== */
         #output-toast {
             position: fixed; inset: auto; left: 50%; bottom: 28px; margin: 0; border: none;
