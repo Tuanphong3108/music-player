@@ -81,4 +81,8 @@ Không cần Node.js hay Build tool phức tạp, bạn có thể chạy dự á
 
 Dự án này được phát hành dưới mã nguồn mở [MIT License](https://github.com/Tuanphong3108/music-player/blob/main/LICENSE).
 
+### Dự án mã nguồn mở và miễn phí (FOSS)
+
+Dự án này là dự án mã nguồn mở và miễn phí được làm bởi Phong VN, repo của dự án ở đây: [Audio Player Repository](https://github.com/Tuanphong3108/music-player)
+
 Build with ❤️ by [Phong VN](https://tuanphong3108.github.io).
