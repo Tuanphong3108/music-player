@@ -183,7 +183,7 @@ loading.report_title=Emergency bug report
 loading.report_btn=REPORT
 
 ## --- Metadata Editor (iframe) ---
-metaeditor.header_title=EDIT METADATA
+metaeditor.header_title=edit metadata
 metaeditor.back=Back
 metaeditor.loading=LAUNCHING EDITOR...
 metaeditor.saving=Saving...
