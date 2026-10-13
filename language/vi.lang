@@ -183,7 +183,7 @@ loading.report_title=Báo cáo lỗi khẩn cấp
 loading.report_btn=BÁO CÁO
 
 ## --- Metadata Editor (iframe) ---
-metaeditor.header_title=EDIT METADATA
+metaeditor.header_title=CHỈNH SỬA METADATA
 metaeditor.back=Quay lại
 metaeditor.loading=ĐANG KHỞI CHẠY TRÌNH CHỈNH SỬA...
 metaeditor.saving=Đang lưu...
