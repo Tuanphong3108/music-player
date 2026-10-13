@@ -333,6 +333,8 @@ function setLang(l) { currentLang = l === 'en' ? 'en' : 'vi'; renderStatic(); if
                 if (!link) { link = document.createElement('link'); link.id = 'app-font-link'; link.rel = 'stylesheet'; document.head.appendChild(link); }
                 if (link.getAttribute('href') !== f.href) link.setAttribute('href', f.href);
             } else if (link) link.remove();
+            var fs = document.getElementById('app-font-face');
+            if (f.faceCss) { if (!fs) { fs = document.createElement('style'); fs.id = 'app-font-face'; document.head.appendChild(fs); } fs.textContent = f.faceCss; } else if (fs) fs.remove();
             var st = document.getElementById('app-font-style');
             if (!st) { st = document.createElement('style'); st.id = 'app-font-style'; document.head.appendChild(st); }
             st.textContent = ':root{--md-ref-typeface-plain:' + f.stack + ';--md-ref-typeface-brand:' + f.stack + '}'
