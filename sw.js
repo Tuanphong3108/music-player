@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'audio-player-';
-const CACHE_VERSION = 'v2026_10_14_201302-add-feature';
+const CACHE_VERSION = 'v2026_10_14_171259-add-feature';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
@@ -52,7 +52,7 @@ self.addEventListener('install', event => {
     await cache.addAll(APP_SHELL);
     const rt = await caches.open(RUNTIME_CACHE);
     await Promise.all(FONT_CSS_PRECACHE.map(url =>
-      fetch(new Request(url, { mode: 'no-cors' })).then(res => rt.put(url, res)).catch(() => {})
+      fetch(new Request(url, { mode: 'no-cors' })).then(res => rt.put(url, res)).catch(() => { })
     ));
     await self.skipWaiting();
   })());
