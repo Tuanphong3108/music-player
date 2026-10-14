@@ -183,7 +183,7 @@ loading.report_title=Emergency bug report
 loading.report_btn=REPORT
 
 ## --- Metadata Editor (iframe) ---
-metaeditor.header_title=edit metadata
+metaeditor.header_title=EDIT METADATA
 metaeditor.back=Back
 metaeditor.loading=LAUNCHING EDITOR...
 metaeditor.saving=Saving...
@@ -299,3 +299,7 @@ font.edit_file_help=Fonts uploaded from a file can only be renamed.
 font.edit_google_help=You can paste the embed <link> code or a Google Fonts link.
 font.edit_url_help=An https:// link to a CSS file or a font file.
 font.err_name_empty=Please enter a font name
+settings.factory_reset=Reset to factory settings
+settings.factory_reset_desc=Erase all settings, added fonts and saved data, then run the getting started screen again
+settings.factory_reset_btn=Reset
+settings.factory_reset_confirm=Reset all settings to default? Added fonts and saved data will be deleted, then the getting started screen will run again.

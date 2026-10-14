@@ -1199,6 +1199,14 @@
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
                 </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-top: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.factory_reset">Đặt lại cài đặt gốc</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.factory_reset_desc">Xóa toàn bộ cài đặt, phông chữ đã thêm và dữ liệu đã lưu, sau đó chạy lại màn hình bắt đầu</span>
+                    </div>
+                    <md-outlined-button id="factory-reset-btn" type="button" style="flex-shrink:0; --md-outlined-button-label-text-color: var(--md-sys-color-error, #f2b8b5); --md-outlined-button-icon-color: var(--md-sys-color-error, #f2b8b5);"><span class="material-symbols-outlined" slot="icon">restart_alt</span><span data-i18n="settings.factory_reset_btn">Đặt lại</span></md-outlined-button>
+                </div>
                 </div>
                 <div class="st-pane" data-pane="appearance">
                     <h3 class="st-pane-title" data-i18n="settings.cat_appearance">Giao diện</h3>
@@ -1540,7 +1548,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.10.13-build060253</span>
+                <span>AUDIOPLAYER V2026.10.14-build171259</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -4269,6 +4277,7 @@
             }, mode === 'zoom' ? 250 : 1850);
         }
         function showOutputToast(name) {
+            { const g = document.getElementById('getting-started-overlay'); if (g && g.style.display === 'block') return; }
             const tpl = currentLangDict['toast.output_using'] || 'Đang sử dụng {device}';
             showToast(tpl.replace('{device}', name), 'headphones', 5000);
         }
@@ -5262,25 +5271,96 @@
 
         const savedLanguage = localStorage.getItem('settings_language');
 
-        if (!savedLanguage) {
-            // Lần đầu vào trang: nhúng full web getting_started.html
-            gettingStartedIframe.src = 'getting_started.html';
-            gettingStartedOverlay.style.display = 'block';
-            settingLanguage.value = 'vi';
-            loadLanguage('vi'); // Tải bản Tiếng Việt làm mặc định ban đầu
-        } else {
-            settingLanguage.value = savedLanguage;
-            loadLanguage(savedLanguage);
+        // --- Màn hình bắt đầu (Getting Started) ---
+        // Hiện lại khi F5 nếu chưa hoàn tất: cờ "pending" được đặt ngay khi hiện lần đầu.
+        const gsStore = {
+            get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+            set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+            del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+        };
+        const gsDone = gsStore.get('getting_started_done') === 'true';
+        const gsShouldShow = gsStore.get('getting_started_pending') === '1' ||
+                             (!savedLanguage && !gsDone);
+
+        function closeGettingStarted() {
+            gettingStartedOverlay.style.display = 'none';
+            gettingStartedIframe.src = 'about:blank';
+        }
+        function applyGsSettings(cfg) {
+            if (!cfg || typeof cfg !== 'object') return;
+            if (cfg.lang === 'vi' || cfg.lang === 'en') {
+                settingLanguage.value = cfg.lang;
+                loadLanguage(cfg.lang);
+            }
+            if (['system', 'light', 'dark'].includes(cfg.theme)) {
+                settings.theme = cfg.theme;
+                gsStore.set('settings_theme', cfg.theme);
+                settingTheme.value = cfg.theme;
+                applyTheme(cfg.theme);
+            }
+            if (typeof cfg.accent === 'string' && accents[cfg.accent]) {
+                settings.accent = cfg.accent;
+                gsStore.set('settings_accent', cfg.accent);
+                settingAccent.value = cfg.accent;
+                applyAccentColor();
+            }
+            const sc = parseInt(cfg.scale, 10);
+            if (sc >= 50 && sc <= 200) {
+                gsStore.set('settings_ui_scale', String(sc));
+                const sl = document.getElementById('setting-ui-scale');
+                const lb = document.getElementById('ui-scale-value');
+                if (sl) sl.value = sc;
+                if (lb) lb.textContent = sc + '%';
+                applyUiScale(sc);
+            }
+        }
+        function sendGsInit() {
+            const w = gettingStartedIframe.contentWindow;
+            if (!w) return;
+            let sc = parseInt(gsStore.get('settings_ui_scale'), 10);
+            if (!(sc >= 50 && sc <= 200)) sc = 100;
+            let font = null;
+            try { font = fontPayload(); } catch (e) {}
+            w.postMessage({
+                type: 'gs-init',
+                lang: gsStore.get('settings_language') || 'vi',
+                theme: settings.theme,
+                accent: settings.accent,
+                scale: sc,
+                parentScale: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale')) || 1,
+                accents: JSON.parse(JSON.stringify(accents)),
+                font
+            }, '*');
         }
 
+        if (gsShouldShow) {
+            gsStore.set('getting_started_pending', '1');
+            gettingStartedIframe.src = 'getting_started.html';
+            gettingStartedOverlay.style.display = 'block';
+        }
+        settingLanguage.value = savedLanguage || 'vi';
+        loadLanguage(savedLanguage || 'vi');
+
         window.addEventListener('message', (e) => {
-            if (e.data === 'en' || e.data === 'vi') {
-                loadLanguage(e.data);
-            } else if (e.data === 'tutorial done') {
-                if (gettingStartedOverlay) {
-                    gettingStartedOverlay.style.display = 'none';
-                    gettingStartedIframe.src = 'about:blank';
+            const d = e.data;
+            const fromGs = e.source === gettingStartedIframe.contentWindow;
+            if (d && typeof d === 'object' && fromGs) {
+                if (d.type === 'gs-ready') sendGsInit();
+                else if (d.type === 'gs-lang' && (d.lang === 'vi' || d.lang === 'en')) loadLanguage(d.lang);
+                else if (d.type === 'gs-done') {
+                    applyGsSettings(d.settings);
+                    gsStore.set('getting_started_done', 'true');
+                    gsStore.del('getting_started_pending');
+                    closeGettingStarted();
                 }
+                return;
+            }
+            if (d === 'en' || d === 'vi') {
+                loadLanguage(d);
+            } else if (d === 'tutorial done' && fromGs) {
+                gsStore.set('getting_started_done', 'true');
+                gsStore.del('getting_started_pending');
+                closeGettingStarted();
             }
         });
 
@@ -5409,6 +5489,26 @@
 
             initFontUI();
         }
+
+        // --- Đặt lại cài đặt gốc ---
+        document.getElementById('factory-reset-btn').addEventListener('click', async () => {
+            const ok = await confirmDialog(
+                currentLangDict['settings.factory_reset_confirm'] || 'Đặt lại toàn bộ cài đặt về mặc định? Phông chữ đã thêm và dữ liệu đã lưu sẽ bị xóa, rồi màn hình bắt đầu sẽ chạy lại.',
+                currentLangDict['settings.factory_reset_btn'] || 'Đặt lại',
+                currentLangDict['settings.factory_reset'] || 'Đặt lại cài đặt gốc');
+            if (!ok) return;
+            try { localStorage.clear(); } catch (e) {}
+            try { sessionStorage.clear(); } catch (e) {}
+            try { localStorage.setItem('getting_started_pending', '1'); } catch (e) {}
+            try {
+                await new Promise((res) => {
+                    const r = indexedDB.deleteDatabase('audioplayer_fonts');
+                    r.onsuccess = r.onerror = r.onblocked = () => res();
+                    setTimeout(res, 1500);
+                });
+            } catch (e) {}
+            location.reload();
+        });
 
         settingsBtn.addEventListener('click', () => {
             const rect = settingsBtn.getBoundingClientRect();
@@ -6733,7 +6833,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.13-build060253';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.14-build171259';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'

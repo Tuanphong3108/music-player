@@ -183,7 +183,7 @@ loading.report_title=Báo cáo lỗi khẩn cấp
 loading.report_btn=BÁO CÁO
 
 ## --- Metadata Editor (iframe) ---
-metaeditor.header_title=chỉnh sửa metadata
+metaeditor.header_title=EDIT METADATA
 metaeditor.back=Quay lại
 metaeditor.loading=ĐANG KHỞI CHẠY TRÌNH CHỈNH SỬA...
 metaeditor.saving=Đang lưu...
@@ -299,3 +299,7 @@ font.edit_file_help=Phông chữ tải lên từ tệp chỉ có thể đổi t�
 font.edit_google_help=Có thể dán mã nhúng <link> hoặc liên kết Google Fonts.
 font.edit_url_help=Liên kết https:// tới tệp CSS hoặc tệp phông chữ.
 font.err_name_empty=Hãy nhập tên phông chữ
+settings.factory_reset=Đặt lại cài đặt gốc
+settings.factory_reset_desc=Xóa toàn bộ cài đặt, phông chữ đã thêm và dữ liệu đã lưu, sau đó chạy lại màn hình bắt đầu
+settings.factory_reset_btn=Đặt lại
+settings.factory_reset_confirm=Đặt lại toàn bộ cài đặt về mặc định? Phông chữ đã thêm và dữ liệu đã lưu sẽ bị xóa, rồi màn hình bắt đầu sẽ chạy lại.
