@@ -6,7 +6,7 @@
       "icon": "zoom_in"
     },
     {
-      "content": "Thêm Dropdown đổi phông chữ với 21 phông phổ biến (Google Sans Flex là mặc định)",
+      "content": "Thêm Dropdown đổi phông chữ với 23 phông phổ biến (Google Sans Flex là mặc định)",
       "icon": "font_download"
     },
     {
@@ -20,6 +20,10 @@
     {
       "content": "Thêm mục \"Quản lý phông chữ\": thêm, xóa và sắp xếp danh sách phông chữ",
       "icon": "tune"
+    },
+    {
+      "content": "Thêm phông chữ Arial và Segoe UI; phông chữ nhập ngoài có thể sửa (bút chì) và xóa, phông tải từ tệp chỉ được đổi tên",
+      "icon": "edit"
     }
   ],
   "en": [
@@ -28,7 +32,7 @@
       "icon": "zoom_in"
     },
     {
-      "content": "Added a font dropdown with 21 popular fonts (Google Sans Flex is the default)",
+      "content": "Added a font dropdown with 23 popular fonts (Google Sans Flex is the default)",
       "icon": "font_download"
     },
     {
@@ -42,6 +46,10 @@
     {
       "content": "Added \"Manage fonts\": add, delete and sort the font list",
       "icon": "tune"
+    },
+    {
+      "content": "Added Arial and Segoe UI fonts; imported fonts can be edited (pencil) and deleted, fonts uploaded from a file can only be renamed",
+      "icon": "edit"
     }
   ]
 }
