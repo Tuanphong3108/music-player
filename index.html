@@ -33,6 +33,8 @@
         :root {
             --app-font: 'Google Sans Flex', sans-serif;
             --ui-scale: 1;
+            --font-scale: 1;
+            --font-scale-factor: 1;
             --vw: calc(100vw / var(--ui-scale));
             --vh: calc(100vh / var(--ui-scale));
             /* Default Dark Mode colors */
@@ -980,6 +982,54 @@
             .st-title-normal, #settings-header h2 { font-size: 16px !important; }
             #settings-dialog:not(.searching) #settings-header h2 { display: none; }
         }
+
+        /* --- Cỡ chữ tùy chỉnh (Font Scale) --- */
+        body {
+            font-size: calc(14px * var(--font-scale-factor));
+        }
+        #track-title { font-size: calc(18px * var(--font-scale-factor)) !important; }
+        #track-artist { font-size: calc(13px * var(--font-scale-factor)) !important; }
+        #track-album { font-size: calc(12px * var(--font-scale-factor)) !important; }
+        #current-time, #duration { font-size: calc(12px * var(--font-scale-factor)) !important; }
+        #speed-btn, .speed-option { font-size: calc(11px * var(--font-scale-factor)) !important; }
+        .lyric-line { font-size: calc(24px * var(--font-scale-factor)) !important; }
+        .lyric-line.active { font-size: calc(38px * var(--font-scale-factor)) !important; }
+        .lyric-placeholder { font-size: calc(12px * var(--font-scale-factor)) !important; }
+        #main-lyric-bar { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .playlist-header h3 { font-size: calc(16px * var(--font-scale-factor)) !important; }
+        .hide-text { font-size: calc(10px * var(--font-scale-factor)) !important; }
+        #track-count { font-size: calc(9px * var(--font-scale-factor)) !important; }
+        .playlist-tab { font-size: calc(13px * var(--font-scale-factor)) !important; }
+        #search-input { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .track-text h4 { font-size: calc(15px * var(--font-scale-factor)) !important; }
+        .track-text p { font-size: calc(9px * var(--font-scale-factor)) !important; }
+        .track-duration { font-size: calc(11px * var(--font-scale-factor)) !important; }
+        .playlist-index { font-size: calc(10px * var(--font-scale-factor)) !important; }
+        .reorder-done-btn span { font-size: calc(24px * var(--font-scale-factor)) !important; }
+        .topbar-btn { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .st-pane-title { font-size: calc(22px * var(--font-scale-factor)) !important; }
+        .st-cat-btn { font-size: calc(15px * var(--font-scale-factor)) !important; }
+        #st-search-input { font-size: calc(15px * var(--font-scale-factor)) !important; }
+        #settings-header h2 { font-size: calc(16px * var(--font-scale-factor)) !important; }
+        #settings-dialog span[style*="font-size: 16px"] { font-size: calc(16px * var(--font-scale-factor)) !important; }
+        #settings-dialog span[style*="font-size: 12px"] { font-size: calc(12px * var(--font-scale-factor)) !important; }
+        #settings-dialog span[style*="font-size: 14px"] { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        #settings-dialog label { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        #ui-scale-value, #font-scale-value { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .cl-header h2 { font-size: calc(20px * var(--font-scale-factor)) !important; }
+        .cl-dialog p { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .cl-dialog span:not(.material-symbols-outlined) { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .cl-dialog label { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .cl-dialog textarea { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .btn-m3 { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        .cm-item span:not(.material-symbols-outlined) { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        #sleep-dialog .sleep-radios label, #font-add-dialog .sleep-radios label { font-size: calc(15px * var(--font-scale-factor)) !important; }
+        #sleep-dialog .sleep-label { font-size: calc(14px * var(--font-scale-factor)) !important; }
+        #sleep-badge { font-size: calc(12px * var(--font-scale-factor)) !important; }
+        .fnt-help { font-size: calc(13px * var(--font-scale-factor)) !important; }
+        .fnt-row-name { font-size: calc(15px * var(--font-scale-factor)) !important; }
+        .fnt-row-tag { font-size: calc(11px * var(--font-scale-factor)) !important; }
+        #setting-font-scale[disabled] { pointer-events: none; }
 </style>
 </head>
 <body>
@@ -1252,15 +1302,31 @@
                     </md-switch>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--playlist-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 20px 0 8px 0;">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.ui_scale">Kích thước giao diện và chữ</span>
-                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.ui_scale_desc">Phóng to hoặc thu nhỏ toàn bộ giao diện và chữ, từ 50% đến 200% (100% là kích thước mặc định)</span>
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.ui_scale">Kích thước giao diện</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.ui_scale_desc">Phóng to hoặc thu nhỏ toàn bộ giao diện, từ 50% đến 200% (100% là kích thước mặc định)</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
                         <md-slider id="setting-ui-scale" min="50" max="200" step="5" value="100" labeled style="width:200px; --md-slider-active-track-color: var(--md-sys-color-primary); --md-slider-handle-color: var(--md-sys-color-primary); --md-slider-label-container-color: var(--md-sys-color-primary); --md-slider-label-label-text-color: var(--md-sys-color-on-primary); --md-slider-inactive-track-color: var(--md-sys-color-surface-variant);"></md-slider>
                         <span id="ui-scale-value" style="min-width:48px; text-align:right; font-size:14px; font-weight:700;">100%</span>
                     </div>
+                </div>
+
+                <div id="setting-font-scale-row" style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 8px 0;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 16px; font-weight: 700;" data-i18n="settings.font_scale">Cỡ chữ</span>
+                        <span style="font-size: 12px; opacity: 0.6;" data-i18n="settings.font_scale_desc">Thu nhỏ hoặc phóng to cỡ chữ, từ 50% đến 200% (100% là kích thước mặc định)</span>
+                    </div>
+                    <div id="setting-font-scale-ctrl" style="display:flex; align-items:center; gap:12px; flex-shrink:0; transition: opacity 0.2s ease, filter 0.2s ease;">
+                        <md-slider id="setting-font-scale" min="50" max="200" step="5" value="100" labeled style="width:200px; --md-slider-active-track-color: var(--md-sys-color-primary); --md-slider-handle-color: var(--md-sys-color-primary); --md-slider-label-container-color: var(--md-sys-color-primary); --md-slider-label-label-text-color: var(--md-sys-color-on-primary); --md-slider-inactive-track-color: var(--md-sys-color-surface-variant);"></md-slider>
+                        <span id="font-scale-value" style="min-width:48px; text-align:right; font-size:14px; font-weight:700;">100%</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0 20px 0; border-bottom: 1px solid var(--playlist-border);">
+                    <md-checkbox id="setting-font-scale-sync" touch-target="wrapper"></md-checkbox>
+                    <label for="setting-font-scale-sync" style="font-size: 14px; cursor: pointer; user-select: none;" data-i18n="settings.font_scale_sync">Đồng bộ cỡ chữ với giao diện</label>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-top: 20px;">
@@ -2581,13 +2647,48 @@
             try { if (customPipWindow) applyFontToDoc(customPipWindow.document); } catch (e) {}
             try { if (typeof sendThemeToChangelog === 'function' && typeof clLoaded !== 'undefined' && clLoaded) sendThemeToChangelog(); } catch (e) {}
         }
+        function updateFontScaleFactor() {
+            let uiPct = parseInt(localStorage.getItem('settings_ui_scale'), 10);
+            if (!(uiPct >= 50 && uiPct <= 200)) uiPct = 100;
+            const isSync = localStorage.getItem('settings_font_scale_sync') === 'true';
+            let fontPct;
+            if (isSync) {
+                fontPct = uiPct;
+            } else {
+                fontPct = parseInt(localStorage.getItem('settings_font_scale'), 10);
+                if (!(fontPct >= 50 && fontPct <= 200)) fontPct = 100;
+            }
+            const uiScale = uiPct / 100;
+            const fontScale = fontPct / 100;
+            const factor = fontScale / uiScale;
+            document.documentElement.style.setProperty('--font-scale-factor', String(factor));
+            if (typeof customPipWindow !== 'undefined' && customPipWindow && customPipWindow.document) {
+                try {
+                    customPipWindow.document.documentElement.style.setProperty('--ui-scale', String(uiScale));
+                    customPipWindow.document.documentElement.style.setProperty('--font-scale', String(fontScale));
+                    customPipWindow.document.documentElement.style.setProperty('--font-scale-factor', String(factor));
+                } catch (e) {}
+            }
+        }
         function applyUiScale(pct) {
-            document.documentElement.style.setProperty('--ui-scale', String(pct / 100));
+            let uiPct = parseInt(pct, 10);
+            if (!(uiPct >= 50 && uiPct <= 200)) uiPct = 100;
+            document.documentElement.style.setProperty('--ui-scale', String(uiPct / 100));
+            updateFontScaleFactor();
+        }
+        function applyFontScale(pct) {
+            let fontPct = parseInt(pct, 10);
+            if (!(fontPct >= 50 && fontPct <= 200)) fontPct = 100;
+            document.documentElement.style.setProperty('--font-scale', String(fontPct / 100));
+            updateFontScaleFactor();
         }
         {
-            let pct = parseInt(localStorage.getItem('settings_ui_scale'), 10);
-            if (!(pct >= 50 && pct <= 200)) pct = 100;
-            applyUiScale(pct);
+            let uiPct = parseInt(localStorage.getItem('settings_ui_scale'), 10);
+            if (!(uiPct >= 50 && uiPct <= 200)) uiPct = 100;
+            let fontPct = parseInt(localStorage.getItem('settings_font_scale'), 10);
+            if (!(fontPct >= 50 && fontPct <= 200)) fontPct = 100;
+            applyUiScale(uiPct);
+            applyFontScale(fontPct);
             applyFontEverywhere();
         }
 
@@ -5312,6 +5413,14 @@
                 if (sl) sl.value = sc;
                 if (lb) lb.textContent = sc + '%';
                 applyUiScale(sc);
+                if (localStorage.getItem('settings_font_scale_sync') === 'true') {
+                    gsStore.set('settings_font_scale', String(sc));
+                    const fsl = document.getElementById('setting-font-scale');
+                    const flb = document.getElementById('font-scale-value');
+                    if (fsl) fsl.value = sc;
+                    if (flb) flb.textContent = sc + '%';
+                    applyFontScale(sc);
+                }
             }
         }
         function sendGsInit() {
@@ -5474,17 +5583,84 @@
         });
 
 
-        // --- Kích thước giao diện (áp dụng khi thả thanh trượt để tránh giật) + Phông chữ ---
+        // --- Kích thước giao diện & Cỡ chữ (áp dụng khi thả thanh trượt để tránh giật) + Phông chữ ---
         {
-            const slider = document.getElementById('setting-ui-scale');
-            const label = document.getElementById('ui-scale-value');
-            let pct = parseInt(localStorage.getItem('settings_ui_scale'), 10);
-            if (!(pct >= 50 && pct <= 200)) pct = 100;
-            slider.value = pct; label.textContent = pct + '%';
-            slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
-            slider.addEventListener('change', () => {
-                localStorage.setItem('settings_ui_scale', slider.value);
-                applyUiScale(parseInt(slider.value, 10));
+            const uiSlider = document.getElementById('setting-ui-scale');
+            const uiLabel = document.getElementById('ui-scale-value');
+            const fontSlider = document.getElementById('setting-font-scale');
+            const fontLabel = document.getElementById('font-scale-value');
+            const fontScaleCtrl = document.getElementById('setting-font-scale-ctrl');
+            const syncCheckbox = document.getElementById('setting-font-scale-sync');
+
+            let uiPct = parseInt(localStorage.getItem('settings_ui_scale'), 10);
+            if (!(uiPct >= 50 && uiPct <= 200)) uiPct = 100;
+            uiSlider.value = uiPct;
+            uiLabel.textContent = uiPct + '%';
+
+            let isSync = localStorage.getItem('settings_font_scale_sync') === 'true';
+            syncCheckbox.checked = isSync;
+
+            let fontPct;
+            if (isSync) {
+                fontPct = uiPct;
+            } else {
+                fontPct = parseInt(localStorage.getItem('settings_font_scale'), 10);
+                if (!(fontPct >= 50 && fontPct <= 200)) fontPct = 100;
+            }
+            fontSlider.value = fontPct;
+            fontLabel.textContent = fontPct + '%';
+
+            function updateSyncUI(synced) {
+                fontSlider.disabled = synced;
+                if (fontScaleCtrl) {
+                    fontScaleCtrl.style.opacity = synced ? '0.38' : '1';
+                    fontScaleCtrl.style.pointerEvents = synced ? 'none' : '';
+                    fontScaleCtrl.style.filter = synced ? 'grayscale(0.8)' : 'none';
+                    fontScaleCtrl.style.transition = 'opacity 0.2s ease, filter 0.2s ease';
+                }
+                if (synced) {
+                    fontSlider.value = uiSlider.value;
+                    fontLabel.textContent = uiSlider.value + '%';
+                    localStorage.setItem('settings_font_scale', uiSlider.value);
+                    applyFontScale(parseInt(uiSlider.value, 10));
+                }
+            }
+
+            updateSyncUI(isSync);
+
+            syncCheckbox.addEventListener('change', () => {
+                const checked = !!syncCheckbox.checked;
+                localStorage.setItem('settings_font_scale_sync', String(checked));
+                updateSyncUI(checked);
+                if (!checked) {
+                    applyFontScale(parseInt(fontSlider.value, 10));
+                }
+            });
+
+            uiSlider.addEventListener('input', () => {
+                uiLabel.textContent = uiSlider.value + '%';
+                if (syncCheckbox.checked) {
+                    fontSlider.value = uiSlider.value;
+                    fontLabel.textContent = uiSlider.value + '%';
+                }
+            });
+
+            uiSlider.addEventListener('change', () => {
+                localStorage.setItem('settings_ui_scale', uiSlider.value);
+                applyUiScale(parseInt(uiSlider.value, 10));
+                if (syncCheckbox.checked) {
+                    localStorage.setItem('settings_font_scale', uiSlider.value);
+                    applyFontScale(parseInt(uiSlider.value, 10));
+                }
+            });
+
+            fontSlider.addEventListener('input', () => {
+                fontLabel.textContent = fontSlider.value + '%';
+            });
+
+            fontSlider.addEventListener('change', () => {
+                localStorage.setItem('settings_font_scale', fontSlider.value);
+                applyFontScale(parseInt(fontSlider.value, 10));
             });
 
             initFontUI();
@@ -5919,6 +6095,8 @@
                     + 'Audio Player Version:\n' + getAppVersionText() + '\n'
                     + 'Language: ' + (localStorage.getItem('settings_language') || 'vi') + '\n'
                     + 'UI scale: ' + (localStorage.getItem('settings_ui_scale') || '100') + '%\n'
+                    + 'Font scale: ' + (localStorage.getItem('settings_font_scale') || '100') + '%\n'
+                    + 'Font scale sync: ' + ((localStorage.getItem('settings_font_scale_sync') === 'true') ? 'ON' : 'OFF') + '\n'
                     + 'Font: ' + (localStorage.getItem('settings_font') || 'default') + '\n'
                     + 'Main Player Lyric: ' + onOff(settings.showMainLyric) + '\n'
                     + 'PiP Lyric: ' + onOff(settings.showPipLyric) + '\n'
