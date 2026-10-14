@@ -16,6 +16,14 @@
     {
       "content": "Dùng music_note.png làm biểu tượng và sửa hiệu ứng nút khi hover (bo góc mượt thay vì giật sang hình vuông)",
       "icon": "music_note"
+    },
+    {
+      "content": "Thêm thanh trượt thay đổi kích thước phông chữ",
+      "icon": "format_size"
+    },
+    {
+      "content": "Thêm checkbox đồng bộ hóa kích thước chữ với kích thước giao diện",
+      "icon": "check_box"
     }
   ],
   "en": [
@@ -34,6 +42,14 @@
     {
       "content": "Use music_note.png as the icon and fixed the button hover effect (smooth rounded corners instead of snapping to a square)",
       "icon": "music_note"
+    },
+    {
+      "content": "Add slider to change font size",
+      "icon": "format_size"
+    },
+    {
+      "content": "Add checkbox to synchronize font size with interface size",
+      "icon": "check_box"
     }
   ]
 }
