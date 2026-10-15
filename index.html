@@ -315,6 +315,10 @@
             cursor: pointer; transition: 0.2s ease; margin-bottom: 4px;
         }
         .song-item:hover { background: rgba(0, 0, 0, 0.05); transform: scale(1.02); }
+        .song-item.song-enter { animation: songIn .5s cubic-bezier(.34,1.56,.64,1) backwards; }
+        @keyframes songIn { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .song-item.song-exit { transition: transform .28s cubic-bezier(.4,0,1,1), opacity .28s ease !important; transform: scale(.3) !important; opacity: 0; pointer-events: none; }
+        html.reduce-motion .song-item.song-enter { animation: none; }
         .song-item.active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 
         .visual-stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; border-radius: 32px; overflow: hidden; transition: var(--m3-transition); }
@@ -582,10 +586,13 @@
         body.reorder-active .song-item .icon-play { display: none; }
         body.reorder-active .song-item .icon-drag { display: block; }
         
-        .song-item.dragging { 
-            opacity: 0.5; 
-            background: var(--md-sys-color-surface-variant); 
-            border: 1px dashed var(--md-sys-color-primary); 
+        body.reorder-active .song-item { user-select: none; -webkit-user-select: none; cursor: grab; transition: background .2s ease; }
+        body.reorder-active .song-item:hover { transform: none; }
+        body.reorder-active .song-item .icon-drag { touch-action: none; }
+        body.reorder-active .playlist-items { overflow-x: hidden; }
+        .song-item.dragging { cursor: grabbing !important; box-shadow: 0 8px 20px rgba(0,0,0,.35);
+            background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+            outline: 2px dashed var(--md-sys-color-primary); outline-offset: -2px;
         }
 
         .reorder-done-btn {
@@ -831,6 +838,11 @@
         }
         #confirm-dialog::part(scrim) { background: #000; }
 
+        #add-music-menu md-menu-item { min-width: 220px; --md-menu-item-label-text-size: calc(13px * var(--font-scale-factor, 1)); }
+
+        #mail-provider-dialog .mail-opts { display: flex; flex-direction: column; gap: 4px; }
+        #mail-provider-dialog md-list-item { border-radius: 16px; --md-list-item-label-text-font: var(--app-font); --md-list-item-leading-icon-color: var(--md-sys-color-primary); }
+
         /* ===== Hẹn giờ tạm dừng ===== */
         #sleep-btn { position: relative; display:flex; align-items:center; justify-content:center; }
         #sleep-btn.sleep-active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
@@ -846,7 +858,7 @@
             font-size: calc(12px * var(--font-scale-factor, 1)); font-weight:700; font-family:var(--app-font);
             transition: max-width .45s cubic-bezier(.2,0,0,1), margin-left .45s cubic-bezier(.2,0,0,1), opacity .25s ease, transform .45s cubic-bezier(.34,1.56,.64,1); }
         #sleep-btn.sleep-active #sleep-badge { max-width:100px; margin-left:4px; opacity:1; transform:scale(1); }
-        #sleep-menu {
+        #sleep-menu, #add-music-menu {
             --md-ref-typeface-plain: var(--app-font);
             --md-menu-container-color: var(--md-sys-color-surface-variant);
             --md-menu-container-shape: 16px;
@@ -861,7 +873,7 @@
             --md-menu-item-selected-label-text-weight: 700;
             font-family: var(--app-font);
         }
-        #sleep-dialog, #sleep-fired-dialog, #font-add-dialog, #font-pick-dialog, #font-edit-dialog {
+        #sleep-dialog, #sleep-fired-dialog, #mail-provider-dialog, #font-add-dialog, #font-pick-dialog, #font-edit-dialog {
             --md-outlined-button-label-text-font: var(--app-font);
             --md-outlined-button-label-text-color: var(--md-sys-color-primary);
             --md-outlined-button-outline-color: var(--md-sys-color-outline);
@@ -905,7 +917,7 @@
             font-family: var(--app-font);
             color: var(--md-sys-color-on-surface);
         }
-        #sleep-dialog::part(scrim), #sleep-fired-dialog::part(scrim), #font-add-dialog::part(scrim), #font-pick-dialog::part(scrim), #font-edit-dialog::part(scrim) { background: #000; }
+        #sleep-dialog::part(scrim), #sleep-fired-dialog::part(scrim), #mail-provider-dialog::part(scrim), #font-add-dialog::part(scrim), #font-pick-dialog::part(scrim), #font-edit-dialog::part(scrim) { background: #000; }
         #font-edit-dialog .fnt-help { font-size: calc(13px * var(--font-scale-factor, 1)); line-height: 1.5; opacity: .8; margin-bottom: 12px; }
         #font-edit-dialog md-outlined-text-field { width: 100%; }
         #font-edit-dialog [hidden] { display: none; }
@@ -1039,6 +1051,17 @@
             <md-text-button id="sleep-cancel" data-i18n="misc.cancel">Huỷ</md-text-button>
             <md-filled-button id="sleep-ok" data-i18n="sleep.set">Đặt hẹn giờ</md-filled-button>
         </div>
+    </md-dialog>
+
+    <md-dialog id="mail-provider-dialog" style="max-width:min(92vw,400px); font-family:var(--app-font);">
+        <div slot="headline" data-i18n="feedback.mail_title">Gửi phản hồi bằng</div>
+        <div slot="content" class="mail-opts">
+            <md-list-item type="button" data-mail="gmail"><span class="material-symbols-outlined" slot="start">mail</span><div slot="headline">Gmail</div></md-list-item>
+            <md-list-item type="button" data-mail="outlook"><span class="material-symbols-outlined" slot="start">inbox</span><div slot="headline">Outlook</div></md-list-item>
+            <md-list-item type="button" data-mail="yahoo"><span class="material-symbols-outlined" slot="start">forward_to_inbox</span><div slot="headline">Yahoo Mail</div></md-list-item>
+            <md-list-item type="button" data-mail="mailto"><span class="material-symbols-outlined" slot="start">open_in_new</span><div slot="headline" data-i18n="feedback.mail_mailto">Liên kết mailto</div></md-list-item>
+        </div>
+        <div slot="actions"><md-text-button id="mail-provider-cancel" data-i18n="misc.cancel">Huỷ</md-text-button></div>
     </md-dialog>
 
     <md-dialog id="sleep-fired-dialog" style="max-width:min(92vw,400px); font-family:var(--app-font);">
@@ -1610,7 +1633,7 @@
         <div class="top-bar">
             <div class="brand">
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>AUDIOPLAYER V2026.10.14-build171259</span>
+                <span>AUDIOPLAYER V2026.10.15-build170251</span>
             </div>
             <div style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -1643,23 +1666,23 @@
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
                 
-                <!-- Nút add_circle kích hoạt Dropdown API File System tiến tiến -->
-                <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined">add_circle</span></button>
-                
-                <!-- Dropdown M3 chọn tệp File System -->
-                <div class="m3-dropdown" id="add-music-dropdown">
-                    <div class="m3-dropdown-item" id="btn-fs-pick-files">
-                        <span class="material-symbols-outlined">file_open</span>
-                        <span data-i18n="topbar.addmusic_file">Chọn tệp nhạc (API File System)</span>
-                    </div>
-                    <div class="m3-dropdown-item" id="btn-fs-pick-directory">
-                        <span class="material-symbols-outlined">folder_open</span>
-                        <span data-i18n="topbar.addmusic_folder">Chọn thư mục nhạc (API File System)</span>
-                    </div>
-                    <div class="m3-dropdown-item" id="btn-fs-pick-legacy">
-                        <span class="material-symbols-outlined">upload_file</span>
-                        <span data-i18n="topbar.addmusic_legacy">Thêm tệp kiểu truyền thống</span>
-                    </div>
+                <!-- Nút add_circle mở menu Material Web (API File System) -->
+                <div style="position:relative;">
+                    <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined">add_circle</span></button>
+                    <md-menu id="add-music-menu" anchor="add-music-trigger" positioning="popover">
+                        <md-menu-item id="btn-fs-pick-files">
+                            <span class="material-symbols-outlined" slot="start">file_open</span>
+                            <div slot="headline" data-i18n="topbar.addmusic_file">Chọn tệp nhạc (API File System)</div>
+                        </md-menu-item>
+                        <md-menu-item id="btn-fs-pick-directory">
+                            <span class="material-symbols-outlined" slot="start">folder_open</span>
+                            <div slot="headline" data-i18n="topbar.addmusic_folder">Chọn thư mục nhạc (API File System)</div>
+                        </md-menu-item>
+                        <md-menu-item id="btn-fs-pick-legacy">
+                            <span class="material-symbols-outlined" slot="start">upload_file</span>
+                            <div slot="headline" data-i18n="topbar.addmusic_legacy">Thêm tệp kiểu truyền thống</div>
+                        </md-menu-item>
+                    </md-menu>
                 </div>
             </div>
         </div>
@@ -3423,6 +3446,7 @@
         const playlistSearch = document.getElementById('playlist-search');
 
         let playlist = [];
+        const knownTracks = new WeakSet();   // bài đã từng được hiển thị -> chỉ bài mới mới có hiệu ứng zoom-in
         let currentIndex = -1;
         let isShuffle = localStorage.getItem('settings_shuffle') === 'true';
         let repeatMode = parseInt(localStorage.getItem('settings_repeat_mode')) || 0;
@@ -3498,8 +3522,31 @@
 
         document.addEventListener('click', () => contextMenu.style.display = 'none');
 
-        cmDelete.addEventListener('click', () => {
+        // Xoá bài: zoom-out bài đó, thu gọn chỗ trống rồi mới đẩy các bài bên dưới lên
+        function animateRemoveSongItem(index) {
+            return new Promise(resolve => {
+                const el = playlistContainer.querySelector('.song-item[data-index="' + index + '"]');
+                if (!el || document.documentElement.classList.contains('reduce-motion')) return resolve();
+                const h = el.offsetHeight;
+                el.classList.add('song-exit');
+                setTimeout(() => {
+                    el.style.overflow = 'hidden'; el.style.height = h + 'px'; el.style.boxSizing = 'border-box';
+                    void el.offsetHeight;
+                    el.style.setProperty('transition', 'height .22s ease, padding .22s ease, margin .22s ease', 'important');
+                    el.style.height = '0px'; el.style.paddingTop = '0px'; el.style.paddingBottom = '0px'; el.style.marginBottom = '0px';
+                    setTimeout(resolve, 230);
+                }, 290);
+            });
+        }
+        let cmDeleting = false;
+        cmDelete.addEventListener('click', async () => {
+            if (cmDeleting) return;
             if (targetMenuIndex > -1) {
+                const idxToDelete = targetMenuIndex;
+                cmDeleting = true;
+                await animateRemoveSongItem(idxToDelete);
+                cmDeleting = false;
+                targetMenuIndex = idxToDelete;
                 const isPlayingDeleted = (currentIndex === targetMenuIndex);
 
                 // Giải phóng blob URL của bài bị xoá, nếu không nó rò rỉ bộ nhớ vĩnh viễn
@@ -3915,6 +3962,118 @@
             shuffleOrder.splice(posTo, 0, moved);
         }
 
+        // Thực hiện việc chuyển bài từ index nguồn tới index đích (dùng chung cho kéo-thả)
+        function commitReorder(srcIdx, targetIdx) {
+            if (srcIdx === targetIdx || srcIdx < 0 || targetIdx < 0) return;
+            if (activePlTab === 'shuffle') {
+                moveInShuffleOrder(srcIdx, targetIdx);
+            } else {
+                const playingTrack = currentIndex !== -1 ? playlist[currentIndex] : null;
+                const draggedTrack = playlist.splice(srcIdx, 1)[0];
+                playlist.splice(targetIdx, 0, draggedTrack);
+                if (playingTrack) currentIndex = playlist.indexOf(playingTrack);
+                if (shuffleInitialized) {
+                    shuffleOrder = shuffleOrder.map(idx => {
+                        if (idx === srcIdx) return targetIdx;
+                        if (srcIdx < targetIdx) {
+                            if (idx > srcIdx && idx <= targetIdx) return idx - 1;
+                        } else if (srcIdx > targetIdx) {
+                            if (idx >= targetIdx && idx < srcIdx) return idx + 1;
+                        }
+                        return idx;
+                    });
+                }
+            }
+        }
+
+        // Kéo-thả sắp xếp kiểu "dính" vào playlist (không dùng HTML5 drag-and-drop nên không có ảnh ma của Chrome):
+        // bài đang kéo chạy theo con trỏ trong phạm vi danh sách, các bài khác tự né ra chỗ trống.
+        function startReorderDrag(e, item, srcIndex) {
+            if (e.button !== undefined && e.button !== 0) return;
+            if (e.pointerType !== 'mouse' && !e.target.closest('.icon-drag')) return; // cảm ứng: chỉ kéo bằng tay nắm
+            const container = playlistContainer;
+            const items = Array.from(container.querySelectorAll('.song-item'));
+            const i0 = items.indexOf(item);
+            if (i0 < 0) return;
+            e.preventDefault();
+            const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale')) || 1;
+            const tops = items.map(el => el.offsetTop), hs = items.map(el => el.offsetHeight);
+            const gap = items.length > 1 ? Math.max(0, (tops[1] - tops[0]) - hs[0]) : 0;
+            const step = hs[i0] + gap;                          // quãng đường các bài khác phải né
+            const centers = items.map((el, k) => tops[k] + hs[k] / 2);
+            const minDy = tops[0] - tops[i0];
+            const maxDy = tops[items.length - 1] + hs[items.length - 1] - (tops[i0] + hs[i0]);
+            const startY = e.clientY, startScroll = container.scrollTop;
+            let pointerY = e.clientY, target = i0, raf = null, dy = 0;
+
+            item.classList.add('dragging');
+            item.style.transition = 'none';
+            item.style.zIndex = '5';
+            item.style.position = 'relative';
+            items.forEach((el, k) => { if (k !== i0) el.style.transition = 'transform .22s cubic-bezier(.2,0,0,1)'; });
+            try { item.setPointerCapture(e.pointerId); } catch (err) {}
+
+            function layout() {
+                dy = (pointerY - startY) / scale + (container.scrollTop - startScroll);
+                dy = Math.max(minDy, Math.min(maxDy, dy));
+                item.style.transform = 'translateY(' + dy + 'px) scale(1.02)';
+                const c = centers[i0] + dy;
+                let t = i0;
+                for (let k = 0; k < items.length; k++) {
+                    if (k === i0) continue;
+                    if (k > i0 && c > centers[k]) t = Math.max(t, k);
+                    if (k < i0 && c < centers[k]) t = Math.min(t, k);
+                }
+                target = t;
+                items.forEach((el, k) => {
+                    if (k === i0) return;
+                    let shift = 0;
+                    if (k > i0 && k <= t) shift = -step;
+                    else if (k < i0 && k >= t) shift = step;
+                    el.style.transform = shift ? 'translateY(' + shift + 'px)' : '';
+                });
+            }
+            // Tự cuộn khi kéo sát mép trên/dưới của danh sách
+            function autoScroll() {
+                const r = container.getBoundingClientRect();
+                const zone = 48 * scale;
+                let v = 0;
+                if (pointerY < r.top + zone) v = -Math.min(14, (r.top + zone - pointerY) / 3);
+                else if (pointerY > r.bottom - zone) v = Math.min(14, (pointerY - (r.bottom - zone)) / 3);
+                if (v) { container.scrollTop += v; layout(); }
+                raf = requestAnimationFrame(autoScroll);
+            }
+            raf = requestAnimationFrame(autoScroll);
+            layout();
+
+            const onMove = (ev) => { pointerY = ev.clientY; layout(); };
+            const finish = (ev, cancel) => {
+                item.removeEventListener('pointermove', onMove);
+                item.removeEventListener('pointerup', onUp);
+                item.removeEventListener('pointercancel', onCancel);
+                cancelAnimationFrame(raf);
+                try { item.releasePointerCapture(e.pointerId); } catch (err) {}
+                const finalT = cancel ? i0 : target;
+                // Trượt bài vừa thả vào đúng ô trống rồi mới ghi nhận thứ tự mới
+                let slotDy = 0;
+                if (finalT > i0) { for (let k = i0 + 1; k <= finalT; k++) slotDy += hs[k] + gap; }
+                else if (finalT < i0) { for (let k = finalT; k < i0; k++) slotDy -= hs[k] + gap; }
+                item.style.transition = 'transform .2s cubic-bezier(.2,0,0,1)';
+                item.style.transform = 'translateY(' + slotDy + 'px)';
+                setTimeout(() => {
+                    const fromData = parseInt(items[i0].dataset.index, 10);
+                    const toData = parseInt(items[finalT].dataset.index, 10);
+                    if (!cancel) commitReorder(fromData, toData);
+                    updatePlaylistUI();
+                }, 210);
+            };
+            const onUp = (ev) => finish(ev, false);
+            const onCancel = (ev) => finish(ev, true);
+            item.addEventListener('pointermove', onMove);
+            item.addEventListener('pointerup', onUp);
+            item.addEventListener('pointercancel', onCancel);
+        }
+
         function updatePlaylistUI() {
             playlistContainer.innerHTML = '';
             let count = 0;
@@ -3931,9 +4090,11 @@
                 renderOrder = playlist.map((_, i) => i);
             }
 
+            let enterN = 0;
             renderOrder.forEach((index, displayPos) => {
                 const track = playlist[index];
                 if (!track) return; // an toàn, phòng lệch dữ liệu nhất thời
+                const isNewTrack = !knownTracks.has(track);
 
                 const normalizedName = removeVietnameseTones(track.name).toLowerCase();
                 const normalizedArtist = removeVietnameseTones(track.artist).toLowerCase();
@@ -3948,6 +4109,7 @@
                     const item = document.createElement('div');
                     item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
                     item.dataset.index = index;
+                    if (isNewTrack && !isReorderMode) { item.classList.add('song-enter'); item.style.animationDelay = Math.min(enterN++ * 30, 450) + 'ms'; }
                     
                     item.innerHTML = `
                         <span class="icon-play" style="font-family: inherit; font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:800; width:22px; text-align:center; opacity:0.6; flex-shrink:0;">${index + 1}</span>
@@ -3959,80 +4121,7 @@
                     `;
                     
                     if (isReorderMode) {
-                        item.draggable = true;
-                        
-                        item.addEventListener('dragstart', (e) => {
-                            dragSourceIndex = index;
-                            item.classList.add('dragging');
-                            e.dataTransfer.effectAllowed = 'move';
-                            e.dataTransfer.setData('text/plain', index); 
-                        });
-                        
-                        item.addEventListener('dragover', (e) => {
-                            e.preventDefault(); 
-                            e.dataTransfer.dropEffect = 'move';
-                            
-                            const bounding = item.getBoundingClientRect();
-                            const offset = bounding.y + (bounding.height / 2);
-                            if (e.clientY - offset > 0) {
-                                item.style.borderBottom = "2px solid var(--md-sys-color-primary)";
-                                item.style.borderTop = "none";
-                            } else {
-                                item.style.borderTop = "2px solid var(--md-sys-color-primary)";
-                                item.style.borderBottom = "none";
-                            }
-                        });
-                        
-                        item.addEventListener('dragleave', () => {
-                            item.style.borderTop = "none";
-                            item.style.borderBottom = "none";
-                        });
-                        
-                        item.addEventListener('drop', (e) => {
-                            e.preventDefault();
-                            item.style.borderTop = "none";
-                            item.style.borderBottom = "none";
-                            
-                            const targetIndex = index;
-                            if (dragSourceIndex !== -1 && dragSourceIndex !== targetIndex) {
-                                if (activePlTab === 'shuffle') {
-                                    // Ở tab Shuffle: chỉ sắp xếp lại thứ tự HÀNG ĐỢI shuffleOrder,
-                                    // không đụng gì tới playlist thật
-                                    moveInShuffleOrder(dragSourceIndex, targetIndex);
-                                } else {
-                                    const playingTrack = currentIndex !== -1 ? playlist[currentIndex] : null;
-                                    const draggedTrack = playlist.splice(dragSourceIndex, 1)[0];
-                                    playlist.splice(targetIndex, 0, draggedTrack);
-                                    if (playingTrack) currentIndex = playlist.indexOf(playingTrack);
-
-                                    // Playlist thật vừa đổi vị trí -> mọi index đang lưu trong
-                                    // shuffleOrder (nếu đã tồn tại) phải remap lại y hệt phép
-                                    // chuyển vị trí này, nếu không tab Shuffle sẽ trỏ lệch bài
-                                    if (shuffleInitialized) {
-                                        shuffleOrder = shuffleOrder.map(idx => {
-                                            if (idx === dragSourceIndex) return targetIndex;
-                                            if (dragSourceIndex < targetIndex) {
-                                                if (idx > dragSourceIndex && idx <= targetIndex) return idx - 1;
-                                            } else if (dragSourceIndex > targetIndex) {
-                                                if (idx >= targetIndex && idx < dragSourceIndex) return idx + 1;
-                                            }
-                                            return idx;
-                                        });
-                                    }
-                                }
-                                updatePlaylistUI();
-                            }
-                        });
-                        
-                        item.addEventListener('dragend', () => {
-                            item.classList.remove('dragging');
-                            dragSourceIndex = -1;
-                            document.querySelectorAll('.song-item').forEach(el => {
-                                el.style.borderTop = "none";
-                                el.style.borderBottom = "none";
-                            });
-                        });
-                        
+                        item.addEventListener('pointerdown', (e) => startReorderDrag(e, item, index));
                     } else if (!isReorderMode) {
                         item.onclick = () => playTrack(index);
                     }
@@ -4041,6 +4130,7 @@
                 }
             });
             
+            playlist.forEach(t => knownTracks.add(t));
             document.getElementById('track-count').innerText = searchQuery && !isReorderMode ? `${count}/${playlist.length}` : playlist.length;
 
             if (typeof renderPipPlaylist === 'function' && customPipWindow) {
@@ -5995,20 +6085,17 @@
 
         // Thiết lập menu Dropdown cho nút Thêm nhạc (+) hỗ trợ File System Access API
         const addMusicTrigger = document.getElementById('add-music-trigger');
-        const addMusicDropdown = document.getElementById('add-music-dropdown');
+        const addMusicMenu = document.getElementById('add-music-menu');
 
         addMusicTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
             if (window.showOpenFilePicker) {
-                addMusicDropdown.classList.toggle('show');
+                addMusicMenu.open = !addMusicMenu.open;
             } else {
                 document.getElementById('file-input').click();
             }
         });
-
-        document.addEventListener('click', () => {
-            addMusicDropdown.classList.remove('show');
-        });
+        hookMenuPlacement(addMusicMenu, addMusicTrigger);
 
         document.getElementById('btn-fs-pick-files').addEventListener('click', async () => {
             try {
@@ -6185,13 +6272,35 @@
                     + '[Nội dung email được tạo tự động từ hệ thống của Audio Player]';
             }
 
-            window.open('mailto:phongvn406@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+            // Hỏi người dùng muốn gửi bằng dịch vụ mail nào
+            pendingMail = { subject, body };
+            mailDialog.show();
+        });
 
+        const MAIL_TO = 'phongvn406@gmail.com';
+        let pendingMail = null;
+        const mailDialog = document.getElementById('mail-provider-dialog');
+        function buildMailUrl(kind, m) {
+            const su = encodeURIComponent(m.subject), bo = encodeURIComponent(m.body), to = encodeURIComponent(MAIL_TO);
+            switch (kind) {
+                case 'gmail': return 'https://mail.google.com/mail/?view=cm&fs=1&to=' + to + '&su=' + su + '&body=' + bo;
+                case 'outlook': return 'https://outlook.live.com/mail/0/deeplink/compose?to=' + to + '&subject=' + su + '&body=' + bo;
+                case 'yahoo': return 'https://compose.mail.yahoo.com/?to=' + to + '&subject=' + su + '&body=' + bo;
+                default: return 'mailto:' + MAIL_TO + '?subject=' + su + '&body=' + bo;
+            }
+        }
+        mailDialog.querySelectorAll('[data-mail]').forEach(el => el.addEventListener('click', () => {
+            if (!pendingMail) return;
+            const url = buildMailUrl(el.dataset.mail, pendingMail);
+            if (el.dataset.mail === 'mailto') window.location.href = url; else window.open(url, '_blank', 'noopener');
+            pendingMail = null;
+            mailDialog.close();
             feedbackModal.classList.remove('open');
             feedbackContent.value = '';
             feedbackTypeBug.checked = true;
             feedbackTypeSuggestion.checked = false;
-        });
+        }));
+        document.getElementById('mail-provider-cancel').addEventListener('click', () => mailDialog.close());
 
         // --- STREAMING_CHUNK:Setting up the "Thông tin khác" (file info) panel... ---
         // --- HỆ THỐNG "THÔNG TIN KHÁC" (FILE INFO) ---
@@ -7078,7 +7187,7 @@
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
                 var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
-                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.14-build171259';
+                var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'AUDIOPLAYER V2026.10.15-build170251';
 
                 var reportSubject = 'Lỗi khẩn cấp về Audio Player';
                 var reportBody = 'Loại: Báo cáo lỗi\n'

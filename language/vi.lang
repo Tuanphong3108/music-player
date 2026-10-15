@@ -311,3 +311,5 @@ sleep.fired_title=Đã tạm dừng theo hẹn giờ
 sleep.fired_time=Nhạc đã tự tạm dừng vì hẹn giờ {n} phút đã hết.
 sleep.fired_tracks=Nhạc đã tự tạm dừng vì hẹn giờ sau {n} bài đã hoàn thành.
 sleep.fired_ok=Đã hiểu
+feedback.mail_title=Gửi phản hồi bằng
+feedback.mail_mailto=Liên kết mailto

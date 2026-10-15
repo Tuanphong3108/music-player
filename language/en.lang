@@ -311,3 +311,5 @@ sleep.fired_title=Paused by sleep timer
 sleep.fired_time=Playback paused automatically because the {n}-minute timer ran out.
 sleep.fired_tracks=Playback paused automatically because the timer for {n} tracks finished.
 sleep.fired_ok=Got it
+feedback.mail_title=Send feedback using
+feedback.mail_mailto=mailto link
