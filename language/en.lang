@@ -305,3 +305,5 @@ settings.factory_reset_confirm=Reset all settings to default? Added fonts and sa
 settings.font_scale=Text size
 settings.font_scale_desc=Shrink or enlarge text from 50% to 200% (100% is the default size)
 settings.font_scale_sync=Sync text size with interface size
+font.sample=Hello world — The quick brown fox 0123
+font.manage_count={n} fonts
