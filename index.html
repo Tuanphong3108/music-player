@@ -3446,7 +3446,10 @@
         const playlistSearch = document.getElementById('playlist-search');
 
         let playlist = [];
-        const knownTracks = new WeakSet();   // bài đã từng được hiển thị -> chỉ bài mới mới có hiệu ứng zoom-in
+        // Bài mới -> { at: thời điểm hiện lần đầu, delay: độ trễ so le }. Giữ lại để nếu danh sách bị vẽ lại ngay
+        // (vd. playTrack gọi updatePlaylistUI liền sau khi thêm) thì hiệu ứng zoom-in vẫn chạy tiếp thay vì bị huỷ.
+        const trackEnter = new WeakMap();
+        const ENTER_MS = 500;
         let currentIndex = -1;
         let isShuffle = localStorage.getItem('settings_shuffle') === 'true';
         let repeatMode = parseInt(localStorage.getItem('settings_repeat_mode')) || 0;
@@ -4095,7 +4098,9 @@
             renderOrder.forEach((index, displayPos) => {
                 const track = playlist[index];
                 if (!track) return; // an toàn, phòng lệch dữ liệu nhất thời
-                const isNewTrack = !knownTracks.has(track);
+                if (!trackEnter.has(track)) trackEnter.set(track, { at: isReorderMode ? -1e9 : performance.now(), delay: Math.min(enterN++ * 30, 450) });
+                const enterInfo = trackEnter.get(track);
+                const enterLeft = enterInfo.delay + ENTER_MS - (performance.now() - enterInfo.at);
 
                 const normalizedName = removeVietnameseTones(track.name).toLowerCase();
                 const normalizedArtist = removeVietnameseTones(track.artist).toLowerCase();
@@ -4110,7 +4115,7 @@
                     const item = document.createElement('div');
                     item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
                     item.dataset.index = index;
-                    if (isNewTrack && !isReorderMode) { item.classList.add('song-enter'); item.style.animationDelay = Math.min(enterN++ * 30, 450) + 'ms'; }
+                    if (!isReorderMode && enterLeft > 30) { item.classList.add('song-enter'); item.style.animationDelay = (enterInfo.delay - (performance.now() - enterInfo.at)) + 'ms'; }
                     
                     item.innerHTML = `
                         <span class="icon-play" style="font-family: inherit; font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:800; width:22px; text-align:center; opacity:0.6; flex-shrink:0;">${index + 1}</span>
@@ -4131,7 +4136,6 @@
                 }
             });
             
-            playlist.forEach(t => knownTracks.add(t));
             document.getElementById('track-count').innerText = searchQuery && !isReorderMode ? `${count}/${playlist.length}` : playlist.length;
 
             if (typeof renderPipPlaylist === 'function' && customPipWindow) {
