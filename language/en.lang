@@ -307,3 +307,7 @@ settings.font_scale_desc=Shrink or enlarge text from 50% to 200% (100% is the de
 settings.font_scale_sync=Sync text size with interface size
 font.sample=Hello world — The quick brown fox 0123
 font.manage_count={n} fonts
+sleep.fired_title=Paused by sleep timer
+sleep.fired_time=Playback paused automatically because the {n}-minute timer ran out.
+sleep.fired_tracks=Playback paused automatically because the timer for {n} tracks finished.
+sleep.fired_ok=Got it

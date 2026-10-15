@@ -28,6 +28,10 @@
     {
       "content": "Thêm hiệu ứng cho nút hẹn giờ khi đặt, đổi hoặc hủy hẹn giờ (thu nhỏ, hiện dấu tick hoặc \"x\", rồi giãn ra hiện số phút/bài còn lại)",
       "icon": "timer"
+    },
+    {
+      "content": "Khi nhạc tự tạm dừng do hẹn giờ, hiện hộp thoại thông báo thay cho toast để biết lý do nhạc dừng",
+      "icon": "bedtime"
     }
   ],
   "en": [
@@ -58,6 +62,10 @@
     {
       "content": "Added animations to the sleep timer button when setting, changing or cancelling (shrink, tick or \"x\" icon, then expand to show the remaining minutes/tracks)",
       "icon": "timer"
+    },
+    {
+      "content": "When playback pauses because of the sleep timer, a dialog is shown instead of a toast so you know why it stopped",
+      "icon": "bedtime"
     }
   ]
 }
