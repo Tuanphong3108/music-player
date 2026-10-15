@@ -4017,12 +4017,13 @@
                 dy = (pointerY - startY) / scale + (container.scrollTop - startScroll);
                 dy = Math.max(minDy, Math.min(maxDy, dy));
                 item.style.transform = 'translateY(' + dy + 'px) scale(1.02)';
-                const c = centers[i0] + dy;
+                // So mép trên/dưới của bài đang kéo với tâm các bài khác -> kéo sát mép là tới được vị trí đầu/cuối
+                const dTop = tops[i0] + dy, dBottom = dTop + hs[i0];
                 let t = i0;
                 for (let k = 0; k < items.length; k++) {
                     if (k === i0) continue;
-                    if (k > i0 && c > centers[k]) t = Math.max(t, k);
-                    if (k < i0 && c < centers[k]) t = Math.min(t, k);
+                    if (k > i0 && dBottom > centers[k]) t = Math.max(t, k);
+                    if (k < i0 && dTop < centers[k]) t = Math.min(t, k);
                 }
                 target = t;
                 items.forEach((el, k) => {
