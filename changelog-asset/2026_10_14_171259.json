@@ -20,6 +20,10 @@
     {
       "content": "Thêm thanh trượt Cỡ chữ (50%–200%, có tùy chọn đồng bộ với kích thước giao diện) áp dụng cho cả PiP, Metadata Editor, About và Changelog",
       "icon": "format_size"
+    },
+    {
+      "content": "Đưa \"Tùy chỉnh...\" và \"Quản lý phông chữ\" lên đầu danh sách phông chữ; Quản lý phông chữ dùng Custom Dialog lớn hơn, có xem trước từng phông",
+      "icon": "font_download"
     }
   ],
   "en": [
@@ -42,6 +46,10 @@
     {
       "content": "Added a Text size slider (50%–200%, with an option to sync with interface size) that also applies to PiP, Metadata Editor, About and Changelog",
       "icon": "format_size"
+    },
+    {
+      "content": "Moved \"Custom...\" and \"Manage fonts\" to the top of the font list; Manage fonts now uses a larger Custom Dialog with a preview for each font",
+      "icon": "font_download"
     }
   ]
 }
