@@ -834,8 +834,15 @@
         /* ===== Hẹn giờ tạm dừng ===== */
         #sleep-btn { position: relative; display:flex; align-items:center; justify-content:center; }
         #sleep-btn.sleep-active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
-        #sleep-badge { display:none; margin-left:4px; font-size: calc(12px * var(--font-scale-factor, 1)); font-weight:700; font-family:var(--app-font); }
-        #sleep-btn.sleep-active #sleep-badge { display:inline; }
+        #sleep-btn { transition: background .3s ease, color .3s ease; }
+        #sleep-btn .sl-ico { transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .2s ease; }
+        #sleep-btn .sl-fb { position:absolute; left:50%; top:50%; margin:-10px 0 0 -10px; transform:scale(0); opacity:0; pointer-events:none; }
+        #sleep-btn.sl-fb-show .sl-fb { transform:scale(1); opacity:1; }
+        #sleep-btn.sl-hide .sl-main { transform:scale(0); opacity:0; }
+        #sleep-badge { display:inline-block; max-width:0; margin-left:0; opacity:0; overflow:hidden; white-space:nowrap; transform:scale(.6); transform-origin:left center;
+            font-size: calc(12px * var(--font-scale-factor, 1)); font-weight:700; font-family:var(--app-font);
+            transition: max-width .45s cubic-bezier(.2,0,0,1), margin-left .45s cubic-bezier(.2,0,0,1), opacity .25s ease, transform .45s cubic-bezier(.34,1.56,.64,1); }
+        #sleep-btn.sleep-active #sleep-badge { max-width:100px; margin-left:4px; opacity:1; transform:scale(1); }
         #sleep-menu {
             --md-ref-typeface-plain: var(--app-font);
             --md-menu-container-color: var(--md-sys-color-surface-variant);
@@ -1609,7 +1616,7 @@
                 </div>
                 <div style="position:relative;">
                     <button class="btn-m3" id="sleep-btn" title="Hẹn giờ tạm dừng" data-i18n-title="sleep.title" style="width:auto; padding:0 8px;">
-                        <span class="material-symbols-outlined" style="font-size:20px;">timer</span><span id="sleep-badge"></span>
+                        <span class="material-symbols-outlined sl-ico sl-main" style="font-size:20px;">timer</span><span class="material-symbols-outlined sl-ico sl-fb" id="sleep-fb" style="font-size:20px;">check</span><span id="sleep-badge"></span>
                     </button>
                     <md-menu id="sleep-menu" anchor="sleep-btn">
                         <md-menu-item data-sleep="off"><div slot="headline" data-i18n="sleep.off">Không</div></md-menu-item>
@@ -4583,33 +4590,57 @@
         const slT = (k, f) => currentLangDict[k] || f;
         const fmtN = n => String(Math.round(n * 100) / 100);
 
+        const sleepFb = document.getElementById('sleep-fb');
+        let sleepAnimating = false, sleepAnimSeq = 0;
+        const slWait = ms => new Promise(r => setTimeout(r, ms));
         function updateSleepUI() {
-            sleepBtn.classList.toggle('sleep-active', !!sleepState);
-            if (!sleepState) { sleepBadge.textContent = ''; return; }
-            if (sleepState.type === 'time') {
-                const m = Math.max(1, Math.ceil((sleepState.endAt - Date.now()) / 60000));
-                sleepBadge.textContent = m + (currentLangDict['sleep.unit_min'] || 'p');
-            } else sleepBadge.textContent = sleepState.remaining + (currentLangDict['sleep.unit_track'] || ' bài');
+            if (sleepState) {
+                if (sleepState.type === 'time') {
+                    const m = Math.max(1, Math.ceil((sleepState.endAt - Date.now()) / 60000));
+                    sleepBadge.textContent = m + (currentLangDict['sleep.unit_min'] || 'p');
+                } else sleepBadge.textContent = sleepState.remaining + (currentLangDict['sleep.unit_track'] || ' bài');
+            } else if (!sleepAnimating) sleepBadge.textContent = '';
+            sleepBtn.classList.toggle('sleep-active', !!sleepState && !sleepAnimating);
         }
-        function clearSleep() { sleepState = null; clearInterval(sleepTick); sleepTick = null; updateSleepUI(); }
+        // Hiệu ứng nút: mọi thứ thu nhỏ + nút co về kích thước cũ -> icon tick/"x" zoom-in ~1s -> thu nhỏ
+        // -> icon đồng hồ hiện lại rồi nút giãn ra hiện số phút/bài còn lại (nếu đang có hẹn giờ)
+        async function sleepAnimate(kind) {
+            const my = ++sleepAnimSeq;
+            sleepAnimating = true;
+            sleepFb.textContent = kind === 'cancel' ? 'close' : 'check';
+            sleepBtn.classList.remove('sleep-active', 'sl-fb-show');
+            sleepBtn.classList.add('sl-hide');
+            await slWait(380); if (my !== sleepAnimSeq) return;
+            sleepBtn.classList.add('sl-fb-show');
+            await slWait(1000); if (my !== sleepAnimSeq) return;
+            sleepBtn.classList.remove('sl-fb-show');
+            await slWait(300); if (my !== sleepAnimSeq) return;
+            sleepBtn.classList.remove('sl-hide');
+            await slWait(250); if (my !== sleepAnimSeq) return;
+            sleepAnimating = false;
+            updateSleepUI();
+        }
+        function clearSleep(silent) { sleepState = null; clearInterval(sleepTick); sleepTick = null; if (!silent) updateSleepUI(); }
         function fireSleep() {
             clearSleep();
             try { audio.pause(); } catch (e) {}
             showToast(slT('toast.sleep_fired', 'Đã tạm dừng theo hẹn giờ'), 'bedtime', 6000);
         }
         function setSleepTime(min, preset) {
-            clearSleep();
+            clearSleep(true);
             sleepState = { type: 'time', endAt: Date.now() + min * 60000, preset: preset || 'custom' };
             sleepTick = setInterval(() => {
                 if (!sleepState) return;
                 if (Date.now() >= sleepState.endAt) fireSleep(); else updateSleepUI();
             }, 1000);
+            sleepAnimate('set');
             updateSleepUI();
             showToast(slT('toast.sleep_time_set', 'Sẽ tạm dừng sau {n} phút').replace('{n}', fmtN(min)), 'timer', 4000);
         }
         function setSleepTracks(n) {
-            clearSleep();
+            clearSleep(true);
             sleepState = { type: 'tracks', remaining: n, preset: 'custom' };
+            sleepAnimate('set');
             updateSleepUI();
             showToast(slT('toast.sleep_tracks_set', 'Sẽ tạm dừng sau {n} bài').replace('{n}', n), 'timer', 4000);
         }
@@ -4647,7 +4678,7 @@
             item.addEventListener('click', () => {
                 const v = item.dataset.sleep;
                 if (v === 'off') {
-                    if (sleepState) { clearSleep(); showToast(slT('toast.sleep_off', 'Đã tắt hẹn giờ tạm dừng'), 'timer_off', 3500); }
+                    if (sleepState) { sleepAnimate('cancel'); clearSleep(); showToast(slT('toast.sleep_off', 'Đã tắt hẹn giờ tạm dừng'), 'timer_off', 3500); }
                 } else if (v === 'custom') {
                     sleepDialogSync();
                     const first = document.querySelector('#sleep-dialog md-radio[value="time"]'); if (first) first.checked = true;
