@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <style>
+  :root{--font-scale-factor:1}
     /* ===== Material 3 Expressive: bảng màu (app cha có thể ghi đè qua postMessage) ===== */
     :root {
       --primary:#D0BCFF; --on-primary:#381E72; --primary-container:#4F378B; --on-primary-container:#EADDFF;
@@ -50,15 +51,15 @@
     .hero { position:relative; overflow:hidden; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:28px; border-radius:40px;
       background:var(--primary-container); color:var(--on-primary-container); animation:pop .7s var(--spring) both; }
     .hero-text { display:flex; flex-direction:column; gap:12px; min-width:0; z-index:1; }
-    .chip { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; background:var(--secondary-container); color:var(--on-secondary-container); }
+    .chip { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px; font-size: calc(12px * var(--font-scale-factor, 1)); font-weight:800; letter-spacing:.06em; text-transform:uppercase; background:var(--secondary-container); color:var(--on-secondary-container); }
     .chip .ms { font-size:16px; }
     .display { margin:0; font-size:clamp(34px,8vw,64px); line-height:1; font-weight:900; letter-spacing:-.035em; }
-    .sub { margin:0; font-size:14px; font-weight:600; opacity:.8; }
+    .sub { margin:0; font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:600; opacity:.8; }
     .hero-blob { width:104px; height:104px; flex-shrink:0; display:grid; place-items:center; background:var(--tertiary-container); color:var(--on-tertiary-container); animation:morph 9s ease-in-out infinite; }
     .hero-blob .ms { font-size:52px; animation:counter 9s ease-in-out infinite; }
     @keyframes counter { 0%,100% { transform:rotate(0); } 50% { transform:rotate(14deg) scale(1.08); } }
 
-    .section { display:flex; align-items:center; gap:12px; font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--on-surface-variant); padding:0 6px; }
+    .section { display:flex; align-items:center; gap:12px; font-size: calc(13px * var(--font-scale-factor, 1)); font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--on-surface-variant); padding:0 6px; }
     .section::after { content:""; flex:1; height:2px; border-radius:2px; background:var(--outline-variant); opacity:.6; }
 
     /* THẺ PHIÊN BẢN: to, bo lớn, đổi hình khi hover/nhấn */
@@ -77,11 +78,11 @@
     .vcard.latest:hover .vi { border-radius:24px; transform:rotate(10deg) scale(1.08); }
     .vcard .vi .ms { font-size:28px; } .vcard.latest .vi .ms { font-size:34px; }
     .vmeta { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
-    .vtitle { display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:24px; font-weight:900; letter-spacing:-.02em; }
-    .vcard.latest .vtitle { font-size:34px; }
-    .vsub { font-size:13px; font-weight:600; opacity:.75; }
+    .vtitle { display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size: calc(24px * var(--font-scale-factor, 1)); font-weight:900; letter-spacing:-.02em; }
+    .vcard.latest .vtitle { font-size: calc(34px * var(--font-scale-factor, 1)); }
+    .vsub { font-size: calc(13px * var(--font-scale-factor, 1)); font-weight:600; opacity:.75; }
     .build { font:700 11px/1 ui-monospace,Menlo,Consolas,monospace; padding:6px 10px; border-radius:10px; background:var(--tertiary-container); color:var(--on-tertiary-container); letter-spacing:0; }
-    .tag { font-size:11px; font-weight:900; letter-spacing:.08em; padding:6px 12px; border-radius:999px; background:var(--tertiary-container); color:var(--on-tertiary-container); }
+    .tag { font-size: calc(11px * var(--font-scale-factor, 1)); font-weight:900; letter-spacing:.08em; padding:6px 12px; border-radius:999px; background:var(--tertiary-container); color:var(--on-tertiary-container); }
     .chev { width:44px; height:44px; flex-shrink:0; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb,currentColor 12%,transparent); transition:transform .4s var(--spring), border-radius .4s var(--spring); }
     .vcard:hover .chev { transform:translateX(4px) scale(1.1); border-radius:14px; }
 
@@ -91,7 +92,7 @@
     .backbtn:hover { border-radius:20px; transform:scale(1.06); } .backbtn:active { border-radius:12px; transform:scale(.92); }
     .backbtn .ms { font-size:28px; }
     .dtitle { display:flex; flex-direction:column; gap:10px; min-width:0; }
-    .dtitle .app { font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--on-surface-variant); }
+    .dtitle .app { font-size: calc(13px * var(--font-scale-factor, 1)); font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--on-surface-variant); }
     .dtitle .row { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
     .dver { font-size:clamp(32px,7vw,52px); line-height:1; font-weight:900; letter-spacing:-.035em; color:var(--primary); }
     .list { display:flex; flex-direction:column; gap:6px; }
@@ -106,7 +107,7 @@
     .item:nth-child(4n+3) .ico { border-radius:30% 70% 60% 40% / 50% 40% 60% 50%; background:var(--secondary-container); color:var(--on-secondary-container); }
     .item:nth-child(4n+4) .ico { border-radius:22px 22px 22px 6px; background:var(--primary); color:var(--on-primary); }
     .item:hover .ico { transform:rotate(-10deg) scale(1.1); border-radius:50% !important; }
-    .item .txt { flex:1; min-width:0; font-size:15px; font-weight:600; line-height:1.45; }
+    .item .txt { flex:1; min-width:0; font-size: calc(15px * var(--font-scale-factor, 1)); font-weight:600; line-height:1.45; }
 
     .state { text-align:center; padding:48px 12px; font-weight:700; color:var(--on-surface-variant); }
     .spinner { width:36px; height:36px; margin:0 auto 14px; border:4px solid var(--outline-variant); border-top-color:var(--primary); animation:spin .9s linear infinite, morph 3s ease-in-out infinite; }
@@ -117,10 +118,10 @@
     @media (min-width:900px) {
       .screen { padding:36px 56px 56px; }
       .hero { padding:40px 48px; border-radius:48px; } .hero-blob { width:140px; height:140px; } .hero-blob .ms { font-size:68px; }
-      .item { padding:16px 22px 16px 16px; } .item .txt { font-size:15.5px; }
+      .item { padding:16px 22px 16px 16px; } .item .txt { font-size: calc(15.5px * var(--font-scale-factor, 1)); }
     }
     @media (min-width:900px) { .list { display:grid; grid-template-columns:1fr 1fr; gap:8px; } }
-    @media (max-width:520px) { .hero { padding:22px; border-radius:32px; } .hero-blob { width:76px; height:76px; } .hero-blob .ms { font-size:38px; } .vcard.latest .vtitle { font-size:28px; } }
+    @media (max-width:520px) { .hero { padding:22px; border-radius:32px; } .hero-blob { width:76px; height:76px; } .hero-blob .ms { font-size:38px; } .vcard.latest .vtitle { font-size: calc(28px * var(--font-scale-factor, 1)); } }
     @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
     ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--outline-variant); border-radius:99px; }
   </style>
@@ -340,8 +341,10 @@ function setLang(l) { currentLang = l === 'en' ? 'en' : 'vi'; renderStatic(); if
             st.textContent = ':root{--md-ref-typeface-plain:' + f.stack + ';--md-ref-typeface-brand:' + f.stack + '}'
                 + 'body,body *:not(.material-symbols-outlined):not(.ms):not(code):not(pre):not(kbd){font-family:' + f.stack + ' !important}';
         }
+function applyFontFactor(v){var n=parseFloat(v);if(!(n>0))return;document.documentElement.style.setProperty('--font-scale-factor',String(n));}
 window.addEventListener('message', ev => {
   const d = ev.data; if (!d) return;
+  if (typeof d === 'object' && d.fontScale) { applyFontFactor(d.fontScale); return; }
   if (typeof d === 'object' && d.font) applyAppFont(d.font);
   if (d.palette && typeof d.palette === 'object') { lastPalette = d.palette; applyPalette(lastPalette); }
   if (d === 'dark' || d.theme === 'dark') applyThemeStyles('dark'); else if (d === 'light' || d.theme === 'light') applyThemeStyles('light');
