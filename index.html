@@ -597,7 +597,7 @@
 
         .reorder-done-btn {
             position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
-            width: 150px; height: 56px; border-radius: 28px;
+            width: auto; min-width: 150px; height: 56px; padding: 0 28px; border-radius: 28px; white-space: nowrap; box-sizing: border-box;
             background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
             border: none; display: flex; align-items: center; justify-content: center; gap: 8px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.4); cursor: pointer; z-index: 2000;
@@ -607,7 +607,7 @@
         .reorder-done-btn:hover { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); transform: translateX(-50%) scale(1.05); }
         .reorder-done-btn:active { transform: translateX(-50%) scale(0.95); }
         body.reorder-active .reorder-done-btn { bottom: 32px; }
-        .reorder-done-btn span { font-size: calc(24px * var(--font-scale-factor, 1)); font-weight: 700; font-variation-settings: 'wght' 700; }
+        .reorder-done-btn span { white-space: nowrap; font-size: calc(24px * var(--font-scale-factor, 1)); font-weight: 700; font-variation-settings: 'wght' 700; }
 
         /* --- PWA INSTALL TOOLTIP --- */
         .install-wrapper {
