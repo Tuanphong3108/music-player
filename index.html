@@ -275,6 +275,7 @@
         .search-container { padding: 0 16px 12px; transition: var(--m3-transition); }
         .playlist-card.collapsed .search-container { display: none; }
         .playlist-card.collapsed #pl-tabs { display: none !important; }
+        body.editor-locked #prev-btn, body.editor-locked #next-btn { opacity: .35; pointer-events: none; }
         body.reorder-active #pl-tabs { display: none !important; }
 
         #pl-tabs.expanded { max-height: 44px !important; padding-bottom: 10px; }
@@ -2125,7 +2126,6 @@
             max-width: 360px;
             width: 100%;
             overflow: hidden;
-            animation: dialog-in 0.13s ease-out both;
           }
           @keyframes dialog-in {
             from { transform: scale(0.94); opacity: 0; }
@@ -2174,6 +2174,19 @@
             margin: 0 auto 12px;
           }
 
+          .ore-dialog.big { max-width: 680px; height: min(82vh, 640px); display: flex; flex-direction: column; }
+          .ore-dialog.big .dialog-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; }
+          .lrc-results { flex: 1; min-height: 0; overflow-y: auto; border: 2px solid #1A1A1A; background: #1E1E1E; }
+          .lrc-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; border-bottom: 1px solid #2c2c2c; }
+          .lrc-item:hover { background: rgba(255,255,255,0.07); }
+          .lrc-item .t { font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .lrc-item .s { font-size: calc(11px * var(--font-scale-factor, 1)); opacity: .65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .lrc-item .grow { flex: 1; min-width: 0; }
+          .lrc-badge { font-family: 'Minecraft', monospace; font-size: calc(9px * var(--font-scale-factor, 1)); padding: 3px 6px; background: #3C8527; color: #fff; flex-shrink: 0; }
+          .lrc-badge.gray { background: #555; }
+          .lrc-dur { font-size: calc(11px * var(--font-scale-factor, 1)); opacity: .6; flex-shrink: 0; }
+          .lrc-msg { padding: 28px 16px; text-align: center; opacity: .7; }
+          .lrc-preview { flex: 1; min-height: 0; overflow: auto; margin: 0; padding: 12px; border: 2px solid #1A1A1A; background: #1E1E1E; white-space: pre-wrap; word-break: break-word; font-family: inherit; line-height: 1.6; color: var(--text-label); }
           #lrcFileInput { display: none; }
 
           ::-webkit-scrollbar { width: 6px; }
@@ -2249,6 +2262,32 @@
           </div>
         </div>
 
+        <div class="overlay hidden" id="overlayLrcSearch">
+          <div class="ore-dialog big">
+            <div class="dialog-header" data-i18n="metaeditor.lrc_title">🔍 Tìm lời bài hát (lrclib.net)</div>
+            <div class="dialog-body">
+              <input class="ore-input" type="text" id="lrcQuery" autocomplete="off" spellcheck="false" placeholder="Tên bài, nghệ sĩ..." data-i18n-placeholder="metaeditor.lrc_placeholder">
+              <div class="lrc-results" id="lrcResults"></div>
+            </div>
+            <div class="dialog-footer">
+              <button class="ore-btn ore-btn-ghost" id="btnLrcCancel" data-i18n="metaeditor.cancel">Hủy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay hidden" id="overlayLrcPreview" style="z-index:210;">
+          <div class="ore-dialog big">
+            <div class="dialog-header" id="lrcPreviewTitle">Lyric</div>
+            <div class="dialog-body">
+              <pre class="lrc-preview" id="lrcPreviewText"></pre>
+            </div>
+            <div class="dialog-footer">
+              <button class="ore-btn ore-btn-ghost" id="btnLrcBack" data-i18n="metaeditor.lrc_back">Quay lại</button>
+              <button class="ore-btn ore-btn-green" id="btnLrcInsert" data-i18n="metaeditor.lrc_insert">Chèn</button>
+            </div>
+          </div>
+        </div>
+
         <div class="overlay hidden" id="overlaySuccess">
           <div class="ore-dialog">
             <div class="dialog-header" data-i18n="metaeditor.saved_title">✓ Đã lưu thành công</div>
@@ -2302,6 +2341,7 @@
             document.getElementById('overlaySuccess').classList.add('hidden');
             document.getElementById('overlayFail').classList.add('hidden');
             document.getElementById('overlayUnsaved').classList.add('hidden');
+            lrcSearch.classList.add('hidden'); lrcPreview.classList.add('hidden');
             document.getElementById('savingScreen').classList.remove('active');
             document.getElementById('mainContent').style.display = '';
             document.getElementById('actionBar').style.display = '';
@@ -2387,12 +2427,68 @@
             sendClose();
           });
 
+          const T = (k, f) => { try { return window.parent.currentLangDict[k] || f; } catch (e) { return f; } };
+          const esc = x => String(x ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+          const lrcSearch = document.getElementById('overlayLrcSearch');
+          const lrcPreview = document.getElementById('overlayLrcPreview');
+          const lrcQuery = document.getElementById('lrcQuery');
+          const lrcResults = document.getElementById('lrcResults');
+          let lrcPicked = '', lrcSeq = 0, lrcTimer = null;
+          const fmtDur = d => { d = Math.round(d || 0); return Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'); };
+
+          function lrcMsg(text) { lrcResults.innerHTML = '<div class="lrc-msg">' + esc(text) + '</div>'; }
+
+          async function runLrcSearch() {
+            const q = lrcQuery.value.trim();
+            const my = ++lrcSeq;
+            if (!q) { lrcMsg(T('metaeditor.lrc_hint', 'Nhập tên bài hát để tìm lời.')); return; }
+            lrcMsg(T('metaeditor.lrc_searching', 'Đang tìm...'));
+            try {
+              const res = await fetch('https://lrclib.net/api/search?q=' + encodeURIComponent(q));
+              if (!res.ok) throw new Error(res.status);
+              const list = await res.json();
+              if (my !== lrcSeq) return;
+              if (!Array.isArray(list) || !list.length) { lrcMsg(T('metaeditor.lrc_none', 'Không tìm thấy kết quả nào.')); return; }
+              lrcResults.innerHTML = '';
+              list.forEach(it => {
+                const text = it.syncedLyrics || it.plainLyrics || '';
+                const row = document.createElement('div');
+                row.className = 'lrc-item';
+                const badge = it.instrumental || !text
+                  ? '<span class="lrc-badge gray">' + esc(T('metaeditor.lrc_instrumental', 'KHÔNG LỜI')) + '</span>'
+                  : it.syncedLyrics ? '<span class="lrc-badge">LRC</span>' : '<span class="lrc-badge gray">TXT</span>';
+                row.innerHTML = '<div class="grow"><div class="t">' + esc(it.trackName) + '</div><div class="s">' + esc(it.artistName) + (it.albumName ? ' • ' + esc(it.albumName) : '') + '</div></div>'
+                  + badge + '<span class="lrc-dur">' + fmtDur(it.duration) + '</span>';
+                if (text) row.addEventListener('click', () => {
+                  lrcPicked = text;
+                  document.getElementById('lrcPreviewTitle').textContent = (it.trackName || '') + ' — ' + (it.artistName || '');
+                  document.getElementById('lrcPreviewText').textContent = text;
+                  lrcPreview.classList.remove('hidden');
+                  document.getElementById('lrcPreviewText').scrollTop = 0;
+                });
+                else row.style.cssText = 'opacity:.45;cursor:default;';
+                lrcResults.appendChild(row);
+              });
+            } catch (err) {
+              if (my === lrcSeq) lrcMsg(T('metaeditor.lrc_error', 'Không kết nối được tới lrclib.net. Hãy kiểm tra mạng và thử lại.'));
+            }
+          }
+
           document.getElementById('btnSearchLrc').addEventListener('click', () => {
-            const t = fields.title.value.trim();
-            const a = fields.artist.value.trim();
-            if (!t) return; // Không có tên bài hát thì thôi, không mở gì cả
-            const query = encodeURIComponent(t) + (a ? '+' + encodeURIComponent(a) : '');
-            window.open('https://lrclib.net/search/' + query, '_blank');
+            const t = fields.title.value.trim(), a = fields.artist.value.trim();
+            lrcQuery.value = t ? t + (a && !/^unknown/i.test(a) ? ' ' + a : '') : '';
+            lrcSearch.classList.remove('hidden');
+            runLrcSearch();
+            lrcQuery.focus();
+          });
+          lrcQuery.addEventListener('input', () => { clearTimeout(lrcTimer); lrcTimer = setTimeout(runLrcSearch, 450); });
+          lrcQuery.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(lrcTimer); runLrcSearch(); } });
+          document.getElementById('btnLrcCancel').addEventListener('click', () => { lrcSeq++; lrcSearch.classList.add('hidden'); });
+          document.getElementById('btnLrcBack').addEventListener('click', () => lrcPreview.classList.add('hidden'));
+          document.getElementById('btnLrcInsert').addEventListener('click', () => {
+            fields.lyric.value = lrcPicked;
+            lrcPreview.classList.add('hidden');
+            lrcSearch.classList.add('hidden');
           });
 
           document.getElementById('btnUploadLrc').addEventListener('click', () =>
@@ -4341,6 +4437,7 @@
         });
 
         document.getElementById('next-btn').addEventListener('click', () => {
+            if (isEditorOpen()) return;   // đang chỉnh sửa: khoá chuyển bài
             if (isShuffle) {
                 if (!shuffleInitialized) generateShuffleOrder();
                 if (shuffleOrder.length === 0) return;
@@ -4358,6 +4455,7 @@
         let prevBtnClickTimer = null;
         let prevBtnClickCount = 0;
         document.getElementById('prev-btn').addEventListener('click', () => {
+            if (isEditorOpen()) return;   // đang chỉnh sửa: khoá chuyển bài
             if (!isShuffle) {
                 let p = currentIndex - 1; if (p < 0) p = playlist.length - 1;
                 playTrack(p);
@@ -4750,6 +4848,7 @@
         }
         function syncRepeatLock() {
             const open = isEditorOpen();
+            document.body.classList.toggle('editor-locked', open);
             if (open && repeatLockSaved === null) {
                 repeatLockSaved = repeatMode;
                 if (repeatMode !== 2) {

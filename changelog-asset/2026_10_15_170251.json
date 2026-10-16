@@ -24,6 +24,14 @@
     {
       "content": "Thêm nút Định vị bài đang phát; tải nhạc lên sẽ tự nhảy tới bài đó",
       "icon": "my_location"
+    },
+    {
+      "content": "Tìm lời bài hát ngay trong trình chỉnh sửa, xem trước rồi chèn vào",
+      "icon": "lyrics"
+    },
+    {
+      "content": "Khoá nút Trước/Sau khi đang chỉnh sửa để không bị đổi bài",
+      "icon": "lock"
     }
   ],
   "en": [
@@ -50,6 +58,14 @@
     {
       "content": "Added a Locate current track button; uploading music jumps to that track",
       "icon": "my_location"
+    },
+    {
+      "content": "Find lyrics right inside the editor, preview them and insert",
+      "icon": "lyrics"
+    },
+    {
+      "content": "Previous/Next are locked while editing so the track doesn't change",
+      "icon": "lock"
     }
   ]
 }
