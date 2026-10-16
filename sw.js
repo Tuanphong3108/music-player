@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'audio-player-';
-const CACHE_VERSION = 'v2026_10_14_171259-sleep-dialog';
+const CACHE_VERSION = 'v2026_10_15_170251-lazy2';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 

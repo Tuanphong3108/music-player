@@ -2,37 +2,45 @@
   "date": "2026-10-15",
   "vi": [
     {
-      "content": "Menu Thêm nhạc chuyển sang Material Web Components Dropdown (kích thước giữ nguyên)",
+      "content": "Đổi menu Thêm nhạc sang giao diện mới",
       "icon": "add_circle"
     },
     {
-      "content": "Bài mới thêm vào playlist có hiệu ứng zoom-in; khi xóa bài sẽ zoom-out rồi mới đẩy các bài bên dưới lên",
-      "icon": "playlist_add"
+      "content": "Thêm hiệu ứng animation cho playlist và nút Thêm nhạc",
+      "icon": "animation"
     },
     {
-      "content": "Sắp xếp playlist: bài được kéo dính vào danh sách, các bài khác tự né ra chỗ trống (không còn ảnh kéo của Chrome)",
+      "content": "Cải thiện việc sắp xếp playlist bằng kéo-thả",
       "icon": "swap_vert"
     },
     {
-      "content": "Gửi phản hồi: hiện hộp thoại chọn Gmail, Outlook, Yahoo Mail hoặc liên kết mailto",
+      "content": "Playlist tải mượt hơn khi có nhiều bài",
+      "icon": "speed"
+    },
+    {
+      "content": "Gửi phản hồi: có thể chọn Gmail, Outlook, Yahoo Mail hoặc mailto",
       "icon": "forward_to_inbox"
     }
   ],
   "en": [
     {
-      "content": "The Add music menu now uses a Material Web Components dropdown (same size)",
+      "content": "Updated the Add music menu to a new look",
       "icon": "add_circle"
     },
     {
-      "content": "New tracks zoom in; deleted tracks zoom out before the tracks below move up",
-      "icon": "playlist_add"
+      "content": "Added animations to the playlist and the Add music button",
+      "icon": "animation"
     },
     {
-      "content": "Playlist reordering: the dragged track sticks to the list and the other tracks move out of the way (no more Chrome drag image)",
+      "content": "Improved playlist reordering by drag and drop",
       "icon": "swap_vert"
     },
     {
-      "content": "Send feedback: a dialog lets you choose Gmail, Outlook, Yahoo Mail or a mailto link",
+      "content": "Playlist loads more smoothly when it has many tracks",
+      "icon": "speed"
+    },
+    {
+      "content": "Send feedback: you can choose Gmail, Outlook, Yahoo Mail or mailto",
       "icon": "forward_to_inbox"
     }
   ]

@@ -838,6 +838,8 @@
         }
         #confirm-dialog::part(scrim) { background: #000; }
 
+        #add-music-trigger { perspective: 300px; }
+        #add-music-trigger .material-symbols-outlined { will-change: transform; }
         #add-music-menu md-menu-item { min-width: 220px; --md-menu-item-label-text-size: calc(13px * var(--font-scale-factor, 1)); }
 
         #mail-provider-dialog .mail-opts { display: flex; flex-direction: column; gap: 4px; }
@@ -1668,7 +1670,7 @@
                 
                 <!-- Nút add_circle mở menu Material Web (API File System) -->
                 <div style="position:relative;">
-                    <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined">add_circle</span></button>
+                    <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined" id="add-music-icon">add_circle</span><md-circular-progress id="add-music-spinner" indeterminate style="display:none; --md-circular-progress-size:24px; --md-circular-progress-active-indicator-width:12;"></md-circular-progress></button>
                     <md-menu id="add-music-menu" anchor="add-music-trigger" positioning="popover">
                         <md-menu-item id="btn-fs-pick-files">
                             <span class="material-symbols-outlined" slot="start">file_open</span>
@@ -3449,6 +3451,9 @@
         // Bài mới -> { at: thời điểm hiện lần đầu, delay: độ trễ so le }. Giữ lại để nếu danh sách bị vẽ lại ngay
         // (vd. playTrack gọi updatePlaylistUI liền sau khi thêm) thì hiệu ứng zoom-in vẫn chạy tiếp thay vì bị huỷ.
         const trackEnter = new WeakMap();
+        const trackNum = new WeakMap();      // số thứ tự đang hiển thị của từng bài (để làm hiệu ứng khi số đổi)
+        const PL_CHUNK = 40;                 // số bài vẽ mỗi đợt (lazy-loading)
+        let plLimit = PL_CHUNK, plObserver = null;
         const ENTER_MS = 500;
         let currentIndex = -1;
         let isShuffle = localStorage.getItem('settings_shuffle') === 'true';
@@ -3667,6 +3672,14 @@
 
         // --- STREAMING_CHUNK:Reading audio metadata with Lyric Embed support... ---
         async function handleFiles(files) {
+            const before = playlist.length;
+            const hadFiles = files && files.length > 0;
+            if (!hadFiles) { if (window.addBtnArrow) addBtnCancel(); return; }
+            addBtnBusy();
+            try { await handleFilesInner(files); }
+            finally { if (playlist.length > before) addBtnDone(); else addBtnCancel(); }
+        }
+        async function handleFilesInner(files) {
             const audioFiles = [];
             const lrcFiles = [];
             let lastAutoPlayIndex = -1;
@@ -3934,6 +3947,7 @@
 
         playlistSearch.addEventListener('input', (e) => {
             searchQuery = removeVietnameseTones(e.target.value.toLowerCase().trim());
+            plLimit = PL_CHUNK;
             updatePlaylistUI();
         });
 
@@ -4094,24 +4108,27 @@
                 renderOrder = playlist.map((_, i) => i);
             }
 
-            let enterN = 0;
-            renderOrder.forEach((index, displayPos) => {
+            // Lọc các bài khớp tìm kiếm (hoặc tất cả khi đang sắp xếp)
+            const matched = [];
+            renderOrder.forEach((index) => {
                 const track = playlist[index];
                 if (!track) return; // an toàn, phòng lệch dữ liệu nhất thời
-                if (!trackEnter.has(track)) trackEnter.set(track, { at: isReorderMode ? -1e9 : performance.now(), delay: Math.min(enterN++ * 30, 450) });
-                const enterInfo = trackEnter.get(track);
-                const enterLeft = enterInfo.delay + ENTER_MS - (performance.now() - enterInfo.at);
-
                 const normalizedName = removeVietnameseTones(track.name).toLowerCase();
                 const normalizedArtist = removeVietnameseTones(track.artist).toLowerCase();
                 const normalizedGenre = removeVietnameseTones(track.genre || '').toLowerCase();
                 const normalizedComposer = removeVietnameseTones(track.composer || '').toLowerCase();
-                
                 const matches = isReorderMode || normalizedName.includes(searchQuery) || normalizedArtist.includes(searchQuery)
                     || normalizedGenre.includes(searchQuery) || normalizedComposer.includes(searchQuery);
-                
-                if (matches) {
-                    count++;
+                if (matches) matched.push(index);
+            });
+            count = matched.length;
+
+            let enterN = 0;
+            const makeItem = (index) => {
+                const track = playlist[index];
+                if (!trackEnter.has(track)) trackEnter.set(track, { at: isReorderMode ? -1e9 : performance.now(), delay: Math.min(enterN++ * 30, 450) });
+                const enterInfo = trackEnter.get(track);
+                const enterLeft = enterInfo.delay + ENTER_MS - (performance.now() - enterInfo.at);
                     const item = document.createElement('div');
                     item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
                     item.dataset.index = index;
@@ -4125,6 +4142,23 @@
                             <div style="font-family:'Minecraft'; font-size: calc(8px * var(--font-scale-factor, 1)); opacity: 0.6; margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''} ${track.fileHandle ? '• FS' : ''}</div>
                         </div>
                     `;
+                    // Số thứ tự đổi -> số cũ zoom-out rồi số mới zoom-in
+                    {
+                        const num = index + 1, prev = trackNum.get(track);
+                        trackNum.set(track, num);
+                        if (prev !== undefined && prev !== num && !isReorderMode && !document.documentElement.classList.contains('reduce-motion')) {
+                            const sp = item.querySelector('.icon-play');
+                            if (sp) {
+                                sp.textContent = prev;
+                                const out = sp.animate([{ transform: 'scale(1)', opacity: 0.6 }, { transform: 'scale(0)', opacity: 0 }], { duration: 170, easing: 'ease-in', fill: 'forwards' });
+                                out.onfinish = () => {
+                                    sp.textContent = num; out.cancel();
+                                    sp.animate([{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 0.6 }], { duration: 260, easing: 'cubic-bezier(.34,1.56,.64,1)' });
+                                };
+                            }
+                        }
+                    }
+
                     
                     if (isReorderMode) {
                         item.addEventListener('pointerdown', (e) => startReorderDrag(e, item, index));
@@ -4132,10 +4166,37 @@
                         item.onclick = () => playTrack(index);
                     }
 
-                    playlistContainer.appendChild(item);
-                }
-            });
-            
+                return item;
+            };
+
+            // Lazy-loading: chỉ vẽ từng đợt, cuộn gần tới cuối mới vẽ thêm
+            if (plObserver) { plObserver.disconnect(); plObserver = null; }
+            let limit = isReorderMode ? matched.length : Math.max(PL_CHUNK, plLimit);
+            const activePos = matched.indexOf(currentIndex);
+            if (!isReorderMode && activePos >= limit) limit = activePos + 1;   // bài đang phát luôn có mặt
+            plLimit = limit;
+            let rendered = 0;
+            const renderUpTo = (n) => {
+                const end = Math.min(n, matched.length);
+                while (rendered < end) playlistContainer.appendChild(makeItem(matched[rendered++]));
+            };
+            renderUpTo(limit);
+            if (rendered < matched.length) {
+                const sentinel = document.createElement('div');
+                sentinel.id = 'pl-sentinel';
+                sentinel.style.cssText = 'height:1px; flex-shrink:0;';
+                playlistContainer.appendChild(sentinel);
+                plObserver = new IntersectionObserver((entries) => {
+                    if (!entries.some(en => en.isIntersecting)) return;
+                    plLimit += PL_CHUNK;
+                    renderUpTo(plLimit);
+                    if (rendered >= matched.length) { plObserver.disconnect(); plObserver = null; sentinel.remove(); return; }
+                    playlistContainer.appendChild(sentinel);   // đẩy mốc xuống cuối, quan sát lại để nạp tiếp nếu vẫn còn trống
+                    plObserver.unobserve(sentinel); plObserver.observe(sentinel);
+                }, { root: playlistContainer, rootMargin: '240px 0px' });
+                plObserver.observe(sentinel);
+            }
+
             document.getElementById('track-count').innerText = searchQuery && !isReorderMode ? `${count}/${playlist.length}` : playlist.length;
 
             if (typeof renderPipPlaylist === 'function' && customPipWindow) {
@@ -4327,14 +4388,14 @@
 
         // Chuyển tab Playlist <-> Shuffle (chỉ đổi CÁCH XEM, không đụng tới isShuffle)
         document.getElementById('pl-tab-playlist').addEventListener('click', () => {
-            activePlTab = 'playlist';
+            activePlTab = 'playlist'; plLimit = PL_CHUNK;
             document.getElementById('pl-tab-playlist').classList.add('active');
             document.getElementById('pl-tab-shuffle').classList.remove('active');
             document.getElementById('reshuffle-btn').style.display = 'none';
             updatePlaylistUI();
         });
         document.getElementById('pl-tab-shuffle').addEventListener('click', () => {
-            activePlTab = 'shuffle';
+            activePlTab = 'shuffle'; plLimit = PL_CHUNK;
             document.getElementById('pl-tab-shuffle').classList.add('active');
             document.getElementById('pl-tab-playlist').classList.remove('active');
             document.getElementById('reshuffle-btn').style.display = 'flex';
@@ -6092,17 +6153,82 @@
         const addMusicTrigger = document.getElementById('add-music-trigger');
         const addMusicMenu = document.getElementById('add-music-menu');
 
+        // ===== Hiệu ứng nút Thêm nhạc =====
+        // mở hộp thoại chọn tệp: icon lật (flip) -> mũi tên xuống
+        // đóng hộp thoại mà không thêm gì: mũi tên nảy lên + xoay, về chỗ cũ thì thành icon cũ và nảy xuống nhẹ
+        // đã chọn tệp: icon xoay tròn (Material circular progress) -> tick -> 1s sau về icon cũ
+        const addIco = document.getElementById('add-music-icon');
+        const addSpin = document.getElementById('add-music-spinner');
+        let addSeq = 0, addIdleTimer = null;
+        const addAnim = (el, kf, ms, easing) => {
+            const a = el.animate(kf, { duration: ms, easing: easing || 'ease', fill: 'none' });
+            return a.finished.catch(() => {});
+        };
+        const addStop = () => { addSeq++; clearTimeout(addIdleTimer); [addIco, addSpin].forEach(el => el.getAnimations().forEach(a => a.cancel())); return addSeq; };
+        const addShowIcon = (name) => { addSpin.style.display = 'none'; addIco.style.display = ''; addIco.textContent = name; };
+        async function addBtnArrow() {
+            const my = addStop();
+            addShowIcon(addIco.textContent === 'add_circle' ? 'add_circle' : addIco.textContent);
+            await addAnim(addIco, [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(90deg)' }], 170, 'ease-in');
+            if (my !== addSeq) return;
+            addIco.textContent = 'arrow_downward';
+            await addAnim(addIco, [{ transform: 'rotateY(-90deg)' }, { transform: 'rotateY(0deg)' }], 190, 'ease-out');
+        }
+        async function addBtnCancel() {
+            const my = addStop();
+            if (addIco.textContent === 'add_circle' && addIco.style.display !== 'none') return;
+            addShowIcon('arrow_downward');
+            await addAnim(addIco, [
+                { transform: 'translateY(0) rotate(0deg)' },
+                { transform: 'translateY(-14px) rotate(200deg)', offset: 0.5 },
+                { transform: 'translateY(0) rotate(360deg)' }], 520, 'cubic-bezier(.3,0,.4,1)');
+            if (my !== addSeq) return;
+            addIco.textContent = 'add_circle';
+            await addAnim(addIco, [{ transform: 'translateY(0)' }, { transform: 'translateY(5px)', offset: 0.45 }, { transform: 'translateY(0)' }], 300, 'ease-out');
+        }
+        async function addBtnBusy() {
+            const my = addStop();
+            if (addIco.style.display !== 'none') {
+                await addAnim(addIco, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], 160, 'ease-in');
+                if (my !== addSeq) return;
+            }
+            addIco.style.display = 'none'; addSpin.style.display = '';
+            addAnim(addSpin, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 240, 'cubic-bezier(.34,1.56,.64,1)');
+        }
+        async function addBtnDone() {
+            const my = addSeq;
+            if (addSpin.style.display !== 'none') {
+                await addAnim(addSpin, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], 160, 'ease-in');
+                if (my !== addSeq) return;
+            }
+            addShowIcon('check');
+            await addAnim(addIco, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 280, 'cubic-bezier(.34,1.56,.64,1)');
+            if (my !== addSeq) return;
+            addIdleTimer = setTimeout(async () => {
+                if (my !== addSeq) return;
+                await addAnim(addIco, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], 160, 'ease-in');
+                if (my !== addSeq) return;
+                addIco.textContent = 'add_circle';
+                addAnim(addIco, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 280, 'cubic-bezier(.34,1.56,.64,1)');
+            }, 1000);
+        }
+        window.addBtnArrow = addBtnArrow;
+
         addMusicTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
             if (window.showOpenFilePicker) {
                 addMusicMenu.open = !addMusicMenu.open;
             } else {
+                addBtnArrow();
                 document.getElementById('file-input').click();
             }
         });
         hookMenuPlacement(addMusicMenu, addMusicTrigger);
+        // Hộp thoại chọn tệp kiểu truyền thống bị đóng mà không chọn gì
+        document.getElementById('file-input').addEventListener('cancel', () => addBtnCancel());
 
         document.getElementById('btn-fs-pick-files').addEventListener('click', async () => {
+            addBtnArrow();
             try {
                 const fileHandles = await window.showOpenFilePicker({
                     multiple: true,
@@ -6119,11 +6245,13 @@
                 }
                 handleFiles(files);
             } catch (err) {
+                addBtnCancel();
                 console.log("Người dùng đã huỷ hoặc lỗi chọn file:", err);
             }
         });
 
         document.getElementById('btn-fs-pick-directory').addEventListener('click', async () => {
+            addBtnArrow();
             try {
                 const dirHandle = await window.showDirectoryPicker();
                 const files = [];
@@ -6136,11 +6264,13 @@
                 }
                 handleFiles(files);
             } catch (err) {
+                addBtnCancel();
                 console.log("Người dùng đã huỷ hoặc lỗi thư mục:", err);
             }
         });
 
         document.getElementById('btn-fs-pick-legacy').addEventListener('click', () => {
+            addBtnArrow();
             document.getElementById('file-input').click();
         });
 
