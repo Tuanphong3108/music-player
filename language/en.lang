@@ -19,6 +19,7 @@ topbar.addmusic_legacy=Add files traditional way
 ## --- Player controls ---
 player.shuffle=Shuffle
 player.reshuffle=Reshuffle
+player.locate=Locate current track
 player.reorder=Edit list order
 player.fullscreen=Fullscreen
 player.edit=Edit info

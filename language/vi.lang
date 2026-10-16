@@ -19,6 +19,7 @@ topbar.addmusic_legacy=Thêm tệp kiểu truyền thống
 ## --- Điều khiển phát nhạc ---
 player.shuffle=Phát ngẫu nhiên
 player.reshuffle=Xáo lại danh sách Shuffle
+player.locate=Định vị bài đang phát
 player.reorder=Chế độ sửa danh sách
 player.fullscreen=Toàn màn hình
 player.edit=Chỉnh sửa thông tin

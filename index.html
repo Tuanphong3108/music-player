@@ -1709,6 +1709,9 @@
                     <div class="search-wrapper">
                         <span class="material-symbols-outlined search-icon">search</span>
                         <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ..." data-i18n-placeholder="playlist.search_placeholder">
+                        <button class="btn-m3" id="locate-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Locate current track" data-i18n-title="player.locate">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">my_location</span>
+                        </button>
                         <button class="btn-m3" id="reshuffle-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px; display:none;" title="Xáo lại danh sách Shuffle" data-i18n-title="player.reshuffle">
                             <span class="material-symbols-outlined" style="font-size: 18px;">shuffle_on</span>
                         </button>
@@ -3790,7 +3793,7 @@
             }
 
             updatePlaylistUI();
-            if (lastAutoPlayIndex !== -1) playTrack(lastAutoPlayIndex);
+            if (lastAutoPlayIndex !== -1) { playTrack(lastAutoPlayIndex); requestAnimationFrame(() => locateCurrentTrack(true)); }
             if (playlist.length > 0) dropZone.style.display = 'none';
             bgPreview.classList.add('visible');
             initVisualizer();
@@ -4203,6 +4206,27 @@
                 renderPipPlaylist();
             }
         }
+
+        function locateCurrentTrack(smooth = true) {
+            if (currentIndex < 0 || !playlist[currentIndex]) return;
+            if (isReorderMode) return;
+            const find = () => playlistContainer.querySelector('.song-item.active');
+            let el = find();
+            if (!el && searchQuery) {   // bài đang phát bị bộ lọc ẩn -> bỏ lọc
+                const si = document.getElementById('playlist-search');
+                if (si) si.value = '';
+                searchQuery = '';
+                updatePlaylistUI();
+                el = find();
+            }
+            if (!el) return;
+            if (playlistCard.classList.contains('collapsed') && typeof togglePlaylist === 'function') togglePlaylist();
+            el.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+            if (smooth && !document.documentElement.classList.contains('reduce-motion')) {
+                el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.03)' }, { transform: 'scale(1)' }], { duration: 450, easing: 'ease-out' });
+            }
+        }
+        document.getElementById('locate-btn').addEventListener('click', (e) => { e.stopPropagation(); locateCurrentTrack(true); });
 
         function playTrack(index) {
             if (index < 0 || index >= playlist.length) return;
@@ -6439,7 +6463,7 @@
         mailDialog.querySelectorAll('[data-mail]').forEach(el => el.addEventListener('click', () => {
             if (!pendingMail) return;
             const url = buildMailUrl(el.dataset.mail, pendingMail);
-            if (el.dataset.mail === 'mailto') window.location.href = url; else window.open(url, '_blank', 'noopener');
+            if (el.dataset.mail === 'mailto') window.open(url, '_blank', 'noopener'); else window.open(url, '_blank', 'noopener');
             pendingMail = null;
             mailDialog.close();
             feedbackModal.classList.remove('open');
