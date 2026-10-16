@@ -16,8 +16,8 @@
                 || /Android|iPhone|iPad|iPod|Mobile|HarmonyOS|KaiOS|Tablet/i.test(ua)
                 || (uad && /Android|iOS/i.test(uad.platform || ''))
                 || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)       // iPadOS
-                || mm('(pointer: coarse)') || mm('(any-pointer: coarse) and (hover: none)') || mm('(hover: none)')
-                || (Math.min(screen.width, screen.height) < 600);
+                || (Math.min(screen.width, screen.height) < 600)
+                || typeof window.showOpenFilePicker !== 'function';   // Chromium di động không có File System Access API
             if (mobile) reasons.push('device');
         } catch (e) { /* không kiểm tra được -> cứ cho chạy */ }
         if (!reasons.length) return;
@@ -34,7 +34,7 @@
         var T = vi ? {
             t: 'Thiết bị không được hỗ trợ',
             d: 'Audio Player yêu cầu tối thiểu trình duyệt Chromium (Chrome, Edge, Opera, Brave...) trên máy tính hoặc laptop.',
-            n: 'Điện thoại và máy tính bảng bị chặn hoàn toàn, kể cả khi bật "Trang web cho máy tính".',
+            n: 'Điện thoại và máy tính bảng Android/iPad bị chặn hoàn toàn, kể cả khi bật "Trang web cho máy tính".',
             r: { browser: 'Trình duyệt hiện tại không phải Chromium.', device: 'Thiết bị hiện tại không phải máy tính/laptop.' }
         } : {
             t: 'Device not supported',
