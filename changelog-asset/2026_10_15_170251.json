@@ -20,6 +20,10 @@
     {
       "content": "Gửi phản hồi: có thể chọn Gmail, Outlook, Yahoo Mail hoặc mailto",
       "icon": "forward_to_inbox"
+    },
+    {
+      "content": "Thêm nút Định vị bài đang phát; tải nhạc lên sẽ tự nhảy tới bài đó",
+      "icon": "my_location"
     }
   ],
   "en": [
@@ -42,6 +46,10 @@
     {
       "content": "Send feedback: you can choose Gmail, Outlook, Yahoo Mail or mailto",
       "icon": "forward_to_inbox"
+    },
+    {
+      "content": "Added a Locate current track button; uploading music jumps to that track",
+      "icon": "my_location"
     }
   ]
 }
