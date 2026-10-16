@@ -6159,7 +6159,7 @@
         // đã chọn tệp: icon xoay tròn (Material circular progress) -> tick -> 1s sau về icon cũ
         const addIco = document.getElementById('add-music-icon');
         const addSpin = document.getElementById('add-music-spinner');
-        let addSeq = 0, addIdleTimer = null;
+        let addSeq = 0, addIdleTimer = null, addPickerPending = false;
         const addAnim = (el, kf, ms, easing) => {
             const a = el.animate(kf, { duration: ms, easing: easing || 'ease', fill: 'none' });
             return a.finished.catch(() => {});
@@ -6167,6 +6167,7 @@
         const addStop = () => { addSeq++; clearTimeout(addIdleTimer); [addIco, addSpin].forEach(el => el.getAnimations().forEach(a => a.cancel())); return addSeq; };
         const addShowIcon = (name) => { addSpin.style.display = 'none'; addIco.style.display = ''; addIco.textContent = name; };
         async function addBtnArrow() {
+            if (addIco.style.display !== 'none' && addIco.textContent === 'arrow_downward') return;
             const my = addStop();
             addShowIcon(addIco.textContent === 'add_circle' ? 'add_circle' : addIco.textContent);
             await addAnim(addIco, [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(90deg)' }], 170, 'ease-in');
@@ -6176,15 +6177,18 @@
         }
         async function addBtnCancel() {
             const my = addStop();
-            if (addIco.textContent === 'add_circle' && addIco.style.display !== 'none') return;
-            addShowIcon('arrow_downward');
-            await addAnim(addIco, [
-                { transform: 'translateY(0) rotate(0deg)' },
-                { transform: 'translateY(-14px) rotate(200deg)', offset: 0.5 },
-                { transform: 'translateY(0) rotate(360deg)' }], 520, 'cubic-bezier(.3,0,.4,1)');
+            addPickerPending = false;
+            if (addIco.style.display !== 'none' && addIco.textContent === 'add_circle') return;
+            if (addIco.style.display === 'none') {
+                // đang xoay tròn -> thu lại rồi lật về icon cũ
+                addSpin.style.display = 'none'; addIco.style.display = ''; addIco.textContent = 'add_circle';
+                await addAnim(addIco, [{ transform: 'rotateY(-90deg)' }, { transform: 'rotateY(0deg)' }], 200, 'ease-out');
+                return;
+            }
+            await addAnim(addIco, [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(90deg)' }], 170, 'ease-in');
             if (my !== addSeq) return;
             addIco.textContent = 'add_circle';
-            await addAnim(addIco, [{ transform: 'translateY(0)' }, { transform: 'translateY(5px)', offset: 0.45 }, { transform: 'translateY(0)' }], 300, 'ease-out');
+            await addAnim(addIco, [{ transform: 'rotateY(-90deg)' }, { transform: 'rotateY(0deg)' }], 190, 'ease-out');
         }
         async function addBtnBusy() {
             const my = addStop();
@@ -6224,11 +6228,14 @@
             }
         });
         hookMenuPlacement(addMusicMenu, addMusicTrigger);
+        // Menu thêm nhạc đang mở -> icon lật thành mũi tên; đóng mà không chọn gì -> lật về icon cũ
+        addMusicMenu.addEventListener('opening', () => { addPickerPending = false; addBtnArrow(); });
+        addMusicMenu.addEventListener('closed', () => { if (!addPickerPending) addBtnCancel(); });
         // Hộp thoại chọn tệp kiểu truyền thống bị đóng mà không chọn gì
         document.getElementById('file-input').addEventListener('cancel', () => addBtnCancel());
 
         document.getElementById('btn-fs-pick-files').addEventListener('click', async () => {
-            addBtnArrow();
+            addPickerPending = true;
             try {
                 const fileHandles = await window.showOpenFilePicker({
                     multiple: true,
@@ -6251,7 +6258,7 @@
         });
 
         document.getElementById('btn-fs-pick-directory').addEventListener('click', async () => {
-            addBtnArrow();
+            addPickerPending = true;
             try {
                 const dirHandle = await window.showDirectoryPicker();
                 const files = [];
@@ -6270,7 +6277,7 @@
         });
 
         document.getElementById('btn-fs-pick-legacy').addEventListener('click', () => {
-            addBtnArrow();
+            addPickerPending = true;
             document.getElementById('file-input').click();
         });
 
