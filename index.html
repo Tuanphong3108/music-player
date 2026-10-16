@@ -1739,21 +1739,17 @@
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
                 
-                <!-- Nút add_circle mở menu Material Web (API File System) -->
+                <!-- Nút add_circle mở menu Material Web -->
                 <div style="position:relative;">
                     <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined" id="add-music-icon">add_circle</span><md-circular-progress id="add-music-spinner" indeterminate style="display:none; --md-circular-progress-size:24px; --md-circular-progress-active-indicator-width:12;"></md-circular-progress></button>
                     <md-menu id="add-music-menu" anchor="add-music-trigger" positioning="popover">
                         <md-menu-item id="btn-fs-pick-files">
                             <span class="material-symbols-outlined" slot="start">file_open</span>
-                            <div slot="headline" data-i18n="topbar.addmusic_file">Chọn tệp nhạc (API File System)</div>
+                            <div slot="headline" data-i18n="topbar.addmusic_file">Chọn tệp nhạc</div>
                         </md-menu-item>
                         <md-menu-item id="btn-fs-pick-directory">
                             <span class="material-symbols-outlined" slot="start">folder_open</span>
-                            <div slot="headline" data-i18n="topbar.addmusic_folder">Chọn thư mục nhạc (API File System)</div>
-                        </md-menu-item>
-                        <md-menu-item id="btn-fs-pick-legacy">
-                            <span class="material-symbols-outlined" slot="start">upload_file</span>
-                            <div slot="headline" data-i18n="topbar.addmusic_legacy">Thêm tệp kiểu truyền thống</div>
+                            <div slot="headline" data-i18n="topbar.addmusic_folder">Chọn thư mục nhạc</div>
                         </md-menu-item>
                     </md-menu>
                 </div>
@@ -6488,10 +6484,6 @@
             }
         });
 
-        document.getElementById('btn-fs-pick-legacy').addEventListener('click', () => {
-            addPickerPending = true; addBtnFolder();
-            document.getElementById('file-input').click();
-        });
 
 
         // --- STREAMING_CHUNK:Linking Metadata and Thumbnail Editors... ---
