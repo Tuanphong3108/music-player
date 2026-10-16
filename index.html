@@ -5690,11 +5690,20 @@
             } catch (err) { /* metadataIframe có thể chưa kịp khởi tạo, bỏ qua */ }
         }
 
+        const EN_FALLBACK = {
+            'metaeditor.lrc_title': '🔍 Find lyrics (lrclib.net)', 'metaeditor.lrc_placeholder': 'Song, artist...',
+            'metaeditor.lrc_hint': 'Type a song name to find lyrics.', 'metaeditor.lrc_searching': 'Searching...',
+            'metaeditor.lrc_none': 'No results found.', 'metaeditor.lrc_error': 'Could not reach lrclib.net. Check your connection and try again.',
+            'metaeditor.lrc_instrumental': 'NO LYRICS', 'metaeditor.lrc_back': 'Back', 'metaeditor.lrc_insert': 'Insert',
+            'player.locate': 'Locate current track'
+        };
         async function loadLanguage(lang) {
             try {
                 const res = await fetch('./language/' + lang + '.lang');
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 currentLangDict = parseLangFile(await res.text());
+                // Phòng khi file .lang cũ còn nằm trong cache/chưa được thay: bổ sung sẵn các chữ mới (tiếng Anh)
+                if (lang === 'en') Object.keys(EN_FALLBACK).forEach(k => { if (currentLangDict[k] === undefined) currentLangDict[k] = EN_FALLBACK[k]; });
                 applyTranslationsEverywhere();
                 localStorage.setItem('settings_language', lang);
                 const langSelectEl = document.getElementById('setting-language');
