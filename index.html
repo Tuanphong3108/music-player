@@ -6166,41 +6166,46 @@
         };
         const addStop = () => { addSeq++; clearTimeout(addIdleTimer); [addIco, addSpin].forEach(el => el.getAnimations().forEach(a => a.cancel())); return addSeq; };
         const addShowIcon = (name) => { addSpin.style.display = 'none'; addIco.style.display = ''; addIco.textContent = name; };
-        async function addBtnArrow() {
-            if (addIco.style.display !== 'none' && addIco.textContent === 'arrow_downward') return;
+        async function addFlipTo(name) {
+            if (addIco.style.display !== 'none' && addIco.textContent === name) return;
             const my = addStop();
-            addShowIcon(addIco.textContent === 'add_circle' ? 'add_circle' : addIco.textContent);
-            await addAnim(addIco, [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(90deg)' }], 170, 'ease-in');
-            if (my !== addSeq) return;
-            addIco.textContent = 'arrow_downward';
-            await addAnim(addIco, [{ transform: 'rotateY(-90deg)' }, { transform: 'rotateY(0deg)' }], 190, 'ease-out');
-        }
-        async function addBtnCancel() {
-            const my = addStop();
-            addPickerPending = false;
-            if (addIco.style.display !== 'none' && addIco.textContent === 'add_circle') return;
-            if (addIco.style.display === 'none') {
-                // đang xoay tròn -> thu lại rồi lật về icon cũ
-                addSpin.style.display = 'none'; addIco.style.display = ''; addIco.textContent = 'add_circle';
-                await addAnim(addIco, [{ transform: 'rotateY(-90deg)' }, { transform: 'rotateY(0deg)' }], 200, 'ease-out');
-                return;
-            }
-            await addAnim(addIco, [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(90deg)' }], 170, 'ease-in');
-            if (my !== addSeq) return;
-            addIco.textContent = 'add_circle';
-            await addAnim(addIco, [{ transform: 'rotateY(-90deg)' }, { transform: 'rotateY(0deg)' }], 190, 'ease-out');
-        }
-        async function addBtnBusy() {
-            const my = addStop();
-            if (addIco.style.display !== 'none') {
-                await addAnim(addIco, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], 160, 'ease-in');
+            if (addIco.style.display === 'none') {   // đang xoay tròn -> hiện lại icon
+                addSpin.style.display = 'none'; addIco.style.display = '';
+            } else {
+                await addAnim(addIco, [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(90deg)' }], 170, 'ease-in');
                 if (my !== addSeq) return;
             }
-            addIco.style.display = 'none'; addSpin.style.display = '';
-            addAnim(addSpin, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 240, 'cubic-bezier(.34,1.56,.64,1)');
+            addIco.textContent = name;
+            await addAnim(addIco, [{ transform: 'rotateY(-90deg)' }, { transform: 'rotateY(0deg)' }], 190, 'ease-out');
+        }
+        const addBtnArrow = () => addFlipTo('arrow_downward');   // menu Thêm nhạc đang mở
+        const addBtnFolder = () => addFlipTo('folder_open');     // hộp thoại chọn tệp đang mở
+        async function addBtnCancel() {
+            addPickerPending = false;
+            addStop();   // huỷ vòng xoay đang chờ hiện (nếu có)
+            await addFlipTo('add_circle');
+        }
+        let addBusyReady = Promise.resolve();
+        function addBtnBusy() {
+            const my = addStop();
+            addPickerPending = false;
+            addBusyReady = (async () => {
+                if (addIco.style.display !== 'none') {
+                    await addAnim(addIco, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], 160, 'ease-in');
+                    if (my !== addSeq) return;
+                }
+                addIco.style.display = 'none'; addSpin.style.display = '';
+                await addAnim(addSpin, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 240, 'cubic-bezier(.34,1.56,.64,1)');
+            })();
+            return addBusyReady;
         }
         async function addBtnDone() {
-            const my = addSeq;
+            const my0 = addSeq;
+            await addBusyReady;                      // chờ vòng xoay hiện xong (thêm nhanh quá thì vẫn thấy)
+            if (my0 !== addSeq) return;
+            await new Promise(r => setTimeout(r, 250));
+            if (my0 !== addSeq) return;
+            const my = addStop();
             if (addSpin.style.display !== 'none') {
                 await addAnim(addSpin, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], 160, 'ease-in');
                 if (my !== addSeq) return;
@@ -6223,7 +6228,7 @@
             if (window.showOpenFilePicker) {
                 addMusicMenu.open = !addMusicMenu.open;
             } else {
-                addBtnArrow();
+                addBtnFolder();
                 document.getElementById('file-input').click();
             }
         });
@@ -6235,7 +6240,7 @@
         document.getElementById('file-input').addEventListener('cancel', () => addBtnCancel());
 
         document.getElementById('btn-fs-pick-files').addEventListener('click', async () => {
-            addPickerPending = true;
+            addPickerPending = true; addBtnFolder();
             try {
                 const fileHandles = await window.showOpenFilePicker({
                     multiple: true,
@@ -6258,7 +6263,7 @@
         });
 
         document.getElementById('btn-fs-pick-directory').addEventListener('click', async () => {
-            addPickerPending = true;
+            addPickerPending = true; addBtnFolder();
             try {
                 const dirHandle = await window.showDirectoryPicker();
                 const files = [];
@@ -6277,7 +6282,7 @@
         });
 
         document.getElementById('btn-fs-pick-legacy').addEventListener('click', () => {
-            addPickerPending = true;
+            addPickerPending = true; addBtnFolder();
             document.getElementById('file-input').click();
         });
 
