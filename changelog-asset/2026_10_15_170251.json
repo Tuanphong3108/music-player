@@ -32,6 +32,10 @@
     {
       "content": "Khoá nút Trước/Sau khi đang chỉnh sửa để không bị đổi bài",
       "icon": "lock"
+    },
+    {
+      "content": "Yêu cầu tối thiểu: trình duyệt Chromium trên máy tính/laptop (chặn điện thoại)",
+      "icon": "computer"
     }
   ],
   "en": [
@@ -66,6 +70,10 @@
     {
       "content": "Previous/Next are locked while editing so the track doesn't change",
       "icon": "lock"
+    },
+    {
+      "content": "Minimum requirement: a Chromium browser on a PC/laptop (phones are blocked)",
+      "icon": "computer"
     }
   ]
 }

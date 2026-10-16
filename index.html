@@ -1,6 +1,74 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <script>
+    // === Yêu cầu tối thiểu: trình duyệt Chromium trên máy tính/laptop ===
+    // Kiểm tra bằng nhiều tín hiệu để không bị qua mặt bởi "Trang web cho máy tính" (PC View) trên điện thoại.
+    (function () {
+        var reasons = [];
+        try {
+            var ua = navigator.userAgent || '', uad = navigator.userAgentData;
+            var chromium = uad && uad.brands ? uad.brands.some(function (b) { return /chromium/i.test(b.brand); })
+                : (/Chrome\/\d/.test(ua) && !/Firefox|FxiOS|CriOS|EdgiOS|OPiOS/.test(ua));
+            if (!chromium) reasons.push('browser');
+            var mm = function (q) { try { return window.matchMedia(q).matches; } catch (e) { return false; } };
+            var mobile = (uad && uad.mobile === true)
+                || /Android|iPhone|iPad|iPod|Mobile|HarmonyOS|KaiOS|Tablet/i.test(ua)
+                || (uad && /Android|iOS/i.test(uad.platform || ''))
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)       // iPadOS
+                || mm('(pointer: coarse)') || mm('(any-pointer: coarse) and (hover: none)') || mm('(hover: none)')
+                || (Math.min(screen.width, screen.height) < 600);
+            if (mobile) reasons.push('device');
+        } catch (e) { /* không kiểm tra được -> cứ cho chạy */ }
+        if (!reasons.length) return;
+        window.__unsupported = true;
+
+        // Tắt mọi chức năng: chặn phím tắt, Media Session, Service Worker, kéo-thả file
+        ['keydown', 'keyup', 'keypress', 'dragover', 'drop', 'paste'].forEach(function (t) {
+            window.addEventListener(t, function (e) { e.stopImmediatePropagation(); e.preventDefault(); }, true);
+        });
+        try { if (navigator.mediaSession) navigator.mediaSession.setActionHandler = function () {}; } catch (e) {}
+        try { if (navigator.serviceWorker) navigator.serviceWorker.register = function () { return new Promise(function () {}); }; } catch (e) {}
+
+        var vi = /^vi/i.test((function () { try { return localStorage.getItem('settings_language') || navigator.language || ''; } catch (e) { return navigator.language || ''; } })());
+        var T = vi ? {
+            t: 'Thiết bị không được hỗ trợ',
+            d: 'Audio Player yêu cầu tối thiểu trình duyệt Chromium (Chrome, Edge, Opera, Brave...) trên máy tính hoặc laptop.',
+            n: 'Điện thoại và máy tính bảng bị chặn hoàn toàn, kể cả khi bật "Trang web cho máy tính".',
+            r: { browser: 'Trình duyệt hiện tại không phải Chromium.', device: 'Thiết bị hiện tại không phải máy tính/laptop.' }
+        } : {
+            t: 'Device not supported',
+            d: 'Audio Player requires at least a Chromium browser (Chrome, Edge, Opera, Brave...) on a PC or laptop.',
+            n: 'Phones and tablets are blocked entirely, even with "Desktop site" turned on.',
+            r: { browser: 'Your current browser is not Chromium.', device: 'Your current device is not a PC/laptop.' }
+        };
+        function show() {
+            var st = document.createElement('style');
+            st.textContent = 'body > *:not(#unsupported-overlay){display:none !important}html,body{background:#111 !important;overflow:hidden !important}';
+            document.head.appendChild(st);
+            try { document.querySelectorAll('audio,video').forEach(function (m) { m.pause(); m.removeAttribute('src'); }); } catch (e) {}
+            var o = document.createElement('div');
+            o.id = 'unsupported-overlay';
+            o.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#111;color:#eee;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:system-ui,-apple-system,Roboto,sans-serif;';
+            var rs = reasons.map(function (k) { return '<li>' + T.r[k] + '</li>'; }).join('');
+            o.innerHTML = '<div style="max-width:440px"><div style="font-size:56px;margin-bottom:12px">🚫</div>'
+                + '<h1 style="font-size:22px;margin:0 0 12px">' + T.t + '</h1>'
+                + '<p style="margin:0 0 10px;line-height:1.5;opacity:.9">' + T.d + '</p>'
+                + '<p style="margin:0 0 14px;line-height:1.5;opacity:.7;font-size:14px">' + T.n + '</p>'
+                + '<ul style="list-style:none;padding:0;margin:0;color:#ff8a80;font-size:14px">' + rs + '</ul></div>';
+            document.body.appendChild(o);
+            document.documentElement.setAttribute('inert', '');
+            o.removeAttribute('inert');
+        }
+        if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
+        // inert trên <html> sẽ khoá luôn overlay -> thay bằng inert cho các phần tử khác
+        document.addEventListener('DOMContentLoaded', function () {
+            document.documentElement.removeAttribute('inert');
+            Array.prototype.forEach.call(document.body.children, function (c) { if (c.id !== 'unsupported-overlay') c.setAttribute('inert', ''); });
+        });
+    })();
+    </script>
+
     <meta charset="UTF-8">
     <meta id="theme-meta" name="theme-color" content="#1C1B1F">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
