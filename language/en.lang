@@ -323,3 +323,5 @@ metaeditor.lrc_error=Could not reach lrclib.net. Check your connection and try a
 metaeditor.lrc_instrumental=NO LYRICS
 metaeditor.lrc_back=Back
 metaeditor.lrc_insert=Insert
+metaeditor.saved_disk=Directly overwrote the original file on disk successfully!
+metaeditor.saved_download=The browser has no permission to write to the original file, so the MP3 with updated tags was downloaded automatically — use the downloaded file to replace the original if you want to keep it permanently.

@@ -2364,8 +2364,8 @@
             if (d && typeof d === 'object' && d.type === 'saved') {
               document.getElementById('savingScreen').classList.remove('active');
               document.getElementById('saveSuccessText').innerText = d.persisted
-                ? 'Đã ghi đè trực tiếp vào file gốc trên đĩa thành công!'
-                : 'Trình duyệt không có quyền ghi thẳng vào file gốc, nên file MP3 đã cập nhật thẻ được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.';
+                ? T('metaeditor.saved_disk', 'Đã ghi đè trực tiếp vào file gốc trên đĩa thành công!')
+                : T('metaeditor.saved_download', 'Trình duyệt không có quyền ghi thẳng vào file gốc, nên file MP3 đã cập nhật thẻ được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.');
               document.getElementById('overlaySuccess').classList.remove('hidden');
               return;
             }
@@ -2373,7 +2373,7 @@
             // Tương thích ngược, phòng khi có nơi khác còn gửi chuỗi 'saved' đơn thuần
             if (d === 'saved') {
               document.getElementById('savingScreen').classList.remove('active');
-              document.getElementById('saveSuccessText').innerText = 'Đã lưu metadata thành công!';
+              document.getElementById('saveSuccessText').innerText = T('metaeditor.saved_success', 'Đã lưu metadata thành công!');
               document.getElementById('overlaySuccess').classList.remove('hidden');
               return;
             }
@@ -2429,7 +2429,7 @@
             sendClose();
           });
 
-          const T = (k, f) => { try { return window.parent.currentLangDict[k] || f; } catch (e) { return f; } };
+          const T = (k, f) => { try { return window.parent.__tr(k) || f; } catch (e) { return f; } };
           const esc = x => String(x ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
           const lrcSearch = document.getElementById('overlayLrcSearch');
           const lrcPreview = document.getElementById('overlayLrcPreview');
@@ -5693,12 +5693,16 @@
             } catch (err) { /* metadataIframe có thể chưa kịp khởi tạo, bỏ qua */ }
         }
 
+        window.__tr = k => (typeof currentLangDict !== 'undefined' && currentLangDict) ? currentLangDict[k] : undefined;
         const EN_FALLBACK = {
             'metaeditor.lrc_title': '🔍 Find lyrics (lrclib.net)', 'metaeditor.lrc_placeholder': 'Song, artist...',
             'metaeditor.lrc_hint': 'Type a song name to find lyrics.', 'metaeditor.lrc_searching': 'Searching...',
             'metaeditor.lrc_none': 'No results found.', 'metaeditor.lrc_error': 'Could not reach lrclib.net. Check your connection and try again.',
             'metaeditor.lrc_instrumental': 'NO LYRICS', 'metaeditor.lrc_back': 'Back', 'metaeditor.lrc_insert': 'Insert',
-            'player.locate': 'Locate current track'
+            'player.locate': 'Locate current track',
+            'metaeditor.saved_disk': 'Directly overwrote the original file on disk successfully!',
+            'metaeditor.saved_download': 'The browser has no permission to write to the original file, so the MP3 with updated tags was downloaded automatically — use the downloaded file to replace the original if you want to keep it permanently.',
+            'metaeditor.saved_success': 'Metadata saved successfully!'
         };
         async function loadLanguage(lang) {
             try {
