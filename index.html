@@ -1635,6 +1635,10 @@
                     <div style="font-weight:700;" id="overwrite-details-title">Tên: -</div>
                     <div id="overwrite-details-artist">Nghệ sĩ: -</div>
                     <div id="overwrite-details-album">Album: -</div>
+                    <div id="overwrite-details-genre">Thể loại: -</div>
+                    <div id="overwrite-details-composer">Nhà soạn nhạc: -</div>
+                    <div style="font-weight:700; margin-top:8px;" data-i18n="confirmoverwrite.field_lyric">Lyric Embed (chỉ đọc)</div>
+                    <textarea id="overwrite-details-lyric" readonly style="width:100%; box-sizing:border-box; height:120px; margin-top:4px; resize:vertical; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); border:1px solid var(--playlist-border); border-radius:8px; padding:8px; font-family: inherit; font-size: calc(12px * var(--font-scale-factor, 1)); line-height:1.5;"></textarea>
                 </div>
                 <p style="font-size: calc(11px * var(--font-scale-factor, 1)); opacity: 0.7; color: var(--md-sys-color-primary);" data-i18n="confirmoverwrite.note">Sau khi lưu, tệp sẽ được cập nhật trực tiếp trong hệ thống.</p>
             </div>
@@ -2420,6 +2424,19 @@
           const ORDER = ['title','artist','album','genre','composer','lyric'];
           let original = {title:'',artist:'',album:'',genre:'',composer:'',lyric:''};
 
+          // Ô nào đang trống thì lấy từ thẻ trong Lyric Embed: [ti:] [ar:] [al:] [au:]/[composer:] [genre:]
+          function fillFromLyric() {
+            const txt = fields.lyric.value || '';
+            const get = names => {
+              for (const n of names) {
+                const m = new RegExp('^\\s*\\[' + n + ':([^\\]]*)\\]', 'im').exec(txt);
+                if (m && m[1].trim()) return m[1].trim();
+              }
+              return '';
+            };
+            const map = { title: ['ti'], artist: ['ar'], album: ['al'], composer: ['au', 'composer', 'comp'], genre: ['genre', 'gn'] };
+            Object.keys(map).forEach(k => { if (!fields[k].value.trim()) { const v = get(map[k]); if (v) fields[k].value = v; } });
+          }
           function hasChanges() { return ORDER.some(k => fields[k].value !== original[k]); }
           function postMsg(msg) { window.parent.postMessage(msg,'*'); }
 
@@ -2486,6 +2503,7 @@
           });
 
           document.getElementById('btnSave').addEventListener('click', () => {
+            fillFromLyric();
             hideAllUI();
             // Nghệ sĩ/Album để trống -> tự điền "Unknown". Genre/Composer để trống thì
             // giữ nguyên trắng, không tự gán "Unknown" cho 2 mục này.
@@ -2586,6 +2604,7 @@
             fields.lyric.value = /\[audioplayer:LRCLIB\]/i.test(lrcPicked) ? lrcPicked : '[audioplayer:LRCLIB]\n' + lrcPicked;
             lrcPreview.classList.add('hidden');
             lrcSearch.classList.add('hidden');
+            fillFromLyric();
           });
 
           document.getElementById('btnUploadLrc').addEventListener('click', () =>
@@ -2594,7 +2613,7 @@
             const file = e.target.files[0];
             if (!file) return;
             const r = new FileReader();
-            r.onload = ev => { fields.lyric.value = ev.target.result; };
+            r.onload = ev => { fields.lyric.value = ev.target.result; fillFromLyric(); };
             r.readAsText(file,'UTF-8');
             e.target.value = '';
           });
@@ -5865,6 +5884,7 @@
             'metaeditor.lrc_none': 'No results found.', 'metaeditor.lrc_error': 'Could not reach lrclib.net. Check your connection and try again.',
             'metaeditor.lrc_instrumental': 'NO LYRICS', 'metaeditor.lrc_back': 'Back', 'metaeditor.lrc_insert': 'Insert',
             'player.locate': 'Locate current track',
+            'confirmoverwrite.field_genre': 'Genre: ', 'confirmoverwrite.field_composer': 'Composer: ', 'confirmoverwrite.field_lyric': 'Lyric Embed (read-only)',
             'lyric.search_placeholder': 'Search lyrics on LRCLIB',
             'metaeditor.saved_disk': 'Directly overwrote the original file on disk successfully!',
             'metaeditor.saved_download': 'The browser has no permission to write to the original file, so the MP3 with updated tags was downloaded automatically — use the downloaded file to replace the original if you want to keep it permanently.',
@@ -6976,6 +6996,9 @@
                 document.getElementById('overwrite-details-title').innerText = titlePrefix + (d.title || untitledStr);
                 document.getElementById('overwrite-details-artist').innerText = artistPrefix + (d.artist || untitledStr);
                 document.getElementById('overwrite-details-album').innerText = albumPrefix + (d.album || unknownStr);
+                document.getElementById('overwrite-details-genre').innerText = (currentLangDict['confirmoverwrite.field_genre'] || 'Thể loại: ') + (d.genre || '-');
+                document.getElementById('overwrite-details-composer').innerText = (currentLangDict['confirmoverwrite.field_composer'] || 'Nhà soạn nhạc: ') + (d.composer || '-');
+                { const ly = document.getElementById('overwrite-details-lyric'); ly.value = d.lyric || ''; ly.scrollTop = 0; }
                 confirmOverwriteModal.classList.add('open');
             }
         });
