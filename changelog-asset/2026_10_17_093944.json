@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-17",
+  "vi": [
+    {
+      "content": "Lyric View có thanh tìm lời bài hát nhanh; lời lấy từ LRCLIB sẽ hiện chú thích nguồn",
+      "icon": "search"
+    }
+  ],
+  "en": [
+    {
+      "content": "Lyric View now has a quick lyric search bar; lyrics from LRCLIB show a source credit",
+      "icon": "search"
+    }
+  ]
+}
