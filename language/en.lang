@@ -12,9 +12,8 @@ topbar.settings=Settings
 topbar.feedback=Send feedback
 topbar.about=About
 topbar.addmusic=Add music
-topbar.addmusic_file=Select music files (File System API)
-topbar.addmusic_folder=Select music folder (File System API)
-topbar.addmusic_legacy=Add files traditional way
+topbar.addmusic_file=Select music files
+topbar.addmusic_folder=Select music folder
 
 ## --- Player controls ---
 player.shuffle=Shuffle

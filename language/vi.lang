@@ -12,9 +12,8 @@ topbar.settings=Cài đặt
 topbar.feedback=Gửi phản hồi
 topbar.about=About
 topbar.addmusic=Thêm nhạc
-topbar.addmusic_file=Chọn tệp nhạc (API File System)
-topbar.addmusic_folder=Chọn thư mục nhạc (API File System)
-topbar.addmusic_legacy=Thêm tệp kiểu truyền thống
+topbar.addmusic_file=Chọn tệp nhạc
+topbar.addmusic_folder=Chọn thư mục nhạc
 
 ## --- Điều khiển phát nhạc ---
 player.shuffle=Phát ngẫu nhiên
