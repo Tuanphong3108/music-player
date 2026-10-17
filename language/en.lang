@@ -325,3 +325,6 @@ metaeditor.lrc_insert=Insert
 metaeditor.saved_disk=Directly overwrote the original file on disk successfully!
 metaeditor.saved_download=The browser has no permission to write to the original file, so the MP3 with updated tags was downloaded automatically — use the downloaded file to replace the original if you want to keep it permanently.
 lyric.search_placeholder=Search lyrics on LRCLIB
+confirmoverwrite.field_genre=Genre: 
+confirmoverwrite.field_composer=Composer: 
+confirmoverwrite.field_lyric=Lyric Embed (read-only)

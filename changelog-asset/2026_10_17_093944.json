@@ -12,6 +12,10 @@
     {
       "content": "Lyric View hiển thị đầy đủ thông tin bài lyric (tiêu đề, nghệ sĩ, album, người làm...)",
       "icon": "info"
+    },
+    {
+      "content": "Chỉnh sửa thẻ: ô nào để trống sẽ tự lấy từ lời bài hát; hộp xác nhận lưu hiện đầy đủ hơn",
+      "icon": "edit_note"
     }
   ],
   "en": [
@@ -26,6 +30,10 @@
     {
       "content": "Lyric View shows the full lyric info (title, artist, album, author...)",
       "icon": "info"
+    },
+    {
+      "content": "Tag editor: empty fields are filled from the lyrics; the save confirmation shows more details",
+      "icon": "edit_note"
     }
   ]
 }
