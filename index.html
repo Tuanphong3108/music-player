@@ -456,6 +456,12 @@
             transform: scale(1.05);
         }
 
+        .lyric-info {
+            margin: 28px 0 0; text-align: center; line-height: 1.7; max-width: 80%;
+            font-size: calc(12px * var(--font-scale-factor, 1)); color: var(--lyric-text); opacity: .7;
+        }
+        .lyric-info b { font-weight: 700; }
+
         .lyric-placeholder {
             margin: auto; font-family: 'Minecraft'; opacity: 0.5; font-size: calc(12px * var(--font-scale-factor, 1)); letter-spacing: 1px;
             text-align: center; line-height: 2; color: var(--md-sys-color-on-surface);
@@ -3987,23 +3993,50 @@
             if (currentIndex !== -1) renderLyrics();
         }
 
-        const LRCLIB_TAG = /^\s*\[audioplayer:LRCLIB\]\s*$/i;
-        function trackHasCredit(track) {
-            return !!(track && track.lyrics && track.lyrics.length && /\[audioplayer:LRCLIB\]/i.test(track.lyricsRaw || ''));
+        const LRC_HEADER_TAG = /^\s*\[(?:audioplayer:LRCLIB|(?:ti|ar|al|au|by|la|ve|length|offset|re|tool):[^\]]*)\]\s*$/i;
+        // Chú thích nguồn lyric: "Lyric by <tên>" (tag [by:...]) và/hoặc "Lyric powered by LRCLIB" (tag [audioplayer:LRCLIB])
+        function lyricCreditText(track) {
+            if (!track || !track.lyrics || !track.lyrics.length) return '';
+            const raw = track.lyricsRaw || '';
+            const parts = [];
+            const by = /^\s*\[by:([^\]]*)\]/im.exec(raw);
+            if (by && by[1].trim()) parts.push('Lyric by ' + by[1].trim());
+            if (/\[audioplayer:LRCLIB\]/i.test(raw)) parts.push('Lyric powered by LRCLIB');
+            return parts.join(' • ');
         }
-        // Bọc dòng lyric (kèm chú thích "Lyric powered by LRCLIB" nhỏ bên dưới nếu bài có thẻ)
+        // Mọi thẻ thông tin trong file LRC ([ti:], [ar:], [al:], [au:], [by:], [la:], [ve:]...) -> chỉ hiện ở Lyric View
+        const LRC_INFO_LABELS = { ti: 'Title', ar: 'Artist', al: 'Album', au: 'Author', by: 'Lyric by', la: 'Language', ve: 'Version', length: 'Length', offset: 'Offset', re: 'Editor', tool: 'Tool' };
+        function lyricInfoList(track) {
+            const out = [];
+            if (!track || !track.lyricsRaw) return out;
+            const seen = new Set();
+            track.lyricsRaw.split(/\r?\n/).forEach(line => {
+                const m = /^\s*\[(ti|ar|al|au|by|la|ve|length|offset|re|tool):([^\]]*)\]/i.exec(line);
+                if (!m) return;
+                const k = m[1].toLowerCase(), v = m[2].trim();
+                if (!v || seen.has(k)) return;
+                seen.add(k); out.push([LRC_INFO_LABELS[k], v]);
+            });
+            return out;
+        }
+        const escHtml = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+        // Bọc dòng lyric (kèm chú thích nhỏ bên dưới nếu bài có tag)
         function lyricHtml(text, track, clamp) {
             const box = clamp ? 'display:-webkit-box;-webkit-line-clamp:' + clamp + ';-webkit-box-orient:vertical;overflow:hidden;' : '';
-            const credit = trackHasCredit(track)
-                ? '<small style="display:block;font-size:.5em;font-weight:500;opacity:.65;margin-top:4px;letter-spacing:.3px;text-shadow:none;">Lyric powered by LRCLIB</small>' : '';
+            const ct = lyricCreditText(track);
+            const credit = ct
+                ? '<small style="display:block;font-size:.5em;font-weight:500;opacity:.65;margin-top:4px;letter-spacing:.3px;text-shadow:none;">' + escHtml(ct) + '</small>' : '';
             return '<span style="' + box + '">' + text + '</span>' + credit;
         }
         function updateLyricCredit() {
             const el = document.getElementById('lyric-credit');
-            if (el) el.classList.toggle('on', trackHasCredit(playlist[currentIndex]));
+            if (!el) return;
+            const ct = lyricCreditText(playlist[currentIndex]);
+            el.textContent = ct;
+            el.classList.toggle('on', !!ct);
         }
         function parseLRC(lrcText) {
-            const lines = lrcText.split('\n').filter(l => !LRCLIB_TAG.test(l));
+            const lines = lrcText.split('\n').filter(l => !LRC_HEADER_TAG.test(l));
             const result = [];
             const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/; 
             const hasTime = lines.some(line => timeReg.test(line));
@@ -4059,6 +4092,14 @@
                 lyricOverlay.appendChild(div);
             });
 
+            const infoList = lyricInfoList(track);
+            if (infoList.length) {
+                const box = document.createElement('div');
+                box.className = 'lyric-info';
+                box.innerHTML = infoList.map(([k, v]) => '<div><b>' + escHtml(k) + ':</b> ' + escHtml(v) + '</div>').join('');
+                lyricOverlay.appendChild(box);
+            }
+
             if (!isStatic) {
                 const spacerBottom = document.createElement('div'); spacerBottom.style.height = '40vh';
                 lyricOverlay.appendChild(spacerBottom);
@@ -4091,12 +4132,12 @@
                 else break;
             }
             
-            const hasCredit = trackHasCredit(track);
+            const creditKey = lyricCreditText(track);
             const line = activeIdx !== -1 ? formatLyricLine(track.lyrics[activeIdx].text) : '';
             const htmlTop = activeIdx !== -1 ? lyricHtml(line, track, 2) : '';
             const htmlPip = activeIdx !== -1 ? lyricHtml(line, track, 3) : '';
             const htmlFs = activeIdx !== -1 ? lyricHtml(line, track, 0) : '';
-            const idxStr = activeIdx.toString() + (hasCredit ? 'c' : '');
+            const idxStr = activeIdx.toString() + (creditKey ? '|' + creditKey : '');
             
             if (customPipWindow) {
                 const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');

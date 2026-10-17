@@ -4,12 +4,28 @@
     {
       "content": "Lyric View có thanh tìm lời bài hát nhanh; lời lấy từ LRCLIB sẽ hiện chú thích nguồn",
       "icon": "search"
+    },
+    {
+      "content": "Hiển thị tên người làm lyric (thẻ [by:...]) cùng chú thích nguồn",
+      "icon": "person"
+    },
+    {
+      "content": "Lyric View hiển thị đầy đủ thông tin bài lyric (tiêu đề, nghệ sĩ, album, người làm...)",
+      "icon": "info"
     }
   ],
   "en": [
     {
       "content": "Lyric View now has a quick lyric search bar; lyrics from LRCLIB show a source credit",
       "icon": "search"
+    },
+    {
+      "content": "Show the lyric author's name (from the [by:...] tag) with the source credit",
+      "icon": "person"
+    },
+    {
+      "content": "Lyric View shows the full lyric info (title, artist, album, author...)",
+      "icon": "info"
     }
   ]
 }
