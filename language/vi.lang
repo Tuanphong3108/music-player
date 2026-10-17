@@ -324,3 +324,4 @@ metaeditor.lrc_back=Quay lại
 metaeditor.lrc_insert=Chèn
 metaeditor.saved_disk=Đã ghi đè trực tiếp vào file gốc trên đĩa thành công!
 metaeditor.saved_download=Trình duyệt không có quyền ghi thẳng vào file gốc, nên file MP3 đã cập nhật thẻ được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.
+lyric.search_placeholder=Tìm lời bài hát trên LRCLIB

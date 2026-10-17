@@ -529,8 +529,26 @@
             font-size: calc(24px * var(--font-scale-factor, 1)); font-weight: 800; color: #fff;
             text-shadow: 0 4px 16px rgba(0,0,0,0.8), 0 0 8px rgba(208, 188, 255, 0.4); 
             pointer-events: none; transition: var(--m3-transition); 
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            display: block;
         }
+
+        .lyric-search-bar {
+            position: absolute; top: 16px; left: 50%; transform: translateX(-50%); width: min(440px, 80%); height: 44px; z-index: 16;
+            display: flex; align-items: center; gap: 10px; padding: 0 16px; box-sizing: border-box; border-radius: 22px;
+            background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface-variant);
+            border: 1px solid var(--playlist-border); cursor: pointer; font-family: inherit;
+            font-size: calc(14px * var(--font-scale-factor, 1)); opacity: 0; pointer-events: none; transition: var(--m3-transition), background .2s;
+        }
+        .lyric-search-bar:hover { background: var(--md-sys-color-secondary-container); }
+        .lyric-search-bar .material-symbols-outlined { font-size: 20px; opacity: .7; }
+        body.lyrics-open .lyric-search-bar { opacity: 1; pointer-events: auto; }
+        body.fullscreen-active .lyric-search-bar, body.fullscreen-active .lyric-credit { display: none !important; }
+        .lyric-credit {
+            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 16; white-space: nowrap;
+            font-size: calc(12px * var(--font-scale-factor, 1)); font-weight: 600; letter-spacing: .3px; color: var(--md-sys-color-on-surface);
+            opacity: 0; pointer-events: none; transition: var(--m3-transition);
+        }
+        body.lyrics-open .lyric-credit.on { opacity: .6; }
 
         body.lyrics-open .top-active-lyric { opacity: 0 !important; visibility: hidden; transition: opacity .2s ease, visibility 0s linear .2s; }
 
@@ -1818,11 +1836,16 @@
                     </div>
                     <h2 id="fs-title" style="margin: 0; font-size: calc(28px * var(--font-scale-factor, 1)); font-weight: 800; text-shadow: 0 4px 12px rgba(0,0,0,0.6);">Studio Standby</h2>
                     <p id="fs-artist" style="margin: 8px 0 24px; font-family: 'Minecraft'; font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.7; text-transform: uppercase;">ENGINE IDLE | SYSTEM</p>
-                    <div id="fs-lyric" style="font-size: calc(24px * var(--font-scale-factor, 1)); font-weight: 700; color: var(--md-sys-color-primary); text-shadow: 0 4px 20px rgba(0,0,0,0.8); max-width: 80%; min-height: 80px; display: flex; align-items: center; justify-content: center; line-height: 1.4;">
+                    <div id="fs-lyric" style="font-size: calc(24px * var(--font-scale-factor, 1)); font-weight: 700; color: var(--md-sys-color-primary); text-shadow: 0 4px 20px rgba(0,0,0,0.8); max-width: 80%; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.4;">
                         
                     </div>
                 </div>
                 
+                <div class="lyric-search-bar" id="lyric-search-bar" role="button" tabindex="0">
+                    <span class="material-symbols-outlined">search</span>
+                    <span data-i18n="lyric.search_placeholder">Tìm lời bài hát trên LRCLIB</span>
+                </div>
+                <div class="lyric-credit" id="lyric-credit">Lyric powered by LRCLIB</div>
                 <div class="lyric-overlay" id="lyric-overlay">
                     <div class="lyric-placeholder" data-i18n="lyric.placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
                 </div>
@@ -2448,6 +2471,8 @@
               return;
             }
 
+            if (d && typeof d === 'object' && d.type === 'openLrcSearch') { document.getElementById('btnSearchLrc').click(); return; }
+
             if (d && typeof d === 'object' && d.type === 'load') {
               ORDER.forEach(k => { fields[k].value = d[k] ?? ''; original[k] = fields[k].value; });
               postMsg('load_success');
@@ -2552,7 +2577,7 @@
           document.getElementById('btnLrcCancel').addEventListener('click', () => { lrcSeq++; lrcSearch.classList.add('hidden'); });
           document.getElementById('btnLrcBack').addEventListener('click', () => lrcPreview.classList.add('hidden'));
           document.getElementById('btnLrcInsert').addEventListener('click', () => {
-            fields.lyric.value = lrcPicked;
+            fields.lyric.value = /\[audioplayer:LRCLIB\]/i.test(lrcPicked) ? lrcPicked : '[audioplayer:LRCLIB]\n' + lrcPicked;
             lrcPreview.classList.add('hidden');
             lrcSearch.classList.add('hidden');
           });
@@ -3962,8 +3987,23 @@
             if (currentIndex !== -1) renderLyrics();
         }
 
+        const LRCLIB_TAG = /^\s*\[audioplayer:LRCLIB\]\s*$/i;
+        function trackHasCredit(track) {
+            return !!(track && track.lyrics && track.lyrics.length && /\[audioplayer:LRCLIB\]/i.test(track.lyricsRaw || ''));
+        }
+        // Bọc dòng lyric (kèm chú thích "Lyric powered by LRCLIB" nhỏ bên dưới nếu bài có thẻ)
+        function lyricHtml(text, track, clamp) {
+            const box = clamp ? 'display:-webkit-box;-webkit-line-clamp:' + clamp + ';-webkit-box-orient:vertical;overflow:hidden;' : '';
+            const credit = trackHasCredit(track)
+                ? '<small style="display:block;font-size:.5em;font-weight:500;opacity:.65;margin-top:4px;letter-spacing:.3px;text-shadow:none;">Lyric powered by LRCLIB</small>' : '';
+            return '<span style="' + box + '">' + text + '</span>' + credit;
+        }
+        function updateLyricCredit() {
+            const el = document.getElementById('lyric-credit');
+            if (el) el.classList.toggle('on', trackHasCredit(playlist[currentIndex]));
+        }
         function parseLRC(lrcText) {
-            const lines = lrcText.split('\n');
+            const lines = lrcText.split('\n').filter(l => !LRCLIB_TAG.test(l));
             const result = [];
             const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/; 
             const hasTime = lines.some(line => timeReg.test(line));
@@ -3994,6 +4034,7 @@
 
         function renderLyrics() {
             lyricOverlay.innerHTML = '';
+            updateLyricCredit();
             const track = playlist[currentIndex];
             if (!track || !track.lyrics || track.lyrics.length === 0) {
                 const noLyricText = currentLangDict['lyric.no_lyric'] || 'BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)';
@@ -4050,14 +4091,18 @@
                 else break;
             }
             
-            const htmlContent = activeIdx !== -1 ? formatLyricLine(track.lyrics[activeIdx].text) : '';
-            const idxStr = activeIdx.toString();
+            const hasCredit = trackHasCredit(track);
+            const line = activeIdx !== -1 ? formatLyricLine(track.lyrics[activeIdx].text) : '';
+            const htmlTop = activeIdx !== -1 ? lyricHtml(line, track, 2) : '';
+            const htmlPip = activeIdx !== -1 ? lyricHtml(line, track, 3) : '';
+            const htmlFs = activeIdx !== -1 ? lyricHtml(line, track, 0) : '';
+            const idxStr = activeIdx.toString() + (hasCredit ? 'c' : '');
             
             if (customPipWindow) {
                 const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
                 if (pipLyricEl && settings.showPipLyric) {
                     if (pipLyricEl.dataset.currentIdx !== idxStr) {
-                        pipLyricEl.innerHTML = htmlContent;
+                        pipLyricEl.innerHTML = htmlPip;
                         pipLyricEl.dataset.currentIdx = idxStr;
                     }
                 } else if (pipLyricEl) {
@@ -4069,7 +4114,7 @@
             const topLyricEl = document.getElementById('top-active-lyric');
             if (topLyricEl && settings.showMainLyric) {
                 if (topLyricEl.dataset.currentIdx !== idxStr) {
-                    topLyricEl.innerHTML = htmlContent;
+                    topLyricEl.innerHTML = htmlTop;
                     topLyricEl.dataset.currentIdx = idxStr;
                 }
             }
@@ -4078,7 +4123,7 @@
             if (document.body.classList.contains('fullscreen-active')) {
                 const fsLyricEl = document.getElementById('fs-lyric');
                 if (fsLyricEl && fsLyricEl.dataset.currentIdx !== idxStr) {
-                    fsLyricEl.innerHTML = htmlContent || formatLyricLine("");
+                    fsLyricEl.innerHTML = htmlFs || lyricHtml(formatLyricLine(""), track, 0);
                     fsLyricEl.dataset.currentIdx = idxStr;
                 }
             }
@@ -4110,6 +4155,21 @@
                  syncLyrics();
             }
         });
+
+        // Thanh tìm kiếm trong Lyric View -> mở Metadata Editor + giao diện tìm lời
+        let openLrcSearchPending = false;
+        function openLyricSearchFromView() {
+            if (currentIndex === -1 || !playlist[currentIndex]) return;
+            if (typeof isEditorOpen === 'function' && isEditorOpen()) return;
+            btnEditMetadataFields.click();
+            if (metadataEditorReady) metadataIframe.contentWindow.postMessage({ type: 'openLrcSearch' }, '*');
+            else openLrcSearchPending = true;
+        }
+        {
+            const sb = document.getElementById('lyric-search-bar');
+            sb.addEventListener('click', openLyricSearchFromView);
+            sb.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLyricSearchFromView(); } });
+        }
 
         playlistSearch.addEventListener('input', (e) => {
             searchQuery = removeVietnameseTones(e.target.value.toLowerCase().trim());
@@ -5476,10 +5536,10 @@
                         font-family: 'Minecraft', sans-serif; text-transform: uppercase;
                     }
                     .pip-lyric {
-                        flex: 1; display: ${settings.showPipLyric ? 'flex' : 'none'}; align-items: center; justify-content: center;
+                        flex: 1; display: ${settings.showPipLyric ? 'flex' : 'none'}; flex-direction: column; align-items: center; justify-content: center;
                         text-align: center; font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700; color: var(--pip-primary, #D0BCFF);
                         padding: 0 16px; text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-                        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+                        overflow: hidden;
                         margin: 12px 0;
                     }
                     .bouncing-dots { display: inline-flex; align-items: flex-end; justify-content: center; height: 1em; gap: 4px; }
@@ -5658,7 +5718,7 @@
                 pipDoc.getElementById('pip-close-btn').onclick = () => {
                     customPipWindow.resizeTo(320, 320); 
                     pipDoc.querySelector('.pip-player-section').style.height = '100%'; 
-                    if (settings.showPipLyric) pipDoc.getElementById('pip-lyric').style.display = '-webkit-box'; 
+                    if (settings.showPipLyric) pipDoc.getElementById('pip-lyric').style.display = 'flex'; 
                     pipDoc.getElementById('pip-playlist-section').style.display = 'none';
                     pipDoc.getElementById('pip-expand-btn').style.opacity = '1';
                     pipDoc.getElementById('pip-expand-btn').style.pointerEvents = 'auto';
@@ -5764,6 +5824,7 @@
             'metaeditor.lrc_none': 'No results found.', 'metaeditor.lrc_error': 'Could not reach lrclib.net. Check your connection and try again.',
             'metaeditor.lrc_instrumental': 'NO LYRICS', 'metaeditor.lrc_back': 'Back', 'metaeditor.lrc_insert': 'Insert',
             'player.locate': 'Locate current track',
+            'lyric.search_placeholder': 'Search lyrics on LRCLIB',
             'metaeditor.saved_disk': 'Directly overwrote the original file on disk successfully!',
             'metaeditor.saved_download': 'The browser has no permission to write to the original file, so the MP3 with updated tags was downloaded automatically — use the downloaded file to replace the original if you want to keep it permanently.',
             'metaeditor.saved_success': 'Metadata saved successfully!'
@@ -6807,6 +6868,7 @@
             if (metadataEditorPendingOpen) {
                 metadataEditorPendingOpen = false;
                 sendLoadDataToEditor();
+                if (openLrcSearchPending) { openLrcSearchPending = false; metadataIframe.contentWindow.postMessage({ type: 'openLrcSearch' }, '*'); }
             }
         };
         metadataIframe.srcdoc = document.getElementById('metadata-editor-template').innerHTML;
