@@ -1896,6 +1896,7 @@
             </div>
             <div class="controls-group">
                 <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)" data-i18n-title="player.pip"><span class="material-symbols-outlined" style="font-size: 20px;">picture_in_picture_alt</span></button>
+                <button class="btn-m3" id="cast-btn" title="Truyền tới thiết bị" data-i18n-title="player.cast" style="display:none;"><span class="material-symbols-outlined" id="cast-icon" style="font-size: 20px;">cast</span></button>
                 <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
                 <button class="btn-m3" id="prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-outlined">skip_previous</span></button>
                 <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng" data-i18n-title="player.play_pause">
@@ -4607,6 +4608,42 @@
             }
         }
 
+        // --- Truyền tới thiết bị (Cast) bằng Remote Playback API ---
+        {
+            const castBtn = document.getElementById('cast-btn');
+            const castIcon = document.getElementById('cast-icon');
+            const remote = audio.remote;
+            if (remote && typeof remote.prompt === 'function') {
+                const ct = (k, f) => currentLangDict[k] || f;
+                castBtn.style.display = '';
+                const paint = () => {
+                    const st = remote.state;
+                    castBtn.classList.toggle('active', st === 'connected');
+                    castIcon.textContent = st === 'connected' ? 'cast_connected' : 'cast';
+                };
+                let lastState = remote.state;
+                ['connecting', 'connect', 'disconnect'].forEach(ev => remote.addEventListener(ev, () => {
+                    paint();
+                    if (remote.state === 'connected' && lastState !== 'connected') showToast(ct('toast.cast_connected', 'Đã kết nối tới thiết bị phát'), 'cast_connected');
+                    else if (remote.state === 'disconnected' && lastState === 'connected') showToast(ct('toast.cast_disconnected', 'Đã ngừng truyền tới thiết bị'), 'cast');
+                    lastState = remote.state;
+                }));
+                castBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    try { await remote.prompt(); }
+                    catch (err) {
+                        const n = err && err.name;
+                        if (n === 'NotFoundError') showToast(ct('toast.cast_none', 'Không tìm thấy thiết bị nào để truyền tới'), 'cast');
+                        else if (n === 'NotSupportedError') showToast(ct('toast.cast_unsupported', 'Không truyền được bài này tới thiết bị'), 'cast');
+                        else if (n === 'InvalidStateError') showToast(ct('toast.cast_busy', 'Chưa truyền được lúc này, hãy thử lại sau'), 'cast');
+                        // NotAllowedError: người dùng đóng hộp chọn thiết bị -> bỏ qua
+                    }
+                    paint();
+                });
+                paint();
+            }
+        }
+
         playBtn.addEventListener('click', () => {
             if (!audio.src && playlist.length > 0) playTrack(0);
             else if (audio.paused) { 
@@ -5884,6 +5921,7 @@
             'metaeditor.lrc_none': 'No results found.', 'metaeditor.lrc_error': 'Could not reach lrclib.net. Check your connection and try again.',
             'metaeditor.lrc_instrumental': 'NO LYRICS', 'metaeditor.lrc_back': 'Back', 'metaeditor.lrc_insert': 'Insert',
             'player.locate': 'Locate current track',
+            'player.cast': 'Cast to device', 'toast.cast_connected': 'Connected to the device', 'toast.cast_disconnected': 'Stopped casting', 'toast.cast_none': 'No devices found to cast to', 'toast.cast_unsupported': 'This track cannot be cast to the device', 'toast.cast_busy': 'Cannot cast right now, try again later',
             'confirmoverwrite.field_genre': 'Genre: ', 'confirmoverwrite.field_composer': 'Composer: ', 'confirmoverwrite.field_lyric': 'Lyric Embed (read-only)',
             'lyric.search_placeholder': 'Search lyrics on LRCLIB',
             'metaeditor.saved_disk': 'Directly overwrote the original file on disk successfully!',
