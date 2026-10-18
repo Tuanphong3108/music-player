@@ -2314,11 +2314,11 @@
           </div>
           <div class="field-row">
             <div class="field-label" data-i18n="metaeditor.field_artist">Nghệ sĩ</div>
-            <input class="ore-input" type="text" id="fieldArtist" name="fieldArtist-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
+            <input class="ore-input" type="text" id="fieldArtist" placeholder="Unknown" name="fieldArtist-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
             <div class="field-label" data-i18n="metaeditor.field_album">Album</div>
-            <input class="ore-input" type="text" id="fieldAlbum" name="fieldAlbum-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
+            <input class="ore-input" type="text" id="fieldAlbum" placeholder="Unknown" name="fieldAlbum-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
           <div class="field-row">
             <div class="field-label" data-i18n="metaeditor.field_genre">Thể loại (Genre)</div>
@@ -2444,8 +2444,8 @@
           let original = {title:'',artist:'',album:'',genre:'',composer:'',lyric:''};
 
           // Ô nào đang trống thì lấy từ thẻ trong Lyric Embed: [ti:] [ar:] [al:] [au:]/[composer:] [genre:]
-          const FILL_MAP = { title: ['ti'], artist: ['ar'], album: ['al'], composer: ['au', 'composer', 'comp'], genre: ['genre', 'gn'] };
-          let fillDeclined = false, fillPending = null;
+          const FILL_MAP = { artist: ['ar'], album: ['al'], composer: ['au', 'composer', 'comp'], genre: ['genre', 'gn'] };
+          let fillPending = null;
           function computeFill() {
             const txt = fields.lyric.value || '';
             const get = names => {
@@ -2460,18 +2460,18 @@
             return out;
           }
           function applyFill(map) { Object.keys(map).forEach(k => { fields[k].value = map[k]; }); }
-          function fillFromLyric() { if (!fillDeclined) applyFill(computeFill()); }   // dùng lúc Lưu (chỉ khi chưa từ chối)
+          const lyricTag = names => { const txt = fields.lyric.value || ''; for (const n of names) { const m = new RegExp('^\\s*\\[' + n + ':([^\\]]*)\\]', 'im').exec(txt); if (m && m[1].trim()) return m[1].trim(); } return ''; };
 
           // Hỏi trước khi tự điền (hiện bản xem trước sau khi điền)
+          // Gọi lúc bấm Lưu: có ô trống điền được -> hiện dialog và trả true (chờ người dùng chọn)
           function askFill() {
-            fillDeclined = false;
             const map = computeFill();
-            if (!Object.keys(map).length) return;
+            if (!Object.keys(map).length) return false;
             fillPending = map;
-            const labels = { title: ['metaeditor.field_title', 'Tên bài hát'], artist: ['metaeditor.field_artist', 'Nghệ sĩ'], album: ['metaeditor.field_album', 'Album'], genre: ['metaeditor.field_genre', 'Thể loại (Genre)'], composer: ['metaeditor.field_composer', 'Nhà soạn nhạc (Composer)'] };
+            const labels = { artist: ['metaeditor.field_artist', 'Nghệ sĩ'], album: ['metaeditor.field_album', 'Album'], genre: ['metaeditor.field_genre', 'Thể loại (Genre)'], composer: ['metaeditor.field_composer', 'Nhà soạn nhạc (Composer)'] };
             const box = document.getElementById('lrcFillPreview');
             box.innerHTML = '';
-            ['title', 'artist', 'album', 'genre', 'composer'].forEach(k => {
+            ['artist', 'album', 'genre', 'composer'].forEach(k => {
               const isNew = k in map, val = isNew ? map[k] : fields[k].value;
               const row = document.createElement('div');
               row.className = 'fill-row' + (isNew ? ' new' : '');
@@ -2479,6 +2479,7 @@
               box.appendChild(row);
             });
             document.getElementById('overlayLrcFill').classList.remove('hidden');
+            return true;
           }
           function hasChanges() { return ORDER.some(k => fields[k].value !== original[k]); }
           function postMsg(msg) { window.parent.postMessage(msg,'*'); }
@@ -2497,7 +2498,7 @@
             document.getElementById('overlayFail').classList.add('hidden');
             document.getElementById('overlayUnsaved').classList.add('hidden');
             lrcSearch.classList.add('hidden'); lrcPreview.classList.add('hidden');
-            document.getElementById('overlayLrcFill').classList.add('hidden'); fillPending = null; fillDeclined = false;
+            document.getElementById('overlayLrcFill').classList.add('hidden'); fillPending = null;
             document.getElementById('savingScreen').classList.remove('active');
             document.getElementById('mainContent').style.display = '';
             document.getElementById('actionBar').style.display = '';
@@ -2546,20 +2547,24 @@
             }
           });
 
-          document.getElementById('btnSave').addEventListener('click', () => {
-            fillFromLyric();
+          function doSave() {
+            // Tên bài trống -> lấy [ti:] trong Lyric; nếu không có thì để trống để bên ngoài lấy tên file.
+            const title = fields.title.value.trim() || lyricTag(['ti']);
             hideAllUI();
-            // Nghệ sĩ/Album để trống -> tự điền "Unknown". Genre/Composer để trống thì
-            // giữ nguyên trắng, không tự gán "Unknown" cho 2 mục này.
+            // Nghệ sĩ/Album trống thì để trống thật sự (chỉ có placeholder mờ "Unknown"),
+            // để các ứng dụng khác tự xử lý theo cách của họ.
             postMsg({
               type:   'save',
-              title:  fields.title.value,
-              artist: fields.artist.value.trim() || 'Unknown',
-              album:  fields.album.value.trim() || 'Unknown',
+              title:  title,
+              artist: fields.artist.value.trim(),
+              album:  fields.album.value.trim(),
               genre:  fields.genre.value,
               composer: fields.composer.value,
               lyric:  fields.lyric.value,
             });
+          }
+          document.getElementById('btnSave').addEventListener('click', () => {
+            if (!askFill()) doSave();
           });
 
           function tryClose() {
@@ -2647,17 +2652,18 @@
             if (fillPending) applyFill(fillPending);
             fillPending = null;
             document.getElementById('overlayLrcFill').classList.add('hidden');
+            doSave();
           });
           document.getElementById('btnFillNo').addEventListener('click', () => {
-            fillPending = null; fillDeclined = true;
+            fillPending = null;
             document.getElementById('overlayLrcFill').classList.add('hidden');
+            doSave();
           });
           document.getElementById('btnLrcBack').addEventListener('click', () => lrcPreview.classList.add('hidden'));
           document.getElementById('btnLrcInsert').addEventListener('click', () => {
             fields.lyric.value = /\[audioplayer:LRCLIB\]/i.test(lrcPicked) ? lrcPicked : '[audioplayer:LRCLIB]\n' + lrcPicked;
             lrcPreview.classList.add('hidden');
             lrcSearch.classList.add('hidden');
-            askFill();
           });
 
           document.getElementById('btnUploadLrc').addEventListener('click', () =>
@@ -2666,7 +2672,7 @@
             const file = e.target.files[0];
             if (!file) return;
             const r = new FileReader();
-            r.onload = ev => { fields.lyric.value = ev.target.result; askFill(); };
+            r.onload = ev => { fields.lyric.value = ev.target.result; };
             r.readAsText(file,'UTF-8');
             e.target.value = '';
           });
@@ -6962,8 +6968,8 @@
             metadataIframe.contentWindow.postMessage({
                 type: 'load',
                 title: track.name || '',
-                artist: track.artist || '',
-                album: track.album || '',
+                artist: /^unknown( artist)?$/i.test(track.artist || '') ? '' : (track.artist || ''),
+                album: /^unknown( album)?$/i.test(track.album || '') ? '' : (track.album || ''),
                 genre: track.genre || '',
                 composer: track.composer || '',
                 lyric: track.lyricsRaw || ''
@@ -7047,9 +7053,9 @@
                 const albumPrefix = currentLangDict['confirmoverwrite.field_album'] || "Album: ";
                 const untitledStr = currentLangDict['moreinfo.untitled'] || "Chưa đặt tên";
                 const unknownStr = currentLangDict['moreinfo.unknown'] || "Chưa rõ";
-                document.getElementById('overwrite-details-title').innerText = titlePrefix + (d.title || untitledStr);
-                document.getElementById('overwrite-details-artist').innerText = artistPrefix + (d.artist || untitledStr);
-                document.getElementById('overwrite-details-album').innerText = albumPrefix + (d.album || unknownStr);
+                document.getElementById('overwrite-details-title').innerText = titlePrefix + (d.title || (playlist[currentIndex] && playlist[currentIndex].file ? playlist[currentIndex].file.name.replace(/\.[^/.]+$/, '') : untitledStr));
+                document.getElementById('overwrite-details-artist').innerText = artistPrefix + (d.artist || 'Unknown');
+                document.getElementById('overwrite-details-album').innerText = albumPrefix + (d.album || 'Unknown');
                 document.getElementById('overwrite-details-genre').innerText = (currentLangDict['confirmoverwrite.field_genre'] || 'Thể loại: ') + (d.genre || '-');
                 document.getElementById('overwrite-details-composer').innerText = (currentLangDict['confirmoverwrite.field_composer'] || 'Nhà soạn nhạc: ') + (d.composer || '-');
                 { const ly = document.getElementById('overwrite-details-lyric'); ly.value = d.lyric || ''; ly.scrollTop = 0; }
@@ -7107,6 +7113,7 @@
                 const arrayBuffer = await track.file.arrayBuffer();
                 const writer = new ID3Writer(arrayBuffer);
 
+                if (!meta.title) meta.title = (track.file && track.file.name ? track.file.name : track.name).replace(/\.[^/.]+$/, '');
                 writer.setFrame('TIT2', meta.title || '')
                       .setFrame('TPE1', [meta.artist || ''])
                       .setFrame('TALB', meta.album || '')
@@ -7164,8 +7171,8 @@
                 const newFile = new File([taggedBlob], (meta.title || track.name) + ".mp3", { type: 'audio/mpeg' });
                 track.file = newFile;
                 track.name = meta.title || track.name;
-                track.artist = meta.artist || track.artist;
-                track.album = meta.album || track.album;
+                track.artist = meta.artist || 'UNKNOWN ARTIST';
+                track.album = meta.album || 'Unknown Album';
                 track.genre = meta.genre || '';       // Trống -> để trắng thật sự, không giữ lại giá trị cũ
                 track.composer = meta.composer || ''; // Trống -> để trắng thật sự, không giữ lại giá trị cũ
                 track.lyrics = meta.lyric ? parseLRC(meta.lyric) : null;

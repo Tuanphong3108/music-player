@@ -14,7 +14,7 @@
       "icon": "info"
     },
     {
-      "content": "Chỉnh sửa thẻ: hỏi trước khi tự điền ô trống từ lời bài hát (có xem trước); hộp xác nhận lưu hiện đầy đủ hơn",
+      "content": "Chỉnh sửa thẻ: khi bấm Lưu sẽ hỏi trước khi điền ô trống từ lời bài hát (có xem trước); Nghệ sĩ/Album để trống thì giữ trống; Tên bài trống thì lấy từ lời, không có thì lấy tên tệp",
       "icon": "edit_note"
     }
   ],
@@ -32,7 +32,7 @@
       "icon": "info"
     },
     {
-      "content": "Tag editor: asks before filling empty fields from the lyrics (with a preview); the save confirmation shows more details",
+      "content": "Tag editor: on Save, asks before filling empty fields from the lyrics (with a preview); empty Artist/Album stay empty; empty Title falls back to the lyrics, then the file name",
       "icon": "edit_note"
     }
   ]
