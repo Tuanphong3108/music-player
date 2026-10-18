@@ -328,3 +328,7 @@ lyric.search_placeholder=Tìm lời bài hát trên LRCLIB
 confirmoverwrite.field_genre=Thể loại: 
 confirmoverwrite.field_composer=Nhà soạn nhạc: 
 confirmoverwrite.field_lyric=Lyric Embed (chỉ đọc)
+metaeditor.fill_title=Điền thông tin từ lời bài hát?
+metaeditor.fill_body=Lời bài hát có kèm thông tin. Điền vào các ô đang trống như bên dưới?
+metaeditor.fill_no=Không điền
+metaeditor.fill_yes=Điền

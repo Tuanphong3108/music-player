@@ -14,7 +14,7 @@
       "icon": "info"
     },
     {
-      "content": "Chỉnh sửa thẻ: ô nào để trống sẽ tự lấy từ lời bài hát; hộp xác nhận lưu hiện đầy đủ hơn",
+      "content": "Chỉnh sửa thẻ: hỏi trước khi tự điền ô trống từ lời bài hát (có xem trước); hộp xác nhận lưu hiện đầy đủ hơn",
       "icon": "edit_note"
     }
   ],
@@ -32,7 +32,7 @@
       "icon": "info"
     },
     {
-      "content": "Tag editor: empty fields are filled from the lyrics; the save confirmation shows more details",
+      "content": "Tag editor: asks before filling empty fields from the lyrics (with a preview); the save confirmation shows more details",
       "icon": "edit_note"
     }
   ]

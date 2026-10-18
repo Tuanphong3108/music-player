@@ -328,3 +328,7 @@ lyric.search_placeholder=Search lyrics on LRCLIB
 confirmoverwrite.field_genre=Genre: 
 confirmoverwrite.field_composer=Composer: 
 confirmoverwrite.field_lyric=Lyric Embed (read-only)
+metaeditor.fill_title=Fill in info from the lyrics?
+metaeditor.fill_body=The lyrics include track info. Fill the empty fields as shown below?
+metaeditor.fill_no=Don't fill
+metaeditor.fill_yes=Fill in
