@@ -1896,7 +1896,6 @@
             </div>
             <div class="controls-group">
                 <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)" data-i18n-title="player.pip"><span class="material-symbols-outlined" style="font-size: 20px;">picture_in_picture_alt</span></button>
-                <button class="btn-m3" id="cast-btn" title="Truyền tới thiết bị" data-i18n-title="player.cast" style="display:none;"><span class="material-symbols-outlined" id="cast-icon" style="font-size: 20px;">cast</span></button>
                 <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
                 <button class="btn-m3" id="prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-outlined">skip_previous</span></button>
                 <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng" data-i18n-title="player.play_pause">
@@ -2287,6 +2286,11 @@
           .lrc-dur { font-size: calc(11px * var(--font-scale-factor, 1)); opacity: .6; flex-shrink: 0; }
           .lrc-msg { padding: 28px 16px; text-align: center; opacity: .7; }
           .lrc-preview { flex: 1; min-height: 0; overflow: auto; margin: 0; padding: 12px; border: 2px solid #1A1A1A; background: #1E1E1E; white-space: pre-wrap; word-break: break-word; font-family: inherit; line-height: 1.6; color: var(--text-label); }
+          .fill-row { display: flex; gap: 12px; padding: 6px 8px; border-bottom: 1px solid #2c2c2c; }
+          .fill-row .fill-label { flex: 0 0 38%; opacity: .65; }
+          .fill-row .fill-val { flex: 1; min-width: 0; word-break: break-word; font-weight: 600; }
+          .fill-row.new { background: rgba(60,133,39,0.18); }
+          .fill-row.new .fill-val { color: #8bd36a; }
           #lrcFileInput { display: none; }
 
           ::-webkit-scrollbar { width: 6px; }
@@ -2388,6 +2392,20 @@
           </div>
         </div>
 
+        <div class="overlay hidden" id="overlayLrcFill" style="z-index:220;">
+          <div class="ore-dialog">
+            <div class="dialog-header" data-i18n="metaeditor.fill_title">Điền thông tin từ lời bài hát?</div>
+            <div class="dialog-body">
+              <div style="margin-bottom:10px;" data-i18n="metaeditor.fill_body">Lời bài hát có kèm thông tin. Điền vào các ô đang trống như bên dưới?</div>
+              <div id="lrcFillPreview"></div>
+            </div>
+            <div class="dialog-footer">
+              <button class="ore-btn ore-btn-ghost" id="btnFillNo" data-i18n="metaeditor.fill_no">Không điền</button>
+              <button class="ore-btn ore-btn-green" id="btnFillYes" data-i18n="metaeditor.fill_yes">Điền</button>
+            </div>
+          </div>
+        </div>
+
         <div class="overlay hidden" id="overlaySuccess">
           <div class="ore-dialog">
             <div class="dialog-header" data-i18n="metaeditor.saved_title">✓ Đã lưu thành công</div>
@@ -2426,7 +2444,9 @@
           let original = {title:'',artist:'',album:'',genre:'',composer:'',lyric:''};
 
           // Ô nào đang trống thì lấy từ thẻ trong Lyric Embed: [ti:] [ar:] [al:] [au:]/[composer:] [genre:]
-          function fillFromLyric() {
+          const FILL_MAP = { title: ['ti'], artist: ['ar'], album: ['al'], composer: ['au', 'composer', 'comp'], genre: ['genre', 'gn'] };
+          let fillDeclined = false, fillPending = null;
+          function computeFill() {
             const txt = fields.lyric.value || '';
             const get = names => {
               for (const n of names) {
@@ -2435,8 +2455,30 @@
               }
               return '';
             };
-            const map = { title: ['ti'], artist: ['ar'], album: ['al'], composer: ['au', 'composer', 'comp'], genre: ['genre', 'gn'] };
-            Object.keys(map).forEach(k => { if (!fields[k].value.trim()) { const v = get(map[k]); if (v) fields[k].value = v; } });
+            const out = {};
+            Object.keys(FILL_MAP).forEach(k => { if (!fields[k].value.trim()) { const v = get(FILL_MAP[k]); if (v) out[k] = v; } });
+            return out;
+          }
+          function applyFill(map) { Object.keys(map).forEach(k => { fields[k].value = map[k]; }); }
+          function fillFromLyric() { if (!fillDeclined) applyFill(computeFill()); }   // dùng lúc Lưu (chỉ khi chưa từ chối)
+
+          // Hỏi trước khi tự điền (hiện bản xem trước sau khi điền)
+          function askFill() {
+            fillDeclined = false;
+            const map = computeFill();
+            if (!Object.keys(map).length) return;
+            fillPending = map;
+            const labels = { title: ['metaeditor.field_title', 'Tên bài hát'], artist: ['metaeditor.field_artist', 'Nghệ sĩ'], album: ['metaeditor.field_album', 'Album'], genre: ['metaeditor.field_genre', 'Thể loại (Genre)'], composer: ['metaeditor.field_composer', 'Nhà soạn nhạc (Composer)'] };
+            const box = document.getElementById('lrcFillPreview');
+            box.innerHTML = '';
+            ['title', 'artist', 'album', 'genre', 'composer'].forEach(k => {
+              const isNew = k in map, val = isNew ? map[k] : fields[k].value;
+              const row = document.createElement('div');
+              row.className = 'fill-row' + (isNew ? ' new' : '');
+              row.innerHTML = '<div class="fill-label">' + esc(T(labels[k][0], labels[k][1])) + (isNew ? ' ＋' : '') + '</div><div class="fill-val">' + (val ? esc(val) : '<span style="opacity:.4">—</span>') + '</div>';
+              box.appendChild(row);
+            });
+            document.getElementById('overlayLrcFill').classList.remove('hidden');
           }
           function hasChanges() { return ORDER.some(k => fields[k].value !== original[k]); }
           function postMsg(msg) { window.parent.postMessage(msg,'*'); }
@@ -2455,6 +2497,7 @@
             document.getElementById('overlayFail').classList.add('hidden');
             document.getElementById('overlayUnsaved').classList.add('hidden');
             lrcSearch.classList.add('hidden'); lrcPreview.classList.add('hidden');
+            document.getElementById('overlayLrcFill').classList.add('hidden'); fillPending = null; fillDeclined = false;
             document.getElementById('savingScreen').classList.remove('active');
             document.getElementById('mainContent').style.display = '';
             document.getElementById('actionBar').style.display = '';
@@ -2600,12 +2643,21 @@
           lrcQuery.addEventListener('input', () => { clearTimeout(lrcTimer); lrcTimer = setTimeout(runLrcSearch, 450); });
           lrcQuery.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(lrcTimer); runLrcSearch(); } });
           document.getElementById('btnLrcCancel').addEventListener('click', () => { lrcSeq++; lrcSearch.classList.add('hidden'); });
+          document.getElementById('btnFillYes').addEventListener('click', () => {
+            if (fillPending) applyFill(fillPending);
+            fillPending = null;
+            document.getElementById('overlayLrcFill').classList.add('hidden');
+          });
+          document.getElementById('btnFillNo').addEventListener('click', () => {
+            fillPending = null; fillDeclined = true;
+            document.getElementById('overlayLrcFill').classList.add('hidden');
+          });
           document.getElementById('btnLrcBack').addEventListener('click', () => lrcPreview.classList.add('hidden'));
           document.getElementById('btnLrcInsert').addEventListener('click', () => {
             fields.lyric.value = /\[audioplayer:LRCLIB\]/i.test(lrcPicked) ? lrcPicked : '[audioplayer:LRCLIB]\n' + lrcPicked;
             lrcPreview.classList.add('hidden');
             lrcSearch.classList.add('hidden');
-            fillFromLyric();
+            askFill();
           });
 
           document.getElementById('btnUploadLrc').addEventListener('click', () =>
@@ -2614,7 +2666,7 @@
             const file = e.target.files[0];
             if (!file) return;
             const r = new FileReader();
-            r.onload = ev => { fields.lyric.value = ev.target.result; fillFromLyric(); };
+            r.onload = ev => { fields.lyric.value = ev.target.result; askFill(); };
             r.readAsText(file,'UTF-8');
             e.target.value = '';
           });
@@ -4608,42 +4660,6 @@
             }
         }
 
-        // --- Truyền tới thiết bị (Cast) bằng Remote Playback API ---
-        {
-            const castBtn = document.getElementById('cast-btn');
-            const castIcon = document.getElementById('cast-icon');
-            const remote = audio.remote;
-            if (remote && typeof remote.prompt === 'function') {
-                const ct = (k, f) => currentLangDict[k] || f;
-                castBtn.style.display = '';
-                const paint = () => {
-                    const st = remote.state;
-                    castBtn.classList.toggle('active', st === 'connected');
-                    castIcon.textContent = st === 'connected' ? 'cast_connected' : 'cast';
-                };
-                let lastState = remote.state;
-                ['connecting', 'connect', 'disconnect'].forEach(ev => remote.addEventListener(ev, () => {
-                    paint();
-                    if (remote.state === 'connected' && lastState !== 'connected') showToast(ct('toast.cast_connected', 'Đã kết nối tới thiết bị phát'), 'cast_connected');
-                    else if (remote.state === 'disconnected' && lastState === 'connected') showToast(ct('toast.cast_disconnected', 'Đã ngừng truyền tới thiết bị'), 'cast');
-                    lastState = remote.state;
-                }));
-                castBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    try { await remote.prompt(); }
-                    catch (err) {
-                        const n = err && err.name;
-                        if (n === 'NotFoundError') showToast(ct('toast.cast_none', 'Không tìm thấy thiết bị nào để truyền tới'), 'cast');
-                        else if (n === 'NotSupportedError') showToast(ct('toast.cast_unsupported', 'Không truyền được bài này tới thiết bị'), 'cast');
-                        else if (n === 'InvalidStateError') showToast(ct('toast.cast_busy', 'Chưa truyền được lúc này, hãy thử lại sau'), 'cast');
-                        // NotAllowedError: người dùng đóng hộp chọn thiết bị -> bỏ qua
-                    }
-                    paint();
-                });
-                paint();
-            }
-        }
-
         playBtn.addEventListener('click', () => {
             if (!audio.src && playlist.length > 0) playTrack(0);
             else if (audio.paused) { 
@@ -5921,7 +5937,7 @@
             'metaeditor.lrc_none': 'No results found.', 'metaeditor.lrc_error': 'Could not reach lrclib.net. Check your connection and try again.',
             'metaeditor.lrc_instrumental': 'NO LYRICS', 'metaeditor.lrc_back': 'Back', 'metaeditor.lrc_insert': 'Insert',
             'player.locate': 'Locate current track',
-            'player.cast': 'Cast to device', 'toast.cast_connected': 'Connected to the device', 'toast.cast_disconnected': 'Stopped casting', 'toast.cast_none': 'No devices found to cast to', 'toast.cast_unsupported': 'This track cannot be cast to the device', 'toast.cast_busy': 'Cannot cast right now, try again later',
+            'metaeditor.fill_title': 'Fill in info from the lyrics?', 'metaeditor.fill_body': 'The lyrics include track info. Fill the empty fields as shown below?', 'metaeditor.fill_no': 'Don\'t fill', 'metaeditor.fill_yes': 'Fill in',
             'confirmoverwrite.field_genre': 'Genre: ', 'confirmoverwrite.field_composer': 'Composer: ', 'confirmoverwrite.field_lyric': 'Lyric Embed (read-only)',
             'lyric.search_placeholder': 'Search lyrics on LRCLIB',
             'metaeditor.saved_disk': 'Directly overwrote the original file on disk successfully!',
