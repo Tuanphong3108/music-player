@@ -10,7 +10,7 @@
       "icon": "person"
     },
     {
-      "content": "Lyric View hiển thị đầy đủ thông tin bài lyric (tiêu đề, nghệ sĩ, album, người làm...)",
+      "content": "Thông tin bài lyric (tiêu đề, nghệ sĩ, album, người làm...) nằm trong mục \"Lyric Information\" ở \"Thông tin khác\"",
       "icon": "info"
     },
     {
@@ -28,7 +28,7 @@
       "icon": "person"
     },
     {
-      "content": "Lyric View shows the full lyric info (title, artist, album, author...)",
+      "content": "Lyric info (title, artist, album, author...) now lives under \"Lyric Information\" in \"More info\"",
       "icon": "info"
     },
     {

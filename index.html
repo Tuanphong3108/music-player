@@ -4083,6 +4083,7 @@
             return parts.join(' • ');
         }
         // Mọi thẻ thông tin trong file LRC ([ti:], [ar:], [al:], [au:], [by:], [la:], [ve:]...) -> chỉ hiện ở Lyric View
+        const LRC_INFO_ICONS = { ti: 'edit', ar: 'person', al: 'album', au: 'edit_note', by: 'lyrics', la: 'translate', ve: 'tag', length: 'schedule', offset: 'timer', re: 'edit', tool: 'build' };
         const LRC_INFO_LABELS = { ti: 'Title', ar: 'Artist', al: 'Album', au: 'Author', by: 'Lyric by', la: 'Language', ve: 'Version', length: 'Length', offset: 'Offset', re: 'Editor', tool: 'Tool' };
         function lyricInfoList(track) {
             const out = [];
@@ -4093,7 +4094,7 @@
                 if (!m) return;
                 const k = m[1].toLowerCase(), v = m[2].trim();
                 if (!v || seen.has(k)) return;
-                seen.add(k); out.push([LRC_INFO_LABELS[k], v]);
+                seen.add(k); out.push([k, v]);
             });
             return out;
         }
@@ -4169,14 +4170,6 @@
                 }
                 lyricOverlay.appendChild(div);
             });
-
-            const infoList = lyricInfoList(track);
-            if (infoList.length) {
-                const box = document.createElement('div');
-                box.className = 'lyric-info';
-                box.innerHTML = infoList.map(([k, v]) => '<div><b>' + escHtml(k) + ':</b> ' + escHtml(v) + '</div>').join('');
-                lyricOverlay.appendChild(box);
-            }
 
             if (!isStatic) {
                 const spacerBottom = document.createElement('div'); spacerBottom.style.height = '40vh';
@@ -6894,6 +6887,11 @@
             rows.push(moreInfoRowHTML('edit_note', currentLangDict['moreinfo.composer_label'] || 'Nhà soạn nhạc', track.composer || unknownStr));
             if (track.year) rows.push(moreInfoRowHTML('calendar_today', currentLangDict['moreinfo.year_label'] || 'Năm', track.year));
 
+            const lyInfo = lyricInfoList(track);
+            if (lyInfo.length) {
+                rows.push(`<div style="font-size: calc(13px * var(--font-scale-factor, 1)); font-weight:700; opacity:0.85; margin-top:8px; padding-top:14px; border-top:1px solid var(--playlist-border);">${escHtml(currentLangDict['moreinfo.lyric_info'] || 'Lyric Information')}</div>`);
+                lyInfo.forEach(([k, v]) => rows.push(moreInfoRowHTML(LRC_INFO_ICONS[k] || 'info', escHtml(currentLangDict['moreinfo.lrc_' + k] || LRC_INFO_LABELS[k]), escHtml(v))));
+            }
             moreInfoBody.innerHTML = rows.join('');
             moreInfoModal.classList.add('open');
         }
