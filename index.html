@@ -426,6 +426,11 @@
         }
         /* Tự ẩn con trỏ chuột khi thanh media control đã trượt xuống ở Full screen mode
            (chỉ áp dụng trong fullscreen, đồng bộ với cùng bộ đếm idle của thanh control) */
+        /* Nút Full screen đi cùng thanh media control: ẩn khi thanh trượt xuống, hiện lại khi thanh hiện lên */
+        body.fullscreen-active #fullscreen-btn { transition: opacity .5s, transform .5s cubic-bezier(0.34, 1.56, 0.64, 1), background .2s; }
+        body.fullscreen-active:has(.player-shell.controls-hidden) #fullscreen-btn {
+            opacity: 0 !important; transform: translateY(150%) !important; pointer-events: none !important;
+        }
         body.fullscreen-active.fs-cursor-hidden,
         body.fullscreen-active.fs-cursor-hidden * {
             cursor: none !important;
