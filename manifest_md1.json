@@ -1,45 +1,31 @@
 {
-  "name": "Notepad MD1",
-  "short_name": "Notepad MD1",
-  "description": "Ứng dụng ghi chú phong cách Material Design 1 với chế độ Tabbed PWA",
-  "start_url": "/notepad/index_md1.html",
+  "name": "Music Player MD1",
+  "short_name": "Music Player MD1",
+  "start_url": "index_md1.html",
   "display": "standalone",
-  "display_override": [
-    "tabbed",
-    "standalone",
-    "browser"
-  ],
-  "tab_strip": {
-    "new_tab_button": {
-      "url": "/notepad/index_md1.html"
-    }
-  },
-  "background_color": "#FFFFFF",
-  "theme_color": "#2196F3",
+  "background_color": "#1C1B1F",
+  "theme_color": "#D0BCFF",
+  "description": "Material Design 1 Music Player with Real-time Visuals",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "music_note.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "music_note.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "file_handlers": [
     {
-      "action": "/notepad/index_md1.html",
+      "action": "index_md1.html",
       "accept": {
-        "text/plain": [".txt", ".bat", ".ps1", ".vbs", ".reg", ".lang"],
-        "text/markdown": [".md"],
-        "text/html": [".html", ".htm"],
-        "text/javascript": [".js"],
-        "application/json": [".json"],
-        "text/css": [".css"],
-        "text/x-python": [".py"]
+        "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".flac"]
       }
     }
-  ],
-  "launch_handler": {
-    "client_mode": "navigate-new"
-  },
-  "scope": "/notepad/"
+  ]
 }

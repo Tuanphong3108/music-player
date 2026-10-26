@@ -1,94 +1,153 @@
-const CACHE_NAME = 'notepad-v13-multitab';
+const CACHE_PREFIX = 'audio-player-';
+const CACHE_VERSION = 'v2026_10_17_093944-ask3';
+const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
-// Relative URLs resolve against this file, so the cache works under any
-// base path (the app is served from /notepad/, not from the site root).
-const ASSETS = [
+const APP_SHELL = [
   './',
-  'index.html',
-  'index_md1.html',
-  'about.html',
-  'app.js',
-  'editor.css',
-  'manifest.json',
-  'manifest_md1.json',
-  'icon.png',
-  'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&family=Google+Sans+Code:wght@400;700&display=swap',
-  'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;700&family=Google+Sans+Code:wght@400;700&display=swap',
-  'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
-  'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js',
-  'https://cdn.jsdelivr.net/npm/markdown-it-task-lists/dist/markdown-it-task-lists.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js',
-  'https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js',
-  'https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/powershell.min.js',
-  'https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/dos.min.js',
-  'https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/vbscript.min.js',
-  'https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif'
+  './index.html',
+  './index_md1.html',
+  './index_indev.html',
+  './changelog.html',
+  './changelog_indev.html',
+  './about.html',
+  './getting_started.html',
+  './404.html',
+  './manifest.json',
+  './manifest_md1.json',
+  './minecraft.ttf',
+  './MinecraftTen-VGORe.ttf',
+  './music_note.png'
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      await Promise.allSettled(
-        ASSETS.map((url) => cache.add(url))
-      );
-    }).then(() => self.skipWaiting())
-  );
+const CDN_HOSTS = new Set([
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'cdnjs.cloudflare.com',
+  'cdn.jsdelivr.net',
+  'esm.run',
+  'tuanphong3108.github.io',
+  'cdn.tailwindcss.com',
+  'unpkg.com',
+  'code.jquery.com'
+]);
+
+// Link CSS phông chữ cần có sẵn khi offline (tải best-effort lúc cài đặt)
+const FONT_CSS_PRECACHE = [
+  'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap',
+  'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+];
+
+const CACHEABLE_DESTINATIONS = new Set([
+  'script',
+  'style',
+  'font',
+  'image',
+  'worker'
+]);
+
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(SHELL_CACHE);
+    await cache.addAll(APP_SHELL);
+    const rt = await caches.open(RUNTIME_CACHE);
+    await Promise.all(FONT_CSS_PRECACHE.map(url =>
+      fetch(new Request(url, { mode: 'no-cors' })).then(res => rt.put(url, res)).catch(() => {})
+    ));
+    await self.skipWaiting();
+  })());
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names.map((name) => {
-          if (name !== CACHE_NAME) return caches.delete(name);
-        })
-      )
-    ).then(() => self.clients.claim())
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames
+      .filter(name => name.startsWith(CACHE_PREFIX) && name !== SHELL_CACHE && name !== RUNTIME_CACHE)
+      .map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET' || request.headers.has('range')) return;
 
-  const sameOrigin = new URL(req.url).origin === self.location.origin;
+  const requestUrl = new URL(request.url);
+  const scopeUrl = new URL(self.registration.scope);
+  const isSameOrigin = requestUrl.origin === scopeUrl.origin;
 
-  // Our own pages and scripts: network first (always fresh), cache when offline.
-  if (sameOrigin || req.mode === 'navigate') {
-    event.respondWith(
-      // 'no-cache' = always revalidate with the server, so GitHub Pages' 10-minute HTTP cache can't
-      // serve a stale app.js next to a fresh index.html
-      fetch(req, { cache: 'no-cache' })
-        .then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(async () => {
-          const cached = await caches.match(req, { ignoreSearch: true });
-          if (cached) return cached;
-          if (req.mode === 'navigate') {
-            const shell = await caches.match('index.html');
-            if (shell) return shell;
-          }
-          return Response.error();
-        })
-    );
+  if (request.mode === 'navigate' && isSameOrigin) {
+    event.respondWith(networkFirstNavigation(request));
     return;
   }
 
-  // Third-party libraries, fonts, spell-check dictionaries: cache first, and remember whatever is
-  // downloaded on demand (dictionaries are versioned URLs, so they never go stale).
-  event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-      if (res.ok) {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+  const isAllowedCdn = !isSameOrigin && CDN_HOSTS.has(requestUrl.hostname);
+  if (!CACHEABLE_DESTINATIONS.has(request.destination) || (!isSameOrigin && !isAllowedCdn)) return;
+
+  event.respondWith(cacheFirstAsset(request));
+});
+
+async function networkFirstNavigation(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const shellCache = await caches.open(SHELL_CACHE);
+      await shellCache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cachedPage = await caches.match(request);
+    if (cachedPage) return cachedPage;
+
+    const indexUrl = new URL('./index.html', self.registration.scope);
+    const cachedIndex = await caches.match(indexUrl.href);
+    if (cachedIndex) return cachedIndex;
+
+    return new Response('Bạn đang offline và trang này chưa được lưu trên thiết bị.', {
+      status: 503,
+      statusText: 'Offline',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+  }
+}
+
+async function cacheFirstAsset(request) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) return cachedResponse;
+
+  const response = await fetch(request);
+  const isCdn = CDN_HOSTS.has(new URL(request.url).hostname);
+  // <link rel="stylesheet"> tới Google Fonts là no-cors -> response "opaque" (ok=false), vẫn phải cache
+  const cacheable = (response.ok && (response.type === 'basic' || response.type === 'cors'))
+    || (isCdn && response.type === 'opaque');
+  if (cacheable) {
+    const runtimeCache = await caches.open(RUNTIME_CACHE);
+    await runtimeCache.put(request, response.clone());
+  }
+  return response;
+}
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const scopeUrl = new URL(self.registration.scope);
+    const requestedUrl = event.notification.data?.url;
+    let targetUrl = scopeUrl.href;
+
+    if (requestedUrl) {
+      const candidate = new URL(requestedUrl, scopeUrl);
+      if (candidate.origin === scopeUrl.origin && candidate.href.startsWith(scopeUrl.href)) {
+        targetUrl = candidate.href;
       }
-      return res;
-    }))
-  );
+    }
+
+    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windowClients) {
+      if (new URL(client.url).origin === scopeUrl.origin && 'focus' in client) {
+        if ('navigate' in client && client.url !== targetUrl) await client.navigate(targetUrl);
+        return client.focus();
+      }
+    }
+    return self.clients.openWindow(targetUrl);
+  })());
 });

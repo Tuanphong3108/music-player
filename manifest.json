@@ -1,45 +1,43 @@
 {
-  "name": "Notepad MD3 Expressive",
-  "short_name": "Notepad",
-  "description": "Ứng dụng ghi chú phong cách Material Design 3 với chế độ Tabbed PWA",
-  "start_url": "/notepad/index.html",
+  "name": "Audio Player",
+  "short_name": "Audio Player",
+  "id": "/music-player/",
+  "start_url": "/music-player/index.html",
+  "scope": "/music-player/",
   "display": "standalone",
-  "display_override": [
-    "tabbed",
-    "standalone",
-    "browser"
-  ],
-  "tab_strip": {
-    "new_tab_button": {
-      "url": "/notepad/index.html"
-    }
-  },
-  "background_color": "#FEF7FF",
-  "theme_color": "#6750A4",
+  "background_color": "#1C1B1F",
+  "theme_color": "#D0BCFF",
+  "description": "Material Design 3 Expressive Audio Player with Real-time Visuals",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "/music-player/music_note.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/music-player/music_note.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/music-player/music_note.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "file_handlers": [
     {
-      "action": "/notepad/index.html",
+      "action": "/music-player/index.html",
       "accept": {
-        "text/plain": [".txt", ".bat", ".ps1", ".vbs", ".reg", ".lang"],
-        "text/markdown": [".md"],
-        "text/html": [".html", ".htm"],
-        "text/javascript": [".js"],
-        "application/json": [".json"],
-        "text/css": [".css"],
-        "text/x-python": [".py"]
+        "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".flac"],
+        "text/plain": [".lrc"]
       }
     }
   ],
   "launch_handler": {
-    "client_mode": "navigate-new"
-  },
-  "scope": "/notepad/"
+    "client_mode": "focus-existing"
+  }
 }
