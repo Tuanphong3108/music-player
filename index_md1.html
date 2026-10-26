@@ -2,1517 +2,607 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta id="theme-meta" name="theme-color" content="#303F9F">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music Player MD1</title>
-    <link rel="icon" type="image/png" href="music_note.png">
+    <!-- Apply the saved/system theme before first paint (avoids a light flash) -->
+    <script>try{var t=localStorage.getItem("notepad-theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+    <title>Notepad MD1 Classic</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <!-- PWA Manifest Link -->
     <link rel="manifest" href="manifest_md1.json">
+    <meta name="theme-color" content="#1976D2">
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <!-- Google Sans Flex & Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;700&family=Google+Sans+Code:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link rel="stylesheet" href="editor.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists/dist/markdown-it-task-lists.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/powershell.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/dos.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.9.0/languages/vbscript.min.js"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
-
     <style>
-        @font-face {
-            font-family: 'Minecraft';
-            src: url('https://tuanphong3108.github.io/google-sans-do-not-access/minecraft.ttf') format('truetype');
-            font-weight: normal; font-style: normal;
-        }
-
-        /* --- MATERIAL DESIGN 1 THEME --- */
+        /* --- MD1 CLASSIC THEME --- */
         :root {
-            /* Light Theme Defaults (MD1 Indigo & Pink) */
-            --primary: #3F51B5;
-            --primary-dark: #303F9F;
-            --accent: #FF4081; /* Pink A200 */
-            --bg-color: #FAFAFA;
-            --surface: #FFFFFF;
-            --text-primary: rgba(0, 0, 0, 0.87);
-            --text-secondary: rgba(0, 0, 0, 0.54);
-            --divider: rgba(0, 0, 0, 0.12);
-            --icon-color: rgba(0, 0, 0, 0.54);
-            
-            /* Elevation (Shadows) */
-            --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-            --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-            --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-            --shadow-fab: 0 2px 5px 0 rgba(0,0,0,0.26), 0 2px 10px 0 rgba(0,0,0,0.16);
-            --shadow-appbar: 0 2px 4px -1px rgba(0,0,0,0.2), 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12);
-            
-            --transition-md: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            --loader-filter: grayscale(1) brightness(0.5) sepia(1) hue-rotate(240deg) saturate(5);
+            /* Palette MD1 chuẩn Android 5.0 */
+            --md-primary: #2196F3;       /* Blue 500 */
+            --md-primary-dark: #1976D2;  /* Blue 700 */
+            --md-accent: #FF4081;        /* Pink A200 */
+            --md-appbar: #2196F3;
+            --md-bg: #E0E0E0;            /* Grey 300 */
+            --md-surface: #FFFFFF;
+            --md-surface-2: #FAFAFA;
+            --md-text: rgba(0,0,0,0.87);
+            --md-text-secondary: rgba(0,0,0,0.54);
+            --md-divider: rgba(0,0,0,0.12);
+            --md-hover: rgba(0,0,0,0.05);
+            --md-overlay-bg: rgba(255,255,255,0.9);
+            --md-code-bg: #F5F5F5;
+            --md-scroll: rgba(0,0,0,0.2);
+            --md-scroll-hover: rgba(0,0,0,0.4);
+
+            /* editor.css adapter */
+            --ed-surface: var(--md-surface);
+            --ed-text: var(--md-text);
+            --ed-text-2: var(--md-text-secondary);
+            --ed-primary: var(--md-primary);
+            --ed-on-primary: #FFFFFF;
+            --ed-hover: var(--md-hover);
+            --ed-error: #E53935;
+            --ed-radius: 2px;
+            --ed-btn-radius: 2px;
+            --ed-btn-case: uppercase;
+            --ed-editor-text: var(--md-text);
+            --ed-selection: rgba(33, 150, 243, 0.3);
+
+            /* Shadows MD1 (Z-Depth) */
+            --shadow-z1: 0 2px 5px 0 rgba(0,0,0,0.16), 0 2px 10px 0 rgba(0,0,0,0.12);
+            --shadow-z2: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
+            --shadow-z3: 0 8px 17px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            --shadow-menu: 0 2px 10px rgba(0,0,0,0.2);
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --primary: #212121;
-                --primary-dark: #000000;
-                --accent: #FF4081;
-                --bg-color: #303030;
-                --surface: #424242;
-                --text-primary: rgba(255, 255, 255, 1);
-                --text-secondary: rgba(255, 255, 255, 0.7);
-                --divider: rgba(255, 255, 255, 0.12);
-                --icon-color: rgba(255, 255, 255, 0.7);
-                --loader-filter: grayscale(1) brightness(1.5) sepia(1) hue-rotate(240deg) saturate(3);
-            }
+        html[data-theme="light"] { color-scheme: light; }
+
+        html[data-theme="dark"] {
+            color-scheme: dark;
+            --md-primary: #64B5F6;       /* Blue 300 */
+            --md-primary-dark: #42A5F5;
+            --md-appbar: #212121;        /* Grey 900 */
+            --md-bg: #121212;
+            --md-surface: #1E1E1E;
+            --md-surface-2: #2A2A2A;
+            --md-text: rgba(255,255,255,0.87);
+            --md-text-secondary: rgba(255,255,255,0.6);
+            --md-divider: rgba(255,255,255,0.12);
+            --md-hover: rgba(255,255,255,0.08);
+            --md-overlay-bg: rgba(18,18,18,0.9);
+            --md-code-bg: #2A2A2A;
+            --md-scroll: rgba(255,255,255,0.25);
+            --md-scroll-hover: rgba(255,255,255,0.45);
+            --ed-on-primary: #0D2540;
+            --ed-error: #EF9A9A;
+            --shadow-z1: 0 2px 5px 0 rgba(0,0,0,0.5), 0 2px 10px 0 rgba(0,0,0,0.4);
+            --shadow-z3: 0 8px 17px 0 rgba(0,0,0,0.6), 0 6px 20px 0 rgba(0,0,0,0.5);
+            --shadow-menu: 0 2px 10px rgba(0,0,0,0.6);
         }
 
-        .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined';
-            font-weight: normal; font-style: normal; font-size: 24px;
-            line-height: 1; display: inline-block; white-space: nowrap;
-            -webkit-font-feature-settings: 'liga';
-            -webkit-font-smoothing: antialiased;
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            transition: var(--transition-md);
-        }
-
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background: var(--bg-color); color: var(--text-primary);
-            font-family: 'Roboto', sans-serif; overflow: hidden;
+        body {
+            font-family: 'Google Sans Flex', sans-serif; /* Giữ font nhưng style MD1 */
+            background-color: var(--md-bg);
+            color: var(--md-text);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
             user-select: none;
         }
 
-        #loading-overlay {
-            position: fixed; inset: 0; background: var(--bg-color);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 2000; transition: opacity 0.5s ease, visibility 0.5s;
-        }
-        #loading-overlay img { 
-            width: 80px; 
-            filter: var(--loader-filter);
-        }
-
-        #context-menu {
-            position: fixed; background: var(--surface);
-            color: var(--text-primary); border-radius: 2px;
-            padding: 8px 0; min-width: 180px; box-shadow: var(--shadow-2);
-            z-index: 9999; display: none; flex-direction: column;
-        }
-        
-        .cm-item {
-            padding: 12px 16px; display: flex; align-items: center; gap: 12px;
-            cursor: pointer; transition: background 0.2s; font-size: 14px;
-        }
-        .cm-item:hover { background: rgba(158, 158, 158, 0.2); }
-        .cm-item.danger { color: #F44336; }
-        .cm-item .material-symbols-outlined { color: var(--icon-color); }
-        .cm-item.danger .material-symbols-outlined { color: #F44336; }
-
-        .app-container {
-            display: flex; flex-direction: column; height: 100vh;
-            width: 100%; position: relative;
+        /* --- Menus (Context & More) --- */
+        #contextMenu, #moreOptionsMenu, #spellSubmenu {
+            position: fixed;
+            display: none;
+            background: var(--md-surface);
+            border-radius: 2px; /* Góc vuông hơn MD3 */
+            box-shadow: var(--shadow-menu);
+            z-index: 1000;
+            min-width: 200px;
+            padding: 8px 0;
+            border: none;
+            animation: fadeIn 0.1s ease-out;
         }
 
-        .top-bar { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 0 24px; height: 64px; 
-            background-color: var(--primary);
-            box-shadow: var(--shadow-appbar);
-            z-index: 100;
-        }
-        .brand { 
-            display: flex; align-items: center; gap: 12px; 
-            font-family: 'Minecraft'; color: #FFFFFF; font-size: 18px;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .top-bar-actions { display: flex; gap: 8px; }
-        
-        .top-bar .btn-m3 { color: #FFFFFF; }
-        .top-bar .btn-m3:hover { background: rgba(255, 255, 255, 0.1); transform: none; }
-
-        .btn-m3 {
-            background: transparent; border: none; color: var(--icon-color);
-            cursor: pointer; width: 48px; height: 48px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; transition: var(--transition-md);
-            position: relative; flex-shrink: 0;
-        }
-        .btn-m3:hover { background: rgba(158, 158, 158, 0.2); transform: none; }
-        .btn-m3.active { color: var(--accent); }
-        .btn-m3.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
-        
-        .repeat-badge {
-            position: absolute; font-size: 10px; font-weight: 700; bottom: 8px; right: 8px;
-            background: var(--accent); color: #FFFFFF;
-            width: 14px; height: 14px; border-radius: 50%; display: none; align-items: center; justify-content: center;
-        }
-        .btn-m3.repeat-one .repeat-badge { display: flex; }
-
-        /* MD1 FAB (Floating Action Button) for Play */
-        .btn-play {
-            width: 56px; height: 56px; background-color: var(--accent) !important;
-            color: #FFFFFF !important; border-radius: 50% !important;
-            box-shadow: var(--shadow-fab) !important;
-        }
-        .btn-play:hover { background-color: #F50057 !important; box-shadow: var(--shadow-2) !important; }
-
-        .main-content { 
-            flex: 1; display: flex; gap: 16px; min-height: 0; 
-            position: relative; padding: 16px; max-width: 1400px; margin: 0 auto; width: 100%;
-        }
-
-        .playlist-card {
-            width: 320px; background: var(--surface); border-radius: 2px;
-            display: flex; flex-direction: column; overflow: hidden; 
-            box-shadow: var(--shadow-1); transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            z-index: 50;
-        }
-        
-        .playlist-card.collapsed { width: 64px; }
-        .playlist-header { 
-            padding: 16px; display: flex; justify-content: space-between; align-items: center; 
-            min-height: 56px; cursor: pointer; border-bottom: 1px solid var(--divider);
-        }
-        .playlist-card.collapsed .playlist-header { flex-direction: column; justify-content: center; padding: 16px 0; gap: 4px; }
-        .playlist-header h3 { margin: 0; font-size: 16px; font-weight: 500; }
-        .playlist-card.collapsed .playlist-header h3 { display: none; }
-        
-        .expand-icon-group { display: flex; align-items: center; gap: 8px; }
-        .expand-icon { transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); color: var(--icon-color); }
-        .playlist-card.collapsed .expand-icon { transform: rotate(-90deg); }
-        .hide-text { font-size: 12px; color: var(--text-secondary); display: block; }
-        .playlist-card.collapsed .hide-text { display: none; }
-        
-        #track-count { font-size: 12px; color: var(--text-secondary); margin: 0; }
-        
-        .search-container { padding: 8px 16px; border-bottom: 1px solid var(--divider); background: var(--surface); }
-        .playlist-card.collapsed .search-container { display: none; }
-        .search-wrapper {
-            background: transparent;
+        .menu-item {
+            padding: 0 16px;
+            height: 48px; /* Chuẩn touch target MD1 */
             display: flex;
             align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            font-size: 15px;
+            color: var(--md-text);
+            transition: background 0.2s;
+        }
+
+        .menu-item:hover:not(.disabled) { background: var(--md-hover); }
+        .menu-item .material-symbols-outlined { font-size: 20px; color: var(--md-text-secondary); }
+        .menu-item .switch { margin-left: auto; }
+        .menu-sep { height: 1px; background: var(--md-divider); margin: 4px 0; }
+
+        /* --- Header (AppBar) --- */
+        .app-header {
+            height: 56px; /* Chuẩn chiều cao AppBar mobile MD1 */
+            background-color: var(--md-appbar) !important;
+            box-shadow: var(--shadow-z1);
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+            color: white;
+            border-bottom: none;
+        }
+
+        /* Logo & Branding - Override Tailwind inline colors */
+        #brandLogo { color: white !important; transition: all 0.8s ease; max-width: 200px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
+        #brandLogo.collapsed { max-width: 40px; }
+        #brandText { font-weight: 500 !important; font-size: 20px !important; letter-spacing: 0.15px; transition: all 0.5s ease; }
+        #brandIcon { color: white !important; transform: scale(0); opacity: 0; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        #brandLogo.collapsed #brandIcon { transform: scale(1); opacity: 1; }
+        #brandLogo.collapsed #brandText { opacity: 0; transform: translateX(-20px); pointer-events: none; }
+
+        /* Actions Buttons in AppBar */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 50%; /* Circle buttons in toolbar */
+            transition: background 0.2s;
+            cursor: pointer;
+            color: white !important; /* Force white icon */
+            background: transparent !important;
+            overflow: hidden;
+        }
+
+        .action-btn:hover:not(.disabled) { background-color: rgba(255,255,255,0.15) !important; }
+        .action-btn .action-label { display: none; } /* MD1 toolbar icons don't show labels usually */
+
+        /* Input Title */
+        #noteTitle {
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: 500 !important;
+            border-bottom: 1px solid rgba(255,255,255,0.5) !important;
+            padding-bottom: 2px;
+        }
+        #noteTitle:focus { border-bottom-color: white !important; }
+        #noteTitle::placeholder { color: rgba(255,255,255,0.6) !important; }
+
+        /* --- Toolbar MD (Format bar) --- */
+        #mdToolbar {
+            background: var(--md-surface) !important;
+            border-radius: 2px !important;
+            box-shadow: var(--shadow-z1);
+            border: none !important;
+            margin-right: 16px;
+        }
+        #mdToolbar .action-btn {
+            color: var(--md-text-secondary) !important;
+            border-radius: 2px !important; /* Square-ish buttons for format bar */
+            width: 36px;
+        }
+        #mdToolbar .action-btn:hover { background-color: var(--md-hover) !important; }
+
+        /* --- Overshoot Switch (Yêu cầu giữ nguyên) --- */
+        .switch { position: relative; display: inline-block; width: 44px !important; height: 20px !important; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #9E9E9E; /* Grey inactive */
+            transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute; content: "close"; font-family: 'Material Symbols Outlined';
+            font-size: 14px; display: flex; align-items: center; justify-content: center;
+            height: 24px; width: 24px; left: -2px; bottom: -2px;
+            background-color: #FAFAFA; color: #757575;
+            transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            font-weight: bold;
+        }
+        input:checked + .slider {
+            background-color: rgba(33, 150, 243, 0.7); /* Sáng hơn! */
+        }
+        input:checked + .slider:before {
+            content: "check";
+            transform: translateX(24px);
+            background-color: #42A5F5; /* Light Blue 400 - sáng hơn! */
+            color: white;
+            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.5); /* Thêm glow */
+        }
+
+        /* --- Find & Replace Bar (Card Style) --- */
+        #findReplaceBar {
+            display: none;
+            background-color: var(--md-surface-2);
+            padding: 8px 16px;
+            gap: 8px;
+            align-items: center;
+            border-bottom: 1px solid var(--md-divider);
+            box-shadow: var(--shadow-z1);
+            flex-wrap: wrap;
+            z-index: 5;
+        }
+
+        .fr-input-container {
+            display: flex;
+            align-items: center;
+            background: var(--md-surface);
+            border-radius: 2px;
             height: 36px;
-            border-bottom: 1px solid var(--divider);
-            transition: 0.3s;
-        }
-        .search-wrapper:focus-within {
-            border-bottom: 2px solid var(--accent);
-        }
-        .search-wrapper span.search-icon { font-size: 20px; color: var(--text-secondary); margin-right: 8px; }
-        .search-input {
-            background: transparent; border: none;
-            color: var(--text-primary);
-            padding: 0; width: 100%;
-            font-size: 14px; font-family: inherit;
-        }
-        .search-input::placeholder { color: var(--text-secondary); }
-
-        .playlist-items { flex: 1; overflow-y: auto; }
-        .playlist-card.collapsed .playlist-items { display: none; }
-
-        .song-item {
-            padding: 12px 16px; display: flex; align-items: center; gap: 16px;
-            cursor: pointer; transition: background 0.2s ease; border-bottom: 1px solid var(--divider);
-        }
-        .song-item:hover { background: rgba(158, 158, 158, 0.1); }
-        .song-item.active { background: rgba(158, 158, 158, 0.2); }
-        .song-item .material-symbols-outlined { color: var(--icon-color); }
-        .song-item.active .material-symbols-outlined { color: var(--accent); }
-
-        .visual-stage { 
-            flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; 
-            border-radius: 2px; overflow: hidden; background: #000; box-shadow: var(--shadow-1);
-        }
-        #visualizer { width: 100%; height: 100%; z-index: 2; position: absolute; inset: 0;}
-
-        .lyric-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-            display: flex; flex-direction: column; align-items: center;
-            padding: 50vh 20px; overflow-y: auto; scroll-behavior: smooth;
-            z-index: 15; opacity: 0; pointer-events: none; transition: var(--transition-md);
-            -ms-overflow-style: none; scrollbar-width: none;
-        }
-        .lyric-overlay::-webkit-scrollbar { display: none; }
-        .lyric-overlay.visible { opacity: 1; pointer-events: auto; }
-
-        .lyric-line {
-            font-size: 20px; color: rgba(255,255,255,0.5); margin: 16px 0;
-            text-align: center; transition: var(--transition-md);
-            cursor: pointer; transform-origin: center;
-            font-weight: 500; max-width: 80%; line-height: 1.4;
-        }
-        .lyric-line:hover { color: #FFFFFF; }
-        .lyric-line.active {
-            font-size: 28px; color: var(--accent);
-            font-weight: 700;
-        }
-
-        .lyric-placeholder {
-            margin: auto; opacity: 0.7; font-size: 14px;
-            text-align: center; line-height: 2; color: #FFFFFF; text-transform: uppercase;
-        }
-
-        .pause-overlay {
-            position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
-            z-index: 5; opacity: 0; pointer-events: none;
-            transition: var(--transition-md); background: rgba(0,0,0,0.3);
-        }
-        .pause-overlay.visible { opacity: 1; }
-        .pause-icon-bg {
-            color: #FFFFFF;
-        }
-        .pause-icon-bg span { font-size: 80px; font-variation-settings: 'FILL' 1; text-shadow: var(--shadow-2); }
-
-        .top-active-lyric {
-            position: absolute; top: 32px; left: 50%; transform: translateX(-50%);
-            width: 90%; text-align: center; z-index: 10;
-            font-size: 24px; font-weight: 700; color: #fff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
-            pointer-events: none; transition: var(--transition-md); 
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-        }
-
-        .bouncing-dots { display: inline-flex; align-items: flex-end; justify-content: center; height: 1em; gap: 4px; }
-        .bouncing-dots .dot { animation: dot-jump 1s infinite; font-size: 1.2em; line-height: 0.5; color: var(--accent); }
-        .bouncing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
-        .bouncing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes dot-jump {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        .bg-thumb-preview {
-            position: absolute; inset: 0; background-size: cover; background-position: center;
-            opacity: 0; transition: opacity 1s ease;
-            z-index: 1; opacity: 0.4;
-        }
-        .bg-thumb-preview.visible { opacity: 0.4; }
-
-        .marquee-container { 
-            width: 100%; overflow: hidden; white-space: nowrap; position: relative;
-        }
-        .marquee-content { display: flex; width: max-content; align-items: center; }
-        .is-scrolling .marquee-content { animation: marquee-scroll 10s linear infinite; }
-        
-        @keyframes marquee-scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        .track-name-text { padding-right: 50px; display: inline-block; color: var(--text-primary); }
-
-        .player-shell {
-            position: relative; background: var(--surface);
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-            padding: 16px 24px; display: grid; grid-template-columns: 1fr 2fr 1fr;
-            align-items: center; gap: 16px; z-index: 100;
-        }
-
-        .seek-container { 
-            position: absolute; top: -10px; left: 0; right: 0; 
-            display: flex; align-items: center; z-index: 110; height: 20px;
-        }
-        #seek-slider {
-            width: 100%; height: 2px; appearance: none; margin: 0;
-            background: rgba(158, 158, 158, 0.3); cursor: pointer; transition: 0.1s;
-        }
-        #seek-slider:active { height: 4px; }
-        #seek-slider::-webkit-slider-thumb { 
-            appearance: none; width: 12px; height: 12px; 
-            background: var(--accent); border-radius: 50%; opacity: 0;
-            transition: transform 0.1s, opacity 0.2s;
-        }
-        .player-shell:hover #seek-slider::-webkit-slider-thumb { opacity: 1; }
-        #seek-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
-
-        .track-info { display: flex; align-items: center; gap: 16px; min-width: 0; }
-        .mini-art { 
-            width: 56px; height: 56px; background: rgba(158, 158, 158, 0.2); 
-            border-radius: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-            overflow: hidden; position: relative; box-shadow: var(--shadow-1);
-        }
-        .mini-art img { width: 100%; height: 100%; object-fit: cover; }
-        .mini-art .placeholder-icon { color: var(--icon-color); font-size: 32px; }
-
-        .track-text { min-width: 0; flex: 1; }
-        .track-text h4 { margin: 0; font-size: 16px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .track-text p { margin: 4px 0 0; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
-
-        .controls-group { display: flex; justify-content: center; align-items: center; gap: 16px; }
-        
-        .volume-group { display: flex; align-items: center; justify-content: flex-end; gap: 16px; color: var(--icon-color); }
-        #volume-slider { width: 100px; height: 2px; appearance: none; background: rgba(158, 158, 158, 0.3); cursor: pointer; }
-        #volume-slider::-webkit-slider-thumb {
-            appearance: none; width: 12px; height: 12px; 
-            background: var(--text-secondary); border-radius: 50%;
-        }
-
-        .time-labels {
-            display: flex; justify-content: space-between; position: absolute; top: -20px; left: 8px; right: 8px;
-            font-size: 12px; color: var(--text-secondary); pointer-events: none;
-        }
-        .hidden { display: none; }
-
-        /* --- REORDER UI MODE STYLES --- */
-        body.reorder-active .player-shell { transform: translateY(150%); opacity: 0; pointer-events: none; }
-        body.reorder-active .playlist-card { width: 100%; max-width: 800px; margin: 0 auto; flex: none; height: 100%; border-radius: 2px; }
-        body.reorder-active .visual-stage { display: none; }
-        
-        body.reorder-active .search-container { display: none; }
-        body.reorder-active .expand-icon-group { display: none; }
-        
-        .song-item .icon-play { display: block; }
-        .song-item .icon-drag { display: none; cursor: grab; color: var(--icon-color); }
-        body.reorder-active .song-item .icon-play { display: none; }
-        body.reorder-active .song-item .icon-drag { display: block; }
-        
-        .song-item.dragging { 
-            opacity: 0.8; 
-            background: var(--surface); 
-            box-shadow: var(--shadow-3);
             border: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 180px;
+        }
+        .fr-input-container:focus-within { box-shadow: 0 0 0 2px var(--md-primary); }
+        .fr-input { border: none; outline: none; flex: 1; font-size: 14px; padding: 0 8px; background: transparent; color: var(--md-text); }
+
+        /* --- Editor Area (Paper Sheet) --- */
+        #editorArea {
+            display: flex; flex-grow: 1; overflow: hidden; position: relative;
+            background: var(--md-bg);
+            padding: 16px;
         }
 
-        .reorder-done-btn {
-            position: fixed; bottom: -100px; right: 24px;
-            width: auto; padding: 0 24px; height: 48px; border-radius: 24px; 
-            background: var(--accent); color: #FFFFFF;
-            border: none; display: flex; align-items: center; justify-content: center; gap: 8px;
-            box-shadow: var(--shadow-fab); cursor: pointer; z-index: 2000;
-            transition: bottom 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            font-family: 'Roboto', sans-serif; font-weight: 500; font-size: 14px; text-transform: uppercase;
+        .editor-wrapper {
+            position: relative; flex: 1; display: flex; overflow: hidden;
+            background: var(--md-surface);
+            box-shadow: var(--shadow-z1);
+            border-radius: 2px;
         }
-        .reorder-done-btn:hover { background: #F50057; box-shadow: var(--shadow-3); }
-        body.reorder-active .reorder-done-btn { bottom: 24px; }
-        .reorder-done-btn span { font-size: 20px; }
 
-        @media (max-width: 850px) {
-            .player-shell { grid-template-columns: 1fr 1fr; padding: 12px 16px; }
-            .volume-group { display: none; }
-            .playlist-card { width: 280px; }
+        /* font / padding / wrapping of the textarea and its layers live in editor.css */
+        .editor-wrapper { --ed-pad: 24px; --ed-lh: 1.6; }  /* Classic padding */
+
+        #noteContent {
+            z-index: 2;
+            position: relative;
+            color: var(--md-text);
+            background: transparent;
+            border: none;
+            resize: none;
+            flex: 1;
+            outline: none;
+            overflow-y: auto;
+            user-select: text;
         }
-        
-        /* Material Scrollbar */
+
+        /* Lớp highlight tìm kiếm nằm đè phía sau textarea (layout trong editor.css) */
+        #searchHighlights mark { background-color: #FFEB3B; color: transparent; border-bottom: none; }
+        #searchHighlights mark.current { background-color: #FF9800; border-bottom: 2px solid #E65100; }
+
+        #previewPane {
+            flex: 1; padding: 24px; overflow-y: auto; background-color: var(--md-surface);
+            display: none; border-left: 1px solid var(--md-divider); user-select: text;
+        }
+        #previewPane.active { display: block !important; }
+
+        /* Markdown Styles */
+        .markdown-body h1 { font-size: 2rem; font-weight: 500; color: var(--md-primary); border-bottom: 1px solid var(--md-divider); margin-bottom: 1rem; }
+        .markdown-body h2 { font-size: 1.5rem; font-weight: 500; margin-top: 1.5rem; }
+        .markdown-body h3 { font-size: 1.25rem; font-weight: 500; margin-top: 1rem; }
+        .markdown-body ul { padding-left: 1.5rem; list-style: disc; }
+        .markdown-body ol { padding-left: 1.5rem; list-style: decimal; }
+        .markdown-body .contains-task-list { list-style: none; padding-left: 0.5rem; }
+        .markdown-body a { color: var(--md-primary); text-decoration: underline; }
+        .markdown-body blockquote { border-left: 4px solid var(--md-divider); padding-left: 1rem; color: var(--md-text-secondary); }
+        .markdown-body hr { border-top: 1px solid var(--md-divider); margin: 1rem 0; }
+        .markdown-body code { background: var(--md-code-bg); padding: 2px 6px; border-radius: 2px; font-family: 'Google Sans Code', monospace; }
+        .markdown-body pre { background: #263238; color: #ECEFF1; padding: 16px; border-radius: 2px; overflow-x: auto; }
+        .markdown-body pre code { background: transparent; color: inherit; padding: 0; }
+
+        /* Toast MD1 (Snackbar) */
+        #toast {
+            visibility: hidden;
+            min-width: 288px;
+            background: #323232;
+            color: white;
+            border-radius: 2px;
+            padding: 14px 24px;
+            position: fixed;
+            left: 24px; /* Bottom Left standard */
+            bottom: 24px;
+            z-index: 100;
+            font-size: 14px;
+            box-shadow: var(--shadow-z1);
+            text-align: center;
+            transform-origin: left bottom;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, visibility 0s linear 0.25s;
+            transform: scale(0.6);
+            opacity: 0;
+        }
+        #toast.show { visibility: visible; transform: scale(1); opacity: 1; transition-delay: 0s; }
+
+        /* --- CSS Spinner (Thay thế GIF) --- */
+        #loading {
+            background: var(--md-overlay-bg) !important;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid rgba(33, 150, 243, 0.2);
+            border-top-color: var(--md-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Auto Save Prompt Card */
+        #autoSavePrompt > div {
+            border-radius: 2px !important;
+            box-shadow: var(--shadow-z3) !important;
+        }
+        #autoSavePrompt h2 { color: var(--md-primary); }
+
+        /* Custom Scrollbar for MD1 feel */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(158, 158, 158, 0.5); }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(158, 158, 158, 0.8); }
+        ::-webkit-scrollbar-thumb { background: var(--md-scroll); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--md-scroll-hover); }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <img src="https://tuanphong3108.github.io/md3-loading/Loading_Indicator.gif" alt="Loading">
-        <p style="font-family:'Roboto', sans-serif; font-weight: 500; color:var(--text-secondary); margin-top:16px; font-size: 14px; letter-spacing: 1px;">LOADING WORKSPACE...</p>
+    <!-- Context & More Menus -->
+    <div id="contextMenu">
+        <div id="spellCtx" style="display:none">
+        <div id="spellCtxItem" class="menu-item"><span class="material-symbols-outlined">spellcheck</span>Chính tả<span class="material-symbols-outlined" style="margin-left:auto">chevron_right</span></div>
+        <div class="menu-sep"></div>
+    </div>
+            <div class="menu-item" onclick="handleMenuAction('undo')"><span class="material-symbols-outlined">undo</span>Hoàn tác</div>
+        <div class="menu-item" onclick="handleMenuAction('redo')"><span class="material-symbols-outlined">redo</span>Làm lại</div>
+        <div class="menu-sep"></div>
+        <div class="menu-item" onclick="toggleFindReplace()"><span class="material-symbols-outlined">search</span>Tìm kiếm & Thay thế</div>
+        <div class="menu-sep"></div>
+        <div class="menu-item" onclick="handleMenuAction('cut')"><span class="material-symbols-outlined">content_cut</span>Cắt</div>
+        <div class="menu-item" onclick="handleMenuAction('copy')"><span class="material-symbols-outlined">content_copy</span>Sao chép</div>
+        <div class="menu-item" onclick="handleMenuAction('paste')"><span class="material-symbols-outlined">content_paste</span>Dán</div>
+        <div class="menu-item" onclick="handleMenuAction('select-all')"><span class="material-symbols-outlined">select_all</span>Chọn tất cả</div>
     </div>
 
-    <div id="context-menu">
-        <div class="cm-item danger" id="cm-delete">
-            <span class="material-symbols-outlined">delete</span>
-            <span>Xoá khỏi playlist</span>
+    <div id="spellSubmenu"></div>
+
+    <div id="moreOptionsMenu">
+        <div class="menu-item" onclick="handleMenuAction('undo')"><span class="material-symbols-outlined">undo</span>Hoàn tác <span class="ml-auto text-xs opacity-50">Ctrl+Z</span></div>
+        <div class="menu-item" onclick="handleMenuAction('redo')"><span class="material-symbols-outlined">redo</span>Làm lại <span class="ml-auto text-xs opacity-50">Ctrl+Y</span></div>
+        <div class="menu-sep"></div>
+        <div class="menu-item" onclick="handleMenuAction('cut')"><span class="material-symbols-outlined">content_cut</span>Cắt <span class="ml-auto text-xs opacity-50">Ctrl+X</span></div>
+        <div class="menu-item" onclick="handleMenuAction('copy')"><span class="material-symbols-outlined">content_copy</span>Sao chép <span class="ml-auto text-xs opacity-50">Ctrl+C</span></div>
+        <div class="menu-item" onclick="handleMenuAction('paste')"><span class="material-symbols-outlined">content_paste</span>Dán <span class="ml-auto text-xs opacity-50">Ctrl+V</span></div>
+        <div class="menu-item" onclick="handleMenuAction('select-all')"><span class="material-symbols-outlined">select_all</span>Chọn tất cả <span class="ml-auto text-xs opacity-50">Ctrl+A</span></div>
+        <div class="menu-sep"></div>
+        <div class="menu-item" onclick="toggleFindReplace()"><span class="material-symbols-outlined">search</span>Tìm kiếm <span class="ml-auto text-xs opacity-50">Ctrl+F</span></div>
+        <div class="menu-sep"></div>
+        <div class="menu-item" onclick="toggleSpellCheck(event)">
+            <span class="material-symbols-outlined">spellcheck</span>Kiểm tra chính tả
+            <label class="switch pointer-events-none"><input type="checkbox" id="spellCheckToggle" tabindex="-1"><span class="slider"></span></label>
         </div>
-        <div class="cm-item" id="cm-add-lrc">
-            <span class="material-symbols-outlined">description</span>
-            <span>Thêm lời lẻ (.lrc)</span>
+        <div class="menu-item" id="spellLangItem" onclick="openSpellDialog()">
+            <span class="material-symbols-outlined">translate</span>
+            <span class="menu-text">Ngôn ngữ kiểm tra<span id="spellLangSummary" class="menu-subtext"></span></span>
+        </div>
+        <div class="menu-item" id="dictItem" onclick="openDictDialog()">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span class="menu-text">Từ điển của tôi<span id="dictSummary" class="menu-subtext"></span></span>
+        </div>
+        <div class="menu-item" id="suggestItem" onclick="openSuggestDialog()">
+            <span class="material-symbols-outlined">auto_fix_high</span>
+            <span class="menu-text">Gợi ý sửa<span id="sugSummary" class="menu-subtext"></span></span>
+        </div>
+        <div class="menu-item" onclick="event.stopPropagation()">
+            <span class="material-symbols-outlined">dark_mode</span>Chế độ tối
+            <select id="themeSelect" class="theme-select" aria-label="Chế độ tối" onchange="setThemeMode(this.value)">
+                <option value="dark">Bật</option>
+                <option value="light">Tắt</option>
+                <option value="system">Hệ thống</option>
+            </select>
+        </div>
+        <div class="menu-item" onclick="restartApp()">
+            <span class="material-symbols-outlined">restart_alt</span>
+            Khởi động lại
         </div>
     </div>
 
-    <div class="app-container">
-        <div class="top-bar">
-            <div class="brand">
-                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
-                <span>PLAYER V2026.05.31</span>
+    <header class="app-header">
+        <div class="flex items-center gap-2 overflow-hidden flex-shrink-0">
+            <div id="brandLogo" class="flex items-center mr-2">
+                <span id="brandIcon" class="material-symbols-outlined text-3xl flex-shrink-0 mr-2">description</span>
+                <span id="brandText" class="font-bold text-xl tracking-tight">Notepad</span>
             </div>
-            <div class="top-bar-actions">
-                <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add</span></button>
+            
+            <div class="flex items-center gap-1">
+                <button onclick="newFile()" class="action-btn" title="Mới"><span class="material-symbols-outlined">note_add</span></button>
+                <button onclick="openFile()" class="action-btn" title="Mở"><span class="material-symbols-outlined">file_open</span></button>
+                <button id="mainSaveBtn" onclick="saveFile()" class="action-btn hidden" title="Lưu"><span class="material-symbols-outlined">save</span></button>
+                <button id="saveAsBtn" onclick="saveFileAs()" class="action-btn" title="Lưu mới"><span class="material-symbols-outlined">save_as</span></button>
             </div>
+            <div class="w-[1px] h-6 bg-white/30 mx-2"></div>
+            <input type="text" id="noteTitle" readonly placeholder="Không tên" class="bg-transparent outline-none border-none text-left w-24 sm:w-32 lg:w-48 transition-colors" autocomplete="off">
         </div>
 
-        <div class="main-content">
-            <div class="playlist-card" id="playlist-card">
-                <div class="playlist-header" onclick="togglePlaylist()">
-                    <div class="expand-icon-group">
-                        <span class="material-symbols-outlined expand-icon">arrow_back</span>
-                        <span class="hide-text">Ẩn</span>
-                    </div>
-                    <h3 id="pl-title">Playlist</h3>
-                    <p id="track-count">0</p>
-                </div>
-                
-                <div class="search-container">
-                    <div class="search-wrapper">
-                        <span class="material-symbols-outlined search-icon">search</span>
-                        <input type="text" id="playlist-search" class="search-input" placeholder="Tìm kiếm bài hát...">
-                        <button class="btn-m3" id="reorder-btn" style="width: 32px; height: 32px; background: transparent; margin-left: auto;" title="Chế độ sửa danh sách">
-                            <span class="material-symbols-outlined" style="font-size: 20px;">sort</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="playlist-items" id="playlist-container"></div>
-            </div>
-
-            <div class="visual-stage">
-                <div class="pause-overlay" id="pause-overlay">
-                    <div class="pause-icon-bg"><span class="material-symbols-outlined">pause</span></div>
-                </div>
-                <div id="drop-zone" style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">
-                    <span class="material-symbols-outlined" style="font-size:72px; color: rgba(255,255,255,0.2)">upload_file</span>
-                    <p style="font-size:14px; margin-top:16px; color: rgba(255,255,255,0.5)">Kéo thả file âm thanh vào đây</p>
-                </div>
-                <div id="bg-preview" class="bg-thumb-preview"></div>
-                <canvas id="visualizer"></canvas>
-                <div id="top-active-lyric" class="top-active-lyric"></div>
-                
-                <div class="lyric-overlay" id="lyric-overlay">
-                    <div class="lyric-placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
-                </div>
-            </div>
+        <div id="mdToolbar" class="hidden sm:flex items-center gap-0.5 px-2 py-1 opacity-0 transition-all">
+            <button onclick="insertMD('**', '**')" class="action-btn text-[color:var(--md-text-secondary)]"><span class="material-symbols-outlined">format_bold</span></button>
+            <button onclick="insertMD('*', '*')" class="action-btn text-[color:var(--md-text-secondary)]"><span class="material-symbols-outlined">format_italic</span></button>
+            <button onclick="insertMD('# ', '')" class="action-btn text-[color:var(--md-text-secondary)]"><span class="material-symbols-outlined">format_size</span></button>
+            <button onclick="insertMD('`', '`')" class="action-btn text-[color:var(--md-text-secondary)]"><span class="material-symbols-outlined">code</span></button>
+            <button onclick="insertMD('~~', '~~')" class="action-btn text-[color:var(--md-text-secondary)]" title="Gạch ngang"><span class="material-symbols-outlined">format_strikethrough</span></button>
+            <button onclick="insertLinePrefix('- ')" class="action-btn text-[color:var(--md-text-secondary)]" title="Danh sách"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+            <button onclick="insertLinePrefix('- [ ] ')" class="action-btn text-[color:var(--md-text-secondary)]" title="Công việc"><span class="material-symbols-outlined">check_box</span></button>
+            <button onclick="insertMD('\n---\n', '')" class="action-btn text-[color:var(--md-text-secondary)]" title="Đường kẻ ngang"><span class="material-symbols-outlined">horizontal_rule</span></button>
+            <button onclick="insertCodeBlock()" class="action-btn text-[color:var(--md-text-secondary)]" title="Khối mã"><span class="material-symbols-outlined">code_blocks</span></button>
         </div>
 
-        <div class="player-shell">
-            <div class="time-labels">
-                <span id="current-time">0:00</span>
-                <span id="duration">0:00</span>
-            </div>
-            <div class="seek-container"><input type="range" id="seek-slider" min="0" max="100" step="any" value="0"></div>
-            <div class="track-info">
-                <div class="mini-art" id="player-mini-art">
-                    <img src="" id="art-img" class="hidden" alt="art">
-                    <span id="art-placeholder" class="material-symbols-outlined placeholder-icon" style="font-variation-settings:'FILL' 1">music_note</span>
-                </div>
-                <div class="track-text">
-                    <div class="marquee-container" id="name-container">
-                        <div class="marquee-content" id="track-name-wrapper">
-                            <h4 id="track-name" class="track-name-text">Studio Standby</h4>
-                        </div>
-                    </div>
-                    <p id="track-artist">ENGINE IDLE | SYSTEM</p>
-                </div>
-            </div>
-            <div class="controls-group">
-                <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)"><span class="material-symbols-outlined">picture_in_picture_alt</span></button>
-                <button class="btn-m3" id="shuffle-btn"><span class="material-symbols-outlined">shuffle</span></button>
-                <button class="btn-m3" id="prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
-                <button class="btn-m3 btn-play" id="play-btn"><span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span></button>
-                <button class="btn-m3" id="next-btn"><span class="material-symbols-outlined">skip_next</span></button>
-                <button class="btn-m3" id="repeat-btn">
-                    <span class="material-symbols-outlined">repeat</span>
-                    <div class="repeat-badge">1</div>
-                </button>
-                <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát">
-                    <span class="material-symbols-outlined">lyrics</span>
-                </button>
-            </div>
-            <div class="volume-group">
-                <span class="material-symbols-outlined">volume_up</span>
-                <input type="range" id="volume-slider" min="0" max="100" value="80">
-            </div>
-        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+            <div id="saveStatus" class="opacity-0 transition-opacity"><span class="material-symbols-outlined text-lg text-white">sync_saved_locally</span></div>
+            <div class="flex items-center gap-3">
+                <div id="autoSaveContainer" class="hidden items-center gap-2">
 
-        <button id="reorder-done-btn" class="reorder-done-btn" title="Hoàn tất">
-            <span class="material-symbols-outlined">check</span>
-            HOÀN TẤT
-        </button>
+                    <label class="switch">
+                        <input type="checkbox" id="autoSaveToggle">
+                        <span class="slider"></span>
+                    </label>
+
+                    <span class="hidden md:inline text-[10px] font-bold uppercase text-white">
+                        Auto Save
+                    </span>
+                </div>
+            </div>
+            <div class="w-[1px] h-6 bg-white/30"></div>
+            <button id="moreOptionsBtn" class="action-btn"><span class="material-symbols-outlined">more_vert</span></button>
+        </div>
+    </header>
+
+    <!-- Find & Replace Bar -->
+    <div id="findReplaceBar">
+        <div class="fr-input-container">
+            <span class="material-symbols-outlined text-[color:var(--md-text-secondary)] pl-2">search</span>
+            <input type="text" id="findInput" class="fr-input" placeholder="Tìm kiếm...">
+            <span id="findCount" class="text-[10px] font-bold text-[color:var(--md-text-secondary)] mr-2">0/0</span>
+            <button onclick="findNext(false)" class="p-1 hover:bg-[color:var(--md-hover)] rounded-full"><span class="material-symbols-outlined text-lg">keyboard_arrow_up</span></button>
+            <button onclick="findNext(true)" class="p-1 hover:bg-[color:var(--md-hover)] rounded-full"><span class="material-symbols-outlined text-lg">keyboard_arrow_down</span></button>
+        </div>
+        <div class="fr-input-container">
+            <span class="material-symbols-outlined text-[color:var(--md-text-secondary)] pl-2">find_replace</span>
+            <input type="text" id="replaceInput" class="fr-input" placeholder="Thay thế bằng...">
+            <button onclick="replaceOne()" class="text-[10px] font-bold uppercase px-2 py-1 hover:bg-[color:var(--md-hover)] rounded text-[color:var(--md-primary)]">Thay</button>
+            <button onclick="replaceAll()" class="text-[10px] font-bold uppercase px-2 py-1 hover:bg-[color:var(--md-hover)] rounded text-[color:var(--md-primary)]">Hết</button>
+        </div>
+        <button onclick="toggleFindReplace()" class="p-2 hover:bg-[color:var(--md-hover)] rounded-full ml-auto"><span class="material-symbols-outlined text-[color:var(--md-text-secondary)]">close</span></button>
     </div>
 
-    <input type="file" id="file-input" class="hidden" accept="audio/*, .lrc" multiple>
-    <input type="file" id="lrc-manual-input" class="hidden" accept=".lrc">
-    <audio id="audio-element"></audio>
+    <main id="editorArea">
+        <div class="editor-wrapper">
+            <div id="lineGutter" class="editor-gutter" aria-hidden="true"><div id="lineGutterInner"></div></div>
+            <div id="lineMirror" class="editor-layer editor-mirror" aria-hidden="true"></div>
+            <div id="syntaxLayer" class="editor-layer" aria-hidden="true"></div>
+            <div id="spellLayer" class="editor-layer" aria-hidden="true"></div>
+            <div id="searchHighlights" class="editor-layer" aria-hidden="true"></div>
+            <div id="suggestLayer" class="editor-layer" aria-hidden="true"></div>
+            <div id="suggestActions" class="editor-layer" aria-hidden="false"></div>
+            <textarea id="noteContent" spellcheck="false" placeholder="Bắt đầu viết..."></textarea>
+            <div id="suggestNav">
+                <button id="sgUp" onclick="sgNav(-1)">↑ <b id="sgUpN">0</b> chỉnh sửa cần được xem xét</button>
+                <button id="sgDown" onclick="sgNav(1)">↓ <b id="sgDownN">0</b> chỉnh sửa cần được xem xét</button>
+            </div>
+        </div>
+        <div id="previewPane" class="markdown-body"></div>
+    </main>
+
+    <footer id="statusBar" role="status">
+        <div class="sb-group">
+            <span id="cursorPos" class="sb-item">Dòng 1, Cột 1</span>
+            <span id="lineCount" class="sb-item">1 dòng</span>
+            <span id="wordCount" class="sb-item">0 ký tự • 0 từ</span>
+        </div>
+        <div class="sb-group">
+            <span id="fileTypeLabel" class="sb-item">Văn bản thuần</span>
+        </div>
+    </footer>
+
+    <div id="toast">Thông báo</div>
+    
+    <!-- CSS Spinner Loading -->
+    <div id="loading" class="fixed inset-0 flex flex-col items-center justify-center z-[100] hidden">
+        <div class="spinner"></div>
+        <p class="mt-4 font-bold text-[color:var(--md-primary)] uppercase tracking-widest text-xs">Đang xử lý</p>
+    </div>
+
+    <!-- Auto Save bubble (appears next to the Auto Save switch) -->
+    <div id="autoSavePrompt" role="dialog" aria-label="Auto Save">
+        <div class="bubble-title">Bật Auto Save?</div>
+        <p class="bubble-text">Nội dung sẽ tự động được lưu sau mỗi lần chỉnh sửa để tránh mất dữ liệu.</p>
+        <div class="bubble-actions">
+            <button class="dlg-btn" onclick="closeAutoSavePrompt()">Không</button>
+            <button class="dlg-btn primary" onclick="enableAutoSave()">Bật</button>
+        </div>
+    </div>
+
+    <!-- Personal dictionary dialog -->
+    <div id="dictDialog" class="dlg-overlay" onclick="closeDictDialog()">
+        <div class="dlg-card" role="dialog" aria-modal="true" aria-labelledby="dictTitle" onclick="event.stopPropagation()">
+            <h2 id="dictTitle" class="dlg-title">Từ điển của tôi</h2>
+            <p class="dlg-sub">Các từ ở đây sẽ không bị gạch chân khi kiểm tra chính tả.</p>
+            <div class="dlg-line">
+                <input id="dictInput" class="dlg-search" type="text" placeholder="Thêm một từ..." autocomplete="off" spellcheck="false">
+                <button class="dlg-btn primary" onclick="addDictWord()">Thêm</button>
+            </div>
+            <div id="dictList" class="dlg-list"></div>
+            <div class="dlg-actions">
+                <button class="dlg-btn primary" onclick="closeDictDialog()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- "Gợi ý sửa" dialog -->
+    <div id="suggestDialog" class="dlg-overlay" onclick="closeSuggestDialog()">
+        <div class="dlg-card" role="dialog" aria-modal="true" aria-labelledby="sugTitle" onclick="event.stopPropagation()">
+            <h2 id="sugTitle" class="dlg-title">Gợi ý sửa</h2>
+            <p class="dlg-sub">Gemini định kỳ đọc văn bản quanh con trỏ và đề xuất chỉnh sửa như trong VS Code. API key chỉ lưu trong trình duyệt này; đoạn văn đang soạn sẽ được gửi tới Google khi kiểm tra.</p>
+            <label class="dlg-label" for="sugKey">Gemini API key</label>
+            <div class="dlg-line">
+                <input id="sugKey" class="dlg-search" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false">
+                <button id="sugSave" class="dlg-btn primary" onclick="saveSuggestKey()">Save</button>
+            </div>
+            <div id="sugKeyStatus" class="dlg-meta"></div>
+            <div class="dlg-toggle">
+                <span class="dlg-name">Bật gợi ý sửa</span>
+                <label class="switch"><input type="checkbox" id="sugToggle" disabled><span class="slider"></span></label>
+            </div>
+            <label class="dlg-label" for="sugModel">Mô hình</label>
+            <select id="sugModel" class="dlg-select" disabled></select>
+            <label class="dlg-label" for="sugRpd">Giới hạn lượt gọi mỗi ngày của mô hình (xem trong Google AI Studio)</label>
+            <input id="sugRpd" class="dlg-search" type="number" min="1" step="1" disabled>
+            <div id="sugInfo" class="dlg-info"></div>
+            <div class="dlg-actions">
+                <button class="dlg-btn primary" onclick="closeSuggestDialog()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spell-check language dialog -->
+    <div id="spellLangDialog" class="dlg-overlay" onclick="closeSpellDialog()">
+        <div class="dlg-card" role="dialog" aria-modal="true" aria-labelledby="spellLangTitle" onclick="event.stopPropagation()">
+            <h2 id="spellLangTitle" class="dlg-title">Ngôn ngữ kiểm tra chính tả</h2>
+            <p class="dlg-sub">Chọn một hoặc nhiều ngôn ngữ. Một từ chỉ bị gạch chân khi sai ở tất cả ngôn ngữ đã chọn.</p>
+            <div id="spellEngineInfo" class="dlg-info"></div>
+            <button id="spellGeminiBtn" class="dlg-btn dlg-inline" style="display:none" onclick="downloadGeminiNano()">Tải Gemini Nano</button>
+            <input id="spellLangFilter" class="dlg-search" type="search" placeholder="Tìm ngôn ngữ..." autocomplete="off">
+            <div id="spellLangList" class="dlg-list"></div>
+            <div class="dlg-actions">
+                <button class="dlg-btn" onclick="closeSpellDialog()">Hủy</button>
+                <button class="dlg-btn primary" onclick="applySpellDialog()">Áp dụng</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // --- HÀM LOẠI BỎ DẤU TIẾNG VIỆT ---
-        function removeVietnameseTones(str) {
-            if (!str) return "";
-            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); 
-            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
-            str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i"); 
-            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o"); 
-            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u"); 
-            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y"); 
-            str = str.replace(/đ/g,"d");
-            str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
-            str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
-            str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
-            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|MỠ/g, "O");
-            str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
-            str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
-            str = str.replace(/Đ/g, "D");
-            str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); 
-            str = str.replace(/\u02C6|\u0306|\u031B/g, ""); 
-            return str;
-        }
-
-        const audio = document.getElementById('audio-element');
-        const fileInput = document.getElementById('file-input');
-        const lrcManualInput = document.getElementById('lrc-manual-input');
-        const playlistContainer = document.getElementById('playlist-container');
-        const playlistCard = document.getElementById('playlist-card');
-        const playBtn = document.getElementById('play-btn');
-        const pauseOverlay = document.getElementById('pause-overlay');
-        const visualizer = document.getElementById('visualizer');
-        const seekSlider = document.getElementById('seek-slider');
-        const volumeSlider = document.getElementById('volume-slider');
-        const nameContainer = document.getElementById('name-container');
-        const nameWrapper = document.getElementById('track-name-wrapper');
-        const trackNameEl = document.getElementById('track-name');
-        const trackArtistEl = document.getElementById('track-artist');
-        const bgPreview = document.getElementById('bg-preview');
-        const dropZone = document.getElementById('drop-zone');
-        const contextMenu = document.getElementById('context-menu');
-        const cmDelete = document.getElementById('cm-delete');
-        const cmAddLrc = document.getElementById('cm-add-lrc');
-        const lyricOverlay = document.getElementById('lyric-overlay');
-        const lyricBtn = document.getElementById('lyric-btn');
-        const artImg = document.getElementById('art-img');
-        const artPlaceholder = document.getElementById('art-placeholder');
-        const playlistSearch = document.getElementById('playlist-search');
-
-        let playlist = [];
-        let currentIndex = -1;
-        let isShuffle = false;
-        let repeatMode = 0; 
-        let targetMenuIndex = -1;
-        let isLyricVisible = false;
-        let searchQuery = "";
-        let isReorderMode = false;
-        let dragSourceIndex = -1;
-
-        function updateThemeColor() {
-            const isLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-            document.getElementById('theme-meta').setAttribute('content', isLight ? '#3F51B5' : '#212121');
-        }
-        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', updateThemeColor);
-        updateThemeColor();
-
-        document.addEventListener('contextmenu', (e) => {
-            const songItem = e.target.closest('.song-item');
-            if (songItem) {
-                e.preventDefault();
-                targetMenuIndex = parseInt(songItem.dataset.index);
-                contextMenu.style.display = 'flex';
-                contextMenu.style.left = `${e.clientX}px`;
-                contextMenu.style.top = `${e.clientY}px`;
-            } else {
-                contextMenu.style.display = 'none';
-            }
-        });
-
-        document.addEventListener('click', () => contextMenu.style.display = 'none');
-
-        cmDelete.addEventListener('click', () => {
-            if (targetMenuIndex > -1) {
-                const isPlayingDeleted = (currentIndex === targetMenuIndex);
-                playlist.splice(targetMenuIndex, 1);
-                if (isPlayingDeleted) {
-                    audio.pause(); audio.src = ''; currentIndex = -1;
-                    trackNameEl.innerText = "Studio Standby";
-                    trackArtistEl.innerText = "ENGINE IDLE | SYSTEM";
-                    artImg.classList.add('hidden');
-                    artPlaceholder.classList.remove('hidden');
-                    bgPreview.style.backgroundImage = 'none';
-                    playBtn.querySelector('span').innerText = 'play_arrow';
-                    pauseOverlay.classList.remove('visible');
-                    renderLyrics();
-                    updateMediaSession();
-                    if(typeof updatePiPUI === 'function') updatePiPUI();
-                } else if (currentIndex > targetMenuIndex) currentIndex--;
-                updatePlaylistUI();
-                targetMenuIndex = -1;
-                if (playlist.length === 0) dropZone.style.display = 'flex';
-            }
-        });
-
-        cmAddLrc.addEventListener('click', () => {
-             if (targetMenuIndex > -1) lrcManualInput.click();
-        });
-
-        lrcManualInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file && targetMenuIndex > -1) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    playlist[targetMenuIndex].lyrics = parseLRC(ev.target.result);
-                    if (currentIndex === targetMenuIndex) renderLyrics();
-                    lrcManualInput.value = ""; 
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        function updateSliderFill(slider) {
-            const val = slider.value;
-            const percent = ((val - slider.min) / (slider.max - slider.min)) * 100;
-            // Get accent color from css var
-            const fillCol = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-            const bgCol = 'rgba(158, 158, 158, 0.3)';
-            slider.style.background = `linear-gradient(to right, ${fillCol} 0%, ${fillCol} ${percent}%, ${bgCol} ${percent}%, ${bgCol} 100%)`;
-        }
-
-        function applyMarquee() {
-            nameContainer.classList.remove('is-scrolling');
-            nameWrapper.querySelectorAll('.clone').forEach(c => c.remove());
-            setTimeout(() => {
-                if (trackNameEl.scrollWidth > nameContainer.offsetWidth - 10) {
-                    nameContainer.classList.add('is-scrolling');
-                    nameWrapper.appendChild(trackNameEl.cloneNode(true)).classList.add('clone');
-                }
-            }, 100);
-        }
-
-        function togglePlaylist() { playlistCard.classList.toggle('collapsed'); }
-
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-        window.addEventListener('dragover', (e) => e.preventDefault());
-        window.addEventListener('drop', (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
-
-        async function handleFiles(files) {
-            const audioFiles = [];
-            const lrcFiles = [];
-            let lastAutoPlayIndex = -1;
-            
-            Array.from(files).forEach(file => {
-                if (file.name.toLowerCase().endsWith('.lrc')) lrcFiles.push(file);
-                else if (file.type.startsWith('audio/')) audioFiles.push(file);
-            });
-
-            for (const file of audioFiles) {
-                let title = file.name.replace(/\.[^/.]+$/, "");
-                let artist = "UNKNOWN ARTIST";
-                let album = "Unknown Album";
-                let cover = null;
-                
-                await new Promise((resolve) => {
-                    window.jsmediatags.read(file, {
-                        onSuccess: function(tag) {
-                            if (tag.tags.title) title = tag.tags.title;
-                            if (tag.tags.artist) artist = tag.tags.artist;
-                            if (tag.tags.album) album = tag.tags.album;
-                            if (tag.tags.picture) {
-                                const { data, format } = tag.tags.picture;
-                                let base64String = "";
-                                for (let i = 0; i < data.length; i++) {
-                                    base64String += String.fromCharCode(data[i]);
-                                }
-                                cover = `data:${format};base64,${window.btoa(base64String)}`;
-                            }
-                            resolve();
-                        },
-                        onError: function() { resolve(); }
-                    });
-                });
-
-                const existingIndex = playlist.findIndex(t => 
-                    t.name.toLowerCase() === title.toLowerCase() && 
-                    t.artist.toLowerCase() === artist.toLowerCase()
-                );
-
-                if (existingIndex !== -1) {
-                    lastAutoPlayIndex = existingIndex;
-                } else {
-                    const newTrack = { 
-                        name: title,
-                        artist: artist,
-                        album: album,
-                        cover: cover,
-                        url: URL.createObjectURL(file),
-                        ext: file.name.split('.').pop().toUpperCase(),
-                        lyrics: null,
-                        rawName: file.name.replace(/\.[^/.]+$/, "") 
-                    };
-                    playlist.push(newTrack);
-                    lastAutoPlayIndex = playlist.length - 1;
-                }
-            }
-
-            for (const file of lrcFiles) {
-                const reader = new FileReader();
-                const content = await new Promise(r => {
-                    reader.onload = (e) => r(e.target.result);
-                    reader.readAsText(file);
-                });
-                
-                const parsed = parseLRC(content);
-                const baseName = file.name.replace(/\.[^/.]+$/, "");
-                const targetTrack = playlist.find(t => t.rawName === baseName);
-                
-                if (targetTrack) {
-                    targetTrack.lyrics = parsed;
-                } else if (audioFiles.length > 0 && playlist.length > 0) {
-                    playlist[playlist.length - 1].lyrics = parsed;
-                }
-            }
-
-            updatePlaylistUI();
-            if (lastAutoPlayIndex !== -1) playTrack(lastAutoPlayIndex);
-            if (playlist.length > 0) dropZone.style.display = 'none';
-            bgPreview.classList.add('visible');
-            initVisualizer();
-            if (currentIndex !== -1) renderLyrics();
-        }
-
-        function parseLRC(lrcText) {
-            const lines = lrcText.split('\n');
-            const result = [];
-            const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/; 
-            const hasTime = lines.some(line => timeReg.test(line));
-
-            if (!hasTime) {
-                return lines.map(line => ({ time: -1, text: line.trim() })).filter(l => l.text);
-            }
-
-            lines.forEach(line => {
-                const match = timeReg.exec(line);
-                if (match) {
-                    const min = parseInt(match[1]);
-                    const sec = parseInt(match[2]);
-                    const msStr = match[3];
-                    const ms = parseInt(msStr);
-                    const time = min * 60 + sec + (msStr.length === 2 ? ms / 100 : ms / 1000);
-                    const txt = line.replace(timeReg, '').trim();
-                    result.push({ time, text: txt });
-                }
-            });
-            return result.sort((a,b) => a.time - b.time);
-        }
-
-        function formatLyricLine(text) {
-            if (text === "") return '<div class="bouncing-dots"><span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>';
-            return text;
-        }
-
-        function renderLyrics() {
-            lyricOverlay.innerHTML = '';
-            const track = playlist[currentIndex];
-            if (!track || !track.lyrics || track.lyrics.length === 0) {
-                lyricOverlay.innerHTML = '<div class="lyric-placeholder">BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)<br><small style="font-size:10px; opacity:0.7">Chuột phải vào bài hát để nạp lẻ</small></div>';
-                return;
-            }
-
-            const isStatic = track.lyrics[0]?.time === -1;
-            if (!isStatic) {
-                const spacerTop = document.createElement('div'); spacerTop.style.height = '40vh';
-                lyricOverlay.appendChild(spacerTop);
-            }
-
-            track.lyrics.forEach((l, i) => {
-                const div = document.createElement('div');
-                div.className = `lyric-line ${isStatic ? 'static' : ''}`; 
-                div.innerHTML = formatLyricLine(l.text);
-                if (!isStatic) {
-                    div.onclick = () => { audio.currentTime = l.time; audio.play(); };
-                }
-                lyricOverlay.appendChild(div);
-            });
-
-            if (!isStatic) {
-                const spacerBottom = document.createElement('div'); spacerBottom.style.height = '40vh';
-                lyricOverlay.appendChild(spacerBottom);
-            } else {
-                lyricOverlay.style.padding = '100px 20px';
-            }
-        }
-
-        function syncLyrics() {
-            const track = playlist[currentIndex];
-            if (!track || !track.lyrics || track.lyrics[0]?.time === -1) {
-                if (customPipWindow) {
-                    const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
-                    if (pipLyricEl) { pipLyricEl.innerHTML = ''; pipLyricEl.dataset.currentIdx = ''; }
-                }
-                const topLyricEl = document.getElementById('top-active-lyric');
-                if (topLyricEl) { topLyricEl.innerHTML = ''; topLyricEl.dataset.currentIdx = ''; }
-                return;
-            }
-            
-            const time = audio.currentTime;
-            let activeIdx = -1;
-            for (let i = 0; i < track.lyrics.length; i++) {
-                if (time >= track.lyrics[i].time - 0.2) activeIdx = i;
-                else break;
-            }
-            
-            const htmlContent = activeIdx !== -1 ? formatLyricLine(track.lyrics[activeIdx].text) : '';
-            const idxStr = activeIdx.toString();
-            
-            if (customPipWindow) {
-                const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
-                if (pipLyricEl && pipLyricEl.dataset.currentIdx !== idxStr) {
-                    pipLyricEl.innerHTML = htmlContent;
-                    pipLyricEl.dataset.currentIdx = idxStr; 
-                }
-            }
-            
-            const topLyricEl = document.getElementById('top-active-lyric');
-            if (topLyricEl && topLyricEl.dataset.currentIdx !== idxStr) {
-                topLyricEl.innerHTML = htmlContent;
-                topLyricEl.dataset.currentIdx = idxStr; 
-            }
-
-            if (!isLyricVisible) return; 
-
-            if (activeIdx !== -1) {
-                const lines = lyricOverlay.querySelectorAll('.lyric-line');
-                const currentActive = lyricOverlay.querySelector('.lyric-line.active');
-                const newActive = lines[activeIdx];
-                if (currentActive !== newActive) {
-                    if (currentActive) currentActive.classList.remove('active');
-                    if (newActive) {
-                        newActive.classList.add('active');
-                        const offset = newActive.offsetTop - lyricOverlay.clientHeight / 2 + newActive.clientHeight / 2;
-                        lyricOverlay.scrollTo({ top: offset, behavior: 'smooth' });
-                    }
-                }
-            }
-        }
-
-        lyricBtn.addEventListener('click', function() {
-            isLyricVisible = !isLyricVisible;
-            this.classList.toggle('active', isLyricVisible);
-            lyricOverlay.classList.toggle('visible', isLyricVisible);
-            if (isLyricVisible) {
-                 renderLyrics();
-                 syncLyrics();
-            }
-        });
-
-        playlistSearch.addEventListener('input', (e) => {
-            searchQuery = removeVietnameseTones(e.target.value.toLowerCase().trim());
-            updatePlaylistUI();
-        });
-
-        document.getElementById('reorder-btn').addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            isReorderMode = true;
-            document.body.classList.add('reorder-active');
-            if (playlistCard.classList.contains('collapsed')) {
-                togglePlaylist(); 
-            }
-            updatePlaylistUI(); 
-        });
-
-        document.getElementById('reorder-done-btn').addEventListener('click', () => {
-            isReorderMode = false;
-            document.body.classList.remove('reorder-active');
-            updatePlaylistUI(); 
-        });
-
-        function updatePlaylistUI() {
-            playlistContainer.innerHTML = '';
-            let count = 0;
-            playlist.forEach((track, index) => {
-                const normalizedName = removeVietnameseTones(track.name).toLowerCase();
-                const normalizedArtist = removeVietnameseTones(track.artist).toLowerCase();
-                
-                const matches = isReorderMode || normalizedName.includes(searchQuery) || normalizedArtist.includes(searchQuery);
-                
-                if (matches) {
-                    count++;
-                    const item = document.createElement('div');
-                    item.className = `song-item ${index === currentIndex ? 'active' : ''}`;
-                    item.dataset.index = index;
-                    
-                    item.innerHTML = `
-                        <span class="material-symbols-outlined icon-play">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'music_note'}</span>
-                        <span class="material-symbols-outlined icon-drag" title="Nắm để kéo thả">drag_handle</span>
-                        <div class="track-text">
-                            <div style="font-weight:500; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''}</div>
-                        </div>
-                    `;
-                    
-                    if (isReorderMode) {
-                        item.draggable = true;
-                        
-                        item.addEventListener('dragstart', (e) => {
-                            dragSourceIndex = index;
-                            item.classList.add('dragging');
-                            e.dataTransfer.effectAllowed = 'move';
-                            e.dataTransfer.setData('text/plain', index);
-                        });
-                        
-                        item.addEventListener('dragover', (e) => {
-                            e.preventDefault(); 
-                            e.dataTransfer.dropEffect = 'move';
-                            
-                            const bounding = item.getBoundingClientRect();
-                            const offset = bounding.y + (bounding.height / 2);
-                            if (e.clientY - offset > 0) {
-                                item.style.borderBottom = "2px solid var(--accent)";
-                                item.style.borderTop = "none";
-                            } else {
-                                item.style.borderTop = "2px solid var(--accent)";
-                                item.style.borderBottom = "none";
-                            }
-                        });
-                        
-                        item.addEventListener('dragleave', () => {
-                            item.style.borderTop = "none";
-                            item.style.borderBottom = "1px solid var(--divider)";
-                        });
-                        
-                        item.addEventListener('drop', (e) => {
-                            e.preventDefault();
-                            item.style.borderTop = "none";
-                            item.style.borderBottom = "1px solid var(--divider)";
-                            
-                            const targetIndex = index;
-                            if (dragSourceIndex !== -1 && dragSourceIndex !== targetIndex) {
-                                const playingTrack = currentIndex !== -1 ? playlist[currentIndex] : null;
-                                const draggedTrack = playlist.splice(dragSourceIndex, 1)[0];
-                                playlist.splice(targetIndex, 0, draggedTrack);
-                                if (playingTrack) currentIndex = playlist.indexOf(playingTrack);
-                                updatePlaylistUI();
-                            }
-                        });
-                        
-                        item.addEventListener('dragend', () => {
-                            item.classList.remove('dragging');
-                            dragSourceIndex = -1;
-                            document.querySelectorAll('.song-item').forEach(el => {
-                                el.style.borderTop = "none";
-                                el.style.borderBottom = "1px solid var(--divider)";
-                            });
-                        });
-                        
-                    } else {
-                        item.onclick = () => playTrack(index);
-                    }
-
-                    playlistContainer.appendChild(item);
-                }
-            });
-            
-            document.getElementById('track-count').innerText = searchQuery && !isReorderMode ? `${count}/${playlist.length}` : playlist.length;
-
-            if (typeof renderPipPlaylist === 'function' && customPipWindow) {
-                renderPipPlaylist();
-            }
-        }
-
-        function playTrack(index) {
-            if (index < 0 || index >= playlist.length) return;
-            currentIndex = index;
-            const track = playlist[index];
-            audio.src = track.url;
-            trackNameEl.innerText = track.name;
-            trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
-            
-            if (track.cover) {
-                artImg.src = track.cover;
-                artImg.classList.remove('hidden');
-                artPlaceholder.classList.add('hidden');
-                bgPreview.style.backgroundImage = `url(${track.cover})`;
-            } else {
-                artImg.classList.add('hidden');
-                artPlaceholder.classList.remove('hidden');
-                bgPreview.style.backgroundImage = 'none';
-            }
-
-            if (customPipWindow) {
-                const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
-                if (pipLyricEl) { pipLyricEl.innerHTML = ''; pipLyricEl.dataset.currentIdx = ''; }
-            }
-            const topLyricEl = document.getElementById('top-active-lyric');
-            if (topLyricEl) { topLyricEl.innerHTML = ''; topLyricEl.dataset.currentIdx = ''; }
-            
-            renderLyrics();
-            applyMarquee();
-            updatePlaylistUI();
-            updateMediaSession();
-            
-            audio.play().catch(() => {});
-            playBtn.querySelector('span').innerText = 'pause';
-            pauseOverlay.classList.remove('visible');
-            
-            if(typeof updatePiPUI === 'function') updatePiPUI(); 
-        }
-
-        function updateMediaSession() {
-            if ('mediaSession' in navigator) {
-                const track = playlist[currentIndex];
-                if (!track) return;
-
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: track.name,
-                    artist: track.artist,
-                    album: track.album || "Unknown Album",
-                    artwork: track.cover ? [
-                        { src: track.cover, sizes: '96x96', type: 'image/png' },
-                        { src: track.cover, sizes: '512x512', type: 'image/png' }
-                    ] : []
-                });
-
-                navigator.mediaSession.setActionHandler('play', () => playBtn.click());
-                navigator.mediaSession.setActionHandler('pause', () => playBtn.click());
-                navigator.mediaSession.setActionHandler('previoustrack', () => document.getElementById('prev-btn').click());
-                navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
-                navigator.mediaSession.setActionHandler('seekto', (details) => {
-                    if (details.seekTime) audio.currentTime = details.seekTime;
-                });
-                
-                try {
-                    navigator.mediaSession.setActionHandler('enterpictureinpicture', () => {
-                        document.getElementById('pip-btn').click();
-                    });
-                } catch (error) {
-                    console.warn("Trình duyệt chưa support action enterpictureinpicture cho MediaSession.");
-                }
-            }
-        }
-
-        playBtn.addEventListener('click', () => {
-            if (!audio.src && playlist.length > 0) playTrack(0);
-            else if (audio.paused) { 
-                audio.play(); 
-                playBtn.querySelector('span').innerText = 'pause'; 
-                pauseOverlay.classList.remove('visible');
-            }
-            else { 
-                audio.pause(); 
-                playBtn.querySelector('span').innerText = 'play_arrow'; 
-                pauseOverlay.classList.add('visible'); 
-            }
-            updatePlaylistUI();
-            if(typeof updatePiPUI === 'function') updatePiPUI(); 
-        });
-
-        document.getElementById('next-btn').addEventListener('click', () => {
-            if (isShuffle) playTrack(Math.floor(Math.random() * playlist.length));
-            else playTrack((currentIndex + 1) % playlist.length);
-        });
-
-        document.getElementById('prev-btn').addEventListener('click', () => {
-            let p = currentIndex - 1; if (p < 0) p = playlist.length - 1;
-            playTrack(p);
-        });
-
-        document.getElementById('shuffle-btn').addEventListener('click', function() {
-            isShuffle = !isShuffle; this.classList.toggle('active', isShuffle);
-            if(typeof updatePiPUI === 'function') updatePiPUI(); 
-        });
-
-        document.getElementById('repeat-btn').addEventListener('click', function() {
-            repeatMode = (repeatMode + 1) % 3;
-            this.classList.toggle('active', repeatMode > 0);
-            this.classList.toggle('repeat-one', repeatMode === 2);
-            this.querySelector('.repeat-badge').innerText = repeatMode === 2 ? '1' : '';
-            if(typeof updatePiPUI === 'function') updatePiPUI(); 
-        });
-
-        audio.addEventListener('ended', () => {
-            if (repeatMode === 2) audio.play();
-            else if (repeatMode === 1 || currentIndex < playlist.length - 1) document.getElementById('next-btn').click();
-        });
-
-        let audioCtx, analyser, dataArray;
-        function initVisualizer() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioCtx.createAnalyser();
-            const source = audioCtx.createMediaElementSource(audio);
-            source.connect(analyser); analyser.connect(audioCtx.destination);
-            analyser.fftSize = 256;
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            draw();
-        }
-
-        function draw() {
-            requestAnimationFrame(draw);
-            if (!analyser) return;
-            analyser.getByteFrequencyData(dataArray);
-            const ctx = visualizer.getContext('2d');
-            visualizer.width = visualizer.clientWidth;
-            visualizer.height = visualizer.clientHeight;
-            const barWidth = (visualizer.width / dataArray.length) * 2.5;
-            let x = 0; ctx.clearRect(0,0, visualizer.width, visualizer.height);
-            dataArray.forEach(val => {
-                const h = (val / 255) * visualizer.height * 0.6;
-                const isLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-                // Material Design style simple bars
-                ctx.fillStyle = isLight ? `rgba(63, 81, 181, ${0.4 + (val/255)*0.6})` : `rgba(255, 255, 255, ${0.2 + (val/255)*0.6})`;
-                ctx.fillRect(x, visualizer.height - h, barWidth-2, Math.max(h, 4));
-                x += barWidth;
-            });
-        }
-
-        audio.addEventListener('timeupdate', () => {
-            seekSlider.value = (audio.currentTime / audio.duration) * 100 || 0;
-            updateSliderFill(seekSlider);
-            document.getElementById('current-time').innerText = formatTime(audio.currentTime, audio.duration);
-            document.getElementById('duration').innerText = formatTime(audio.duration, audio.duration);
-            syncLyrics();
-        });
-
-        function formatTime(s, totalS = 0) {
-            if (isNaN(s)) return "0:00";
-            const totalH = Math.floor(totalS / 3600);
-            const h = Math.floor(s / 3600);
-            const m = Math.floor((s % 3600) / 60);
-            const sec = Math.floor(s % 60);
-            if (totalH > 0) return `${h}:${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`;
-            return `${m}:${sec < 10 ? '0' : ''}${sec}`;
-        }
-
-        seekSlider.addEventListener('input', (e) => audio.currentTime = (e.target.value / 100) * audio.duration);
-        volumeSlider.addEventListener('input', (e) => { audio.volume = e.target.value / 100; updateSliderFill(volumeSlider); });
-
-        const hideLoading = () => {
-            const loader = document.getElementById('loading-overlay');
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.visibility = 'hidden', 500);
+        window.NOTEPAD_CONFIG = {
+            defaultTitle: 'Notepad MD1',
+            newFileName: 'No_name.txt',
+            themeColors: { light: '#1976D2', dark: '#212121', tabbedLight: '#2196F3', tabbedDark: '#212121' }
         };
-        window.addEventListener('load', hideLoading);
-        setTimeout(hideLoading, 1500);
-
-        if ('launchQueue' in window) {
-            window.launchQueue.setConsumer((params) => {
-                if (params.files && params.files.length) {
-                    Promise.all(params.files.map(h => h.getFile())).then(handleFiles);
-                }
-            });
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(registration => console.log('SW Registered with scope:', registration.scope))
-                    .catch(err => console.log('SW Registration failed:', err));
-            });
-        }
-
-        // --- PICTURE-IN-PICTURE (PIP) LOGIC ---
-        let customPipWindow = null;
-        const pipBtn = document.getElementById('pip-btn');
-        let pipTargetMenuIndex = -1; 
-
-        function renderPipPlaylist() {
-            if (!customPipWindow) return;
-            const container = customPipWindow.document.getElementById('pip-playlist-container');
-            if (!container) return;
-            container.innerHTML = '';
-            playlist.forEach((track, index) => {
-                const item = customPipWindow.document.createElement('div');
-                item.className = `pip-song-item ${index === currentIndex ? 'active' : ''}`;
-                item.innerHTML = `
-                    <span class="material-symbols-outlined" style="font-size: 18px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'music_note'}</span>
-                    <div class="pip-song-info">
-                        <div class="pip-song-name">${track.name}</div>
-                        <div class="pip-song-artist">${track.artist}</div>
-                    </div>
-                `;
-                item.onclick = () => playTrack(index);
-                
-                item.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    pipTargetMenuIndex = index;
-                    customPipWindow.document.getElementById('pip-cm-title').innerText = track.name;
-                    customPipWindow.document.getElementById('pip-cm-overlay').classList.add('open');
-                    customPipWindow.document.getElementById('pip-context-menu').classList.add('open');
-                };
-
-                container.appendChild(item);
-            });
-        }
-
-        function updatePiPUI() {
-            if (!customPipWindow) return;
-            const doc = customPipWindow.document;
-            const track = playlist[currentIndex];
-            
-            const titleEl = doc.getElementById('pip-title');
-            const artistEl = doc.getElementById('pip-artist');
-            const bgEl = doc.getElementById('pip-bg');
-            const playSpan = doc.getElementById('pip-play-btn').querySelector('span');
-            const shuffleBtn = doc.getElementById('pip-shuffle-btn');
-            const repeatBtn = doc.getElementById('pip-repeat-btn');
-            const repeatBadge = doc.getElementById('pip-repeat-badge');
-
-            if (track) {
-                titleEl.innerText = track.name;
-                artistEl.innerText = track.artist;
-                if (track.cover) {
-                    bgEl.style.backgroundImage = `url(${track.cover})`;
-                    bgEl.innerHTML = '';
-                } else {
-                    bgEl.style.backgroundImage = 'none';
-                    bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
-                }
-            } else {
-                titleEl.innerText = 'Chưa có bài hát';
-                artistEl.innerText = 'Studio Standby';
-                bgEl.style.backgroundImage = 'none';
-                bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
-            }
-
-            playSpan.innerText = audio.paused ? 'play_arrow' : 'pause';
-            
-            shuffleBtn.classList.toggle('active', isShuffle);
-            repeatBtn.classList.toggle('active', repeatMode > 0);
-            repeatBadge.innerText = repeatMode === 2 ? '1' : '';
-            repeatBadge.style.display = repeatMode === 2 ? 'flex' : 'none';
-
-            const playlistSection = doc.getElementById('pip-playlist-section');
-            if (playlistSection && playlistSection.style.display !== 'none') {
-                renderPipPlaylist();
-            }
-        }
-
-        pipBtn.addEventListener('click', async () => {
-            if (!('documentPictureInPicture' in window)) {
-                alert('Trình duyệt của bạn chưa hỗ trợ Document Picture-in-Picture.');
-                return;
-            }
-
-            if (customPipWindow) {
-                customPipWindow.close();
-                return;
-            }
-
-            try {
-                customPipWindow = await window.documentPictureInPicture.requestWindow({
-                    width: 320,
-                    height: 320,
-                });
-
-                try {
-                    const screenW = window.screen.availWidth;
-                    const screenH = window.screen.availHeight;
-                    customPipWindow.moveTo(screenW - 340, screenH - 340);
-                } catch(e) { console.warn("Hệ điều hành này không cho ép góc PiP programmatically."); }
-
-                const pipDoc = customPipWindow.document;
-
-                const style = pipDoc.createElement('style');
-                style.textContent = `
-                    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-                    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
-                    
-                    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-                    body { 
-                        margin: 0; padding: 0; width: 100%; height: 100vh;
-                        font-family: 'Roboto', sans-serif; 
-                        background: #212121; color: #FFFFFF; 
-                        overflow: hidden; user-select: none;
-                        display: flex; flex-direction: column;
-                    }
-                    .pip-bg { 
-                        position: fixed; inset: 0; z-index: 1;
-                        background-size: cover; background-position: center;
-                        filter: brightness(0.4); 
-                        display: flex; justify-content: center; align-items: center;
-                    }
-                    .pip-player-section {
-                        height: 100%; flex-shrink: 0; position: relative; z-index: 2;
-                        display: flex; flex-direction: column; justify-content: space-between;
-                        padding: 24px; transition: height 0.3s;
-                    }
-                    .pip-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-                    .pip-header-content { flex: 1; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-                    .pip-title { 
-                        font-size: 16px; font-weight: 500; margin: 0; width: 100%; text-align: center;
-                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-                    }
-                    .pip-artist {
-                        font-size: 12px; font-weight: 400; margin: 4px 0 0; width: 100%; text-align: center; opacity: 0.7;
-                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                        text-transform: uppercase;
-                    }
-                    .pip-lyric {
-                        flex: 1; display: flex; align-items: center; justify-content: center;
-                        text-align: center; font-size: 16px; font-weight: 500; color: #FF4081;
-                        padding: 0 16px; text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-                        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-                        margin: 12px 0;
-                    }
-                    .bouncing-dots { display: inline-flex; align-items: flex-end; justify-content: center; height: 1em; gap: 4px; }
-                    .bouncing-dots .dot { animation: dot-jump 1s infinite; font-size: 1.2em; line-height: 0.5; color: #FF4081;}
-                    .bouncing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
-                    .bouncing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
-                    @keyframes dot-jump {
-                        0%, 100% { transform: translateY(0); }
-                        50% { transform: translateY(-8px); }
-                    }
-                    .pip-controls { 
-                        display: flex; justify-content: center; align-items: center; gap: 8px;
-                    }
-                    .btn-m3 {
-                        background: transparent; border: none; color: rgba(255,255,255,0.7);
-                        cursor: pointer; width: 44px; height: 44px; border-radius: 50%;
-                        display: flex; align-items: center; justify-content: center; 
-                        transition: all 0.2s; position: relative;
-                    }
-                    .btn-m3:hover { background: rgba(255,255,255,0.1); }
-                    .btn-m3.active { color: #FF4081; }
-                    
-                    /* MD1 FAB for PiP */
-                    .btn-play {
-                        width: 56px; height: 56px; border-radius: 50%;
-                        background: #FF4081; color: #FFFFFF;
-                        box-shadow: 0 2px 5px 0 rgba(0,0,0,0.26);
-                    }
-                    .btn-play:hover { background: #F50057; box-shadow: 0 4px 5px 0 rgba(0,0,0,0.14); }
-                    
-                    .material-symbols-outlined {
-                        font-family: 'Material Symbols Outlined';
-                        font-weight: normal; font-style: normal; font-size: 24px;
-                        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-                    }
-                    .btn-play .material-symbols-outlined { font-size: 32px; font-variation-settings: 'FILL' 1; color: #FFFFFF; }
-                    .active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
-                    
-                    .repeat-badge {
-                        position: absolute; font-size: 9px; font-weight: 700; 
-                        bottom: 6px; right: 6px; background: #FF4081; color: #FFFFFF;
-                        width: 14px; height: 14px; border-radius: 50%; 
-                        display: none; align-items: center; justify-content: center;
-                    }
-
-                    .pip-playlist-section {
-                        flex: 1; display: none; flex-direction: column; position: relative; z-index: 2;
-                        background: rgba(0, 0, 0, 0.6); border-top: 1px solid rgba(255,255,255,0.1);
-                        overflow: hidden;
-                    }
-                    .pip-playlist-header {
-                        padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-                        border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4);
-                    }
-                    .pip-playlist-container {
-                        flex: 1; overflow-y: auto; padding: 0;
-                    }
-                    .pip-song-item {
-                        padding: 12px 16px; display: flex; align-items: center; gap: 16px;
-                        cursor: pointer; transition: 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05);
-                    }
-                    .pip-song-item:hover { background: rgba(255,255,255,0.1); }
-                    .pip-song-item.active { background: rgba(255,255,255,0.2); }
-                    .pip-song-item.active .material-symbols-outlined { color: #FF4081; }
-                    .pip-song-info { display: flex; flex-direction: column; overflow: hidden; }
-                    .pip-song-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    .pip-song-artist { font-size: 12px; opacity: 0.7; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                    
-                    ::-webkit-scrollbar { width: 6px; }
-                    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 0; }
-                    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
-
-                    .pip-context-menu {
-                        position: absolute; bottom: 0; left: 0; width: 100%;
-                        background: #424242;
-                        padding: 16px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-                        z-index: 100; box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
-                        display: flex; flex-direction: column; gap: 16px;
-                    }
-                    .pip-context-menu.open { transform: translateY(0); }
-                    .pip-cm-overlay {
-                        position: absolute; inset: 0; background: rgba(0,0,0,0.5);
-                        z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-                    }
-                    .pip-cm-overlay.open { opacity: 1; pointer-events: auto; }
-                    .pip-cm-title { font-size: 16px; font-weight: 500; color: #FFFFFF; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-                    .pip-cm-btn {
-                        background: transparent; color: #F44336; border: none;
-                        padding: 12px; font-family: inherit; font-size: 14px; font-weight: 500;
-                        cursor: pointer; display: flex; align-items: center; justify-content: flex-start; gap: 16px;
-                        transition: background 0.2s; text-transform: uppercase;
-                    }
-                    .pip-cm-btn:hover { background: rgba(244, 67, 54, 0.1); }
-                `;
-                pipDoc.head.appendChild(style);
-
-                pipDoc.body.innerHTML = `
-                    <div id="pip-bg" class="pip-bg"></div>
-                    <div class="pip-player-section">
-                        <div class="pip-header">
-                            <div style="width: 32px;"></div>
-                            <div class="pip-header-content">
-                                <h4 id="pip-title" class="pip-title">Studio Standby</h4>
-                                <p id="pip-artist" class="pip-artist">ENGINE IDLE | SYSTEM</p>
-                            </div>
-                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;"><span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span></button>
-                        </div>
-                        
-                        <div id="pip-lyric" class="pip-lyric"></div>
-
-                        <div class="pip-controls">
-                            <button class="btn-m3" id="pip-shuffle-btn"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                            <button class="btn-m3" id="pip-prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
-                            <button class="btn-m3 btn-play" id="pip-play-btn"><span class="material-symbols-outlined">play_arrow</span></button>
-                            <button class="btn-m3" id="pip-next-btn"><span class="material-symbols-outlined">skip_next</span></button>
-                            <button class="btn-m3" id="pip-repeat-btn">
-                                <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
-                                <div id="pip-repeat-badge" class="repeat-badge">1</div>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="pip-playlist-section" id="pip-playlist-section">
-                        <div class="pip-playlist-header">
-                            <span style="font-size: 14px; font-weight: 500;">Danh sách phát</span>
-                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;"><span class="material-symbols-outlined" style="font-size: 18px;">close</span></button>
-                        </div>
-                        <div class="pip-playlist-container" id="pip-playlist-container"></div>
-                    </div>
-
-                    <div class="pip-cm-overlay" id="pip-cm-overlay"></div>
-                    <div class="pip-context-menu" id="pip-context-menu">
-                        <div class="pip-cm-title" id="pip-cm-title">Song Name</div>
-                        <button class="pip-cm-btn" id="pip-cm-delete">
-                            <span class="material-symbols-outlined">delete</span>
-                            Xoá khỏi playlist
-                        </button>
-                    </div>
-                `;
-
-                pipDoc.getElementById('pip-play-btn').onclick = () => document.getElementById('play-btn').click();
-                pipDoc.getElementById('pip-prev-btn').onclick = () => document.getElementById('prev-btn').click();
-                pipDoc.getElementById('pip-next-btn').onclick = () => document.getElementById('next-btn').click();
-                pipDoc.getElementById('pip-shuffle-btn').onclick = () => document.getElementById('shuffle-btn').click();
-                pipDoc.getElementById('pip-repeat-btn').onclick = () => document.getElementById('repeat-btn').click();
-
-                pipDoc.getElementById('pip-expand-btn').onclick = () => {
-                    customPipWindow.resizeTo(320, 500); 
-                    pipDoc.querySelector('.pip-player-section').style.height = '140px'; 
-                    pipDoc.getElementById('pip-lyric').style.display = 'none'; 
-                    pipDoc.getElementById('pip-playlist-section').style.display = 'flex';
-                    pipDoc.getElementById('pip-expand-btn').style.opacity = '0';
-                    pipDoc.getElementById('pip-expand-btn').style.pointerEvents = 'none';
-                    renderPipPlaylist(); 
-                };
-
-                pipDoc.getElementById('pip-close-btn').onclick = () => {
-                    customPipWindow.resizeTo(320, 320); 
-                    pipDoc.querySelector('.pip-player-section').style.height = '100%'; 
-                    pipDoc.getElementById('pip-lyric').style.display = '-webkit-box'; 
-                    pipDoc.getElementById('pip-playlist-section').style.display = 'none';
-                    pipDoc.getElementById('pip-expand-btn').style.opacity = '1';
-                    pipDoc.getElementById('pip-expand-btn').style.pointerEvents = 'auto';
-                };
-
-                const pipOverlayEl = pipDoc.getElementById('pip-cm-overlay');
-                const pipCmEl = pipDoc.getElementById('pip-context-menu');
-                
-                const closePipCm = () => {
-                    pipOverlayEl.classList.remove('open');
-                    pipCmEl.classList.remove('open');
-                    pipTargetMenuIndex = -1;
-                };
-
-                pipOverlayEl.onclick = closePipCm;
-
-                pipDoc.getElementById('pip-cm-delete').onclick = () => {
-                    if (pipTargetMenuIndex > -1) {
-                        targetMenuIndex = pipTargetMenuIndex; 
-                        document.getElementById('cm-delete').click(); 
-                        closePipCm();
-                    }
-                };
-
-                customPipWindow.addEventListener("pagehide", () => { customPipWindow = null; });
-
-                updatePiPUI();
-
-            } catch (error) {
-                console.error("Lỗi khi mở PiP:", error);
-            }
-        });
-
     </script>
+    <script src="app.js"></script>
+    
 </body>
 </html>
