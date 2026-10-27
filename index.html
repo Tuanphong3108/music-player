@@ -6276,8 +6276,14 @@
             const ro = document.getElementById('reset-overlay');
             if (ro) ro.style.display = 'flex';
             await new Promise(r => setTimeout(r, 60));
-            try { localStorage.clear(); } catch (e) {}
-            try { sessionStorage.clear(); } catch (e) {}
+            // Chỉ xoá đúng các khoá của app này (localStorage dùng chung cho cả tên miền,
+            // nên KHÔNG dùng clear() kẻo xoá luôn dữ liệu của các app khác cùng domain).
+            ['settings_accent','settings_dynamic_accent','settings_font','settings_font_entries','settings_font_scale',
+             'settings_font_scale_sync','settings_language','settings_output_device','settings_playback_speed',
+             'settings_reduce_effects','settings_reduce_motion','settings_repeat_mode','settings_show_fs_lyric',
+             'settings_show_main_lyric','settings_show_pip_lyric','settings_shuffle','settings_theme','settings_ui_scale',
+             'settings_volume','settings_wake_lock','getting_started_done','getting_started_pending'
+            ].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
             try { localStorage.setItem('getting_started_pending', '1'); } catch (e) {}
             try {
                 await new Promise((res) => {
