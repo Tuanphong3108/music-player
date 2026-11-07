@@ -366,3 +366,6 @@ mixer.compressor=Chuẩn hoá âm lượng
 mixer.compressor_desc=Nén bớt chênh lệch giữa đoạn nhỏ và đoạn lớn, hạn chế vỡ tiếng khi tăng âm
 mixer.reset=Đặt lại bộ trộn âm thanh
 player.video_no_edit=Tệp video chưa hỗ trợ chỉnh sửa thẻ và ảnh bìa
+metaeditor.field_subtitle=Subtitle Embed
+metaeditor.section_subtitle=Phụ đề
+metaeditor.saved_subtitle=Đã lưu phụ đề trong ứng dụng (không ghi vào tệp video).

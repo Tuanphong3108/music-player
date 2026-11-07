@@ -2,6 +2,18 @@
   "date": "2026-11-06",
   "vi": [
     {
+      "content": "Sóng nhạc đổi màu theo Accent Color",
+      "icon": "graphic_eq"
+    },
+    {
+      "content": "Video: nút chỉnh sửa chỉ mở khung Subtitle Embed (lưu phụ đề trong ứng dụng)",
+      "icon": "subtitles"
+    },
+    {
+      "content": "PiP có thanh trượt thời gian",
+      "icon": "linear_scale"
+    },
+    {
       "content": "Đổi tên ứng dụng từ Audio Player thành Media Player",
       "icon": "edit"
     },
@@ -23,6 +35,18 @@
     }
   ],
   "en": [
+    {
+      "content": "The visualizer now follows the Accent Color",
+      "icon": "graphic_eq"
+    },
+    {
+      "content": "Video: the edit button opens only the Subtitle Embed box (subtitles are saved inside the app)",
+      "icon": "subtitles"
+    },
+    {
+      "content": "PiP now has a time slider",
+      "icon": "linear_scale"
+    },
     {
       "content": "Renamed the app from Audio Player to Media Player",
       "icon": "edit"

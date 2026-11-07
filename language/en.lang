@@ -366,3 +366,6 @@ mixer.compressor=Normalize volume
 mixer.compressor_desc=Squeezes the gap between quiet and loud parts and helps prevent distortion when boosting
 mixer.reset=Reset audio mixer
 player.video_no_edit=Video files don't support tag or cover editing yet
+metaeditor.field_subtitle=Subtitle Embed
+metaeditor.section_subtitle=Subtitle
+metaeditor.saved_subtitle=Subtitle saved in the app (the video file itself is not modified).

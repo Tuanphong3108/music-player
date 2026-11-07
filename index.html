@@ -2433,10 +2433,10 @@
             <div class="field-label" data-i18n="metaeditor.field_composer">Nhà soạn nhạc (Composer)</div>
             <input class="ore-input" type="text" id="fieldComposer" name="fieldComposer-nofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other">
           </div>
-          <div class="section-header" style="padding-top:12px;" data-i18n="metaeditor.section_lyric">Lyric</div>
+          <div class="section-header" style="padding-top:12px;" data-sub-section data-i18n="metaeditor.section_lyric">Lyric</div>
           <div class="field-row">
             <div class="lrc-row">
-              <div class="field-label" data-i18n="metaeditor.field_lyric">Lyric Embed</div>
+              <div class="field-label" data-sub-label data-i18n="metaeditor.field_lyric">Lyric Embed</div>
               <div style="display:flex; gap:8px;">
                 <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnSearchLrc" title="Tìm lyric trên lrclib.net" data-i18n-title="metaeditor.search_lyric_title" data-i18n="metaeditor.search_lyric">🔍 Tìm kiếm</button>
                 <button class="ore-btn ore-btn-gray ore-btn-sm" id="btnUploadLrc" title="Tải lên file phụ đề .lrc" data-i18n-title="metaeditor.upload_lrc_title" data-i18n="metaeditor.upload_lrc">⬆ Tải lên .lrc</button>
@@ -2545,6 +2545,9 @@
             composer: document.getElementById('fieldComposer'),
             lyric:  document.getElementById('fieldLyric'),
           };
+          const style0 = document.createElement('style');
+          style0.textContent = '#mainContent.sub-mode > .section-header:first-child, #mainContent.sub-mode > .field-row:nth-child(-n+6) { display: none; }';
+          document.head.appendChild(style0);
           const ORDER = ['title','artist','album','genre','composer','lyric'];
           let original = {title:'',artist:'',album:'',genre:'',composer:'',lyric:''};
 
@@ -2623,7 +2626,9 @@
 
             if (d && typeof d === 'object' && d.type === 'saved') {
               document.getElementById('savingScreen').classList.remove('active');
-              document.getElementById('saveSuccessText').innerText = d.persisted
+              document.getElementById('saveSuccessText').innerText = d.persisted === 'app'
+                ? T('metaeditor.saved_subtitle', 'Đã lưu phụ đề trong ứng dụng (không ghi vào tệp video).')
+                : d.persisted
                 ? T('metaeditor.saved_disk', 'Đã ghi đè trực tiếp vào file gốc trên đĩa thành công!')
                 : T('metaeditor.saved_download', 'Trình duyệt không có quyền ghi thẳng vào file gốc, nên file MP3 đã cập nhật thẻ được tự động tải về máy — hãy dùng file vừa tải để thay thế file gốc nếu cần lưu vĩnh viễn.');
               document.getElementById('overlaySuccess').classList.remove('hidden');
@@ -2647,12 +2652,25 @@
             if (d && typeof d === 'object' && d.type === 'openLrcSearch') { document.getElementById('btnSearchLrc').click(); return; }
 
             if (d && typeof d === 'object' && d.type === 'load') {
+              subMode = !!d.video;
+              applySubMode();
               ORDER.forEach(k => { fields[k].value = d[k] ?? ''; original[k] = fields[k].value; });
               postMsg('load_success');
             }
           });
 
+          // Video: chỉ còn khung Subtitle Embed (không có tag để ghi vào tệp video)
+          let subMode = false;
+          function applySubMode() {
+            document.getElementById('mainContent').classList.toggle('sub-mode', subMode);
+            const lab = document.querySelector('[data-sub-label]'), sec = document.querySelector('[data-sub-section]');
+            lab.dataset.i18n = subMode ? 'metaeditor.field_subtitle' : 'metaeditor.field_lyric';
+            sec.dataset.i18n = subMode ? 'metaeditor.section_subtitle' : 'metaeditor.section_lyric';
+            lab.textContent = subMode ? T('metaeditor.field_subtitle', 'Subtitle Embed') : T('metaeditor.field_lyric', 'Lyric Embed');
+            sec.textContent = subMode ? T('metaeditor.section_subtitle', 'Subtitle') : T('metaeditor.section_lyric', 'Lyric');
+          }
           function doSave() {
+            if (subMode) { hideAllUI(); postMsg({ type: 'save', video: true, lyric: fields.lyric.value }); return; }
             // Tên bài trống -> lấy [ti:] trong Lyric; nếu không có thì để trống để bên ngoài lấy tên file.
             const title = fields.title.value.trim() || lyricTag(['ti']);
             hideAllUI();
@@ -2669,7 +2687,7 @@
             });
           }
           document.getElementById('btnSave').addEventListener('click', () => {
-            if (!askFill()) doSave();
+            if (subMode || !askFill()) doSave();
           });
 
           function tryClose() {
@@ -4140,6 +4158,7 @@
                 const url = URL.createObjectURL(file);
                 const videoFile = isVideoFile(file);
                 if (videoFile && !cover) cover = await captureVideoFrame(url);
+                if (videoFile && !lyricsRaw) lyricsRaw = loadVideoSubtitle(file);
 
                 const existingIndex = playlist.findIndex(t => 
                     t.name.toLowerCase() === title.toLowerCase() && 
@@ -5015,6 +5034,16 @@
             }
         }
 
+        let vizRGB = null, vizFrame = 0;
+        function readAccentRGB() {
+            const c = document.createElement('canvas').getContext('2d');
+            c.fillStyle = '#D0BCFF';
+            c.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary').trim() || '#D0BCFF';
+            const hex = c.fillStyle;   // luôn trả về dạng #rrggbb (hoặc rgba(...) nếu có alpha)
+            if (hex[0] === '#') return [1, 3, 5].map(i => parseInt(hex.substr(i, 2), 16)).join(',');
+            const m = hex.match(/[\d.]+/g); return m ? m.slice(0, 3).join(',') : '208,188,255';
+        }
+
         function draw() {
             requestAnimationFrame(draw);
             if (!analyser) return;
@@ -5028,11 +5057,11 @@
             visualizer.height = visualizer.clientHeight;
             const barWidth = (visualizer.width / dataArray.length) * 2.5;
             let x = 0; ctx.clearRect(0,0, visualizer.width, visualizer.height);
+            // Màu sóng nhạc đồng bộ với Accent Color (đọc lại mỗi ~0,5 giây để theo kịp lúc đổi accent/theme)
+            if (!vizRGB || (vizFrame++ % 30 === 0)) vizRGB = readAccentRGB();
             dataArray.forEach(val => {
                 const h = (val / 255) * visualizer.height * 0.6;
-                const isLight = document.documentElement.classList.contains('theme-light') || 
-                                (!document.documentElement.classList.contains('theme-dark') && window.matchMedia('(prefers-color-scheme: light)').matches);
-                ctx.fillStyle = isLight ? `rgba(103, 80, 164, ${0.2 + (val/255)*0.6})` : `rgba(208, 188, 255, ${0.2 + (val/255)*0.6})`;
+                ctx.fillStyle = `rgba(${vizRGB}, ${0.2 + (val/255)*0.6})`;
                 ctx.beginPath();
                 ctx.roundRect(x, (visualizer.height/2) - (h/2), barWidth-2, Math.max(h, 4), 10);
                 ctx.fill(); x += barWidth;
@@ -5044,6 +5073,7 @@
             updateSliderFill(seekSlider);
             document.getElementById('current-time').innerText = formatTime(audio.currentTime, audio.duration);
             document.getElementById('duration').innerText = formatTime(audio.duration, audio.duration);
+            updatePipSeek();
             syncLyrics();
         });
 
@@ -5698,6 +5728,15 @@
         }
 
         // --- PiP + video: hình lấy từ captureStream() của thẻ phát chính (thẻ gốc vẫn phát, PiP chỉ là bản xem) ---
+        let pipSeeking = false;
+        function updatePipSeek() {
+            if (!customPipWindow) return;
+            const d = customPipWindow.document, sk = d.getElementById('pip-seek');
+            if (!sk) return;
+            if (!pipSeeking) sk.value = audio.duration ? (audio.currentTime / audio.duration) * 1000 : 0;
+            d.getElementById('pip-cur').innerText = formatTime(audio.currentTime, audio.duration);
+            d.getElementById('pip-dur').innerText = formatTime(audio.duration, audio.duration);
+        }
         let pipVideoSrc = '';        // nguồn đang gắn vào PiP, để chỉ đổi stream/kích thước khi đổi bài
         let pipSizedForVideo = false; // cửa sổ đã được chỉnh theo khung video (để trả lại 320x320 khi hết video)
         function pipVideoSize() {
@@ -5856,6 +5895,10 @@
                         0%, 100% { transform: translateY(0); }
                         50% { transform: translateY(-8px); }
                     }
+                    .pip-seek { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+                    .pip-time { font-size: calc(11px * var(--font-scale-factor, 1)); opacity: .75; min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
+                    #pip-seek { flex: 1; min-width: 0; height: 4px; cursor: pointer; accent-color: var(--pip-primary, #D0BCFF); }
+                    body.pip-expanded .pip-player-section { padding: 12px 24px; }
                     .pip-controls { 
                         display: flex; justify-content: center; align-items: center; gap: 8px;
                     }
@@ -5902,8 +5945,8 @@
                         background: linear-gradient(rgba(0,0,0,.6), transparent 35%, transparent 60%, rgba(0,0,0,.65));
                     }
                     body.pip-video:not(.pip-expanded):hover .pip-player-section::before { opacity: 1; }
-                    body.pip-video:not(.pip-expanded) .pip-header, body.pip-video:not(.pip-expanded) .pip-controls { opacity: 0; transition: opacity .25s; }
-                    body.pip-video:not(.pip-expanded):hover .pip-header, body.pip-video:not(.pip-expanded):hover .pip-controls { opacity: 1; }
+                    body.pip-video:not(.pip-expanded) .pip-header, body.pip-video:not(.pip-expanded) .pip-controls, body.pip-video:not(.pip-expanded) .pip-seek { opacity: 0; transition: opacity .25s; }
+                    body.pip-video:not(.pip-expanded):hover .pip-header, body.pip-video:not(.pip-expanded):hover .pip-controls, body.pip-video:not(.pip-expanded):hover .pip-seek { opacity: 1; }
                     body.pip-video:not(.pip-expanded) .pip-lyric { justify-content: flex-end; margin: 0 0 4px; pointer-events: none; }
                     .pip-playlist-section {
                         flex: 1; display: none; flex-direction: column; position: relative; z-index: 2;
@@ -5984,6 +6027,12 @@
                         
                         <div id="pip-lyric" class="pip-lyric"></div>
 
+                        <div class="pip-seek">
+                            <span id="pip-cur" class="pip-time">0:00</span>
+                            <input type="range" id="pip-seek" min="0" max="1000" step="1" value="0">
+                            <span id="pip-dur" class="pip-time">0:00</span>
+                        </div>
+
                         <div class="pip-controls">
                             <button class="btn-m3" id="pip-shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
                             <button class="btn-m3" id="pip-prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-outlined">skip_previous</span></button>
@@ -6024,11 +6073,19 @@
                 pipDoc.getElementById('pip-next-btn').onclick = () => document.getElementById('next-btn').click();
                 pipDoc.getElementById('pip-shuffle-btn').onclick = () => document.getElementById('shuffle-btn').click();
                 pipDoc.getElementById('pip-repeat-btn').onclick = () => document.getElementById('repeat-btn').click();
+                // Thanh trượt thời gian: kéo -> tua; lúc đang kéo thì không bị timeupdate ghi đè
+                const pipSeekEl = pipDoc.getElementById('pip-seek');
+                pipSeekEl.addEventListener('pointerdown', () => { pipSeeking = true; });
+                pipSeekEl.addEventListener('pointerup', () => { pipSeeking = false; });
+                pipSeekEl.addEventListener('input', () => {
+                    if (audio.duration) audio.currentTime = (pipSeekEl.value / 1000) * audio.duration;
+                    pipDoc.getElementById('pip-cur').innerText = formatTime(audio.currentTime, audio.duration);
+                });
 
                 pipDoc.getElementById('pip-expand-btn').onclick = () => {
                     pipDoc.body.classList.add('pip-expanded');
                     customPipWindow.resizeTo(320, 500); 
-                    pipDoc.querySelector('.pip-player-section').style.height = '180px'; 
+                    pipDoc.querySelector('.pip-player-section').style.height = '200px'; 
                     pipDoc.getElementById('pip-lyric').style.display = 'none'; 
                     pipDoc.getElementById('pip-playlist-section').style.display = 'flex';
                     pipDoc.getElementById('pip-expand-btn').style.opacity = '0';
@@ -6071,6 +6128,7 @@
 
                 pipVideoSrc = '';
                 updatePiPUI();
+                updatePipSeek();
                 pipSyncVideo(true);
 
             } catch (error) {
@@ -6144,6 +6202,9 @@
 
         window.__tr = k => (typeof currentLangDict !== 'undefined' && currentLangDict) ? currentLangDict[k] : undefined;
         const EN_FALLBACK = {
+            "metaeditor.field_subtitle": "Subtitle Embed",
+            "metaeditor.section_subtitle": "Subtitle",
+            "metaeditor.saved_subtitle": "Subtitle saved in the app (the video file itself is not modified).",
             'player.video_no_edit': "Video files don't support tag or cover editing yet",
             "settings.cat_mixer": "Audio mixer",
             "mixer.preamp": "Volume boost (Preamp)",
@@ -6550,7 +6611,7 @@
              'settings_font_scale_sync','settings_language','settings_output_device','settings_playback_speed',
              'settings_reduce_effects','settings_reduce_motion','settings_repeat_mode','settings_show_fs_lyric',
              'settings_show_main_lyric','settings_show_pip_lyric','settings_shuffle','settings_theme','settings_ui_scale',
-             'settings_volume','settings_wake_lock','settings_mixer','getting_started_done','getting_started_pending'
+             'settings_volume','settings_wake_lock','settings_mixer','settings_subs','getting_started_done','getting_started_pending'
             ].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
             try { localStorage.setItem('getting_started_pending', '1'); } catch (e) {}
             try {
@@ -6954,16 +7015,25 @@
 
         let pendingMetadata = null;
 
+        // Phụ đề của video được lưu trong trình duyệt (không ghi được vào tệp video), khoá theo tên + dung lượng tệp
+        const subKey = f => f ? (f.name + '|' + f.size) : '';
+        function loadVideoSubtitle(f) { try { return (JSON.parse(localStorage.getItem('settings_subs') || '{}'))[subKey(f)] || ''; } catch (e) { return ''; } }
+        function saveVideoSubtitle(f, text) {
+            try {
+                const all = JSON.parse(localStorage.getItem('settings_subs') || '{}');
+                if (text) all[subKey(f)] = text; else delete all[subKey(f)];
+                localStorage.setItem('settings_subs', JSON.stringify(all));
+            } catch (e) { showToast('Không lưu được phụ đề (bộ nhớ trình duyệt đầy?)'); }
+        }
+
         editMetadataBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (currentIndex === -1) {
                 showToast(currentLangDict['player.load_first_prompt'] || "Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!");
                 return;
             }
-            if (playlist[currentIndex] && playlist[currentIndex].isVideo) {
-                showToast(currentLangDict['player.video_no_edit'] || 'Tệp video chưa hỗ trợ chỉnh sửa thẻ và ảnh bìa');
-                return;
-            }
+            // Video: chỉ có Subtitle Embed -> mở thẳng trình chỉnh sửa, không cần bảng chọn (không có ảnh bìa để sửa)
+            if (playlist[currentIndex] && playlist[currentIndex].isVideo) { btnEditMetadataFields.click(); return; }
             editOptionsModal.classList.add('open');
         });
 
@@ -7255,7 +7325,8 @@
                 album: /^unknown( album)?$/i.test(track.album || '') ? '' : (track.album || ''),
                 genre: track.genre || '',
                 composer: track.composer || '',
-                lyric: track.lyricsRaw || ''
+                lyric: track.lyricsRaw || '',
+                video: !!track.isVideo
             }, '*');
         }
 
@@ -7328,6 +7399,18 @@
             else if (d === 'close') {
                 metadataIframe.style.right = 'calc(-1 * var(--vw))'; 
                 refreshCurrentTrackUI(); // Cập nhật tên/nghệ sĩ/lời bài hát tại chỗ tức thì
+            }
+            else if (d && d.type === 'save' && d.video) {
+                // Video: không ghi vào tệp, chỉ lưu phụ đề trong ứng dụng (theo tên + dung lượng tệp)
+                const track = playlist[currentIndex];
+                if (track) {
+                    track.lyricsRaw = d.lyric || '';
+                    track.lyrics = d.lyric ? parseLRC(d.lyric) : null;
+                    saveVideoSubtitle(track.file, d.lyric || '');
+                    renderLyrics(); updatePlaylistUI(); updateFsUI();
+                    if (typeof updatePiPUI === 'function') updatePiPUI();
+                }
+                metadataIframe.contentWindow.postMessage({ type: 'saved', persisted: 'app' }, '*');
             }
             else if (d && d.type === 'save') {
                 pendingMetadata = d;
