@@ -5697,6 +5697,40 @@
             });
         }
 
+        // --- PiP + video: hình lấy từ captureStream() của thẻ phát chính (thẻ gốc vẫn phát, PiP chỉ là bản xem) ---
+        let pipVideoSrc = '';        // nguồn đang gắn vào PiP, để chỉ đổi stream/kích thước khi đổi bài
+        let pipSizedForVideo = false; // cửa sổ đã được chỉnh theo khung video (để trả lại 320x320 khi hết video)
+        function pipVideoSize() {
+            let w = 480, h = Math.round(w * audio.videoHeight / audio.videoWidth);
+            if (h > 560) { h = 560; w = Math.round(h * audio.videoWidth / audio.videoHeight); }
+            return [Math.max(w, 280), Math.max(h, 160)];
+        }
+        function pipSyncVideo(forceResize) {
+            if (!customPipWindow) return;
+            const doc = customPipWindow.document;
+            const v = doc.getElementById('pip-video');
+            if (!v) return;
+            const on = !!(playlist[currentIndex] && playlist[currentIndex].isVideo) && audio.videoWidth > 0;
+            doc.body.classList.toggle('pip-video', on);
+            if (on) {
+                const key = audio.currentSrc;
+                const changed = key !== pipVideoSrc;
+                if (changed) {
+                    pipVideoSrc = key;
+                    try { v.srcObject = audio.captureStream ? audio.captureStream() : null; v.play().catch(() => {}); } catch (e) { console.warn('PiP video:', e); }
+                }
+                if ((changed || forceResize) && !doc.body.classList.contains('pip-expanded')) {
+                    try { const [w, h] = pipVideoSize(); customPipWindow.resizeTo(w, h); pipSizedForVideo = true; } catch (e) {}
+                }
+            } else {
+                if (pipVideoSrc) { pipVideoSrc = ''; v.srcObject = null; }
+                if (pipSizedForVideo && !doc.body.classList.contains('pip-expanded')) {
+                    pipSizedForVideo = false;
+                    try { customPipWindow.resizeTo(320, 320); } catch (e) {}
+                }
+            }
+        }
+
         function updatePiPUI() {
             if (!customPipWindow) return;
             const doc = customPipWindow.document;
@@ -5743,6 +5777,7 @@
             if (playlistSection && playlistSection.style.display !== 'none') {
                 renderPipPlaylist();
             }
+            pipSyncVideo(false);
         }
 
         pipBtn.addEventListener('click', async () => {
@@ -5757,10 +5792,9 @@
             }
 
             try {
-                customPipWindow = await window.documentPictureInPicture.requestWindow({
-                    width: 320,
-                    height: 320,
-                });
+                const pipInitVideo = !!(playlist[currentIndex] && playlist[currentIndex].isVideo) && audio.videoWidth > 0;
+                const [pipW0, pipH0] = pipInitVideo ? pipVideoSize() : [320, 320];
+                customPipWindow = await window.documentPictureInPicture.requestWindow({ width: pipW0, height: pipH0 });
 
                 try {
                     const screenW = window.screen.availWidth;
@@ -5858,6 +5892,19 @@
                         display: none; align-items: center; justify-content: center;
                     }
 
+                    /* Video trong PiP: khung video quyết định kích thước, nút trên/dưới tự ẩn và hiện khi rê chuột vào */
+                    .pip-video-el { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; z-index: 1; display: none; }
+                    body.pip-video:not(.pip-expanded) .pip-video-el { display: block; }
+                    body.pip-video:not(.pip-expanded) .pip-bg { display: none; }
+                    body.pip-video:not(.pip-expanded) .pip-player-section { padding: 12px 16px; }
+                    body.pip-video:not(.pip-expanded) .pip-player-section::before {
+                        content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .25s;
+                        background: linear-gradient(rgba(0,0,0,.6), transparent 35%, transparent 60%, rgba(0,0,0,.65));
+                    }
+                    body.pip-video:not(.pip-expanded):hover .pip-player-section::before { opacity: 1; }
+                    body.pip-video:not(.pip-expanded) .pip-header, body.pip-video:not(.pip-expanded) .pip-controls { opacity: 0; transition: opacity .25s; }
+                    body.pip-video:not(.pip-expanded):hover .pip-header, body.pip-video:not(.pip-expanded):hover .pip-controls { opacity: 1; }
+                    body.pip-video:not(.pip-expanded) .pip-lyric { justify-content: flex-end; margin: 0 0 4px; pointer-events: none; }
                     .pip-playlist-section {
                         flex: 1; display: none; flex-direction: column; position: relative; z-index: 2;
                         background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255,255,255,0.1);
@@ -5924,6 +5971,7 @@
 
                 pipDoc.body.innerHTML = `
                     <div id="pip-bg" class="pip-bg"></div>
+                    <video id="pip-video" class="pip-video-el" muted playsinline></video>
                     <div class="pip-player-section">
                         <div class="pip-header">
                             <div style="width: 32px;"></div> 
@@ -5978,6 +6026,7 @@
                 pipDoc.getElementById('pip-repeat-btn').onclick = () => document.getElementById('repeat-btn').click();
 
                 pipDoc.getElementById('pip-expand-btn').onclick = () => {
+                    pipDoc.body.classList.add('pip-expanded');
                     customPipWindow.resizeTo(320, 500); 
                     pipDoc.querySelector('.pip-player-section').style.height = '180px'; 
                     pipDoc.getElementById('pip-lyric').style.display = 'none'; 
@@ -5988,12 +6037,14 @@
                 };
 
                 pipDoc.getElementById('pip-close-btn').onclick = () => {
-                    customPipWindow.resizeTo(320, 320); 
+                    pipDoc.body.classList.remove('pip-expanded');
+                    customPipWindow.resizeTo(320, 320); pipSizedForVideo = false;
                     pipDoc.querySelector('.pip-player-section').style.height = '100%'; 
                     if (settings.showPipLyric) pipDoc.getElementById('pip-lyric').style.display = 'flex'; 
                     pipDoc.getElementById('pip-playlist-section').style.display = 'none';
                     pipDoc.getElementById('pip-expand-btn').style.opacity = '1';
                     pipDoc.getElementById('pip-expand-btn').style.pointerEvents = 'auto';
+                    pipSyncVideo(true);
                 };
 
                 const pipOverlayEl = pipDoc.getElementById('pip-cm-overlay');
@@ -6016,9 +6067,11 @@
                 };
 
                 updateFontScaleFactor();
-                customPipWindow.addEventListener("pagehide", () => { customPipWindow = null; });
+                customPipWindow.addEventListener("pagehide", () => { customPipWindow = null; pipVideoSrc = ""; pipSizedForVideo = false; });
 
+                pipVideoSrc = '';
                 updatePiPUI();
+                pipSyncVideo(true);
 
             } catch (error) {
                 console.error("Vỡ kế hoạch mở PiP:", error);
@@ -7146,6 +7199,7 @@
         // bật nút; nếu audio báo lỗi (file hỏng/không hỗ trợ) -> giữ nút tắt (xám)
         audio.addEventListener('loadedmetadata', () => {
             document.body.classList.toggle('has-video', audio.videoWidth > 0);
+            if (typeof pipSyncVideo === 'function') pipSyncVideo(false);
             const track = playlist[currentIndex];
             if (track) track.canOpen = true;
             updateMoreInfoBtnState();
