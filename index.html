@@ -564,6 +564,7 @@
         .lyric-search-bar .material-symbols-outlined { font-size: 20px; opacity: .7; }
         body.lyrics-open .lyric-search-bar { opacity: 1; pointer-events: auto; }
         body.fullscreen-active .lyric-search-bar, body.fullscreen-active .lyric-credit { display: none !important; }
+        body.is-video-track .lyric-search-bar { display: none !important; }   /* video chưa hỗ trợ chỉnh thẻ/tìm lời */
         .lyric-credit {
             position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 16; white-space: nowrap;
             font-size: calc(12px * var(--font-scale-factor, 1)); font-weight: 600; letter-spacing: .3px; color: var(--md-sys-color-on-surface);
@@ -4406,7 +4407,7 @@
         // Thanh tìm kiếm trong Lyric View -> mở Metadata Editor + giao diện tìm lời
         let openLrcSearchPending = false;
         function openLyricSearchFromView() {
-            if (currentIndex === -1 || !playlist[currentIndex]) return;
+            if (currentIndex === -1 || !playlist[currentIndex] || playlist[currentIndex].isVideo) return;
             if (typeof isEditorOpen === 'function' && isEditorOpen()) return;
             btnEditMetadataFields.click();
             if (metadataEditorReady) metadataIframe.contentWindow.postMessage({ type: 'openLrcSearch' }, '*');
@@ -4702,6 +4703,7 @@
             if (index < 0 || index >= playlist.length) return;
             currentIndex = index;
             const track = playlist[index];
+            document.body.classList.toggle('is-video-track', !!track.isVideo);
             document.body.classList.remove('has-video');   // sẽ bật lại khi loadedmetadata báo tệp có hình
             audio.src = track.url;
             trackNameEl.innerText = track.name;
