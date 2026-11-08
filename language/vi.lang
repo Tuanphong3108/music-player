@@ -11,9 +11,9 @@ topbar.install_tooltip=Cài đặt để có thể mở file trực tiếp từ 
 topbar.settings=Cài đặt
 topbar.feedback=Gửi phản hồi
 topbar.about=About
-topbar.addmusic=Thêm nhạc
-topbar.addmusic_file=Chọn tệp nhạc
-topbar.addmusic_folder=Chọn thư mục nhạc
+topbar.addmusic=Thêm nhạc / video
+topbar.addmusic_file=Chọn tệp nhạc hoặc video
+topbar.addmusic_folder=Chọn thư mục nhạc hoặc video
 
 ## --- Điều khiển phát nhạc ---
 player.shuffle=Phát ngẫu nhiên
@@ -32,7 +32,7 @@ player.speed=Tốc độ phát
 player.mute=Tắt/Bật tiếng
 player.pip=Mở Trình phát thu nhỏ (PiP)
 player.no_track=Chưa có bài hát
-player.load_first_prompt=Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!
+player.load_first_prompt=Hãy nạp tệp nhạc hoặc video và phát để sử dụng trình chỉnh sửa!
 player.output_device=Chọn thiết bị phát âm thanh
 toast.output_using=Đang sử dụng {device}
 player.output_default=Mặc định

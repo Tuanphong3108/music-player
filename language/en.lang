@@ -11,9 +11,9 @@ topbar.install_tooltip=Install to open files directly from your computer
 topbar.settings=Settings
 topbar.feedback=Send feedback
 topbar.about=About
-topbar.addmusic=Add music
-topbar.addmusic_file=Select music files
-topbar.addmusic_folder=Select music folder
+topbar.addmusic=Add music / video
+topbar.addmusic_file=Select music or video files
+topbar.addmusic_folder=Select music or video folder
 
 ## --- Player controls ---
 player.shuffle=Shuffle
@@ -32,7 +32,7 @@ player.speed=Playback speed
 player.mute=Mute/Unmute
 player.pip=Open Picture-in-Picture (PiP)
 player.no_track=No track loaded
-player.load_first_prompt=Please load a music file and play it to use the editor!
+player.load_first_prompt=Please load a music or video file and play it to use the editor!
 player.output_device=Choose audio output device
 toast.output_using=Now using {device}
 player.output_default=Default

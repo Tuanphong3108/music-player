@@ -1873,15 +1873,15 @@
                 
                 <!-- Nút add_circle mở menu Material Web -->
                 <div style="position:relative;">
-                    <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined" id="add-music-icon">add_circle</span><md-circular-progress id="add-music-spinner" indeterminate style="display:none; --md-circular-progress-size:24px; --md-circular-progress-active-indicator-width:12;"></md-circular-progress></button>
+                    <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc / video" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined" id="add-music-icon">add_circle</span><md-circular-progress id="add-music-spinner" indeterminate style="display:none; --md-circular-progress-size:24px; --md-circular-progress-active-indicator-width:12;"></md-circular-progress></button>
                     <md-menu id="add-music-menu" anchor="add-music-trigger" positioning="popover">
                         <md-menu-item id="btn-fs-pick-files">
                             <span class="material-symbols-outlined" slot="start">file_open</span>
-                            <div slot="headline" data-i18n="topbar.addmusic_file">Chọn tệp nhạc</div>
+                            <div slot="headline" data-i18n="topbar.addmusic_file">Chọn tệp nhạc hoặc video</div>
                         </md-menu-item>
                         <md-menu-item id="btn-fs-pick-directory">
                             <span class="material-symbols-outlined" slot="start">folder_open</span>
-                            <div slot="headline" data-i18n="topbar.addmusic_folder">Chọn thư mục nhạc</div>
+                            <div slot="headline" data-i18n="topbar.addmusic_folder">Chọn thư mục nhạc hoặc video</div>
                         </md-menu-item>
                     </md-menu>
                 </div>
@@ -7029,7 +7029,7 @@
         editMetadataBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (currentIndex === -1) {
-                showToast(currentLangDict['player.load_first_prompt'] || "Hãy nạp tệp nhạc và phát để sử dụng trình chỉnh sửa!");
+                showToast(currentLangDict['player.load_first_prompt'] || "Hãy nạp tệp nhạc hoặc video và phát để sử dụng trình chỉnh sửa!");
                 return;
             }
             // Video: chỉ có Subtitle Embed -> mở thẳng trình chỉnh sửa, không cần bảng chọn (không có ảnh bìa để sửa)
