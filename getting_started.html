@@ -169,7 +169,7 @@
     <section class="slide center" data-step="0"><div class="slide-inner center">
       <div class="hero-icon"><img src="music_note.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ms',textContent:'music_note'}))"></div>
       <h2 data-i="s1_title">Chào mừng đến với Media Player</h2>
-      <p class="lead" data-i="s1_desc">Trình phát nhạc chạy ngay trên máy bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.</p>
+      <p class="lead" data-i="s1_desc">Trình phát nhạc và video chạy ngay trên máy bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.</p>
       <div style="width:100%">
         <div class="lang-label" data-i="s1_pick">Chọn ngôn ngữ</div>
         <div class="lang-grid">
@@ -182,14 +182,14 @@
     <!-- 2. Thêm nhạc -->
     <section class="slide" data-step="1"><div class="slide-inner">
       <div><span class="chip"><span class="ms">add_circle</span><span data-i="s2_chip">Bắt đầu</span></span></div>
-      <h2 data-i="s2_title">Thêm nhạc vào trình phát</h2>
-      <p class="lead" data-i="s2_desc">Nhạc được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.</p>
+      <h2 data-i="s2_title">Thêm nhạc hoặc video vào trình phát</h2>
+      <p class="lead" data-i="s2_desc">Nhạc và video được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.</p>
       <div class="grid g3">
-        <div class="card"><div class="ico"><span class="ms">add_circle</span></div><h3 data-i="s2_c1t">Nút Thêm nhạc</h3><p data-i="s2_c1d">Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc. Phím tắt: <kbd>Ctrl</kbd> + <kbd>O</kbd>.</p></div>
-        <div class="card"><div class="ico"><span class="ms">drag_pan</span></div><h3 data-i="s2_c2t">Kéo &amp; thả</h3><p data-i="s2_c2d">Kéo tệp nhạc (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.</p></div>
+        <div class="card"><div class="ico"><span class="ms">add_circle</span></div><h3 data-i="s2_c1t">Nút Thêm nhạc / video</h3><p data-i="s2_c1d">Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc/video (mp4, webm, mkv, mov...). Phím tắt: <kbd>Ctrl</kbd> + <kbd>O</kbd>.</p></div>
+        <div class="card"><div class="ico"><span class="ms">drag_pan</span></div><h3 data-i="s2_c2t">Kéo &amp; thả</h3><p data-i="s2_c2d">Kéo tệp nhạc hoặc video (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.</p></div>
         <div class="card"><div class="ico"><span class="ms">queue_music</span></div><h3 data-i="s2_c3t">Danh sách phát</h3><p data-i="s2_c3d">Tìm bài trong danh sách, bật Ngẫu nhiên (Shuffle) và Lặp lại để nghe liên tục.</p></div>
       </div>
-      <div class="note"><span class="ms">offline_bolt</span><span data-i="s2_note">Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc trực tiếp từ máy và dùng offline.</span></div>
+      <div class="note"><span class="ms">offline_bolt</span><span data-i="s2_note">Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc/video trực tiếp từ máy và dùng offline.</span></div>
     </div></section>
 
     <!-- 3. Tính năng -->
@@ -199,10 +199,13 @@
       <div class="grid g3">
         <div class="card"><div class="ico"><span class="ms">lyrics</span></div><h3 data-i="s3_c1t">Lời bài hát đồng bộ</h3><p data-i="s3_c1d">Tự nhận tệp .lrc cùng tên hoặc lời nhúng trong bài. Bấm vào một câu để tua tới đó.</p></div>
         <div class="card"><div class="ico"><span class="ms">edit_note</span></div><h3 data-i="s3_c2t">Sửa thẻ &amp; ảnh bìa</h3><p data-i="s3_c2d">Chỉnh thẻ ID3, ảnh bìa và tìm lời trên lrclib ngay trong ứng dụng.</p></div>
-        <div class="card"><div class="ico"><span class="ms">picture_in_picture_alt</span></div><h3 data-i="s3_c3t">Thu nhỏ (PiP)</h3><p data-i="s3_c3d">Giữ trình phát nhỏ nổi trên màn hình trong lúc bạn làm việc khác.</p></div>
-        <div class="card"><div class="ico"><span class="ms">fullscreen</span></div><h3 data-i="s3_c4t">Toàn màn hình</h3><p data-i="s3_c4d">Ảnh bìa, lời và sóng nhạc trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.</p></div>
+        <div class="card"><div class="ico"><span class="ms">picture_in_picture_alt</span></div><h3 data-i="s3_c3t">Thu nhỏ (PiP)</h3><p data-i="s3_c3d">Giữ trình phát nhỏ nổi trên màn hình (có cả thanh tua và khung video) trong lúc bạn làm việc khác.</p></div>
+        <div class="card"><div class="ico"><span class="ms">fullscreen</span></div><h3 data-i="s3_c4t">Toàn màn hình</h3><p data-i="s3_c4d">Ảnh bìa, lời và sóng nhạc (hoặc hình video) trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.</p></div>
         <div class="card"><div class="ico"><span class="ms">timer</span></div><h3 data-i="s3_c5t">Hẹn giờ tạm dừng</h3><p data-i="s3_c5d">Tự dừng nhạc sau một khoảng thời gian hoặc sau một số bài nhất định.</p></div>
         <div class="card"><div class="ico"><span class="ms">headphones</span></div><h3 data-i="s3_c6t">Thiết bị âm thanh</h3><p data-i="s3_c6d">Chọn loa hoặc tai nghe phát nhạc ngay từ thanh trên cùng.</p></div>
+        <div class="card"><div class="ico"><span class="ms">movie</span></div><h3 data-i="s3_c7t"></h3><p data-i="s3_c7d"></p></div>
+        <div class="card"><div class="ico"><span class="ms">equalizer</span></div><h3 data-i="s3_c8t"></h3><p data-i="s3_c8d"></p></div>
+        <div class="card"><div class="ico"><span class="ms">subtitles</span></div><h3 data-i="s3_c9t"></h3><p data-i="s3_c9d"></p></div>
       </div>
     </div></section>
 
@@ -216,7 +219,7 @@
         <div class="key-row"><span data-i="k_seek">Tua lùi / tiến 5 giây</span><span class="k"><kbd>←</kbd><kbd>→</kbd></span></div>
         <div class="key-row"><span data-i="k_vol">Tăng / giảm âm lượng</span><span class="k"><kbd>↑</kbd><kbd>↓</kbd></span></div>
         <div class="key-row"><span data-i="k_track">Bài trước / bài sau</span><span class="k"><kbd>Ctrl</kbd><kbd>←</kbd><kbd>→</kbd></span></div>
-        <div class="key-row"><span data-i="k_open">Thêm nhạc</span><span class="k"><kbd>Ctrl</kbd><kbd>O</kbd></span></div>
+        <div class="key-row"><span data-i="k_open">Thêm nhạc / video</span><span class="k"><kbd>Ctrl</kbd><kbd>O</kbd></span></div>
         <div class="key-row"><span data-i="k_full">Toàn màn hình</span><span class="k"><kbd>F11</kbd></span></div>
       </div>
     </div></section>
@@ -267,24 +270,27 @@
   var T = {
     vi: {
       hdr_sub:'Hướng dẫn bắt đầu', skip:'Bỏ qua', back:'Quay lại', next:'Tiếp theo', finish:'Bắt đầu nghe nhạc',
-      step:'Bước {n} / {t}', names:['Chào mừng','Thêm nhạc','Tính năng','Phím tắt','Cài đặt nhanh'],
+      step:'Bước {n} / {t}', names:['Chào mừng','Thêm nhạc / video','Tính năng','Phím tắt','Cài đặt nhanh'],
       s1_title:'Chào mừng đến với Media Player',
-      s1_desc:'Trình phát nhạc chạy ngay trên máy bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.',
+      s1_desc:'Trình phát nhạc và video chạy ngay trên máy bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.',
       s1_pick:'Chọn ngôn ngữ',
-      s2_chip:'Bắt đầu', s2_title:'Thêm nhạc vào trình phát', s2_desc:'Nhạc được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.',
-      s2_c1t:'Nút Thêm nhạc', s2_c1d:'Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc. Phím tắt: <kbd>Ctrl</kbd> + <kbd>O</kbd>.',
-      s2_c2t:'Kéo & thả', s2_c2d:'Kéo tệp nhạc (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.',
+      s2_chip:'Bắt đầu', s2_title:'Thêm nhạc hoặc video vào trình phát', s2_desc:'Nhạc và video được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.',
+      s2_c1t:'Nút Thêm nhạc / video', s2_c1d:'Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc/video (mp4, webm, mkv, mov...). Phím tắt: <kbd>Ctrl</kbd> + <kbd>O</kbd>.',
+      s2_c2t:'Kéo & thả', s2_c2d:'Kéo tệp nhạc hoặc video (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.',
       s2_c3t:'Danh sách phát', s2_c3d:'Tìm bài trong danh sách, bật Ngẫu nhiên (Shuffle) và Lặp lại để nghe liên tục.',
-      s2_note:'Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc trực tiếp từ máy và dùng offline.',
+      s2_note:'Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc/video trực tiếp từ máy và dùng offline.',
       s3_chip:'Tính năng', s3_title:'Những thứ hay ho đi kèm',
       s3_c1t:'Lời bài hát đồng bộ', s3_c1d:'Tự nhận tệp .lrc cùng tên hoặc lời nhúng trong bài. Bấm vào một câu để tua tới đó.',
       s3_c2t:'Sửa thẻ & ảnh bìa', s3_c2d:'Chỉnh thẻ ID3, ảnh bìa và tìm lời trên lrclib ngay trong ứng dụng.',
-      s3_c3t:'Thu nhỏ (PiP)', s3_c3d:'Giữ trình phát nhỏ nổi trên màn hình trong lúc bạn làm việc khác.',
-      s3_c4t:'Toàn màn hình', s3_c4d:'Ảnh bìa, lời và sóng nhạc trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.',
+      s3_c3t:'Thu nhỏ (PiP)', s3_c3d:'Giữ trình phát nhỏ nổi trên màn hình (có cả thanh tua và khung video) trong lúc bạn làm việc khác.',
+      s3_c4t:'Toàn màn hình', s3_c4d:'Ảnh bìa, lời và sóng nhạc (hoặc hình video) trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.',
       s3_c5t:'Hẹn giờ tạm dừng', s3_c5d:'Tự dừng nhạc sau một khoảng thời gian hoặc sau một số bài nhất định.',
+      s3_c7t:'Phát video', s3_c7d:'Hỗ trợ mp4, webm, mkv, mov... Hình hiện ngay trong khung chính, Toàn màn hình và PiP.',
+      s3_c8t:'Bộ trộn âm thanh', s3_c8d:'Chỉnh Equalizer 5 dải, khuếch đại, cân bằng trái/phải, mono trong Cài đặt.',
+      s3_c9t:'Phụ đề video', s3_c9d:'Bấm nút chỉnh sửa khi đang xem video để thêm lời/phụ đề (.lrc), lưu ngay trong ứng dụng.',
       s3_c6t:'Thiết bị âm thanh', s3_c6d:'Chọn loa hoặc tai nghe phát nhạc ngay từ thanh trên cùng.',
       s4_chip:'Phím tắt', s4_title:'Điều khiển không cần chuột',
-      k_play:'Phát / Tạm dừng', k_mute:'Bật / Tắt tiếng', k_seek:'Tua lùi / tiến 5 giây', k_vol:'Tăng / giảm âm lượng', k_track:'Bài trước / bài sau', k_open:'Thêm nhạc', k_full:'Toàn màn hình',
+      k_play:'Phát / Tạm dừng', k_mute:'Bật / Tắt tiếng', k_seek:'Tua lùi / tiến 5 giây', k_vol:'Tăng / giảm âm lượng', k_track:'Bài trước / bài sau', k_open:'Thêm nhạc / video', k_full:'Toàn màn hình',
       s5_chip:'Cài đặt nhanh', s5_title:'Chọn phong cách của bạn',
       s5_desc:'Xem thử ngay trên màn hình này. Mọi thay đổi sẽ được áp dụng vào Media Player khi bạn bấm nút bắt đầu, và có thể đổi lại trong Cài đặt.',
       t_title:'Chế độ sáng / tối', t_desc:'Chọn tông nền cho giao diện', t_system:'Hệ thống', t_light:'Sáng', t_dark:'Tối',
@@ -294,24 +300,27 @@
     },
     en: {
       hdr_sub:'Getting started', skip:'Skip', back:'Back', next:'Next', finish:'Start listening',
-      step:'Step {n} of {t}', names:['Welcome','Add music','Features','Shortcuts','Quick settings'],
+      step:'Step {n} of {t}', names:['Welcome','Add music / video','Features','Shortcuts','Quick settings'],
       s1_title:'Welcome to Media Player',
-      s1_desc:'A music player that runs right on your device: synced lyrics, ID3 tag editing, Material 3 design and full offline support.',
+      s1_desc:'A music and video player that runs right on your device: synced lyrics, ID3 tag editing, Material 3 design and full offline support.',
       s1_pick:'Choose your language',
-      s2_chip:'Get started', s2_title:'Add music to the player', s2_desc:'Music is read straight from your device and never uploaded to any server.',
-      s2_c1t:'Add music button', s2_c1d:'Click the plus button at the top to pick files or a whole music folder. Shortcut: <kbd>Ctrl</kbd> + <kbd>O</kbd>.',
-      s2_c2t:'Drag & drop', s2_c2d:'Drop audio files (and .lrc lyric files) right onto the app window.',
+      s2_chip:'Get started', s2_title:'Add music or video to the player', s2_desc:'Music and video are read straight from your device and never uploaded to any server.',
+      s2_c1t:'Add music / video button', s2_c1d:'Click the plus button at the top to pick files or a whole music/video folder (mp4, webm, mkv, mov...). Shortcut: <kbd>Ctrl</kbd> + <kbd>O</kbd>.',
+      s2_c2t:'Drag & drop', s2_c2d:'Drop music or video files (and .lrc lyric files) right onto the app window.',
       s2_c3t:'Playlist', s2_c3d:'Search the list, turn on Shuffle and Repeat to keep the music going.',
-      s2_note:'Install the app (the install button in the top bar) to open music files directly from your computer and use it offline.',
+      s2_note:'Install the app (the install button in the top bar) to open music/video files directly from your computer and use it offline.',
       s3_chip:'Features', s3_title:'Handy things included',
       s3_c1t:'Synced lyrics', s3_c1d:'Detects a matching .lrc file or lyrics embedded in the track. Click a line to jump to it.',
       s3_c2t:'Edit tags & cover art', s3_c2d:'Edit ID3 tags, cover art and search lyrics on lrclib without leaving the app.',
-      s3_c3t:'Mini player (PiP)', s3_c3d:'Keep a small floating player on screen while you work on something else.',
-      s3_c4t:'Fullscreen', s3_c4d:'Cover art, lyrics and the visualizer in Immersive mode. Shortcut: <kbd>F11</kbd>.',
+      s3_c3t:'Mini player (PiP)', s3_c3d:'Keep a small floating player (with a seek bar and the video picture) on screen while you work on something else.',
+      s3_c4t:'Fullscreen', s3_c4d:'Cover art, lyrics and the visualizer (or the video picture) in Immersive mode. Shortcut: <kbd>F11</kbd>.',
       s3_c5t:'Sleep timer', s3_c5d:'Pause the music after a set time or after a number of tracks.',
+      s3_c7t:'Video playback', s3_c7d:'Supports mp4, webm, mkv, mov... The picture shows in the main stage, Fullscreen and PiP.',
+      s3_c8t:'Audio mixer', s3_c8d:'Tune the 5-band equalizer, preamp, left/right balance and mono in Settings.',
+      s3_c9t:'Video subtitles', s3_c9d:'Press the edit button while watching a video to add lyrics/subtitles (.lrc), saved inside the app.',
       s3_c6t:'Audio output', s3_c6d:'Pick the speaker or headphones from the top bar.',
       s4_chip:'Shortcuts', s4_title:'Control it without a mouse',
-      k_play:'Play / Pause', k_mute:'Mute / Unmute', k_seek:'Seek back / forward 5 seconds', k_vol:'Volume up / down', k_track:'Previous / next track', k_open:'Add music', k_full:'Fullscreen',
+      k_play:'Play / Pause', k_mute:'Mute / Unmute', k_seek:'Seek back / forward 5 seconds', k_vol:'Volume up / down', k_track:'Previous / next track', k_open:'Add music / video', k_full:'Fullscreen',
       s5_chip:'Quick settings', s5_title:'Pick your style',
       s5_desc:'Preview it right on this screen. Everything is applied to Media Player when you press the start button, and you can change it later in Settings.',
       t_title:'Light / dark mode', t_desc:'Choose the background tone', t_system:'System', t_light:'Light', t_dark:'Dark',
