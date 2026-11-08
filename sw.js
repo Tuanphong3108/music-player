@@ -1,4 +1,5 @@
 const CACHE_PREFIX = 'media-player-';
+const LEGACY_PREFIX = 'audio-player-';   // tên cũ trước khi đổi sang Media Player, để dọn cache cũ
 const CACHE_VERSION = 'v2026_11_06_113044';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
@@ -62,7 +63,7 @@ self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames
-      .filter(name => name.startsWith(CACHE_PREFIX) && name !== SHELL_CACHE && name !== RUNTIME_CACHE)
+      .filter(name => (name.startsWith(CACHE_PREFIX) || name.startsWith(LEGACY_PREFIX)) && name !== SHELL_CACHE && name !== RUNTIME_CACHE)
       .map(name => caches.delete(name)));
     await self.clients.claim();
   })());
