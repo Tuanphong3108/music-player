@@ -19,7 +19,7 @@ const APP_SHELL = [
   './minecraft.ttf',
   './MinecraftTen-VGORe.ttf',
   './error.png',
-  ./error-dark.png',
+  './error-dark.png',
   './music_note.png'
 ];
 
