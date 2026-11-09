@@ -18,6 +18,8 @@ const APP_SHELL = [
   './manifest_md1.json',
   './minecraft.ttf',
   './MinecraftTen-VGORe.ttf',
+  './error.png',
+  ./error-dark.png',
   './music_note.png'
 ];
 
