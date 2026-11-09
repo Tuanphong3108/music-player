@@ -2,6 +2,10 @@
   "date": "2026-11-06",
   "vi": [
     {
+      "content": "Hiển thị khung thông báo khi tệp âm thanh hoặc video bị lỗi và tự động ẩn sóng nhạc",
+      "icon": "error"
+    },
+    {
       "content": "Sóng nhạc đổi màu theo Accent Color",
       "icon": "graphic_eq"
     },
@@ -35,6 +39,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Display an error screen when an audio or video file fails to play and hide the visualizer",
+      "icon": "error"
+    },
     {
       "content": "The visualizer now follows the Accent Color",
       "icon": "graphic_eq"
