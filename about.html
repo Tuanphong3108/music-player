@@ -381,6 +381,8 @@
                 summaryCondDesc: "Phải giữ nguyên thông báo bản quyền MIT trong tất cả bản sao.",
                 summaryWarnTitle: "Bảo hành",
                 summaryWarnDesc: "Phần mềm được cung cấp nguyên bản, không bảo hành đi kèm.",
+                thirdPartyTitle: "Giấy phép của bên thứ ba",
+                thirdPartyNote: "Media Player sử dụng các thành phần bên dưới. Mỗi thành phần thuộc quyền của tác giả riêng và tuân theo giấy phép của chính nó, không nằm trong MIT License © 2026 Phong VN ở trên.",
                 features: [
                     {
                         title: "Hệ thống Phím tắt tiện lợi",
@@ -457,6 +459,8 @@
                 summaryCondDesc: "Must preserve copyright notice in all copies.",
                 summaryWarnTitle: "Limitations",
                 summaryWarnDesc: "Software provided 'as is', without warranty of any kind.",
+                thirdPartyTitle: "Third-party licenses",
+                thirdPartyNote: "Media Player uses the components below. Each belongs to its own authors and is governed by its own license; they are not covered by the MIT License © 2026 Phong VN above.",
                 features: [
                     {
                         title: "Convenient Keyboard Shortcuts",
@@ -674,6 +678,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.</pre>
                         </div>
+
+                        <div class="flex flex-col gap-2">
+                            <h4 class="font-bold text-sm text-[var(--m3-on-surface)]">${langData.thirdPartyTitle}</h4>
+                            <p class="text-[11px] text-[var(--m3-on-surface-variant)]">${langData.thirdPartyNote}</p>
+                            <div class="rounded-2xl border border-[var(--m3-outline)]/20 overflow-hidden divide-y divide-[var(--m3-outline)]/20 bg-[var(--m3-surface-container-high)]">
+                                ${THIRD_PARTY.map(t => `
+                                <a href="${t.url}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between gap-3 p-3 hover:bg-[var(--m3-surface-container-highest)] transition-colors">
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-xs text-[var(--m3-on-surface)] truncate">${t.name}</div>
+                                        <div class="text-[11px] text-[var(--m3-on-surface-variant)] truncate">${t.by} · ${t.use}</div>
+                                    </div>
+                                    <span class="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400">${t.license}</span>
+                                </a>`).join('')}
+                            </div>
+                        </div>
                     </div>
                 `;
             } else {
@@ -698,6 +717,21 @@ SOFTWARE.</pre>
                 detailView.classList.add('opacity-100', 'translate-x-0');
             }, 200);
         }
+
+        // Thành phần bên thứ ba (tên giấy phép theo từng dự án)
+        const THIRD_PARTY = [
+            { name: "Material Web (@material/web)", by: "Google", use: "UI", license: "Apache-2.0", url: "https://github.com/material-components/material-web/blob/main/LICENSE" },
+            { name: "Material Symbols", by: "Google", use: "Icon", license: "Apache-2.0", url: "https://github.com/google/material-design-icons/blob/master/LICENSE" },
+            { name: "Google Sans Flex", by: "Google", use: "Font", license: "SIL OFL 1.1", url: "https://fonts.google.com/specimen/Google+Sans+Flex/license" },
+            { name: "jsmediatags 3.9.5", by: "Jesse Ditson / aadsm", use: "ID3", license: "BSD-3-Clause", url: "https://github.com/aadsm/jsmediatags/blob/master/LICENSE.md" },
+            { name: "browser-id3-writer 4.4.0", by: "egoroof", use: "ID3", license: "MIT", url: "https://github.com/egoroof/browser-id3-writer/blob/master/LICENSE" },
+            { name: "Tailwind CSS", by: "Tailwind Labs", use: "About / Changelog", license: "MIT", url: "https://github.com/tailwindlabs/tailwindcss/blob/main/LICENSE" },
+            { name: "marked", by: "markedjs", use: "Markdown", license: "MIT", url: "https://github.com/markedjs/marked/blob/master/LICENSE.md" },
+            { name: "DOMPurify 3.0.6", by: "Cure53", use: "HTML sanitize", license: "Apache-2.0 / MPL-2.0", url: "https://github.com/cure53/DOMPurify/blob/main/LICENSE" },
+            { name: "highlight.js 11.9.0", by: "highlight.js", use: "Code highlight", license: "BSD-3-Clause", url: "https://github.com/highlightjs/highlight.js/blob/main/LICENSE" },
+            { name: "LRCLIB", by: "lrclib.net", use: "Lyrics API", license: "API", url: "https://lrclib.net" },
+            { name: "Minecraft / MinecraftTen fonts", by: "Mojang / Minecraft Ten", use: "Font", license: "Owners", url: "https://www.minecraft.net" }
+        ];
 
         // Close Feature Detail Screen
         function closeFeatureDetail() {
