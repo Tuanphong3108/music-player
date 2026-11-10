@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>What's New?</title>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght,ROND@100..1000,0..100&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <style>
   :root{--font-scale-factor:1}
@@ -329,6 +330,7 @@ function setLang(l) { currentLang = l === 'en' ? 'en' : 'vi'; renderStatic(); if
         // Phông chữ do app cha gửi sang qua postMessage: { font: { name, stack, href } }
         function applyAppFont(f) {
             if (!f || !f.stack) return;
+    document.documentElement.classList.toggle('custom-font', f.stack.indexOf("'Google Sans Flex'") !== 0);
             var link = document.getElementById('app-font-link');
             if (f.href) {
                 if (!link) { link = document.createElement('link'); link.id = 'app-font-link'; link.rel = 'stylesheet'; document.head.appendChild(link); }
@@ -362,5 +364,28 @@ applyThemeStyles(EMBED_CONFIG.defaultTheme); renderStatic(); loadList();
   } catch (e) { fail(); }
 })();
   </script>
+<script>
+/* Google Sans Flex: bo tròn (ROND) cho chữ in đậm/tiêu đề khi dùng phông mặc định */
+(function () {
+  function run() {
+    try {
+      var sels = ['h1','h2','h3','h4','h5','h6','b','strong','th','[style*="font-weight: 6"]','[style*="font-weight:6"]','[style*="font-weight: 7"]','[style*="font-weight:7"]','[style*="font-weight: 8"]','[style*="font-weight:8"]','[style*="font-weight: 9"]','[style*="font-weight:9"]','[style*="font-weight: bold"]','[style*="font-weight:bold"]'];
+      function heavy(w) { return w === 'bold' || w === 'bolder' || parseInt(w, 10) >= 600; }
+      function scan(rules) {
+        for (var i = 0; i < rules.length; i++) {
+          var r = rules[i];
+          if (r.cssRules && !r.selectorText) { scan(r.cssRules); continue; }
+          if (r.style && r.selectorText && heavy(r.style.fontWeight)) r.selectorText.split(',').forEach(function (x) { x = x.trim(); if (x && !/::?(before|after|placeholder)/.test(x)) sels.push(x); });
+        }
+      }
+      for (var k = 0; k < document.styleSheets.length; k++) { try { scan(document.styleSheets[k].cssRules); } catch (e) {} }
+      var st = document.createElement('style');
+      st.textContent = sels.map(function (x) { return ':root:not(.custom-font) ' + x; }).join(',\n') + ' { font-variation-settings: "ROND" 100; }';
+      document.head.appendChild(st);
+    } catch (e) {}
+  }
+  if (document.readyState === 'complete') run(); else window.addEventListener('load', run);
+})();
+</script>
 </body>
 </html>

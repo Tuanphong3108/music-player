@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'media-player-';
 const LEGACY_PREFIX = 'audio-player-';   // tên cũ trước khi đổi sang Media Player, để dọn cache cũ
-const CACHE_VERSION = 'v2026_11_06_113044-error-file-update';
+const CACHE_VERSION = 'v2026_11_06_113044-rounded';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
@@ -38,6 +38,7 @@ const CDN_HOSTS = new Set([
 // Link CSS phông chữ cần có sẵn khi offline (tải best-effort lúc cài đặt)
 const FONT_CSS_PRECACHE = [
   'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap',
+  'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght,ROND@100..1000,0..100&display=swap',
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
 ];
 

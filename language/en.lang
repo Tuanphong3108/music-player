@@ -371,3 +371,4 @@ metaeditor.section_subtitle=Subtitle
 metaeditor.saved_subtitle=Subtitle saved in the app (the video file itself is not modified).
 player.error_title=Playback error
 player.error_desc=“{name}” may not be supported. Playback may experience some issues.
+player.error_code=Error code: {code}

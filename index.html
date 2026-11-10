@@ -79,6 +79,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
+    <!-- Bản có trục ROND (bo tròn) cho chữ đậm/tiêu đề; nếu tải lỗi thì bản trên vẫn dùng bình thường -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght,ROND@100..1000,0..100&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     
     <!-- Thư viện đọc và ghi đè Metadata ID3 trực tiếp trong trình duyệt -->
@@ -1207,22 +1209,11 @@
         }
         body.fullscreen-active .playback-error-desc { color: #CAC4D0; }
 
-        /* --- GOOGLE SANS FLEX: BO TRÒN (ROUNDNESS) CHO CHỮ IN ĐẬM & HEADER --- */
-h1, h2, h3, h4, h5, h6,
-b, strong {
-    font-variation-settings: 'ROND' 100, 'wght' 700;
-}
-h1 { font-variation-settings: 'ROND' 100, 'wght' 850; }
-h2, h3 { font-variation-settings: 'ROND' 100, 'wght' 750; }
-
-/* Bổ sung hiển thị mã lỗi chi tiết bên dưới thông báo lỗi */
-.playback-error-code {
-    margin-top: 6px;
-    font-family: 'Minecraft', monospace;
-    font-size: calc(11px * var(--font-scale-factor, 1));
-    opacity: 0.65;
-    letter-spacing: 0.5px;
-}
+        /* Dòng mã lỗi dưới thông báo lỗi phát */
+        .playback-error-code {
+            margin-top: 10px; font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+            font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .6; letter-spacing: .3px; user-select: text;
+        }
 </style>
 </head>
 <body>
@@ -2018,6 +2009,7 @@ h2, h3 { font-variation-settings: 'ROND' 100, 'wght' 750; }
     <img src="error-dark.png" alt="Error" class="playback-error-icon icon-dark">
     <h3 class="playback-error-title" id="playback-error-title" data-i18n="player.error_title">Lỗi khi phát</h3>
     <p class="playback-error-desc" id="playback-error-desc"></p>
+    <p class="playback-error-code" id="playback-error-code"></p>
 </div>
                 <div id="top-active-lyric" class="top-active-lyric"></div>
                 
@@ -3138,9 +3130,34 @@ h2, h3 { font-variation-settings: 'ROND' 100, 'wght' 750; }
                 if (st.textContent !== face) st.textContent = face;
             }
         }
+
+        // --- Google Sans Flex: bo tròn (trục ROND) cho chữ in đậm và tiêu đề ---
+        // Chỉ áp dụng khi đang dùng phông mặc định (không có class custom-font). Quét các luật CSS có font-weight >= 600
+        // và thêm font-variation-settings tương ứng, nên chữ đậm tạo bằng bất kỳ class/inline style nào cũng được bo tròn.
+        function applyRoundedBold(doc) {
+            try {
+                if (!doc || doc.__roundedBold) return;
+                doc.__roundedBold = true;
+                const sels = new Set(['h1','h2','h3','h4','h5','h6','b','strong','th','[slot="headline"]',
+                    '[style*="font-weight: 6"]','[style*="font-weight:6"]','[style*="font-weight: 7"]','[style*="font-weight:7"]',
+                    '[style*="font-weight: 8"]','[style*="font-weight:8"]','[style*="font-weight: 9"]','[style*="font-weight:9"]',
+                    '[style*="font-weight: bold"]','[style*="font-weight:bold"]']);
+                const heavy = w => w === 'bold' || w === 'bolder' || (parseInt(w, 10) >= 600);
+                const scan = rules => { for (const r of rules) {
+                    if (r.cssRules && !r.selectorText) { scan(r.cssRules); continue; }
+                    if (r.style && r.selectorText && heavy(r.style.fontWeight)) r.selectorText.split(',').forEach(x => { x = x.trim(); if (x && !/::?(before|after|placeholder)/.test(x)) sels.add(x); });
+                } };
+                for (const sh of doc.styleSheets) { try { scan(sh.cssRules); } catch (e) {} }
+                const st = doc.createElement('style');
+                st.textContent = [...sels].map(x => ':root:not(.custom-font) ' + x).join(',\n') + ' { font-variation-settings: "ROND" 100; }';
+                doc.head.appendChild(st);
+            } catch (e) { console.warn('rounded bold:', e); }
+        }
         function applyFontToDoc(doc) {
             if (!doc || !doc.documentElement) return;
             const name = selectedFontName();
+            doc.documentElement.classList.toggle('custom-font', name !== 'default');
+            applyRoundedBold(doc);
             if (name !== 'default') loadFontIntoDoc(doc, findEntry(name));
             doc.documentElement.style.setProperty('--app-font', fontStack(name));
         }
@@ -5931,6 +5948,7 @@ h2, h3 { font-variation-settings: 'ROND' 100, 'wght' 750; }
                 const style = pipDoc.createElement('style');
                 style.textContent = `
                     @import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap');
+                    @import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght,ROND@100..1000,0..100&display=swap');
                     @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
                     
                     * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -6287,6 +6305,7 @@ h2, h3 { font-variation-settings: 'ROND' 100, 'wght' 750; }
         window.__tr = k => (typeof currentLangDict !== 'undefined' && currentLangDict) ? currentLangDict[k] : undefined;
         const EN_FALLBACK = {
             "player.error_title": "Playback error",
+            "player.error_code": "Error code: {code}",
             "player.error_desc": "“{name}” may not be supported. Playback may experience some issues.",
             "metaeditor.field_subtitle": "Subtitle Embed",
             "metaeditor.section_subtitle": "Subtitle",
@@ -8173,8 +8192,15 @@ h2, h3 { font-variation-settings: 'ROND' 100, 'wght' 750; }
             const errTitleEl = document.getElementById('playback-error-title');
             const errDescEl = document.getElementById('playback-error-desc');
 
+            let playbackErrorCode = '';
             function updatePlaybackErrorText() {
                 if (!document.body.classList.contains('has-playback-error')) return;
+                const codeEl = document.getElementById('playback-error-code');
+                if (codeEl) {
+                    const ct = (typeof currentLangDict !== 'undefined' && currentLangDict['player.error_code'])
+                        || (/^en/i.test(localStorage.getItem('settings_language') || '') ? 'Error code: {code}' : 'Mã lỗi: {code}');
+                    codeEl.textContent = ct.replace('{code}', playbackErrorCode);
+                }
                 const track = playlist[currentIndex];
                 const fileName = (track && track.file && track.file.name) ? track.file.name : (track ? track.name : '');
                 const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
@@ -8208,6 +8234,13 @@ h2, h3 { font-variation-settings: 'ROND' 100, 'wght' 750; }
                 pauseOverlay.classList.remove('visible');
                 document.body.classList.remove('has-video');
                 document.body.classList.add('has-playback-error');
+                // Mã lỗi: tên chuẩn của MediaError + mã chi tiết do trình duyệt báo (nếu có), vd. MEDIA_ERR_SRC_NOT_SUPPORTED (4) · DEMUXER_ERROR_COULD_NOT_OPEN
+                const MEDIA_ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
+                const me = audio.error;
+                let code = me ? ((MEDIA_ERR[me.code] || 'MEDIA_ERR_UNKNOWN') + ' (' + me.code + ')') : 'MEDIA_ERR_UNKNOWN';
+                const detail = me && me.message ? me.message.split(':')[0].trim() : '';
+                if (detail && /^[A-Z0-9_]{6,}$/.test(detail)) code += ' · ' + detail;
+                playbackErrorCode = code;
                 updatePlaybackErrorText();
             });
 
