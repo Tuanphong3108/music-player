@@ -1207,6 +1207,22 @@
         }
         body.fullscreen-active .playback-error-desc { color: #CAC4D0; }
 
+        /* --- GOOGLE SANS FLEX: BO TRÒN (ROUNDNESS) CHO CHỮ IN ĐẬM & HEADER --- */
+h1, h2, h3, h4, h5, h6,
+b, strong {
+    font-variation-settings: 'ROND' 100, 'wght' 700;
+}
+h1 { font-variation-settings: 'ROND' 100, 'wght' 850; }
+h2, h3 { font-variation-settings: 'ROND' 100, 'wght' 750; }
+
+/* Bổ sung hiển thị mã lỗi chi tiết bên dưới thông báo lỗi */
+.playback-error-code {
+    margin-top: 6px;
+    font-family: 'Minecraft', monospace;
+    font-size: calc(11px * var(--font-scale-factor, 1));
+    opacity: 0.65;
+    letter-spacing: 0.5px;
+}
 </style>
 </head>
 <body>
@@ -1997,12 +2013,12 @@
                 <canvas id="visualizer"></canvas>
 
                 <!-- Khung hiển thị khi tệp âm thanh / video bị lỗi -->
-                <div id="playback-error-overlay" class="playback-error-overlay">
-                    <img src="error.png" alt="Error" class="playback-error-icon icon-light">
-                    <img src="error-dark.png" alt="Error" class="playback-error-icon icon-dark">
-                    <h3 class="playback-error-title" id="playback-error-title" data-i18n="player.error_title">Lỗi khi phát</h3>
-                    <p class="playback-error-desc" id="playback-error-desc"></p>
-                </div>
+<div id="playback-error-overlay" class="playback-error-overlay">
+    <img src="error.png" alt="Error" class="playback-error-icon icon-light">
+    <img src="error-dark.png" alt="Error" class="playback-error-icon icon-dark">
+    <h3 class="playback-error-title" id="playback-error-title" data-i18n="player.error_title">Lỗi khi phát</h3>
+    <p class="playback-error-desc" id="playback-error-desc"></p>
+</div>
                 <div id="top-active-lyric" class="top-active-lyric"></div>
                 
                 <!-- Full screen toggle button at bottom-right corner of visual stage -->
