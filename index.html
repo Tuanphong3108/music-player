@@ -4547,19 +4547,60 @@
 
         document.getElementById('reorder-btn').addEventListener('click', (e) => {
             e.stopPropagation(); 
+            const anchor = captureListAnchor();
             isReorderMode = true;
             document.body.classList.add('reorder-active');
             if (playlistCard.classList.contains('collapsed')) {
                 togglePlaylist(); 
             }
             updatePlaylistUI(); 
+            restoreListAnchor(anchor);
         });
 
         document.getElementById('reorder-done-btn').addEventListener('click', () => {
+            const anchor = captureListAnchor();
             isReorderMode = false;
             document.body.classList.remove('reorder-active');
+            // Đảm bảo đợt vẽ lazy-load đủ dài để chứa vị trí đang xem (không bị cắt ngắn rồi nhảy lên đầu)
+            if (anchor) {
+                const pos = anchor.pos;
+                if (pos >= 0) plLimit = Math.max(plLimit, pos + PL_CHUNK);
+            }
             updatePlaylistUI(); 
+            restoreListAnchor(anchor);
         });
+
+        // Giữ nguyên vị trí cuộn của danh sách khi vào/thoát chế độ sắp xếp:
+        // ghi nhớ bài đang nằm ở mép trên + độ lệch, rồi đặt lại sau khi vẽ và sau khi layout đổi xong.
+        function captureListAnchor() {
+            const c = playlistContainer;
+            if (!c) return null;
+            const top = c.getBoundingClientRect().top;
+            const items = c.querySelectorAll('.song-item');
+            let pos = 0;
+            for (const el of items) {
+                const r = el.getBoundingClientRect();
+                if (r.bottom > top + 1) return { index: +el.dataset.index, pos, offset: r.top - top, scrollTop: c.scrollTop };
+                pos++;
+            }
+            return { index: -1, pos: -1, offset: 0, scrollTop: c.scrollTop };
+        }
+        function restoreListAnchor(a) {
+            if (!a) return;
+            const c = playlistContainer;
+            const apply = () => {
+                if (a.index < 0) { c.scrollTop = a.scrollTop; return; }
+                const el = c.querySelector('.song-item[data-index="' + a.index + '"]');
+                if (!el) return;
+                c.scrollTop += (el.getBoundingClientRect().top - c.getBoundingClientRect().top) - a.offset;
+            };
+            apply();
+            requestAnimationFrame(apply);
+            // giữ đúng vị trí suốt lúc khung playlist đang đổi kích thước (transition)
+            const t0 = performance.now();
+            const tick = () => { apply(); if (performance.now() - t0 < 600) requestAnimationFrame(tick); };
+            requestAnimationFrame(tick);
+        }
 
         // Di chuyển track ở playlist-index "fromIndex" tới ngay trước track ở "toIndex",
         // NHƯNG chỉ đổi vị trí bên trong shuffleOrder (không đụng gì tới mảng playlist
