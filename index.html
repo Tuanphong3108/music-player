@@ -697,7 +697,14 @@
         body.reorder-active .playlist-card { width: 100%; flex: 1; }
         body.reorder-active .visual-stage { transform: translateX(100%); opacity: 0; flex: 0; min-width: 0; margin: 0; padding: 0; pointer-events: none; }
         
-        body.reorder-active .search-container { display: none; }
+        body.reorder-active #locate-btn, body.reorder-active #reshuffle-btn, body.reorder-active #reorder-btn { display: none !important; }
+        .find-only { display: none; }
+        body.reorder-active .find-only { display: inline-flex; }
+        .find-count { font-size: calc(12px * var(--font-scale-factor, 1)); font-weight: 700; opacity: .7; white-space: nowrap; min-width: 34px; text-align: center; align-items: center; justify-content: center; }
+        mark.find-hit { background: #ffe14d; color: #1b1b1b; border-radius: 3px; padding: 0 1px; }
+        mark.find-hit.find-current { background: #ff9632; outline: 2px solid #ff9632; }
+        .song-item .reorder-num { display: none; }
+        body.reorder-active .song-item .reorder-num { display: block; font-size: calc(13px * var(--font-scale-factor, 1)); font-weight: 800; opacity: .6; flex-shrink: 0; min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
         body.reorder-active .expand-icon-group { display: none; }
         
         .song-item .icon-play { display: block; }
@@ -1975,6 +1982,13 @@
                     <div class="search-wrapper">
                         <span class="material-symbols-outlined search-icon">search</span>
                         <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ..." data-i18n-placeholder="playlist.search_placeholder">
+                        <span class="find-only find-count" id="find-count">0/0</span>
+                        <button class="btn-m3 find-only" id="find-prev" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Kết quả trước (Shift+Enter)" disabled>
+                            <span class="material-symbols-outlined" style="font-size: 18px;">keyboard_arrow_up</span>
+                        </button>
+                        <button class="btn-m3 find-only" id="find-next" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Kết quả tiếp theo (Enter)" disabled>
+                            <span class="material-symbols-outlined" style="font-size: 18px;">keyboard_arrow_down</span>
+                        </button>
                         <button class="btn-m3" id="locate-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Locate current track" data-i18n-title="player.locate">
                             <span class="material-symbols-outlined" style="font-size: 18px;">my_location</span>
                         </button>
@@ -4540,6 +4554,7 @@
         }
 
         playlistSearch.addEventListener('input', (e) => {
+            if (isReorderMode) { findQuery = removeVietnameseTones(e.target.value.toLowerCase().trim()); findIdx = 0; applyFind(true); return; }
             searchQuery = removeVietnameseTones(e.target.value.toLowerCase().trim());
             plLimit = PL_CHUNK;
             updatePlaylistUI();
@@ -4553,6 +4568,9 @@
             if (playlistCard.classList.contains('collapsed')) {
                 togglePlaylist(); 
             }
+            // Trong chế độ sắp xếp, ô tìm kiếm hoạt động như Ctrl + F (bôi vàng, không lọc)
+            playlistSearch.value = ''; searchQuery = ''; findQuery = ''; findIdx = 0;
+            playlistSearch.placeholder = __trf('playlist.find_placeholder', 'Tìm trong danh sách...');
             updatePlaylistUI(); 
             restoreListAnchor(anchor);
         });
@@ -4566,8 +4584,72 @@
                 const pos = anchor.pos;
                 if (pos >= 0) plLimit = Math.max(plLimit, pos + PL_CHUNK);
             }
+            playlistSearch.value = ''; searchQuery = ''; findQuery = ''; findIdx = 0;
+            playlistSearch.placeholder = __trf('playlist.search_placeholder', 'Tìm tên bài, ca sĩ...');
             updatePlaylistUI(); 
             restoreListAnchor(anchor);
+        });
+
+        // ----- Tìm kiểu Ctrl + F trong chế độ sắp xếp (bôi vàng + nút chuyển, không có thay thế) -----
+        let findQuery = '', findIdx = 0;
+        const __trf = (k, f) => { try { return (window.__tr && window.__tr(k)) || f; } catch (e) { return f; } };
+        function clearFindMarks() {
+            playlistContainer.querySelectorAll('mark.find-hit').forEach(m => {
+                const par = m.parentNode;
+                par.replaceChild(document.createTextNode(m.textContent), m);
+                par.normalize();
+            });
+        }
+        function highlightIn(div) {
+            const text = div.textContent;
+            let norm = '';
+            for (const ch of text) {
+                const n = removeVietnameseTones(ch).toLowerCase();
+                norm += (n.length === ch.length) ? n : ch.toLowerCase().slice(0, ch.length).padEnd(ch.length, ' ');
+            }
+            if (norm.length !== text.length) return;
+            const hits = [];
+            let from = 0, at;
+            while ((at = norm.indexOf(findQuery, from)) >= 0) { hits.push(at); from = at + findQuery.length; }
+            if (!hits.length) return;
+            div.textContent = '';
+            let pos = 0;
+            hits.forEach(h => {
+                if (h > pos) div.appendChild(document.createTextNode(text.slice(pos, h)));
+                const m = document.createElement('mark');
+                m.className = 'find-hit';
+                m.textContent = text.slice(h, h + findQuery.length);
+                div.appendChild(m);
+                pos = h + findQuery.length;
+            });
+            if (pos < text.length) div.appendChild(document.createTextNode(text.slice(pos)));
+        }
+        function updateFindUI(n) {
+            const cnt = document.getElementById('find-count');
+            if (cnt) cnt.textContent = (n ? (findIdx + 1) : 0) + '/' + n;
+            ['find-prev', 'find-next'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = n < 1; });
+        }
+        function applyFind(scroll) {
+            clearFindMarks();
+            if (!isReorderMode || !findQuery) { updateFindUI(0); return; }
+            playlistContainer.querySelectorAll('.song-item .track-text > div').forEach(highlightIn);
+            const marks = playlistContainer.querySelectorAll('mark.find-hit');
+            if (findIdx >= marks.length) findIdx = 0;
+            marks.forEach((m, i) => m.classList.toggle('find-current', i === findIdx));
+            updateFindUI(marks.length);
+            if (scroll && marks[findIdx]) marks[findIdx].scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+        function stepFind(d) {
+            const marks = playlistContainer.querySelectorAll('mark.find-hit');
+            if (!marks.length) return;
+            findIdx = (findIdx + d + marks.length) % marks.length;
+            applyFind(true);
+        }
+        document.getElementById('find-next').addEventListener('click', () => stepFind(1));
+        document.getElementById('find-prev').addEventListener('click', () => stepFind(-1));
+        playlistSearch.addEventListener('keydown', (e) => {
+            if (!isReorderMode) return;
+            if (e.key === 'Enter') { e.preventDefault(); stepFind(e.shiftKey ? -1 : 1); }
         });
 
         // Giữ nguyên vị trí cuộn của danh sách khi vào/thoát chế độ sắp xếp:
@@ -4776,6 +4858,7 @@
                             <div style="font-weight:700; font-size: calc(14px * var(--font-scale-factor, 1)); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
                             <div style="font-family:'Minecraft'; font-size: calc(8px * var(--font-scale-factor, 1)); opacity: 0.6; margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''} ${track.fileHandle ? '• FS' : ''}</div>
                         </div>
+                        <span class="reorder-num">${index + 1}</span>
                     `;
                     // Số thứ tự đổi -> số cũ zoom-out rồi số mới zoom-in
                     {
@@ -4832,6 +4915,7 @@
                 plObserver.observe(sentinel);
             }
 
+            if (isReorderMode && findQuery) applyFind(false);
             document.getElementById('track-count').innerText = searchQuery && !isReorderMode ? `${count}/${playlist.length}` : playlist.length;
 
             if (typeof renderPipPlaylist === 'function' && customPipWindow) {
@@ -8168,6 +8252,16 @@
             if (e.key === 'F11' || e.code === 'F11') {
                 e.preventDefault();
                 toggleFullscreen();
+                return;
+            }
+
+            // Ctrl + F: vào ô tìm kiếm playlist (trong chế độ sắp xếp thì tìm kiểu Ctrl + F)
+            if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === 'KeyF' || (e.key || '').toLowerCase() === 'f')
+                && !document.querySelector('.cl-overlay.open') && !document.querySelector('.overlay:not(.hidden)')) {
+                e.preventDefault();
+                if (playlistCard.classList.contains('collapsed')) togglePlaylist();
+                playlistSearch.focus();
+                playlistSearch.select();
                 return;
             }
 

@@ -43,6 +43,7 @@ playlist.hide=Hide
 playlist.tab_playlist=Playlist
 playlist.tab_shuffle=Shuffle
 playlist.search_placeholder=Search title, artist...
+playlist.find_placeholder=Find in list...
 contextmenu.delete=Remove from playlist
 contextmenu.add_lrc=Add lyrics (.lrc)
 

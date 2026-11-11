@@ -43,6 +43,7 @@ playlist.hide=Ẩn
 playlist.tab_playlist=Playlist
 playlist.tab_shuffle=Shuffle
 playlist.search_placeholder=Tìm tên bài, ca sĩ...
+playlist.find_placeholder=Tìm trong danh sách...
 contextmenu.delete=Xoá khỏi playlist
 contextmenu.add_lrc=Thêm lời lẻ (.lrc)
 
