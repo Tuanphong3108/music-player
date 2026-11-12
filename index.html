@@ -6462,6 +6462,30 @@
                 updateFontScaleFactor();
                 customPipWindow.addEventListener("pagehide", () => { customPipWindow = null; pipVideoSrc = ""; pipSizedForVideo = false; });
 
+                // Khoá tỉ lệ khung PiP: nhạc = hình vuông, video = đúng tỉ lệ khung hình của video.
+                // Kéo cạnh nào thì cạnh còn lại tự theo (chỉ phóng to/thu nhỏ, không méo ngang/dọc).
+                {
+                    const w = customPipWindow;
+                    let lastW = w.innerWidth, lastH = w.innerHeight, tmr = 0, busy = false;
+                    const ratio = () => (playlist[currentIndex] && playlist[currentIndex].isVideo && audio.videoWidth > 0) ? audio.videoWidth / audio.videoHeight : 1;
+                    w.addEventListener('resize', () => {
+                        if (busy || w.document.body.classList.contains('pip-expanded')) { lastW = w.innerWidth; lastH = w.innerHeight; return; }
+                        clearTimeout(tmr);
+                        tmr = setTimeout(() => {
+                            if (!customPipWindow || w.document.body.classList.contains('pip-expanded')) return;
+                            const r = ratio(), cw = w.innerWidth, ch = w.innerHeight;
+                            const dW = Math.abs(cw - lastW), dH = Math.abs(ch - lastH);
+                            let nw = cw, nh = ch;
+                            if (dW >= dH) nh = Math.round(cw / r); else nw = Math.round(ch * r);
+                            if (Math.abs(nw - cw) > 1 || Math.abs(nh - ch) > 1) {
+                                busy = true;
+                                try { w.resizeTo(nw, nh); } catch (e) {}
+                                setTimeout(() => { busy = false; lastW = w.innerWidth; lastH = w.innerHeight; }, 120);
+                            } else { lastW = cw; lastH = ch; }
+                        }, 90);
+                    });
+                }
+
                 pipVideoSrc = '';
                 updatePiPUI();
                 updatePipSeek();
