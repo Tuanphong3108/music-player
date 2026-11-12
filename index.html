@@ -478,6 +478,12 @@
             font-size: calc(12px * var(--font-scale-factor, 1)); color: var(--lyric-text); opacity: .7;
         }
         .lyric-info b { font-weight: 700; }
+        /* Video: lyric luôn chữ trắng trên nền tối để đọc được trên mọi khung hình, bất kể giao diện sáng/tối */
+        body.has-video .lyric-overlay { --lyric-bg: rgba(0,0,0,0.62); --lyric-text: rgba(255,255,255,0.55); --lyric-active: #fff; }
+        body.has-video .lyric-line { text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+        body.has-video .lyric-line:hover { color: #fff; }
+        body.has-video .lyric-line.active { text-shadow: 0 4px 24px rgba(0,0,0,.7); }
+        body.has-video .lyric-info, body.has-video .lyric-placeholder { color: #fff; }
 
         .lyric-placeholder {
             margin: auto; font-family: 'Minecraft'; opacity: 0.5; font-size: calc(12px * var(--font-scale-factor, 1)); letter-spacing: 1px;
@@ -4637,7 +4643,11 @@
             if (findIdx >= marks.length) findIdx = 0;
             marks.forEach((m, i) => m.classList.toggle('find-current', i === findIdx));
             updateFindUI(marks.length);
-            if (scroll && marks[findIdx]) marks[findIdx].scrollIntoView({ block: 'center', behavior: 'smooth' });
+            if (scroll && marks[findIdx]) {
+                // Chỉ cuộn bên trong playlist, không cuộn cả trang
+                const c = playlistContainer, r = marks[findIdx].getBoundingClientRect(), cr = c.getBoundingClientRect();
+                c.scrollTo({ top: c.scrollTop + (r.top - cr.top) - c.clientHeight / 2 + r.height / 2, behavior: 'smooth' });
+            }
         }
         function stepFind(d) {
             const marks = playlistContainer.querySelectorAll('mark.find-hit');
@@ -5042,17 +5052,32 @@
             }
         }
 
+        // Video: icon tạm dừng chỉ hiện ~1 giây rồi zoom-out (nhạc thì giữ nguyên như cũ)
+        let pauseFlashTimer = 0;
+        function flashPauseIcon() {
+            clearTimeout(pauseFlashTimer);
+            pauseOverlay.classList.add('visible');
+            pauseFlashTimer = setTimeout(() => pauseOverlay.classList.remove('visible'), 1000);
+        }
+        audio.addEventListener('pause', () => {
+            // Tạm dừng bằng phím media / bấm vào khung / PiP cũng hiện icon (bỏ qua khi hết bài)
+            if (document.body.classList.contains('has-video') && !audio.ended && !pauseOverlay.classList.contains('visible')) flashPauseIcon();
+        });
+        audio.addEventListener('play', () => { clearTimeout(pauseFlashTimer); if (document.body.classList.contains('has-video')) pauseOverlay.classList.remove('visible'); });
+
         playBtn.addEventListener('click', () => {
             if (!audio.src && playlist.length > 0) playTrack(0);
             else if (audio.paused) { 
                 audio.play(); 
                 playBtn.querySelector('span').innerText = 'pause'; 
+                clearTimeout(pauseFlashTimer);
                 pauseOverlay.classList.remove('visible');
             }
             else { 
                 audio.pause(); 
                 playBtn.querySelector('span').innerText = 'play_arrow'; 
-                pauseOverlay.classList.add('visible'); 
+                if (document.body.classList.contains('has-video')) flashPauseIcon();
+                else pauseOverlay.classList.add('visible'); 
             }
             updatePlaylistUI();
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
@@ -8344,7 +8369,7 @@
                 && !document.querySelector('.cl-overlay.open') && !document.querySelector('.overlay:not(.hidden)')) {
                 e.preventDefault();
                 if (playlistCard.classList.contains('collapsed')) togglePlaylist();
-                playlistSearch.focus();
+                playlistSearch.focus({ preventScroll: true });
                 playlistSearch.select();
                 return;
             }
