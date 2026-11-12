@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-12",
+  "vi": [
+    {
+      "content": "Nhận tệp từ Photos ngay vào danh sách phát (Media Player đang mở thì thêm thẳng, chưa mở thì tự mở ra), hỗ trợ giao thức web+mediaplayer",
+      "icon": "send_to_mobile"
+    },
+    {
+      "content": "Sắp xếp playlist: ô tìm kiếm quay lại và hoạt động giống Ctrl + F (bôi vàng kết quả, nút chuyển tới/lui, không có thay thế)",
+      "icon": "find_in_page"
+    },
+    {
+      "content": "Phím tắt Ctrl + F để vào ô tìm kiếm playlist",
+      "icon": "keyboard"
+    },
+    {
+      "content": "Sắp xếp playlist: số thứ tự bài nằm bên phải để vẫn tìm được",
+      "icon": "format_list_numbered"
+    },
+    {
+      "content": "Sắp xếp playlist: giữ nguyên vị trí cuộn khi vào và thoát, không còn nhảy lên đầu",
+      "icon": "swap_vert"
+    },
+    {
+      "content": "Mục LICENSE trong About bổ sung giấy phép của các thành phần bên thứ ba đã dùng",
+      "icon": "gavel"
+    }
+  ],
+  "en": [
+    {
+      "content": "Receive files from Photos straight into the queue (added directly when Media Player is open, opened automatically otherwise); supports the web+mediaplayer protocol",
+      "icon": "send_to_mobile"
+    },
+    {
+      "content": "Playlist reorder: the search box is back and works like Ctrl + F (yellow highlights, previous/next buttons, no replace)",
+      "icon": "find_in_page"
+    },
+    {
+      "content": "Added Ctrl + F shortcut to jump to the playlist search box",
+      "icon": "keyboard"
+    },
+    {
+      "content": "Playlist reorder: the track number moves to the right so it stays easy to find",
+      "icon": "format_list_numbered"
+    },
+    {
+      "content": "Playlist reorder: keeps the scroll position when entering and leaving, no more jumping to the top",
+      "icon": "swap_vert"
+    },
+    {
+      "content": "The LICENSE section in About now lists the licenses of the third-party components used",
+      "icon": "gavel"
+    }
+  ]
+}
