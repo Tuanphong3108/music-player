@@ -5909,6 +5909,8 @@
                 fail: vi ? 'Không đọc được tệp từ Photos' : 'Could not read the files from Photos'
             };
             let retry = null;
+            // Đánh dấu đã cài thành PWA (cùng origin) để Photos biết có thể mở bằng protocol web+mediaplayer
+            try { if (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: window-controls-overlay)').matches) localStorage.setItem('mp_pwa', '1'); } catch (e) {}
             async function toFiles(items, ask) {
                 const out = []; let denied = false;
                 for (const h of items) {
@@ -5963,6 +5965,7 @@
                 try {
                     const rows = (await takePending()).filter(r => r && Date.now() - r.t < 5 * 60 * 1000);
                     const items = rows.flatMap(r => r.items || []);
+                    if (rows.length) { try { const ack = new BroadcastChannel('media-player-handoff'); rows.forEach(r => r.id && ack.postMessage({ type: 'ack', id: r.id })); setTimeout(() => ack.close(), 500); } catch (e) {} }
                     if (items.length) await enqueue(items, false);
                     if (/[?&]handoff=1/.test(location.search)) history.replaceState(null, '', location.pathname);
                 } catch (e) {}
