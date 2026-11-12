@@ -5928,8 +5928,7 @@
             async function enqueue(items, ask) {
                 const { out, denied } = await toFiles(items, ask);
                 if (out.length) {
-                    const playing = typeof audio !== 'undefined' && audio && !audio.paused;
-                    await handleFiles(out, { noPlay: playing });
+                    await handleFiles(out);   // đúng chức năng thêm bài: thêm, chuyển tới bài vừa thêm (phát) và tự cuộn tới bài đó
                     showToast(T.added(out.length), 'playlist_add');
                 }
                 if (denied && !out.length) {
