@@ -55,11 +55,5 @@
   ],
   "launch_handler": {
     "client_mode": "focus-existing"
-  },
-  "protocol_handlers": [
-    {
-      "protocol": "web+mediaplayer",
-      "url": "/music-player/index.html?handoff=1&u=%s"
-    }
-  ]
+  }
 }

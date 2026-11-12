@@ -5941,8 +5941,18 @@
             }
             try {
                 const bc = new BroadcastChannel('media-player-handoff');
+                // Trang mở bằng ?handoff=focus chỉ để "đánh thức" cửa sổ cũ: nếu đã có bản khác đang chạy thì tự đóng
+                const probe = /[?&]handoff=focus/.test(location.search);
+                if (probe) {
+                    const pid = 'p' + Date.now();
+                    const pc = new BroadcastChannel('media-player-handoff');
+                    pc.onmessage = e => { if (e.data && e.data.type === 'pong' && e.data.id === pid) { try { window.close(); } catch (err) {} } };
+                    pc.postMessage({ type: 'ping', id: pid });
+                    setTimeout(() => { pc.close(); history.replaceState(null, '', location.pathname); }, 1500);
+                }
                 bc.onmessage = e => {
                     const d = e.data;
+                    if (d && d.type === 'ping' && !probe) { window.focus(); bc.postMessage({ type: 'pong', id: d.id }); return; }
                     if (!d || d.type !== 'enqueue' || !Array.isArray(d.handles)) return;
                     try { if (localStorage.getItem('mp_handoff_seen') === d.id) return; localStorage.setItem('mp_handoff_seen', d.id); } catch (err) {}
                     bc.postMessage({ type: 'ack', id: d.id });
