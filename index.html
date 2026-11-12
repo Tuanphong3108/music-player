@@ -4183,12 +4183,12 @@
         });
 
         // --- STREAMING_CHUNK:Reading audio metadata with Lyric Embed support... ---
-        async function handleFiles(files) {
+        async function handleFiles(files, opts) {
             const before = playlist.length;
             const hadFiles = files && files.length > 0;
             if (!hadFiles) { if (window.addBtnArrow) addBtnCancel(); return; }
             addBtnBusy();
-            try { await handleFilesInner(files); }
+            try { await handleFilesInner(files, opts); }
             finally { if (playlist.length > before) addBtnDone(); else addBtnCancel(); }
         }
         // Tệp phát được: nhạc hoặc video (mp4, webm, mkv, mov...). Trình duyệt giải mã được codec nào thì phát codec đó.
@@ -4217,7 +4217,7 @@
                 v.src = url;
             });
         }
-        async function handleFilesInner(files) {
+        async function handleFilesInner(files, opts) {
             const audioFiles = [];
             const lrcFiles = [];
             let lastAutoPlayIndex = -1;
@@ -4334,7 +4334,7 @@
             }
 
             updatePlaylistUI();
-            if (lastAutoPlayIndex !== -1) { playTrack(lastAutoPlayIndex); requestAnimationFrame(() => locateCurrentTrack(true)); }
+            if (lastAutoPlayIndex !== -1 && !(opts && opts.noPlay)) { playTrack(lastAutoPlayIndex); requestAnimationFrame(() => locateCurrentTrack(true)); }
             if (playlist.length > 0) dropZone.style.display = 'none';
             bgPreview.classList.add('visible');
             initVisualizer();
@@ -5896,6 +5896,78 @@
         };
         window.addEventListener('load', hideLoading);
         setTimeout(hideLoading, 1500);
+
+
+        // --- Nhận tệp từ app khác cùng origin (Photos): thêm thẳng vào danh sách phát ---
+        // Cách 1 (Media Player đang mở): BroadcastChannel 'media-player-handoff' nhận {type:'enqueue', id, handles}, trả {type:'ack', id}.
+        // Cách 2 (Media Player chưa mở): Photos lưu handle vào IndexedDB 'media-handoff' rồi mở ?handoff=1; trang này đọc và xoá khi khởi động.
+        (function () {
+            const vi = (localStorage.getItem('settings_language') || 'vi') !== 'en';
+            const T = {
+                added: n => vi ? `Đã thêm ${n} tệp từ Photos vào danh sách phát` : `Added ${n} file(s) from Photos to the queue`,
+                denied: vi ? 'Bấm vào bất kỳ đâu để cấp quyền đọc tệp từ Photos' : 'Click anywhere to allow reading the files from Photos',
+                fail: vi ? 'Không đọc được tệp từ Photos' : 'Could not read the files from Photos'
+            };
+            let retry = null;
+            async function toFiles(items, ask) {
+                const out = []; let denied = false;
+                for (const h of items) {
+                    try {
+                        if (h && h.kind === 'file') {
+                            if (h.queryPermission && await h.queryPermission({ mode: 'read' }) !== 'granted') {
+                                if (!ask || (await h.requestPermission({ mode: 'read' })) !== 'granted') { denied = true; continue; }
+                            }
+                            const f = await h.getFile(); f.fileHandle = h; out.push(f);
+                        } else if (h instanceof File) out.push(h);
+                    } catch (e) { denied = true; }
+                }
+                return { out, denied };
+            }
+            async function enqueue(items, ask) {
+                const { out, denied } = await toFiles(items, ask);
+                if (out.length) {
+                    const playing = typeof audio !== 'undefined' && audio && !audio.paused;
+                    await handleFiles(out, { noPlay: playing });
+                    showToast(T.added(out.length), 'playlist_add');
+                }
+                if (denied && !out.length) {
+                    showToast(T.denied, 'lock');
+                    if (retry) document.removeEventListener('click', retry);
+                    retry = () => { retry = null; enqueue(items, true).catch(() => showToast(T.fail, 'error')); };
+                    document.addEventListener('click', retry, { once: true });
+                }
+            }
+            try {
+                const bc = new BroadcastChannel('media-player-handoff');
+                bc.onmessage = e => {
+                    const d = e.data;
+                    if (!d || d.type !== 'enqueue' || !Array.isArray(d.handles)) return;
+                    try { if (localStorage.getItem('mp_handoff_seen') === d.id) return; localStorage.setItem('mp_handoff_seen', d.id); } catch (err) {}
+                    bc.postMessage({ type: 'ack', id: d.id });
+                    enqueue(d.handles, false);
+                };
+            } catch (e) {}
+            async function takePending() {
+                const db = await new Promise((res, rej) => {
+                    const r = indexedDB.open('media-handoff', 1);
+                    r.onupgradeneeded = () => r.result.createObjectStore('queue', { autoIncrement: true });
+                    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+                });
+                return new Promise((res, rej) => {
+                    const t = db.transaction('queue', 'readwrite'), st = t.objectStore('queue'), rq = st.getAll();
+                    rq.onsuccess = () => { st.clear(); };
+                    t.oncomplete = () => { db.close(); res(rq.result || []); }; t.onerror = t.onabort = () => rej(t.error);
+                });
+            }
+            window.addEventListener('load', () => setTimeout(async () => {
+                try {
+                    const rows = (await takePending()).filter(r => r && Date.now() - r.t < 5 * 60 * 1000);
+                    const items = rows.flatMap(r => r.items || []);
+                    if (items.length) await enqueue(items, false);
+                    if (/[?&]handoff=1/.test(location.search)) history.replaceState(null, '', location.pathname);
+                } catch (e) {}
+            }, 700));
+        })();
 
         if ('launchQueue' in window) {
             window.launchQueue.setConsumer((params) => {
