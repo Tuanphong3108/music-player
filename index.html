@@ -5683,7 +5683,7 @@
             // Re-show để luôn nằm trên cùng top layer (kể cả trên dialog/menu mở sau)
             try { if (outputToast.matches(':popover-open')) outputToast.hidePopover(); outputToast.showPopover(); } catch (e) {}
             requestAnimationFrame(() => requestAnimationFrame(() => outputToast.classList.add('show')));
-            outputToastTimer = setTimeout(() => hideOutputToast('fade'), ms);
+            outputToastTimer = setTimeout(() => hideOutputToast('zoom'), ms);
         }
         document.getElementById('output-toast-close').addEventListener('click', () => hideOutputToast('zoom'));
 
