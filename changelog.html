@@ -387,5 +387,9 @@ applyThemeStyles(EMBED_CONFIG.defaultTheme); renderStatic(); loadList();
   if (document.readyState === 'complete') run(); else window.addEventListener('load', run);
 })();
 </script>
+<script>
+    // Menu chuột phải tuỳ chỉnh dùng chung của Media Player (chặn menu mặc định của trình duyệt)
+    try { window.parent.__installCtxMenu(document, 'm3-plain'); } catch (e) {}
+</script>
 </body>
 </html>

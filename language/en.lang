@@ -46,6 +46,13 @@ playlist.search_placeholder=Search title, artist...
 playlist.find_placeholder=Find in list...
 contextmenu.delete=Remove from playlist
 contextmenu.add_lrc=Add lyrics (.lrc)
+contextmenu.cut=Cut
+contextmenu.copy=Copy
+contextmenu.paste=Paste
+contextmenu.select_all=Select all
+contextmenu.play_pause=Play / Pause
+contextmenu.add_media=Add music / video
+contextmenu.fullscreen=Fullscreen
 
 ## --- Reorder ---
 reorder.done_title=Done

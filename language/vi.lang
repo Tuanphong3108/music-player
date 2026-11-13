@@ -46,6 +46,13 @@ playlist.search_placeholder=Tìm tên bài, ca sĩ...
 playlist.find_placeholder=Tìm trong danh sách...
 contextmenu.delete=Xoá khỏi playlist
 contextmenu.add_lrc=Thêm lời lẻ (.lrc)
+contextmenu.cut=Cắt
+contextmenu.copy=Sao chép
+contextmenu.paste=Dán
+contextmenu.select_all=Chọn tất cả
+contextmenu.play_pause=Phát / Tạm dừng
+contextmenu.add_media=Thêm nhạc / video
+contextmenu.fullscreen=Toàn màn hình
 
 ## --- Reorder ---
 reorder.done_title=Hoàn tất

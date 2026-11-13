@@ -2895,6 +2895,8 @@
             r.readAsText(file,'UTF-8');
             e.target.value = '';
           });
+          // Menu chuột phải riêng (kiểu Ore UI): cắt / sao chép / dán trong ô nhập liệu
+          try { window.parent.__installCtxMenu(document, 'ore'); } catch (e) {}
         </script>
         </body>
         </html>
@@ -4032,6 +4034,137 @@
                 if (typeof sendThemeToChangelog === 'function') sendThemeToChangelog();
             }
         });
+
+
+        // ===== Menu chuột phải tuỳ chỉnh (thay menu mặc định của trình duyệt) =====
+        // Dùng chung cho trang chính và Ore UI chỉnh sửa metadata: window.__installCtxMenu(document, 'm3' | 'ore', getExtraItems)
+        window.__installCtxMenu = function (doc, theme, extra) {
+            if (!doc || doc.__ctxInstalled) return;
+            doc.__ctxInstalled = true;
+            const win = doc.defaultView || window;
+            const tr = (k, f) => { try { return (window.__tr && window.__tr(k)) || f; } catch (e) { return f; } };
+            const ore = theme === 'ore';
+            const st = doc.createElement('style');
+            st.textContent = ore ? `
+                .ctxl { position: fixed; z-index: 2147483000; display: none; flex-direction: column; min-width: 150px; padding: 4px; background: #313233; border: 2px solid #1A1A1A; box-shadow: inset 0 -3px 0 #1E1E1F, inset 0 2px 0 rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.5); font-family: 'Minecraft', monospace; font-size: 12px; color: #fff; user-select: none; }
+                .ctxl.open { display: flex; }
+                .ctxl .ci { padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; gap: 18px; }
+                .ctxl .ci:hover { background: #3C8527; }
+                .ctxl .ci.off { opacity: .4; pointer-events: none; }
+                .ctxl .sep { height: 2px; background: #1A1A1A; margin: 4px 0; }
+                .ctxl .ci small { opacity: .6; font-size: 10px; }
+            ` : `
+                .ctxl { position: fixed; z-index: 2147483000; display: none; flex-direction: column; min-width: 190px; padding: 8px 0; background: var(--md-sys-color-surface-variant, #49454F); color: var(--md-sys-color-on-surface-variant, #CAC4D0); border-radius: 12px; border: 1px solid rgba(255,255,255,.1); box-shadow: 0 8px 32px rgba(0,0,0,.4); backdrop-filter: blur(10px); font-size: calc(14px * var(--font-scale-factor, 1)); user-select: none; transform-origin: top left; }
+                .ctxl.open { display: flex; animation: ctxlIn .14s ease-out; }
+                @keyframes ctxlIn { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+                .ctxl .ci { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+                .ctxl .ci:hover { background: rgba(255,255,255,.1); }
+                .ctxl .ci.off { opacity: .4; pointer-events: none; }
+                .ctxl .ci .material-symbols-outlined { font-size: 20px; }
+                .ctxl .ci small { margin-left: auto; opacity: .6; font-size: .8em; padding-left: 16px; }
+                .ctxl .sep { height: 1px; background: rgba(255,255,255,.12); margin: 6px 0; }
+            `;
+            (doc.head || doc.documentElement).appendChild(st);
+            const menu = doc.createElement('div');
+            menu.className = 'ctxl';
+            (doc.body || doc.documentElement).appendChild(menu);
+
+            const textTypes = ['', 'text', 'search', 'url', 'tel', 'email', 'password', 'number'];
+            const findEditable = (e) => {
+                for (const n of (e.composedPath ? e.composedPath() : [e.target])) {
+                    if (!n || n.nodeType !== 1) continue;
+                    const tag = n.tagName;
+                    if (tag === 'TEXTAREA' || (tag === 'INPUT' && textTypes.includes((n.getAttribute('type') || '').toLowerCase())) || n.isContentEditable) return n;
+                }
+                return null;
+            };
+            const isField = el => el.tagName === 'TEXTAREA' || el.tagName === 'INPUT';
+            const selText = el => {
+                if (isField(el)) { try { return el.value.substring(el.selectionStart, el.selectionEnd); } catch (e) { return ''; } }
+                return (win.getSelection() || '').toString();
+            };
+            const writeClip = async (t) => {
+                try { await win.navigator.clipboard.writeText(t); }
+                catch (e) { try { doc.execCommand('copy'); } catch (e2) {} }
+            };
+            const fire = (el) => el.dispatchEvent(new win.Event('input', { bubbles: true }));
+            const doCopy = async (el) => { const t = selText(el); if (t) await writeClip(t); };
+            const doCut = async (el) => {
+                const t = selText(el); if (!t) return;
+                await writeClip(t);
+                if (isField(el)) { el.setRangeText('', el.selectionStart, el.selectionEnd, 'end'); fire(el); }
+                else doc.execCommand('delete');
+            };
+            const doPaste = async (el) => {
+                let t = '';
+                try { t = await win.navigator.clipboard.readText(); } catch (e) { return; }
+                if (!t) return;
+                el.focus();
+                if (isField(el)) { el.setRangeText(t, el.selectionStart, el.selectionEnd, 'end'); fire(el); }
+                else doc.execCommand('insertText', false, t);
+            };
+            const doSelectAll = (el) => { el.focus(); if (isField(el)) el.select(); else doc.execCommand('selectAll'); };
+
+            const close = () => menu.classList.remove('open');
+            const open = (items, x, y) => {
+                menu.textContent = '';
+                items.forEach(it => {
+                    if (it === '-') { const d = doc.createElement('div'); d.className = 'sep'; menu.appendChild(d); return; }
+                    const d = doc.createElement('div');
+                    d.className = 'ci' + (it.off ? ' off' : '');
+                    if (!ore && theme !== 'm3-plain' && it.icon) { const ic = doc.createElement('span'); ic.className = 'material-symbols-outlined'; ic.textContent = it.icon; d.appendChild(ic); }
+                    const lb = doc.createElement('span'); lb.textContent = it.label; d.appendChild(lb);
+                    if (it.hint) { const h = doc.createElement('small'); h.textContent = it.hint; d.appendChild(h); }
+                    // mousedown không cướp focus/vùng chọn của ô nhập liệu
+                    d.addEventListener('mousedown', ev => ev.preventDefault());
+                    d.addEventListener('click', async (ev) => { ev.stopPropagation(); close(); try { await it.run(); } catch (e) {} });
+                    menu.appendChild(d);
+                });
+                menu.classList.add('open');
+                const vw = win.innerWidth, vh = win.innerHeight;
+                const r = menu.getBoundingClientRect();
+                menu.style.left = Math.max(4, Math.min(x, vw - r.width - 4)) + 'px';
+                menu.style.top = Math.max(4, Math.min(y, vh - r.height - 4)) + 'px';
+            };
+
+            doc.addEventListener('contextmenu', (e) => {
+                e.preventDefault();                       // luôn chặn menu mặc định
+                if (e.target.closest && e.target.closest('.song-item')) { close(); return; }   // bài trong playlist có menu riêng
+                const items = [];
+                const el = findEditable(e);
+                if (el) {
+                    const has = !!selText(el), ro = el.readOnly || el.disabled;
+                    items.push(
+                        { label: tr('contextmenu.cut', 'Cắt'), icon: 'content_cut', hint: 'Ctrl+X', off: !has || ro, run: () => doCut(el) },
+                        { label: tr('contextmenu.copy', 'Sao chép'), icon: 'content_copy', hint: 'Ctrl+C', off: !has, run: () => doCopy(el) },
+                        { label: tr('contextmenu.paste', 'Dán'), icon: 'content_paste', hint: 'Ctrl+V', off: ro, run: () => doPaste(el) },
+                        { label: tr('contextmenu.select_all', 'Chọn tất cả'), icon: 'select_all', hint: 'Ctrl+A', run: () => doSelectAll(el) }
+                    );
+                } else {
+                    const sel = (win.getSelection() || '').toString();
+                    if (sel) items.push({ label: tr('contextmenu.copy', 'Sao chép'), icon: 'content_copy', hint: 'Ctrl+C', run: () => writeClip(sel) });
+                }
+                if (extra && !el) {
+                    const more = extra(e) || [];
+                    if (more.length && items.length) items.push('-');
+                    items.push(...more);
+                }
+                if (!items.length) { close(); return; }
+                open(items, e.clientX, e.clientY);
+            }, true);
+            ['mousedown', 'wheel', 'blur', 'resize', 'keydown'].forEach(t => doc.addEventListener(t, (ev) => {
+                if (t === 'mousedown' && menu.contains(ev.target)) return;
+                if (t === 'keydown' && ev.key !== 'Escape') return;
+                close();
+            }, true));
+            win.addEventListener('blur', close);
+        };
+        window.__installCtxMenu(document, 'm3', () => [
+            { label: tr2('contextmenu.play_pause', 'Phát / Tạm dừng'), icon: 'play_arrow', hint: 'Space', run: () => playBtn.click() },
+            { label: tr2('contextmenu.add_media', 'Thêm nhạc / video'), icon: 'add_circle', hint: 'Ctrl+O', run: () => document.getElementById('add-music-trigger').click() },
+            { label: tr2('contextmenu.fullscreen', 'Toàn màn hình'), icon: 'fullscreen', hint: 'F11', run: () => toggleFullscreen() }
+        ]);
+        function tr2(k, f) { try { return (window.__tr && window.__tr(k)) || f; } catch (e) { return f; } }
 
         document.addEventListener('contextmenu', (e) => {
             const songItem = e.target.closest('.song-item');
@@ -6562,6 +6695,7 @@
 
         window.__tr = k => (typeof currentLangDict !== 'undefined' && currentLangDict) ? currentLangDict[k] : undefined;
         const EN_FALLBACK = {
+            'contextmenu.cut': 'Cut', 'contextmenu.copy': 'Copy', 'contextmenu.paste': 'Paste', 'contextmenu.select_all': 'Select all', 'contextmenu.play_pause': 'Play / Pause', 'contextmenu.add_media': 'Add music / video', 'contextmenu.fullscreen': 'Fullscreen',
             "player.error_title": "Playback error",
             "player.error_code": "Error code: {code}",
             "player.error_desc": "“{name}” may not be supported. Playback may experience some issues.",
