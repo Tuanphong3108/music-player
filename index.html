@@ -1949,6 +1949,7 @@
                     </md-menu>
                 </div>
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
+                <button class="btn-m3" id="share-btn" title="Chia sẻ" data-i18n-title="topbar.share"><span class="material-symbols-outlined">share</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
                 
                 <!-- Nút add_circle mở menu Material Web -->
@@ -4089,7 +4090,7 @@
                 .ctxl.open { display: flex; animation: ctxlIn .14s ease-out; }
                 @keyframes ctxlIn { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
                 .ctxl .ci { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
-                .ctxl .ci:hover { background: rgba(255,255,255,.1); }
+                .ctxl .ci:hover, .ctxl .ci.on { background: rgba(255,255,255,.1); }
                 .ctxl .ci.off { opacity: .4; pointer-events: none; }
                 .ctxl .ci .mso { font-family: ${iconFam || 'inherit'}; font-size: 20px; line-height: 1; font-weight: normal; font-style: normal; letter-spacing: normal; text-transform: none; white-space: nowrap; font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga'; flex-shrink: 0; width: 20px; overflow: hidden; }
                 .ctxl .ci small { margin-left: auto; opacity: .6; font-size: .8em; padding-left: 16px; }
@@ -4099,6 +4100,9 @@
             const menu = doc.createElement('div');
             menu.className = 'ctxl';
             (doc.body || doc.documentElement).appendChild(menu);
+            const subMenu = doc.createElement('div');       // menu phụ (flyout)
+            subMenu.className = 'ctxl';
+            (doc.body || doc.documentElement).appendChild(subMenu);
 
             const textTypes = ['', 'text', 'search', 'url', 'tel', 'email', 'password', 'number'];
             const findEditable = (e) => {
@@ -4136,22 +4140,45 @@
             };
             const doSelectAll = (el) => { el.focus(); if (isField(el)) el.select(); else doc.execCommand('selectAll'); };
 
-            const close = () => menu.classList.remove('open');
-            const open = (items, x, y) => {
-                menu.textContent = '';
+            const closeSub = () => { subMenu.classList.remove('open'); subMenu.__owner = null; };
+            const close = () => { menu.classList.remove('open'); closeSub(); };
+            const openSub = (row, items) => {
+                if (subMenu.__owner === row && subMenu.classList.contains('open')) { closeSub(); return; }
+                menu.querySelectorAll('.ci.on').forEach(n => n.classList.remove('on'));
+                row.classList.add('on');
+                subMenu.__owner = row;
+                render(subMenu, items, true);
+                subMenu.classList.add('open');
+                const rr = row.getBoundingClientRect(), sr = subMenu.getBoundingClientRect(), vw = win.innerWidth, vh = win.innerHeight;
+                let x = rr.right + 2; if (x + sr.width > vw - 4) x = Math.max(4, rr.left - sr.width - 2);
+                subMenu.style.left = x + 'px';
+                subMenu.style.top = Math.max(4, Math.min(rr.top - 8, vh - sr.height - 4)) + 'px';
+            };
+            const render = (el, items, isSub) => {
+                el.textContent = '';
                 items.forEach(it => {
-                    if (it === '-') { const d = doc.createElement('div'); d.className = 'sep'; menu.appendChild(d); return; }
+                    if (it === '-') { const d = doc.createElement('div'); d.className = 'sep'; el.appendChild(d); return; }
                     const d = doc.createElement('div');
                     d.className = 'ci' + (it.off ? ' off' : '');
                     if (ore) { const px = it.px && pixelIcon(it.px); if (px) d.appendChild(px); }
-                    else if (iconFam && it.icon) { const ic = doc.createElement('span'); ic.className = 'mso'; ic.textContent = it.icon; d.appendChild(ic); }
+                    else if (iconFam && (it.icon || it.checked !== undefined)) { const ic = doc.createElement('span'); ic.className = 'mso'; ic.textContent = it.checked !== undefined ? (it.checked ? 'check' : '') : it.icon; d.appendChild(ic); }
                     const lb = doc.createElement('span'); lb.textContent = it.label; if (ore) lb.className = 'grow'; d.appendChild(lb);
                     if (it.hint) { const h = doc.createElement('small'); h.textContent = it.hint; d.appendChild(h); }
+                    if (it.sub && !ore && iconFam) { const ch = doc.createElement('span'); ch.className = 'mso'; ch.style.marginLeft = it.hint ? '0' : 'auto'; ch.textContent = 'chevron_right'; d.appendChild(ch); }
                     // mousedown không cướp focus/vùng chọn của ô nhập liệu
                     d.addEventListener('mousedown', ev => ev.preventDefault());
-                    d.addEventListener('click', async (ev) => { ev.stopPropagation(); close(); try { await it.run(); } catch (e) {} });
-                    menu.appendChild(d);
+                    if (it.sub) {
+                        d.addEventListener('click', (ev) => { ev.stopPropagation(); openSub(d, it.sub); });
+                        if (!isSub) d.addEventListener('mouseenter', () => { if (!subMenu.classList.contains('open')) return; openSub(d, it.sub); });
+                    } else {
+                        if (!isSub) d.addEventListener('mouseenter', () => { if (subMenu.classList.contains('open') && subMenu.__owner !== d) { closeSub(); menu.querySelectorAll('.ci.on').forEach(n => n.classList.remove('on')); } });
+                        d.addEventListener('click', async (ev) => { ev.stopPropagation(); close(); try { await it.run(); } catch (e) {} });
+                    }
+                    el.appendChild(d);
                 });
+            };
+            const open = (items, x, y) => {
+                render(menu, items, false);
                 menu.classList.add('open');
                 const vw = win.innerWidth, vh = win.innerHeight;
                 const r = menu.getBoundingClientRect();
@@ -4185,17 +4212,50 @@
                 open(items, e.clientX, e.clientY);
             }, true);
             ['mousedown', 'wheel', 'blur', 'resize', 'keydown'].forEach(t => doc.addEventListener(t, (ev) => {
-                if (t === 'mousedown' && menu.contains(ev.target)) return;
+                if (t === 'mousedown' && (menu.contains(ev.target) || subMenu.contains(ev.target))) return;
                 if (t === 'keydown' && ev.key !== 'Escape') return;
                 close();
             }, true));
             win.addEventListener('blur', close);
         };
-        window.__installCtxMenu(document, 'm3', () => [
-            { label: tr2('contextmenu.play_pause', 'Phát / Tạm dừng'), icon: audio.paused ? 'play_arrow' : 'pause', hint: 'Space', run: () => playBtn.click() },
-            { label: tr2('contextmenu.add_media', 'Thêm nhạc / video'), icon: 'add_circle', hint: 'Ctrl+O', run: () => document.getElementById('add-music-trigger').click() },
-            { label: tr2('contextmenu.fullscreen', 'Toàn màn hình'), icon: document.fullscreenElement || document.body.classList.contains('fullscreen-active') ? 'fullscreen_exit' : 'fullscreen', hint: 'F11', run: () => toggleFullscreen() }
-        ]);
+        window.__installCtxMenu(document, 'm3', () => {
+            const qs = (id, label) => {
+                const sw = document.getElementById(id);
+                if (!sw) return null;
+                const row = sw.closest('div[style*="justify-content"]');
+                const lab = row && row.querySelector('span');
+                return { label: (lab && lab.textContent.trim()) || label, checked: !!sw.selected, run: () => sw.click() };
+            };
+            const quick = [
+                qs('setting-main-lyric'), qs('setting-pip-lyric'), qs('setting-fs-lyric'), '-',
+                qs('setting-dynamic-accent'), qs('setting-reduce-motion'), qs('setting-reduce-effects'), qs('setting-wake-lock'), '-',
+                qs('mixer-eq-on'), qs('mixer-mono'), qs('mixer-comp')
+            ].filter(Boolean);
+            return [
+                { label: tr2('contextmenu.play_pause', 'Phát / Tạm dừng'), icon: audio.paused ? 'play_arrow' : 'pause', hint: 'Space', run: () => playBtn.click() },
+                { label: tr2('contextmenu.add_media', 'Thêm nhạc / video'), icon: 'add_circle', sub: [
+                    { label: tr2('topbar.addmusic_file', 'Chọn tệp nhạc hoặc video'), icon: 'file_open', hint: 'Ctrl+O', run: () => document.getElementById('btn-fs-pick-files').click() },
+                    { label: tr2('topbar.addmusic_folder', 'Chọn thư mục nhạc hoặc video'), icon: 'folder_open', run: () => document.getElementById('btn-fs-pick-directory').click() }
+                ] },
+                { label: tr2('contextmenu.share_current', 'Chia sẻ tệp đang phát'), icon: 'share', run: () => shareCurrentFile() },
+                { label: tr2('contextmenu.fullscreen', 'Toàn màn hình'), icon: document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen', hint: 'F11', run: () => toggleFullscreen() },
+                '-',
+                { label: tr2('contextmenu.quick_settings', 'Cài đặt nhanh'), icon: 'tune', sub: quick }
+            ];
+        });
+        // Chia sẻ tệp đang phát qua Web Share (nút Share trên thanh trên và mục trong menu chuột phải)
+        async function shareCurrentFile() {
+            const track = playlist[currentIndex];
+            if (!track || !track.file) { showToast(tr2('share.no_file', 'Chưa có tệp nào đang phát để chia sẻ'), 'share'); return; }
+            try {
+                const data = { files: [track.file], title: track.name || track.file.name };
+                if (navigator.canShare && navigator.canShare(data)) await navigator.share(data);
+                else showToast(tr2('share.unsupported', 'Trình duyệt này chưa hỗ trợ chia sẻ tệp'), 'share');
+            } catch (e) {
+                if (e && e.name !== 'AbortError') showToast(tr2('share.failed', 'Không chia sẻ được tệp này'), 'error');
+            }
+        }
+        document.getElementById('share-btn').addEventListener('click', shareCurrentFile);
         function tr2(k, f) { try { return (window.__tr && window.__tr(k)) || f; } catch (e) { return f; } }
 
         document.addEventListener('contextmenu', (e) => {
@@ -6727,7 +6787,7 @@
 
         window.__tr = k => (typeof currentLangDict !== 'undefined' && currentLangDict) ? currentLangDict[k] : undefined;
         const EN_FALLBACK = {
-            'contextmenu.cut': 'Cut', 'contextmenu.copy': 'Copy', 'contextmenu.paste': 'Paste', 'contextmenu.select_all': 'Select all', 'contextmenu.play_pause': 'Play / Pause', 'contextmenu.add_media': 'Add music / video', 'contextmenu.fullscreen': 'Fullscreen',
+            'contextmenu.cut': 'Cut', 'contextmenu.copy': 'Copy', 'contextmenu.paste': 'Paste', 'contextmenu.select_all': 'Select all', 'contextmenu.play_pause': 'Play / Pause', 'contextmenu.add_media': 'Add music / video', 'contextmenu.fullscreen': 'Fullscreen', 'contextmenu.share_current': 'Share current playing file', 'contextmenu.quick_settings': 'Quick Settings', 'topbar.share': 'Share', 'share.no_file': 'No file is playing to share', 'share.unsupported': 'This browser does not support sharing files', 'share.failed': 'Could not share this file',
             "player.error_title": "Playback error",
             "player.error_code": "Error code: {code}",
             "player.error_desc": "“{name}” may not be supported. Playback may experience some issues.",

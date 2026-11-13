@@ -53,6 +53,12 @@ contextmenu.select_all=Chọn tất cả
 contextmenu.play_pause=Phát / Tạm dừng
 contextmenu.add_media=Thêm nhạc / video
 contextmenu.fullscreen=Toàn màn hình
+contextmenu.share_current=Chia sẻ tệp đang phát
+contextmenu.quick_settings=Cài đặt nhanh
+topbar.share=Chia sẻ
+share.no_file=Chưa có tệp nào đang phát để chia sẻ
+share.unsupported=Trình duyệt này chưa hỗ trợ chia sẻ tệp
+share.failed=Không chia sẻ được tệp này
 
 ## --- Reorder ---
 reorder.done_title=Hoàn tất

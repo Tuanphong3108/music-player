@@ -53,6 +53,12 @@ contextmenu.select_all=Select all
 contextmenu.play_pause=Play / Pause
 contextmenu.add_media=Add music / video
 contextmenu.fullscreen=Fullscreen
+contextmenu.share_current=Share current playing file
+contextmenu.quick_settings=Quick Settings
+topbar.share=Share
+share.no_file=No file is playing to share
+share.unsupported=This browser does not support sharing files
+share.failed=Could not share this file
 
 ## --- Reorder ---
 reorder.done_title=Done
