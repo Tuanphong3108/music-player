@@ -52,6 +52,10 @@
     {
       "content": "Thêm nút Share để chia sẻ tệp đang phát (trong menu chuột phải là \"Chia sẻ tệp đang phát\")",
       "icon": "share"
+    },
+    {
+      "content": "Phím tắt hoạt động cả khi đang focus vào thanh âm lượng, nút bấm hay phần tử khác (chỉ tạm ngừng khi đang gõ trong ô nhập liệu hoặc mở menu)",
+      "icon": "keyboard"
     }
   ],
   "en": [
@@ -106,6 +110,10 @@
     {
       "content": "Added a Share button to share the current file (\"Share current playing file\" in the right-click menu)",
       "icon": "share"
+    },
+    {
+      "content": "Keyboard shortcuts now work while focus is on the volume slider, buttons or other elements (paused only while typing in a text field or using a menu)",
+      "icon": "keyboard"
     }
   ]
 }

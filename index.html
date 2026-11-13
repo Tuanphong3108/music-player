@@ -8605,6 +8605,23 @@
 
         // --- STREAMING_CHUNK:Registering global Keyboard Hotkeys... ---
         // --- ĐĂNG KÝ HỆ THỐNG PHÍM TẮT ĐIỀU KHIỂN ---
+        const TEXT_INPUT_TYPES = ['', 'text', 'search', 'url', 'tel', 'email', 'password', 'number'];
+        function isTypingOrMenuTarget(e) {
+            const path = e.composedPath ? e.composedPath() : [e.target];
+            for (const n of path) {
+                if (!n || n.nodeType !== 1) continue;
+                const tag = n.tagName;
+                if (tag === 'TEXTAREA' || tag === 'SELECT' || n.isContentEditable) return true;
+                if (tag === 'INPUT' && TEXT_INPUT_TYPES.includes((n.getAttribute('type') || '').toLowerCase())) return true;
+                if (/^MD-(OUTLINED-|FILLED-)?TEXT-FIELD$|^MD-(MENU|MENU-ITEM|SELECT|SELECT-OPTION|DIALOG)$/.test(tag)) return true;
+            }
+            return false;
+        }
+        // Space trên nút đang focus: ngăn trình duyệt kích hoạt nút khi nhả phím (phím tắt đã xử lý ở keydown)
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' && !isTypingOrMenuTarget(e) && !document.querySelector('.cl-overlay.open') && !document.querySelector('.overlay:not(.hidden)')) e.preventDefault();
+        });
+
         window.addEventListener('keydown', (e) => {
             // Phím F11: Chặn Full screen mặc định của trình duyệt, dùng chế độ
             // Toàn màn hình Immersive riêng của app thay thế
@@ -8624,11 +8641,10 @@
                 return;
             }
 
-            const activeEl = document.activeElement;
-            // Chặn phím tắt khi đang nhập liệu hoặc mở hộp thoại sửa thẻ
-            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
-                return;
-            }
+            // Chặn phím tắt khi đang nhập liệu (ô văn bản) hoặc đang thao tác trong menu / hộp thoại.
+            // Các phần tử khác (thanh âm lượng, nút bấm, thanh tua...) KHÔNG chặn: phím tắt vẫn hoạt động
+            // và thay thế thao tác mặc định của phần tử đó (vd: Space trên nút, mũi tên trên thanh trượt).
+            if (isTypingOrMenuTarget(e)) return;
             if (document.querySelector('.cl-overlay.open') || document.querySelector('.overlay:not(.hidden)')) {
                 return;
             }
