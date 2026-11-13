@@ -24,6 +24,34 @@
     {
       "content": "Mục LICENSE trong About bổ sung giấy phép của các thành phần bên thứ ba đã dùng",
       "icon": "gavel"
+    },
+    {
+      "content": "Lyric khi phát video luôn chữ trắng trên nền tối để dễ đọc",
+      "icon": "subtitles"
+    },
+    {
+      "content": "Video: icon tạm dừng hiện khoảng 1 giây rồi zoom-out",
+      "icon": "pause_circle"
+    },
+    {
+      "content": "Tìm kiếm trong Sắp xếp chỉ cuộn bên trong playlist, không cuộn cả trang",
+      "icon": "manage_search"
+    },
+    {
+      "content": "PiP: khoá tỉ lệ khung khi đổi kích thước (nhạc hình vuông, video theo tỉ lệ gốc)",
+      "icon": "picture_in_picture"
+    },
+    {
+      "content": "Menu chuột phải tuỳ chỉnh toàn trang, có Cắt / Sao chép / Dán trong ô nhập liệu và menu riêng kiểu Ore UI trong trình sửa metadata (icon pixel)",
+      "icon": "left_click"
+    },
+    {
+      "content": "Menu chuột phải có menu phụ: Thêm nhạc / video (chọn tệp hoặc thư mục) và Cài đặt nhanh",
+      "icon": "menu_open"
+    },
+    {
+      "content": "Thêm nút Share để chia sẻ tệp đang phát (trong menu chuột phải là \"Chia sẻ tệp đang phát\")",
+      "icon": "share"
     }
   ],
   "en": [
@@ -50,6 +78,34 @@
     {
       "content": "The LICENSE section in About now lists the licenses of the third-party components used",
       "icon": "gavel"
+    },
+    {
+      "content": "Lyrics on video always use white text over a dark backdrop for readability",
+      "icon": "subtitles"
+    },
+    {
+      "content": "Video: the pause icon shows for about 1 second, then zooms out",
+      "icon": "pause_circle"
+    },
+    {
+      "content": "Search in Reorder now scrolls only inside the playlist, not the whole page",
+      "icon": "manage_search"
+    },
+    {
+      "content": "PiP: aspect ratio is locked when resizing (square for music, original ratio for video)",
+      "icon": "picture_in_picture"
+    },
+    {
+      "content": "Custom right-click menu across the app, with Cut / Copy / Paste in text fields and a dedicated Ore UI-style menu (pixel icons) in the metadata editor",
+      "icon": "left_click"
+    },
+    {
+      "content": "Right-click menu now has submenus: Add music / video (files or folder) and Quick Settings",
+      "icon": "menu_open"
+    },
+    {
+      "content": "Added a Share button to share the current file (\"Share current playing file\" in the right-click menu)",
+      "icon": "share"
     }
   ]
 }
