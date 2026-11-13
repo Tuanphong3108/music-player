@@ -3247,6 +3247,41 @@
             applyFontEverywhere();
         }
 
+        // ===== Ctrl + cuộn chuột: chỉnh Kích thước giao diện (giống Settings > Kích thước giao diện) =====
+        let uiWheelAcc = 0, uiWheelTimer = 0;
+        window.__uiScaleWheel = function (e) {
+            uiWheelAcc += e.deltaY;
+            clearTimeout(uiWheelTimer);
+            uiWheelTimer = setTimeout(() => { uiWheelAcc = 0; }, 200);
+            // chuột: mỗi nấc ~100 -> 1 bước; touchpad/pinch gửi delta nhỏ nên cộng dồn
+            const steps = Math.trunc(Math.abs(uiWheelAcc) / 40);
+            if (!steps) return;
+            const dir = uiWheelAcc < 0 ? 1 : -1;      // cuộn lên = phóng to
+            uiWheelAcc = 0;
+            let cur = parseInt(localStorage.getItem('settings_ui_scale'), 10);
+            if (!(cur >= 50 && cur <= 200)) cur = 100;
+            const next = Math.max(50, Math.min(200, cur + dir * 5 * Math.min(steps, 3)));
+            if (next === cur) return;
+            localStorage.setItem('settings_ui_scale', String(next));
+            const sl = document.getElementById('setting-ui-scale'), lb = document.getElementById('ui-scale-value');
+            if (sl) sl.value = next;
+            if (lb) lb.textContent = next + '%';
+            applyUiScale(next);
+            if (localStorage.getItem('settings_font_scale_sync') === 'true') {
+                localStorage.setItem('settings_font_scale', String(next));
+                const fsl = document.getElementById('setting-font-scale'), flb = document.getElementById('font-scale-value');
+                if (fsl) fsl.value = next;
+                if (flb) flb.textContent = next + '%';
+                applyFontScale(next);
+            }
+            try { showToast((window.__tr && window.__tr('settings.ui_scale')) ? window.__tr('settings.ui_scale') + ': ' + next + '%' : 'Kích thước giao diện: ' + next + '%', 'zoom_in', 1200); } catch (e) {}
+        };
+        window.addEventListener('wheel', (e) => {
+            if (!e.ctrlKey) return;
+            e.preventDefault();                 // chặn zoom của trình duyệt
+            window.__uiScaleWheel(e);
+        }, { passive: false });
+
         // ----- IndexedDB lưu tệp phông chữ tải lên -----
         function fontDB() {
             return new Promise((res, rej) => {
@@ -4217,6 +4252,8 @@
                 close();
             }, true));
             win.addEventListener('blur', close);
+            // Ctrl + cuộn trong iframe (About, Metadata Editor...) cũng chỉnh kích thước giao diện của app
+            if (doc !== document) doc.addEventListener('wheel', (e) => { if (e.ctrlKey) { e.preventDefault(); window.__uiScaleWheel && window.__uiScaleWheel(e); } }, { passive: false });
         };
         window.__installCtxMenu(document, 'm3', () => {
             const qs = (id, label) => {

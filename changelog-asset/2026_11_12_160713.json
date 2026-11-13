@@ -56,6 +56,10 @@
     {
       "content": "Phím tắt hoạt động cả khi đang focus vào thanh âm lượng, nút bấm hay phần tử khác (chỉ tạm ngừng khi đang gõ trong ô nhập liệu hoặc mở menu)",
       "icon": "keyboard"
+    },
+    {
+      "content": "Ctrl + cuộn chuột để chỉnh nhanh Kích thước giao diện (50% - 200%)",
+      "icon": "zoom_in"
     }
   ],
   "en": [
@@ -114,6 +118,10 @@
     {
       "content": "Keyboard shortcuts now work while focus is on the volume slider, buttons or other elements (paused only while typing in a text field or using a menu)",
       "icon": "keyboard"
+    },
+    {
+      "content": "Ctrl + mouse wheel quickly adjusts the interface size (50% - 200%)",
+      "icon": "zoom_in"
     }
   ]
 }
