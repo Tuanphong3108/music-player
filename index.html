@@ -4072,6 +4072,24 @@
         });
 
 
+        // Đặt menu (position: fixed) tại toạ độ chuột, tự né cạnh màn hình (lật sang trái/lên trên khi tràn).
+        // Chú ý html { zoom } (Kích thước giao diện): toạ độ chuột & getBoundingClientRect tính bằng px thật,
+        // còn left/top CSS tính theo đơn vị đã zoom -> chia cho zoom khi gán.
+        window.__placeMenu = function (el, x, y, margin) {
+            margin = margin == null ? 8 : margin;
+            const d = el.ownerDocument, w = d.defaultView;
+            const z = parseFloat(w.getComputedStyle(d.documentElement).zoom) || 1;
+            const vw = w.innerWidth, vh = w.innerHeight;
+            const r = { width: el.offsetWidth * z, height: el.offsetHeight * z };   // không dùng getBoundingClientRect: đang chạy animation scale
+            let nx = x, ny = y;
+            if (x + r.width > vw - margin) nx = x - r.width;     // tràn phải -> lật sang trái con trỏ
+            if (y + r.height > vh - margin) ny = y - r.height;   // tràn dưới -> lật lên trên con trỏ
+            nx = Math.max(margin, Math.min(nx, vw - r.width - margin));
+            ny = Math.max(margin, Math.min(ny, vh - r.height - margin));
+            el.style.left = (nx / z) + 'px';
+            el.style.top = (ny / z) + 'px';
+        };
+
         // ===== Menu chuột phải tuỳ chỉnh (thay menu mặc định của trình duyệt) =====
         // Dùng chung cho trang chính và Ore UI chỉnh sửa metadata: window.__installCtxMenu(document, 'm3' | 'ore', getExtraItems)
         window.__installCtxMenu = function (doc, theme, extra) {
@@ -4185,9 +4203,11 @@
                 render(subMenu, items, true);
                 subMenu.classList.add('open');
                 const rr = row.getBoundingClientRect(), sr = subMenu.getBoundingClientRect(), vw = win.innerWidth, vh = win.innerHeight;
-                let x = rr.right + 2; if (x + sr.width > vw - 4) x = Math.max(4, rr.left - sr.width - 2);
-                subMenu.style.left = x + 'px';
-                subMenu.style.top = Math.max(4, Math.min(rr.top - 8, vh - sr.height - 4)) + 'px';
+                const z = parseFloat(win.getComputedStyle(doc.documentElement).zoom) || 1;
+                let x = rr.right + 2; if (x + sr.width > vw - 8) x = Math.max(8, rr.left - sr.width - 2);   // hết chỗ bên phải -> mở sang trái
+                const y = Math.max(8, Math.min(rr.top - 8, vh - sr.height - 8));
+                subMenu.style.left = (x / z) + 'px';
+                subMenu.style.top = (y / z) + 'px';
             };
             const render = (el, items, isSub) => {
                 el.textContent = '';
@@ -4215,10 +4235,7 @@
             const open = (items, x, y) => {
                 render(menu, items, false);
                 menu.classList.add('open');
-                const vw = win.innerWidth, vh = win.innerHeight;
-                const r = menu.getBoundingClientRect();
-                menu.style.left = Math.max(4, Math.min(x, vw - r.width - 4)) + 'px';
-                menu.style.top = Math.max(4, Math.min(y, vh - r.height - 4)) + 'px';
+                window.__placeMenu(menu, x, y);
             };
 
             doc.addEventListener('contextmenu', (e) => {
@@ -4301,8 +4318,7 @@
                 e.preventDefault();
                 targetMenuIndex = parseInt(songItem.dataset.index);
                 contextMenu.style.display = 'flex';
-                contextMenu.style.left = `${e.clientX}px`;
-                contextMenu.style.top = `${e.clientY}px`;
+                window.__placeMenu(contextMenu, e.clientX, e.clientY);
             } else {
                 contextMenu.style.display = 'none';
             }
