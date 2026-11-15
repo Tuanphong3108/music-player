@@ -64,6 +64,10 @@
     {
       "content": "Mặc định bật \"Đồng bộ kích thước chữ với kích thước giao diện\"",
       "icon": "text_fields"
+    },
+    {
+      "content": "Ctrl + O mở menu Thêm nhạc / video ngay tại vị trí con chuột; thêm phím tắt Alt + F để mở Cài đặt",
+      "icon": "keyboard"
     }
   ],
   "en": [
@@ -130,6 +134,10 @@
     {
       "content": "\"Sync font size with interface size\" is now on by default",
       "icon": "text_fields"
+    },
+    {
+      "content": "Ctrl + O opens the Add music / video menu at the mouse pointer; new Alt + F shortcut opens Settings",
+      "icon": "keyboard"
     }
   ]
 }

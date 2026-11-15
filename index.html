@@ -7583,8 +7583,25 @@
         }
         window.addBtnArrow = addBtnArrow;
 
+        // Ctrl + O: mở menu Thêm nhạc ngay tại vị trí con trỏ chuột (bấm nút thì vẫn mở dưới nút như cũ)
+        let addMenuAtMouse = false, lastMouse = null;
+        window.addEventListener('mousemove', (e) => { lastMouse = { x: e.clientX, y: e.clientY }; }, { passive: true });
+        const addMenuAnchor = {   // "neo ảo" cho fixMenuPlacement: con trỏ chuột hoặc nút Thêm
+            get offsetWidth() { return addMenuAtMouse ? 0 : addMusicTrigger.offsetWidth; },
+            getBoundingClientRect() {
+                if (addMenuAtMouse && lastMouse) return { left: lastMouse.x, right: lastMouse.x, top: lastMouse.y, bottom: lastMouse.y, width: 0, height: 0 };
+                return addMusicTrigger.getBoundingClientRect();
+            }
+        };
+        window.__openAddMenuAtMouse = function () {
+            if (!window.showOpenFilePicker) { addBtnFolder(); document.getElementById('file-input').click(); return; }
+            if (addMusicMenu.open) { addMusicMenu.open = false; return; }
+            addMenuAtMouse = !!lastMouse;
+            addMusicMenu.open = true;
+        };
         addMusicTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
+            addMenuAtMouse = false;
             if (window.showOpenFilePicker) {
                 addMusicMenu.open = !addMusicMenu.open;
             } else {
@@ -7592,10 +7609,10 @@
                 document.getElementById('file-input').click();
             }
         });
-        hookMenuPlacement(addMusicMenu, addMusicTrigger);
+        hookMenuPlacement(addMusicMenu, addMenuAnchor);
         // Menu thêm nhạc đang mở -> icon lật thành mũi tên; đóng mà không chọn gì -> lật về icon cũ
         addMusicMenu.addEventListener('opening', () => { addPickerPending = false; addBtnArrow(); });
-        addMusicMenu.addEventListener('closed', () => { if (!addPickerPending) addBtnCancel(); });
+        addMusicMenu.addEventListener('closed', () => { addMenuAtMouse = false; if (!addPickerPending) addBtnCancel(); });
         // Hộp thoại chọn tệp kiểu truyền thống bị đóng mà không chọn gì
         document.getElementById('file-input').addEventListener('cancel', () => addBtnCancel());
 
@@ -8694,6 +8711,14 @@
                 return;
             }
 
+            // Alt + F: mở Settings
+            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && (e.code === 'KeyF')
+                && !document.querySelector('.cl-overlay.open') && !document.querySelector('.overlay:not(.hidden)')) {
+                e.preventDefault();
+                settingsBtn.click();
+                return;
+            }
+
             // Chặn phím tắt khi đang nhập liệu (ô văn bản) hoặc đang thao tác trong menu / hộp thoại.
             // Các phần tử khác (thanh âm lượng, nút bấm, thanh tua...) KHÔNG chặn: phím tắt vẫn hoạt động
             // và thay thế thao tác mặc định của phần tử đó (vd: Space trên nút, mũi tên trên thanh trượt).
@@ -8710,7 +8735,7 @@
             // Phím Ctrl + O: Mở file
             else if (e.ctrlKey && e.code === 'KeyO') {
                 e.preventDefault();
-                document.getElementById('add-music-trigger').click();
+                window.__openAddMenuAtMouse();
             } 
             // Phím Ctrl + Mũi tên Phải: Chuyển sang bài tiếp theo
             else if (e.ctrlKey && e.code === 'ArrowRight') {
