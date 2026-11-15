@@ -3196,7 +3196,7 @@
             let uiPct = parseInt(localStorage.getItem('settings_ui_scale'), 10);
             if (!(uiPct >= 50 && uiPct <= 200)) uiPct = 100;
             let fontPct;
-            if (localStorage.getItem('settings_font_scale_sync') === 'true') fontPct = uiPct;
+            if (localStorage.getItem('settings_font_scale_sync') !== 'false') fontPct = uiPct;
             else {
                 fontPct = parseInt(localStorage.getItem('settings_font_scale'), 10);
                 if (!(fontPct >= 50 && fontPct <= 200)) fontPct = 100;
@@ -3267,7 +3267,7 @@
             if (sl) sl.value = next;
             if (lb) lb.textContent = next + '%';
             applyUiScale(next);
-            if (localStorage.getItem('settings_font_scale_sync') === 'true') {
+            if (localStorage.getItem('settings_font_scale_sync') !== 'false') {
                 localStorage.setItem('settings_font_scale', String(next));
                 const fsl = document.getElementById('setting-font-scale'), flb = document.getElementById('font-scale-value');
                 if (fsl) fsl.value = next;
@@ -6946,7 +6946,7 @@
                 if (sl) sl.value = sc;
                 if (lb) lb.textContent = sc + '%';
                 applyUiScale(sc);
-                if (localStorage.getItem('settings_font_scale_sync') === 'true') {
+                if (localStorage.getItem('settings_font_scale_sync') !== 'false') {
                     gsStore.set('settings_font_scale', String(sc));
                     const fsl = document.getElementById('setting-font-scale');
                     const flb = document.getElementById('font-scale-value');
@@ -7168,7 +7168,7 @@
             uiSlider.value = uiPct;
             uiLabel.textContent = uiPct + '%';
 
-            let isSync = localStorage.getItem('settings_font_scale_sync') === 'true';
+            let isSync = localStorage.getItem('settings_font_scale_sync') !== 'false';
             syncCheckbox.checked = isSync;
 
             let fontPct;
@@ -7765,7 +7765,7 @@
                     + 'Language: ' + (localStorage.getItem('settings_language') || 'vi') + '\n'
                     + 'UI scale: ' + (localStorage.getItem('settings_ui_scale') || '100') + '%\n'
                     + 'Font scale: ' + (localStorage.getItem('settings_font_scale') || '100') + '%\n'
-                    + 'Font scale sync: ' + ((localStorage.getItem('settings_font_scale_sync') === 'true') ? 'ON' : 'OFF') + '\n'
+                    + 'Font scale sync: ' + ((localStorage.getItem('settings_font_scale_sync') !== 'false') ? 'ON' : 'OFF') + '\n'
                     + 'Font: ' + (localStorage.getItem('settings_font') || 'default') + '\n'
                     + 'Main Player Lyric: ' + onOff(settings.showMainLyric) + '\n'
                     + 'PiP Lyric: ' + onOff(settings.showPipLyric) + '\n'

@@ -60,6 +60,10 @@
     {
       "content": "Ctrl + cuộn chuột để chỉnh nhanh Kích thước giao diện (50% - 200%)",
       "icon": "zoom_in"
+    },
+    {
+      "content": "Mặc định bật \"Đồng bộ kích thước chữ với kích thước giao diện\"",
+      "icon": "text_fields"
     }
   ],
   "en": [
@@ -122,6 +126,10 @@
     {
       "content": "Ctrl + mouse wheel quickly adjusts the interface size (50% - 200%)",
       "icon": "zoom_in"
+    },
+    {
+      "content": "\"Sync font size with interface size\" is now on by default",
+      "icon": "text_fields"
     }
   ]
 }
