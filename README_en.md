@@ -57,7 +57,7 @@
 * **Material Design 3 Expressive:** Modern aesthetics featuring dynamic colors (optionally taken from the cover art), rich interactions (Ripple Effects, Overshoot Animations).
 * **Customization:** Dark/Light/System theme, Accent Color, 20+ fonts (plus Google Fonts / your own files), UI scale and font scale.
 * **Multilingual:** Vietnamese and English.
-* **Low-end Device Optimization:** Options to toggle motion effects (*Reduce Motion*) and disable background blurs (*Blur Effect*) for fluid performance across all hardware.
+* **Low-end Device Optimization:** Presets (Full / Balanced / Power saver / Maximum) and per-element switches for motion, frosted glass, blurred cover background, visualizer and floating lyric for fluid performance across all hardware.
 
 ---
 

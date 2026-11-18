@@ -840,29 +840,30 @@
             animation-iteration-count: infinite !important;
         }
 
-        /* --- GIẢM HIỆU ỨNG MỜ VÀ CHUYỂN ĐỘNG (NÂNG CAO) ---
-           Ngoài toàn bộ hiệu ứng ở trên, còn: bỏ backdrop-filter (blur kính mờ) khắp app,
-           album art không blur nữa mà chỉ tối đi, ẩn hẳn sóng nhạc, và lyric chuyển vào
-           giữa màn hình thay vì nằm trên cao — tối ưu cho máy cấu hình thấp vcl. */
-        html.reduce-effects *,
-        html.reduce-effects *::before,
-        html.reduce-effects *::after {
+        /* --- HIỆU NĂNG & HIỆU ỨNG: từng thành phần có thể tắt riêng (class gắn lên <html>) ---
+           no-glass: bỏ kính mờ (backdrop-filter) khắp app
+           no-album-blur: nền ảnh bìa không blur nữa, chỉ tối đi
+           no-visualizer: ẩn (và ngừng vẽ) sóng nhạc
+           no-top-lyric: lyric chuyển vào giữa màn hình thay vì nằm trên cao */
+        html.no-glass *,
+        html.no-glass *::before,
+        html.no-glass *::after {
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
         }
-        html.reduce-effects .bg-thumb-preview {
+        html.no-album-blur .bg-thumb-preview {
             filter: brightness(0.4) !important;
         }
-        html.reduce-effects #visualizer {
+        html.no-visualizer #visualizer {
             display: none !important;
         }
-        html.reduce-effects .top-active-lyric {
+        html.no-top-lyric .top-active-lyric {
             top: 50% !important;
             left: 50% !important;
             transform: translate(-50%, -50%) !important;
             width: 80% !important;
         }
-    
+
         /* ===== Dropdown: Material Web (md-outlined-select / md-menu) khớp màu chủ đạo + sáng/tối ===== */
         .m3-select, #output-device-menu {
             --md-ref-typeface-plain: var(--app-font);
@@ -1677,21 +1678,63 @@
                     <h3 class="st-pane-title" data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</h3>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="settings.reduce_motion">Giảm hiệu ứng chuyển động</span>
-                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.reduce_motion_desc">Khi bật lên, hiệu ứng chuyển động giữa các trang sẽ không còn (Ngoại trừ sóng âm, tắt ở cài đặt riêng)</span>
+                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="perf.preset">Cấu hình sẵn</span>
+                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.preset_desc">Chọn nhanh một mức hiệu năng, hoặc tự chỉnh từng thành phần bên dưới (sẽ chuyển sang "Tuỳ chỉnh").</span>
                     </div>
-                    <md-switch icons id="setting-reduce-motion">
+                    <md-outlined-select id="perf-preset" class="m3-select">
+                        <md-select-option value="default"><div slot="headline" data-i18n="perf.preset_default">Đầy đủ (mặc định)</div></md-select-option>
+                        <md-select-option value="balanced"><div slot="headline" data-i18n="perf.preset_balanced">Cân bằng</div></md-select-option>
+                        <md-select-option value="low"><div slot="headline" data-i18n="perf.preset_low">Tiết kiệm</div></md-select-option>
+                        <md-select-option value="max"><div slot="headline" data-i18n="perf.preset_max">Hiệu năng tối đa</div></md-select-option>
+                        <md-select-option value="custom"><div slot="headline" data-i18n="perf.preset_custom">Tuỳ chỉnh</div></md-select-option>
+                    </md-outlined-select>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="perf.motion">Hiệu ứng chuyển động</span>
+                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.motion_desc">Chuyển trang, mở/đóng hộp thoại, hoạt ảnh nút bấm... (chữ chạy tên bài vẫn giữ)</span>
+                    </div>
+                    <md-switch icons id="perf-motion">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
                 </div>
-
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="settings.reduce_effects">Giảm hiệu ứng mờ và chuyển động (Nâng cao)</span>
-                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.reduce_effects_desc">Sẽ giảm các hiệu ứng mờ, chuyển động và xóa sóng nhạc, hữu ích khi máy có cấu hình thấp vcl.</span>
+                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="perf.glass">Kính mờ (Blur)</span>
+                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.glass_desc">Hiệu ứng mờ trong suốt ở thanh, menu và hộp thoại. Tốn GPU nhất, tắt đi giúp máy yếu mượt hơn.</span>
                     </div>
-                    <md-switch icons id="setting-reduce-effects">
+                    <md-switch icons id="perf-glass">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="perf.album_blur">Nền mờ từ ảnh bìa</span>
+                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.album_blur_desc">Ảnh bìa bài hát làm nền mờ phía sau. Tắt thì chỉ làm tối nền.</span>
+                    </div>
+                    <md-switch icons id="perf-album-blur">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="perf.visualizer">Sóng nhạc</span>
+                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.visualizer_desc">Vẽ sóng âm theo nhạc. Tắt sẽ ngừng phân tích và vẽ để tiết kiệm CPU.</span>
+                    </div>
+                    <md-switch icons id="perf-visualizer">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="perf.top_lyric">Lyric nổi phía trên</span>
+                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.top_lyric_desc">Lyric hiện trên cao có hoạt ảnh. Tắt thì lyric nằm giữa màn hình.</span>
+                    </div>
+                    <md-switch icons id="perf-top-lyric">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
@@ -3030,13 +3073,34 @@
             }
         };
 
+        // --- HIỆU NĂNG & HIỆU ỨNG ---
+        const PERF_PRESETS = {
+            default:  { motion: true,  glass: true,  albumBlur: true,  visualizer: true,  topLyric: true  },
+            balanced: { motion: true,  glass: false, albumBlur: true,  visualizer: true,  topLyric: true  },
+            low:      { motion: false, glass: false, albumBlur: false, visualizer: true,  topLyric: true  },
+            max:      { motion: false, glass: false, albumBlur: false, visualizer: false, topLyric: false }
+        };
+        function loadPerf() {
+            try {
+                const raw = localStorage.getItem('settings_perf');
+                if (raw) { const o = JSON.parse(raw); return Object.assign({}, PERF_PRESETS.default, o); }
+            } catch (e) {}
+            // Chuyển từ 2 công tắc cũ: "Nâng cao" = Hiệu năng tối đa; "Giảm chuyển động" = tắt riêng chuyển động
+            if (localStorage.getItem('settings_reduce_effects') === 'true') return Object.assign({}, PERF_PRESETS.max);
+            if (localStorage.getItem('settings_reduce_motion') === 'true') return Object.assign({}, PERF_PRESETS.default, { motion: false });
+            return Object.assign({}, PERF_PRESETS.default);
+        }
+        function perfPresetOf(p) {
+            for (const [name, v] of Object.entries(PERF_PRESETS)) if (Object.keys(v).every(k => !!p[k] === v[k])) return name;
+            return 'custom';
+        }
+
         // --- CẤU HÌNH BAN ĐẦU HỆ THỐNG ---
         let settings = {
             showMainLyric: localStorage.getItem('settings_show_main_lyric') !== 'false',
             showPipLyric: localStorage.getItem('settings_show_pip_lyric') !== 'false',
             showFsLyric: localStorage.getItem('settings_show_fs_lyric') !== 'false',
-            reduceMotion: localStorage.getItem('settings_reduce_motion') === 'true',   // Mặc định Off
-            reduceEffects: localStorage.getItem('settings_reduce_effects') === 'true', // Mặc định Off
+            perf: loadPerf(),   // Hiệu năng & hiệu ứng: bật/tắt từng thành phần
             wakeLockEnabled: localStorage.getItem('settings_wake_lock') !== 'false', // Mặc định ON
             theme: localStorage.getItem('settings_theme') || 'dark',
             accent: localStorage.getItem('settings_accent') || 'purple',
@@ -3730,13 +3794,14 @@
         let dynamicAccentHex = null;
         let dynamicAccentResetTimer = null;
 
-        // Áp class reduce-motion/reduce-effects lên <html> theo đúng settings hiện tại
+        // Áp các class hiệu năng lên <html> theo đúng settings.perf hiện tại
         function applyMotionEffectSettings() {
-            const root = document.documentElement;
-            // Bật "Nâng cao" thì luôn kéo theo bật "Giảm hiệu ứng chuyển động" cơ bản
-            const motionOn = settings.reduceMotion || settings.reduceEffects;
-            root.classList.toggle('reduce-motion', motionOn);
-            root.classList.toggle('reduce-effects', settings.reduceEffects);
+            const root = document.documentElement, p = settings.perf;
+            root.classList.toggle('reduce-motion', !p.motion);
+            root.classList.toggle('no-glass', !p.glass);
+            root.classList.toggle('no-album-blur', !p.albumBlur);
+            root.classList.toggle('no-visualizer', !p.visualizer);
+            root.classList.toggle('no-top-lyric', !p.topLyric);
         }
         applyMotionEffectSettings();
 
@@ -4282,7 +4347,7 @@
             };
             const quick = [
                 qs('setting-main-lyric'), qs('setting-pip-lyric'), qs('setting-fs-lyric'), '-',
-                qs('setting-dynamic-accent'), qs('setting-reduce-motion'), qs('setting-reduce-effects'), qs('setting-wake-lock'), '-',
+                qs('setting-dynamic-accent'), qs('perf-motion'), qs('perf-glass'), qs('perf-visualizer'), qs('setting-wake-lock'), '-',
                 qs('mixer-eq-on'), qs('mixer-mono'), qs('mixer-comp')
             ].filter(Boolean);
             return [
@@ -5579,7 +5644,7 @@
             // "Giảm hiệu ứng mờ và chuyển động (Nâng cao)" đang bật -> bỏ hẳn việc phân
             // tích tần số + vẽ canvas mỗi khung hình để tiết kiệm CPU cho máy yếu, chứ
             // không chỉ ẩn bằng CSS (ẩn bằng CSS vẫn tốn CPU vẽ ở dưới nếu không chặn ở đây)
-            if (settings.reduceEffects) return;
+            if (!settings.perf.visualizer) return;
             analyser.getByteFrequencyData(dataArray);
             const ctx = visualizer.getContext('2d');
             visualizer.width = visualizer.clientWidth;
@@ -7019,8 +7084,29 @@
         const settingMainLyric = document.getElementById('setting-main-lyric');
         const settingPipLyric = document.getElementById('setting-pip-lyric');
         const settingFsLyric = document.getElementById('setting-fs-lyric');
-        const settingReduceMotion = document.getElementById('setting-reduce-motion');
-        const settingReduceEffects = document.getElementById('setting-reduce-effects');
+        const perfPreset = document.getElementById('perf-preset');
+        const perfSwitches = { motion: 'perf-motion', glass: 'perf-glass', albumBlur: 'perf-album-blur', visualizer: 'perf-visualizer', topLyric: 'perf-top-lyric' };
+        function syncPerfUI() {
+            for (const [k, id] of Object.entries(perfSwitches)) document.getElementById(id).selected = !!settings.perf[k];
+            perfPreset.value = perfPresetOf(settings.perf);
+        }
+        syncPerfUI();
+        for (const [k, id] of Object.entries(perfSwitches)) {
+            document.getElementById(id).addEventListener('change', (e) => {
+                settings.perf[k] = e.target.selected;
+                localStorage.setItem('settings_perf', JSON.stringify(settings.perf));
+                perfPreset.value = perfPresetOf(settings.perf);
+                applyMotionEffectSettings();
+            });
+        }
+        perfPreset.addEventListener('change', (e) => {
+            const v = e.target.value;
+            if (!PERF_PRESETS[v]) return;     // "Tuỳ chỉnh": giữ nguyên các công tắc hiện tại
+            settings.perf = Object.assign({}, PERF_PRESETS[v]);
+            localStorage.setItem('settings_perf', JSON.stringify(settings.perf));
+            syncPerfUI();
+            applyMotionEffectSettings();
+        });
         const settingWakeLock = document.getElementById('setting-wake-lock');
         const settingDynamicAccent = document.getElementById('setting-dynamic-accent');
         const settingTheme = document.getElementById('setting-theme');
@@ -7029,12 +7115,8 @@
         settingMainLyric.selected = settings.showMainLyric;
         settingPipLyric.selected = settings.showPipLyric;
         settingFsLyric.selected = settings.showFsLyric;
-        settingReduceEffects.selected = settings.reduceEffects;
         settingWakeLock.selected = settings.wakeLockEnabled;
         settingDynamicAccent.selected = settings.dynamicAccent;
-        // "Nâng cao" đang bật thì force + khoá switch cơ bản luôn hiện đang bật, không cho tắt riêng
-        settingReduceMotion.selected = settings.reduceMotion || settings.reduceEffects;
-        settingReduceMotion.disabled = settings.reduceEffects;
         settingTheme.value = settings.theme;
         settingAccent.value = settings.accent;
 
@@ -7055,27 +7137,6 @@
             settings.showFsLyric = e.target.selected;
             localStorage.setItem('settings_show_fs_lyric', settings.showFsLyric);
             applyLyricVisibility();
-        });
-
-        settingReduceMotion.addEventListener('change', (e) => {
-            settings.reduceMotion = e.target.selected;
-            localStorage.setItem('settings_reduce_motion', settings.reduceMotion);
-            applyMotionEffectSettings();
-        });
-
-        settingReduceEffects.addEventListener('change', (e) => {
-            settings.reduceEffects = e.target.selected;
-            localStorage.setItem('settings_reduce_effects', settings.reduceEffects);
-
-            // Bật "Nâng cao" -> force bật + khoá switch "Giảm hiệu ứng chuyển động" cơ bản
-            if (settings.reduceEffects) {
-                settings.reduceMotion = true;
-                localStorage.setItem('settings_reduce_motion', 'true');
-            }
-            settingReduceMotion.selected = settings.reduceMotion || settings.reduceEffects;
-            settingReduceMotion.disabled = settings.reduceEffects;
-
-            applyMotionEffectSettings();
         });
 
         settingWakeLock.addEventListener('change', (e) => {
@@ -7251,7 +7312,7 @@
             // nên KHÔNG dùng clear() kẻo xoá luôn dữ liệu của các app khác cùng domain).
             ['settings_accent','settings_dynamic_accent','settings_font','settings_font_entries','settings_font_scale',
              'settings_font_scale_sync','settings_language','settings_output_device','settings_playback_speed',
-             'settings_reduce_effects','settings_reduce_motion','settings_repeat_mode','settings_show_fs_lyric',
+             'settings_reduce_effects','settings_reduce_motion','settings_perf','settings_repeat_mode','settings_show_fs_lyric',
              'settings_show_main_lyric','settings_show_pip_lyric','settings_shuffle','settings_theme','settings_ui_scale',
              'settings_volume','settings_wake_lock','settings_mixer','settings_subs','getting_started_done','getting_started_pending'
             ].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
@@ -7787,8 +7848,7 @@
                     + 'Main Player Lyric: ' + onOff(settings.showMainLyric) + '\n'
                     + 'PiP Lyric: ' + onOff(settings.showPipLyric) + '\n'
                     + 'Fullscreen Lyric: ' + onOff(settings.showFsLyric) + '\n'
-                    + 'Reduce Motion: ' + onOff(settings.reduceMotion) + '\n'
-                    + 'Reduce Blur & Motion (Advanced): ' + onOff(settings.reduceEffects) + '\n'
+                    + 'Performance preset: ' + perfPresetOf(settings.perf) + ' (motion ' + onOff(settings.perf.motion) + ', glass ' + onOff(settings.perf.glass) + ', album blur ' + onOff(settings.perf.albumBlur) + ', visualizer ' + onOff(settings.perf.visualizer) + ', top lyric ' + onOff(settings.perf.topLyric) + ')\n'
                     + 'Keep Screen Awake in Fullscreen: ' + onOff(settings.wakeLockEnabled) + '\n'
                     + 'Dynamic Accent from Album Art: ' + onOff(settings.dynamicAccent) + '\n'
                     + 'Theme: ' + (themeLabels[settings.theme] || settings.theme) + '\n'

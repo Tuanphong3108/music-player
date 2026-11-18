@@ -68,6 +68,10 @@
     {
       "content": "Ctrl + O mở menu Thêm nhạc / video ngay tại vị trí con chuột; thêm phím tắt Alt + F để mở Cài đặt",
       "icon": "keyboard"
+    },
+    {
+      "content": "Hiệu năng & hiệu ứng: thêm dropdown cấu hình sẵn (Đầy đủ / Cân bằng / Tiết kiệm / Hiệu năng tối đa / Tuỳ chỉnh) và công tắc cho từng thành phần: chuyển động, kính mờ, nền mờ từ ảnh bìa, sóng nhạc, lyric nổi phía trên",
+      "icon": "speed"
     }
   ],
   "en": [
@@ -138,6 +142,10 @@
     {
       "content": "Ctrl + O opens the Add music / video menu at the mouse pointer; new Alt + F shortcut opens Settings",
       "icon": "keyboard"
+    },
+    {
+      "content": "Performance & effects: added a preset dropdown (Full / Balanced / Power saver / Maximum performance / Custom) plus a switch for each element: motion, frosted glass, blurred cover background, visualizer and floating top lyric",
+      "icon": "speed"
     }
   ]
 }
