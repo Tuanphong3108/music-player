@@ -843,8 +843,7 @@
         /* --- HIỆU NĂNG & HIỆU ỨNG: từng thành phần có thể tắt riêng (class gắn lên <html>) ---
            no-glass: bỏ kính mờ (backdrop-filter) khắp app
            no-album-blur: nền ảnh bìa không blur nữa, chỉ tối đi
-           no-visualizer: ẩn (và ngừng vẽ) sóng nhạc
-           no-top-lyric: lyric chuyển vào giữa màn hình thay vì nằm trên cao */
+           no-visualizer: ẩn (và ngừng vẽ) sóng nhạc; lúc đó dòng lyric đang hát chuyển vào giữa khung phát (bật lại thì nằm phía trên) */
         html.no-glass *,
         html.no-glass *::before,
         html.no-glass *::after {
@@ -857,7 +856,7 @@
         html.no-visualizer #visualizer {
             display: none !important;
         }
-        html.no-top-lyric .top-active-lyric {
+        html.no-visualizer .top-active-lyric {
             top: 50% !important;
             left: 50% !important;
             transform: translate(-50%, -50%) !important;
@@ -1719,22 +1718,12 @@
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                         <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="perf.visualizer">Sóng nhạc</span>
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.visualizer_desc">Vẽ sóng âm theo nhạc. Tắt sẽ ngừng phân tích và vẽ để tiết kiệm CPU.</span>
                     </div>
                     <md-switch icons id="perf-visualizer">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
-                    </md-switch>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="perf.top_lyric">Lyric nổi phía trên</span>
-                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.top_lyric_desc">Lyric hiện trên cao có hoạt ảnh. Tắt thì lyric nằm giữa màn hình.</span>
-                    </div>
-                    <md-switch icons id="perf-top-lyric">
                         <span class="material-symbols-outlined" slot="on-icon">check</span>
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
@@ -3075,15 +3064,15 @@
 
         // --- HIỆU NĂNG & HIỆU ỨNG ---
         const PERF_PRESETS = {
-            default:  { motion: true,  glass: true,  albumBlur: true,  visualizer: true,  topLyric: true  },
-            balanced: { motion: true,  glass: false, albumBlur: true,  visualizer: true,  topLyric: true  },
-            low:      { motion: false, glass: false, albumBlur: false, visualizer: true,  topLyric: true  },
-            max:      { motion: false, glass: false, albumBlur: false, visualizer: false, topLyric: false }
+            default:  { motion: true,  glass: true,  albumBlur: true,  visualizer: true  },
+            balanced: { motion: true,  glass: false, albumBlur: true,  visualizer: true  },
+            low:      { motion: false, glass: false, albumBlur: false, visualizer: true  },
+            max:      { motion: false, glass: false, albumBlur: false, visualizer: false }
         };
         function loadPerf() {
             try {
                 const raw = localStorage.getItem('settings_perf');
-                if (raw) { const o = JSON.parse(raw); return Object.assign({}, PERF_PRESETS.default, o); }
+                if (raw) { const o = JSON.parse(raw), r = {}; for (const k of Object.keys(PERF_PRESETS.default)) r[k] = o[k] !== undefined ? !!o[k] : PERF_PRESETS.default[k]; return r; }
             } catch (e) {}
             // Chuyển từ 2 công tắc cũ: "Nâng cao" = Hiệu năng tối đa; "Giảm chuyển động" = tắt riêng chuyển động
             if (localStorage.getItem('settings_reduce_effects') === 'true') return Object.assign({}, PERF_PRESETS.max);
@@ -3801,7 +3790,6 @@
             root.classList.toggle('no-glass', !p.glass);
             root.classList.toggle('no-album-blur', !p.albumBlur);
             root.classList.toggle('no-visualizer', !p.visualizer);
-            root.classList.toggle('no-top-lyric', !p.topLyric);
         }
         applyMotionEffectSettings();
 
@@ -7085,7 +7073,7 @@
         const settingPipLyric = document.getElementById('setting-pip-lyric');
         const settingFsLyric = document.getElementById('setting-fs-lyric');
         const perfPreset = document.getElementById('perf-preset');
-        const perfSwitches = { motion: 'perf-motion', glass: 'perf-glass', albumBlur: 'perf-album-blur', visualizer: 'perf-visualizer', topLyric: 'perf-top-lyric' };
+        const perfSwitches = { motion: 'perf-motion', glass: 'perf-glass', albumBlur: 'perf-album-blur', visualizer: 'perf-visualizer' };
         function syncPerfUI() {
             for (const [k, id] of Object.entries(perfSwitches)) document.getElementById(id).selected = !!settings.perf[k];
             perfPreset.value = perfPresetOf(settings.perf);
@@ -7848,7 +7836,7 @@
                     + 'Main Player Lyric: ' + onOff(settings.showMainLyric) + '\n'
                     + 'PiP Lyric: ' + onOff(settings.showPipLyric) + '\n'
                     + 'Fullscreen Lyric: ' + onOff(settings.showFsLyric) + '\n'
-                    + 'Performance preset: ' + perfPresetOf(settings.perf) + ' (motion ' + onOff(settings.perf.motion) + ', glass ' + onOff(settings.perf.glass) + ', album blur ' + onOff(settings.perf.albumBlur) + ', visualizer ' + onOff(settings.perf.visualizer) + ', top lyric ' + onOff(settings.perf.topLyric) + ')\n'
+                    + 'Performance preset: ' + perfPresetOf(settings.perf) + ' (motion ' + onOff(settings.perf.motion) + ', glass ' + onOff(settings.perf.glass) + ', album blur ' + onOff(settings.perf.albumBlur) + ', visualizer ' + onOff(settings.perf.visualizer) + ')\n'
                     + 'Keep Screen Awake in Fullscreen: ' + onOff(settings.wakeLockEnabled) + '\n'
                     + 'Dynamic Accent from Album Art: ' + onOff(settings.dynamicAccent) + '\n'
                     + 'Theme: ' + (themeLabels[settings.theme] || settings.theme) + '\n'

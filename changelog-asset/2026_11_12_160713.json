@@ -70,7 +70,7 @@
       "icon": "keyboard"
     },
     {
-      "content": "Hiệu năng & hiệu ứng: thêm dropdown cấu hình sẵn (Đầy đủ / Cân bằng / Tiết kiệm / Hiệu năng tối đa / Tuỳ chỉnh) và công tắc cho từng thành phần: chuyển động, kính mờ, nền mờ từ ảnh bìa, sóng nhạc, lyric nổi phía trên",
+      "content": "Hiệu năng & hiệu ứng: thêm dropdown cấu hình sẵn (Đầy đủ / Cân bằng / Tiết kiệm / Hiệu năng tối đa / Tuỳ chỉnh) và công tắc cho từng thành phần: chuyển động, kính mờ, nền mờ từ ảnh bìa, sóng nhạc (tắt sóng nhạc thì dòng lyric đang hát nằm giữa khung phát)",
       "icon": "speed"
     }
   ],
@@ -144,7 +144,7 @@
       "icon": "keyboard"
     },
     {
-      "content": "Performance & effects: added a preset dropdown (Full / Balanced / Power saver / Maximum performance / Custom) plus a switch for each element: motion, frosted glass, blurred cover background, visualizer and floating top lyric",
+      "content": "Performance & effects: added a preset dropdown (Full / Balanced / Power saver / Maximum performance / Custom) plus a switch for each element: motion, frosted glass, blurred cover background, visualizer (with the visualizer off, the current lyric line sits in the middle)",
       "icon": "speed"
     }
   ]

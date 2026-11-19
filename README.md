@@ -58,7 +58,7 @@
 * **Material Design 3 Expressive:** Thiết kế hiện đại, màu sắc tự động linh hoạt (có thể lấy màu từ ảnh bìa), hiệu ứng tương tác (Ripple Effect, Overshoot Animation) cực bắt mắt.
 * **Tuỳ biến:** Theme Tối/Sáng/Tự động, Accent Color, hơn 20 phông chữ (kèm phông Google Fonts / tệp riêng), thu phóng giao diện và cỡ chữ.
 * **Đa ngôn ngữ:** Tiếng Việt và English.
-* **Tối ưu máy cấu hình yếu:** Cấu hình sẵn (Đầy đủ / Cân bằng / Tiết kiệm / Hiệu năng tối đa) và công tắc riêng cho chuyển động, kính mờ, nền mờ ảnh bìa, sóng nhạc, lyric nổi giúp ứng dụng mượt mà trên mọi thiết bị.
+* **Tối ưu máy cấu hình yếu:** Cấu hình sẵn (Đầy đủ / Cân bằng / Tiết kiệm / Hiệu năng tối đa) và công tắc riêng cho chuyển động, kính mờ, nền mờ ảnh bìa, sóng nhạc giúp ứng dụng mượt mà trên mọi thiết bị.
 
 ---
 
