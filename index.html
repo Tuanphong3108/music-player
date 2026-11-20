@@ -888,10 +888,10 @@
             body.lyrics-open .lyric-search-bar, body.lyrics-open .lyric-credit { display: none; }
             body.lyric-static .lyric-line.active { font-size: calc(30px * var(--font-scale-factor, 1)); color: var(--lyric-text); font-weight: 600; }
             #m-lyric-panel { display: none; position: fixed; z-index: 2600; left: 0; width: var(--vw); bottom: 0; flex-direction: column; gap: 12px; padding: 12px 16px 22px;
-                transform: translateY(110%); transition: transform .35s cubic-bezier(.2,.8,.2,1); background: linear-gradient(to bottom, transparent, var(--md-sys-color-primary-container) 30%); padding-top: 40px; }
-            body.lyrics-open #m-lyric-panel { display: flex; }
+                transform: none; transition: transform .35s cubic-bezier(.2,.8,.2,1); background: linear-gradient(to bottom, transparent, var(--md-sys-color-primary-container) 30%); padding-top: 40px; }
+            body.lyrics-open #m-lyric-panel { display: flex; pointer-events: auto; }
             body.lyrics-open.m-lyric-ui #m-lyric-panel { transform: none; }
-            body.lyrics-open:not(.m-lyric-ui) #m-lyric-panel { pointer-events: none; }
+            body.lyrics-open:not(.m-lyric-ui) #m-lyric-panel { transform: none; pointer-events: auto; }
             body.lyrics-open.fullscreen-active #m-lyric-panel { display: none; }
             .mlp-row { display: flex; align-items: center; gap: 10px; }
             .mlp-play { width: 78px; height: 78px; flex-shrink: 0; border: none; border-radius: 50%; background: var(--md-sys-color-tertiary-container, #633B48); color: var(--md-sys-color-on-tertiary-container, #FFD8E4); display: grid; place-items: center; cursor: pointer; }
@@ -5021,17 +5021,15 @@
             }
         });
 
-        // --- Bảng điều khiển lyric (điện thoại): chạm vào lyric để trượt lên, 5s không chạm thì tự trượt xuống ---
+        // --- Bảng điều khiển lyric (điện thoại): luôn hiển thị khi mở Lyric View ---
         (function () {
             const body = document.body, panel = document.getElementById('m-lyric-panel');
             const playB = document.getElementById('m-lyric-play'), seek = document.getElementById('m-lyric-seek');
-            let hideT = null, dragging = false;
-            const arm = () => { clearTimeout(hideT); if (dragging) return; hideT = setTimeout(() => body.classList.remove('m-lyric-ui'), 5000); };
-            const show = () => { body.classList.add('m-lyric-ui'); arm(); };
+            let dragging = false;
+            const show = () => { body.classList.add('m-lyric-ui'); };
             lyricOverlay.addEventListener('click', () => { if (document.documentElement.classList.contains('m-ui')) show(); });
-            panel.addEventListener('pointerdown', arm); panel.addEventListener('click', arm);
-            seek.addEventListener('pointerdown', () => { dragging = true; clearTimeout(hideT); });
-            window.addEventListener('pointerup', () => { if (dragging) { dragging = false; arm(); } });
+            seek.addEventListener('pointerdown', () => { dragging = true; });
+            window.addEventListener('pointerup', () => { if (dragging) { dragging = false; } });
             seek.addEventListener('input', () => { if (isFinite(audio.duration)) audio.currentTime = seek.value / 100 * audio.duration; });
             audio.addEventListener('timeupdate', () => { if (!dragging && isFinite(audio.duration) && audio.duration > 0) seek.value = audio.currentTime / audio.duration * 100; });
             const icon = () => { playB.firstElementChild.textContent = audio.paused ? 'play_arrow' : 'pause'; };
