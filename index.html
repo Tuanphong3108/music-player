@@ -874,6 +874,9 @@
             .controls-group > div { grid-area: spd; width: 100%; }
             .controls-group > div > #speed-btn { width: 100% !important; height: 56px !important; border-radius: 10px 28px 28px 10px !important; background: var(--md-sys-color-surface-variant) !important; }
             body.reorder-active .player-shell { display: none; }
+            .reorder-done-btn { z-index: 3600; }
+            body.reorder-active .playlist-items { padding-bottom: 110px; }
+            body.reorder-active.m-playlist-open .playlist-card { position: fixed; }
         }
         @media (max-width: 720px) and (max-height: 640px) {
             #fs-cover-wrap { width: min(100%, 40vh) !important; }
