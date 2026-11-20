@@ -63,6 +63,7 @@
     </script>
 
     <style>
+        html, body { overflow-x: hidden; }
     :root{--font-scale-factor:1}
 .text-xs{font-size:calc(12px * var(--font-scale-factor,1)) !important}.text-sm{font-size:calc(14px * var(--font-scale-factor,1)) !important}.text-base{font-size:calc(16px * var(--font-scale-factor,1)) !important}.text-lg{font-size:calc(18px * var(--font-scale-factor,1)) !important}.text-xl{font-size:calc(20px * var(--font-scale-factor,1)) !important}.text-2xl{font-size:calc(24px * var(--font-scale-factor,1)) !important}.text-3xl{font-size:calc(30px * var(--font-scale-factor,1)) !important}.text-\[11px\]{font-size:calc(11px * var(--font-scale-factor,1)) !important}
         :root {
@@ -385,6 +386,14 @@
                 thirdPartyNote: "Media Player sử dụng các thành phần bên dưới. Mỗi thành phần thuộc quyền của tác giả riêng và tuân theo giấy phép của chính nó, không nằm trong MIT License © 2026 Phong VN ở trên.",
                 features: [
                     {
+                        title: "Ứng dụng Android & giao diện điện thoại",
+                        icon: "phone_android",
+                        badge: "Android",
+                        badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                        summary: "App Android (WebView) tự cập nhật theo repo, dùng được offline, giao diện Now Playing tối ưu cho điện thoại.",
+                        description: "Media Player có bản Android và giao diện riêng cho màn hình hẹp (PC giữ nguyên):\n\n• **Tự cập nhật**: App tải nội dung từ trang web của dự án nên mỗi lần repo cập nhật, app cập nhật theo mà không cần cài lại APK.\n• **Dùng offline**: Sau lần mở đầu tiên có mạng, app chạy được khi không có Internet.\n• **Mở bằng / Chia sẻ**: Chọn \"Mở bằng Media Player\" hoặc Chia sẻ nhạc, video từ ứng dụng khác vào app; nút Chia sẻ trong app gửi tệp đang phát ra ngoài.\n• **Phát nền**: Nhạc tiếp tục phát khi thoát ra màn hình chính, có thông báo với nút Trước / Phát / Sau.\n• **Giao diện Now Playing**: Ảnh bìa lớn, nút Prev / Play / Next dạng pill, hàng Shuffle / Repeat / Tốc độ. Playlist mở dạng tờ toàn màn hình từ nút trên thanh trên; Cài đặt, Hẹn giờ, Chia sẻ, Phản hồi nằm trong menu ⋮.\n• **Thông tin kỹ thuật**: Mục \"Thông tin khác\" hiển thị tần số lấy mẫu, bitrate và định dạng của bài đang phát.\n\nLưu ý: Picture-in-Picture và chọn thư mục không có trên Android WebView."
+                    },
+                    {
                         title: "Hệ thống Phím tắt tiện lợi",
                         icon: "keyboard",
                         badge: "Hotkeys",
@@ -462,6 +471,14 @@
                 thirdPartyTitle: "Third-party licenses",
                 thirdPartyNote: "Media Player uses the components below. Each belongs to its own authors and is governed by its own license; they are not covered by the MIT License © 2026 Phong VN above.",
                 features: [
+                    {
+                        title: "Android app & phone interface",
+                        icon: "phone_android",
+                        badge: "Android",
+                        badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                        summary: "Android (WebView) app that auto-updates with the repo, works offline, with a phone-optimized Now Playing UI.",
+                        description: "Media Player has an Android build and a dedicated narrow-screen interface (desktop is unchanged):\n\n• **Auto-update**: The app loads the project's website, so whenever the repo updates the app updates too, with no APK reinstall.\n• **Offline**: After the first launch with a connection, the app works without Internet.\n• **Open with / Share**: Choose \"Open with Media Player\" or share audio/video from other apps into it; the in-app Share button sends the playing file out.\n• **Background playback**: Music keeps playing after leaving the app, with a notification offering Previous / Play / Next.\n• **Now Playing UI**: Large cover art, pill-shaped Prev / Play / Next buttons, and a Shuffle / Repeat / Speed row. The playlist opens as a full-screen sheet from the top bar; Settings, Sleep timer, Share and Feedback live in the ⋮ menu.\n• **Technical info**: \"More info\" shows the sample rate, bitrate and format of the current track.\n\nNote: Picture-in-Picture and folder picking are unavailable on Android WebView."
+                    },
                     {
                         title: "Convenient Keyboard Shortcuts",
                         icon: "keyboard",

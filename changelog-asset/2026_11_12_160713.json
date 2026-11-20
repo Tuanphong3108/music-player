@@ -80,6 +80,18 @@
     {
       "content": "Giao diện điện thoại (màn hình hẹp) và app Android dùng WebView: tự cập nhật theo repo, dùng offline, mở/chia sẻ file nhạc & video vào app, phát nền có thông báo",
       "icon": "android"
+    },
+    {
+      "content": "Giao diện điện thoại kiểu Now Playing: ảnh bìa lớn, nút pill Prev/Play/Next, hàng Shuffle/Repeat/Tốc độ, playlist dạng tờ toàn màn hình, menu ⋮ chứa Cài đặt/Hẹn giờ/Chia sẻ/Phản hồi, Fullscreen gọn lại (PC giữ nguyên)",
+      "icon": "smartphone"
+    },
+    {
+      "content": "Thông tin khác: thêm Chất lượng âm thanh (tần số lấy mẫu, bitrate, định dạng)",
+      "icon": "graphic_eq"
+    },
+    {
+      "content": "Android: nút Chia sẻ gửi được tệp đang phát qua khung chia sẻ của hệ thống",
+      "icon": "share"
     }
   ],
   "en": [
@@ -162,6 +174,18 @@
     {
       "content": "Phone layout and an Android WebView app: auto-updates with the repo, works offline, open/share audio & video into the app, background playback with notification",
       "icon": "android"
+    },
+    {
+      "content": "Now Playing phone UI: large cover art, pill Prev/Play/Next, Shuffle/Repeat/Speed row, full-screen playlist sheet, ⋮ menu for Settings/Sleep/Share/Feedback, tighter Fullscreen (desktop unchanged)",
+      "icon": "smartphone"
+    },
+    {
+      "content": "More info: added Audio quality (sample rate, bitrate, format)",
+      "icon": "graphic_eq"
+    },
+    {
+      "content": "Android: the Share button can send the playing file via the system share sheet",
+      "icon": "share"
     }
   ]
 }
