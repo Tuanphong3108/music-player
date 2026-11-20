@@ -844,6 +844,22 @@
             body.reorder-active .playlist-card { height: auto; flex: 1; }
         }
         html.is-android-app #pip-btn, html.is-android-app #install-btn, html.is-android-app #install-wrapper { display: none !important; }
+        /* Fullscreen trên điện thoại: thanh điều khiển gọn lại, nút fullscreen lên góc trên để không bị che */
+        @media (max-width: 720px) {
+            body.fullscreen-active .player-shell { bottom: 8px !important; width: calc(var(--vw) - 16px) !important; padding: 20px 10px 8px; }
+            body.fullscreen-active #fullscreen-btn { top: calc(12px + env(safe-area-inset-top, 0px)) !important; bottom: auto !important; right: 12px !important; }
+            body.fullscreen-active .mini-art { width: 40px; height: 40px; }
+            body.fullscreen-active .controls-group .btn-m3 { width: 34px; height: 34px; }
+            body.fullscreen-active .controls-group .btn-play { width: 48px; height: 48px; }
+            body.has-video.fullscreen-active #fs-stage-overlay { padding-bottom: 170px !important; }
+        }
+        @media (max-height: 520px) and (orientation: landscape) {
+            body.fullscreen-active .player-shell { grid-template-columns: minmax(0, 1fr) auto !important; padding: 18px 12px 6px; gap: 8px; width: calc(var(--vw) - 24px) !important; bottom: 6px !important; }
+            body.fullscreen-active .player-shell .volume-group { display: none; }
+            body.fullscreen-active .controls-group { flex-wrap: nowrap; }
+            body.fullscreen-active #fullscreen-btn { top: 10px !important; bottom: auto !important; right: 10px !important; }
+            body.has-video.fullscreen-active #fs-stage-overlay { padding-bottom: 90px !important; }
+        }
         @media (max-width: 720px) and (max-height: 520px) {
             .playlist-card { height: 55%; }
             .top-bar { display: none; }
