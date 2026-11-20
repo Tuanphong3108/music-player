@@ -12,12 +12,19 @@
                 : (/Chrome\/\d/.test(ua) && !/Firefox|FxiOS|CriOS|EdgiOS|OPiOS/.test(ua));
             if (!chromium) reasons.push('browser');
             var mm = function (q) { try { return window.matchMedia(q).matches; } catch (e) { return false; } };
-            var mobile = (uad && uad.mobile === true)
+            // Googlebook (laptop chạy Chrome Android): UA có "Android" nhưng KHÔNG phải điện thoại/máy tính bảng:
+            // không có "Mobile", Client Hints báo mobile=false, màn hình lớn và có chuột/touchpad (hover + pointer chính xác).
+            // Cho qua và bỏ yêu cầu File System Access API (app đã có fallback chọn tệp thường).
+            var googlebook = /Android/i.test(ua) && !/Mobile|Tablet/i.test(ua)
+                && !(uad && uad.mobile === true)
+                && Math.min(screen.width, screen.height) >= 600
+                && mm('(hover: hover) and (pointer: fine)');
+            var mobile = googlebook ? false : ((uad && uad.mobile === true)
                 || /Android|iPhone|iPad|iPod|Mobile|HarmonyOS|KaiOS|Tablet/i.test(ua)
                 || (uad && /Android|iOS/i.test(uad.platform || ''))
                 || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)       // iPadOS
                 || (Math.min(screen.width, screen.height) < 600)
-                || typeof window.showOpenFilePicker !== 'function';   // Chromium di động không có File System Access API
+                || typeof window.showOpenFilePicker !== 'function');   // Chromium di động không có File System Access API
             if (mobile) reasons.push('device');
         } catch (e) { /* không kiểm tra được -> cứ cho chạy */ }
         if (!reasons.length) return;
@@ -34,12 +41,12 @@
         var T = vi ? {
             t: 'Thiết bị không được hỗ trợ',
             d: 'Media Player yêu cầu tối thiểu trình duyệt Chromium (Chrome, Edge, Opera, Brave...) trên máy tính hoặc laptop.',
-            n: 'Điện thoại và máy tính bảng Android/iPad bị chặn hoàn toàn, kể cả khi bật "Trang web cho máy tính".',
+            n: 'Điện thoại và máy tính bảng Android/iPad bị chặn hoàn toàn, kể cả khi bật "Trang web cho máy tính" (Googlebook thì dùng được).',
             r: { browser: 'Trình duyệt hiện tại không phải Chromium.', device: 'Thiết bị hiện tại không phải máy tính/laptop.' }
         } : {
             t: 'Device not supported',
             d: 'Media Player requires at least a Chromium browser (Chrome, Edge, Opera, Brave...) on a PC or laptop.',
-            n: 'Phones and tablets are blocked entirely, even with "Desktop site" turned on.',
+            n: 'Phones and tablets are blocked entirely, even with "Desktop site" turned on (Googlebook laptops are supported).',
             r: { browser: 'Your current browser is not Chromium.', device: 'Your current device is not a PC/laptop.' }
         };
         function show() {

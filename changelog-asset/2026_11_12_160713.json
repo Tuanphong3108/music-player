@@ -72,6 +72,10 @@
     {
       "content": "Hiệu năng & hiệu ứng: thêm dropdown cấu hình sẵn (Đầy đủ / Cân bằng / Tiết kiệm / Hiệu năng tối đa / Tuỳ chỉnh) và công tắc cho từng thành phần: chuyển động, kính mờ, nền mờ từ ảnh bìa, sóng nhạc (tắt sóng nhạc thì dòng lyric đang hát nằm giữa khung phát)",
       "icon": "speed"
+    },
+    {
+      "content": "Bỏ chặn Googlebook (laptop chạy Chrome Android): nhận diện qua UA Android không phải di động, màn hình lớn và có chuột/touchpad",
+      "icon": "laptop_chromebook"
     }
   ],
   "en": [
@@ -146,6 +150,10 @@
     {
       "content": "Performance & effects: added a preset dropdown (Full / Balanced / Power saver / Maximum performance / Custom) plus a switch for each element: motion, frosted glass, blurred cover background, visualizer (with the visualizer off, the current lyric line sits in the middle)",
       "icon": "speed"
+    },
+    {
+      "content": "Googlebook (laptops running Chrome Android) is no longer blocked: detected as non-mobile Android with a large screen and mouse/touchpad",
+      "icon": "laptop_chromebook"
     }
   ]
 }

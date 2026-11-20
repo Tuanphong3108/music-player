@@ -8,7 +8,7 @@
 
 * 🌐 **Live App:** [Media Player](https://tuanphong3108.github.io/music-player/) *(Hoạt động 100% Offline sau khi tải xong)*
 
-> ⚠️ **Yêu cầu tối thiểu:** trình duyệt nền Chromium (Chrome, Edge...) trên máy tính/laptop (kể cả máy cảm ứng như Surface), để dùng đầy đủ File System Access API và mở tệp trực tiếp bằng ứng dụng. Điện thoại không được hỗ trợ.
+> ⚠️ **Yêu cầu tối thiểu:** trình duyệt nền Chromium (Chrome, Edge...) trên máy tính/laptop (kể cả máy cảm ứng như Surface và Googlebook), để dùng đầy đủ File System Access API và mở tệp trực tiếp bằng ứng dụng. Điện thoại không được hỗ trợ.
 
 ---
 

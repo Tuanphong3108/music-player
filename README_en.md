@@ -8,7 +8,7 @@
 
 * 🌐 **Live App:** [Media Player](https://tuanphong3108.github.io/music-player/) *(Works 100% Offline after loading)*
 
-> ⚠️ **Minimum requirement:** a Chromium-based browser (Chrome, Edge...) on a desktop/laptop PC (touch PCs such as Surface are fine), so the File System Access API and opening files directly in the app work fully. Phones are not supported.
+> ⚠️ **Minimum requirement:** a Chromium-based browser (Chrome, Edge...) on a desktop/laptop PC (touch PCs such as Surface and Googlebook laptops are fine), so the File System Access API and opening files directly in the app work fully. Phones are not supported.
 
 ---
 
