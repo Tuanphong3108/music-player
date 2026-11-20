@@ -6566,15 +6566,30 @@
                     if (files.length) handleFiles(files);
                 } catch (e) { console.log('native-open failed', e); }
             };
-            window.__nativeCmd = function (c) { const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
+            window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
             if (window.__pendingNativeFiles) { const q = window.__pendingNativeFiles; window.__pendingNativeFiles = null; window.__nativeOpenFiles(q); }
             const report = () => {
                 try {
-                    const t = document.getElementById('track-name');
-                    AB.setPlaying(!audio.paused && !audio.ended, (t && t.textContent) || '');
+                    const t = document.getElementById('track-name'), ar = document.getElementById('track-artist');
+                    const artist = ((ar && ar.textContent) || '').split('|')[0].trim();
+                    AB.setState(!audio.paused && !audio.ended, (t && t.textContent) || '', artist,
+                        Math.round((audio.currentTime || 0) * 1000), isFinite(audio.duration) ? Math.round(audio.duration * 1000) : 0);
                 } catch (e) {}
             };
-            ['play', 'pause', 'ended', 'loadedmetadata'].forEach(ev => audio.addEventListener(ev, report));
+            const sendArt = () => {
+                try {
+                    const img = document.getElementById('art-img');
+                    if (!img || img.classList.contains('hidden') || !img.naturalWidth) { AB.setArtwork(''); return; }
+                    const c = document.createElement('canvas'), n = 320;
+                    c.width = n; c.height = n;
+                    const k = Math.max(n / img.naturalWidth, n / img.naturalHeight);
+                    const w = img.naturalWidth * k, h = img.naturalHeight * k;
+                    c.getContext('2d').drawImage(img, (n - w) / 2, (n - h) / 2, w, h);
+                    AB.setArtwork(c.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                } catch (e) {}
+            };
+            ['play', 'pause', 'ended', 'loadedmetadata', 'seeked', 'ratechange'].forEach(ev => audio.addEventListener(ev, report));
+            audio.addEventListener('loadedmetadata', () => { setTimeout(() => { sendArt(); report(); }, 1500); });
         })();
 
         if ('serviceWorker' in navigator) {
@@ -7855,7 +7870,7 @@
                 addAnim(addIco, [{ transform: 'scale(0)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], 280, 'cubic-bezier(.34,1.56,.64,1)');
             }, 1000);
         }
-        window.addBtnArrow = addBtnArrow;
+        window.addBtnArrow = addBtnArrow; window.addBtnCancel = addBtnCancel;
 
         // Ctrl + O: mở menu Thêm nhạc ngay tại vị trí con trỏ chuột (bấm nút thì vẫn mở dưới nút như cũ)
         let addMenuAtMouse = false, lastMouse = null;
@@ -7868,7 +7883,7 @@
             }
         };
         window.__openAddMenuAtMouse = function () {
-            if (!window.showOpenFilePicker) { addBtnFolder(); document.getElementById('file-input').click(); return; }
+            if (!window.showOpenFilePicker && !window.AndroidBridge) { addBtnFolder(); document.getElementById('file-input').click(); return; }
             if (addMusicMenu.open) { addMusicMenu.open = false; return; }
             addMenuAtMouse = !!lastMouse;
             addMusicMenu.open = true;
@@ -7876,7 +7891,7 @@
         addMusicTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
             addMenuAtMouse = false;
-            if (window.showOpenFilePicker) {
+            if (window.showOpenFilePicker || window.AndroidBridge) {
                 addMusicMenu.open = !addMusicMenu.open;
             } else {
                 addBtnFolder();
@@ -7892,6 +7907,7 @@
 
         document.getElementById('btn-fs-pick-files').addEventListener('click', async () => {
             addPickerPending = true; addBtnFolder();
+            if (window.AndroidBridge && AndroidBridge.pickFiles) { AndroidBridge.pickFiles(); return; }
             try {
                 const fileHandles = await window.showOpenFilePicker({
                     multiple: true,
@@ -7915,6 +7931,7 @@
 
         document.getElementById('btn-fs-pick-directory').addEventListener('click', async () => {
             addPickerPending = true; addBtnFolder();
+            if (window.AndroidBridge && AndroidBridge.pickFolder) { AndroidBridge.pickFolder(); return; }
             try {
                 const dirHandle = await window.showDirectoryPicker();
                 const files = [];

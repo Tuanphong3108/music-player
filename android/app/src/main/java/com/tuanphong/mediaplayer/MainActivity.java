@@ -9,6 +9,7 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.view.View;
 import android.view.ViewGroup;
@@ -185,19 +186,7 @@ public class MainActivity extends Activity {
         }
         if (uris.isEmpty()) return;
         i.setAction(Intent.ACTION_MAIN); // tránh nạp lại khi xoay màn hình
-        for (Uri u : uris) {
-            try {
-                String id = String.valueOf(nextId++);
-                served.put(id, u);
-                JSONObject o = new JSONObject();
-                o.put("url", "https://" + ASSET_HOST + "/f/" + id);
-                o.put("name", displayName(u));
-                String t = getContentResolver().getType(u);
-                o.put("type", t == null ? "" : t);
-                pending.add(o);
-            } catch (Exception ignored) {}
-        }
-        flushPending();
+        queueUris(uris);
     }
 
     private String displayName(Uri u) {
@@ -221,13 +210,81 @@ public class MainActivity extends Activity {
         web.evaluateJavascript(js, null);
     }
 
+    private void startSvc(Intent i) {
+        try { if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i); } catch (Exception ignored) {}
+    }
+
+    void callJs(final String js) {
+        runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, null); });
+    }
+
+    private void queueUris(List<Uri> uris) {
+        for (Uri u : uris) {
+            try {
+                String id = String.valueOf(nextId++);
+                served.put(id, u);
+                JSONObject o = new JSONObject();
+                o.put("url", "https://" + ASSET_HOST + "/f/" + id);
+                o.put("name", displayName(u));
+                String t = getContentResolver().getType(u);
+                o.put("type", t == null ? "" : t);
+                pending.add(o);
+            } catch (Exception ignored) {}
+        }
+        flushPending();
+    }
+
+    /** Duyệt đệ quy thư mục (SAF tree) lấy file nhạc/video + lời/phụ đề đi kèm. */
+    private void scanTree(final Uri tree) {
+        new Thread(() -> {
+            List<Uri> out = new ArrayList<>();
+            try {
+                String rootId = DocumentsContract.getTreeDocumentId(tree);
+                walk(tree, rootId, out, 0);
+            } catch (Exception ignored) {}
+            runOnUiThread(() -> {
+                if (out.isEmpty()) callJs("window.addBtnCancel&&addBtnCancel()");
+                else queueUris(out);
+            });
+        }).start();
+    }
+
+    private void walk(Uri tree, String docId, List<Uri> out, int depth) {
+        if (depth > 6) return;
+        Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, docId);
+        try (Cursor c = getContentResolver().query(children, new String[]{
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_MIME_TYPE,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME}, null, null, null)) {
+            if (c == null) return;
+            while (c.moveToNext()) {
+                String id = c.getString(0), mime = c.getString(1), name = c.getString(2);
+                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) { walk(tree, id, out, depth + 1); continue; }
+                String ln = name == null ? "" : name.toLowerCase();
+                if ((mime != null && (mime.startsWith("audio/") || mime.startsWith("video/")))
+                        || ln.endsWith(".lrc") || ln.endsWith(".srt") || ln.endsWith(".vtt")
+                        || ln.endsWith(".mp3") || ln.endsWith(".flac") || ln.endsWith(".m4a") || ln.endsWith(".ogg") || ln.endsWith(".opus")
+                        || ln.endsWith(".wav") || ln.endsWith(".mkv") || ln.endsWith(".mp4") || ln.endsWith(".webm"))
+                    out.add(DocumentsContract.buildDocumentUriUsingTree(tree, id));
+            }
+        } catch (Exception ignored) {}
+    }
+
     void sendCmd(final String cmd) {
         runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__nativeCmd&&window.__nativeCmd('" + cmd + "')", null); });
     }
 
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
-        if (req == 42 && filePathCb != null) {
+        if (req == 43 || req == 44) {
+            if (res != RESULT_OK || data == null) { callJs("window.addBtnCancel&&addBtnCancel()"); }
+            else if (req == 44 && data.getData() != null) scanTree(data.getData());
+            else {
+                List<Uri> l = new ArrayList<>();
+                if (data.getClipData() != null) for (int k = 0; k < data.getClipData().getItemCount(); k++) l.add(data.getClipData().getItemAt(k).getUri());
+                else if (data.getData() != null) l.add(data.getData());
+                if (l.isEmpty()) callJs("window.addBtnCancel&&addBtnCancel()"); else queueUris(l);
+            }
+        } else if (req == 42 && filePathCb != null) {
             Uri[] out = null;
             if (res == RESULT_OK && data != null) {
                 if (data.getClipData() != null) {
@@ -289,14 +346,45 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
-        public void setPlaying(boolean playing, String title) {
+        public void setState(boolean playing, String title, String artist, long posMs, long durMs) {
             Intent i = new Intent(MainActivity.this, MediaService.class);
             i.setAction(MediaService.ACTION_UPDATE);
             i.putExtra("playing", playing);
             i.putExtra("title", title);
+            i.putExtra("artist", artist);
+            i.putExtra("pos", posMs);
+            i.putExtra("dur", durMs);
+            startSvc(i);
+        }
+
+        @JavascriptInterface
+        public void setArtwork(String b64) {
             try {
-                if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i);
+                Intent i = new Intent(MainActivity.this, MediaService.class);
+                i.setAction(MediaService.ACTION_ART);
+                i.putExtra("art", b64 == null || b64.isEmpty() ? new byte[0] : Base64.decode(b64, Base64.DEFAULT));
+                startSvc(i);
             } catch (Exception ignored) {}
+        }
+
+        @JavascriptInterface
+        public void pickFiles() {
+            runOnUiThread(() -> {
+                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("*/*");
+                i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "video/*", "text/*", "application/octet-stream", "application/x-subrip"});
+                try { startActivityForResult(i, 43); } catch (Exception e) { callJs("window.addBtnCancel&&addBtnCancel()"); }
+            });
+        }
+
+        @JavascriptInterface
+        public void pickFolder() {
+            runOnUiThread(() -> {
+                try { startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 44); }
+                catch (Exception e) { callJs("window.addBtnCancel&&addBtnCancel()"); }
+            });
         }
     }
 }
