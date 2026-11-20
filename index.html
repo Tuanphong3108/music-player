@@ -873,6 +873,20 @@
             #repeat-btn.active, #shuffle-btn.active { background: var(--md-sys-color-tertiary-container, var(--md-sys-color-primary-container)) !important; color: var(--md-sys-color-on-tertiary-container, inherit) !important; }
             .controls-group > div { grid-area: spd; width: 100%; }
             .controls-group > div > #speed-btn { width: 100% !important; height: 56px !important; border-radius: 10px 28px 28px 10px !important; background: var(--md-sys-color-surface-variant) !important; }
+            /* Lyric toàn màn hình kiểu Android: chữ to giữa màn hình, dòng đang hát nổi bật, nút ^ ở đáy để đóng */
+            .lyric-overlay { position: fixed; left: 0; top: 0; width: var(--vw); height: var(--vh); border-radius: 0; z-index: 2500;
+                --lyric-bg: var(--md-sys-color-primary-container); --lyric-text: color-mix(in srgb, var(--md-sys-color-on-primary-container) 38%, transparent); --lyric-active: var(--md-sys-color-primary);
+                backdrop-filter: none; padding: 34vh 22px 34vh; }
+            body:not(.has-video) .lyric-overlay { background: var(--md-sys-color-primary-container); }
+            .lyric-line { font-size: calc(30px * var(--font-scale-factor, 1)); margin: 18px 0; max-width: 100%; letter-spacing: -.2px; }
+            .lyric-line.active { font-size: calc(34px * var(--font-scale-factor, 1)); transform: none; text-shadow: none; }
+            .lyric-info { max-width: 100%; }
+            #m-lyric-close { display: none; }
+            body.lyrics-open #m-lyric-close { display: grid; place-items: center; position: fixed; z-index: 2600; left: calc(var(--vw) / 2 - 28px); bottom: 24px; width: 56px; height: 56px;
+                border: none; border-radius: 50%; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: 0 6px 20px rgba(0,0,0,.35); cursor: pointer; }
+            #m-lyric-close .material-symbols-outlined { font-size: 28px; }
+            body.lyrics-open .lyric-search-bar, body.lyrics-open .lyric-credit { display: none; }
+            body.lyrics-open.fullscreen-active #m-lyric-close { display: none; }
             body.reorder-active .player-shell { display: none; }
             .reorder-done-btn { z-index: 3600; }
             body.reorder-active .playlist-items { padding-bottom: 110px; }
@@ -2179,6 +2193,7 @@
                     <span data-i18n="lyric.search_placeholder">Tìm lời bài hát trên LRCLIB</span>
                 </div>
                 <div class="lyric-credit" id="lyric-credit">Lyric powered by LRCLIB</div>
+                <button class="m-only" id="m-lyric-close" title="Đóng lời bài hát"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
                 <div class="lyric-overlay" id="lyric-overlay">
                     <div class="lyric-placeholder" data-i18n="lyric.placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
                 </div>
@@ -4974,6 +4989,8 @@
                  syncLyrics();
             }
         });
+
+        document.getElementById('m-lyric-close').addEventListener('click', () => lyricBtn.click());
 
         // Thanh tìm kiếm trong Lyric View -> mở Metadata Editor + giao diện tìm lời
         let openLrcSearchPending = false;
