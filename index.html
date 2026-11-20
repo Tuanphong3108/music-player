@@ -814,43 +814,81 @@
             .playlist-card { width: 280px; }
         }
 
-        /* --- GIAO DIỆN ĐIỆN THOẠI (màn hình hẹp / app Android WebView) --- */
+        /* --- GIAO DIỆN ĐIỆN THOẠI: kiểu "Now Playing" (màn hình hẹp / app Android WebView) --- */
+        .m-only, .m-title { display: none; }
+        .top-extra { display: contents; }
         @media (max-width: 720px) {
-            .app-container { padding: 8px; gap: 8px; }
-            .top-bar { padding: 0 2px; gap: 6px; min-width: 0; }
-            .brand { min-width: 0; flex-shrink: 1; }
-            .brand > span:not(.material-symbols-outlined) { display: none; }
-            .top-bar > div:last-child { gap: 2px !important; overflow-x: auto; scrollbar-width: none; min-width: 0; }
-            .top-bar > div:last-child::-webkit-scrollbar { display: none; }
-            .top-bar .btn-m3 { width: 40px; height: 40px; }
-            .main-content { flex-direction: column; gap: 8px; }
-            .playlist-card { width: 100%; flex: 0 0 auto; height: 40%; }
-            .playlist-card.collapsed { width: 100%; height: 56px; border-radius: 20px; align-self: stretch; }
-            .playlist-card.collapsed .playlist-header { flex-direction: row; padding: 8px 16px; gap: 12px; justify-content: space-between; }
-            .playlist-card.collapsed .playlist-header h3 { display: block; }
-            .visual-stage { border-radius: 24px; min-height: 120px; }
-            #visualizer { border-radius: 24px; }
-            .player-shell { grid-template-columns: 1fr; padding: 22px 12px 10px; gap: 6px; border-radius: 24px; }
-            .seek-container { left: 18px; right: 18px; }
-            .time-labels { left: 18px; right: 18px; }
-            #seek-slider { height: 6px; }
-            #seek-slider::-webkit-slider-thumb { opacity: 1; width: 16px; height: 16px; }
-            .controls-group { gap: 2px; flex-wrap: wrap; }
-            .controls-group .btn-m3 { width: 38px; height: 38px; }
-            .controls-group .btn-play { width: 52px; height: 52px; }
-            #pip-btn { display: none; }
-            .volume-group { display: none; }
-            .btn-m3:hover { transform: none; }
-            body.reorder-active .playlist-card { height: auto; flex: 1; }
+            .app-container { padding: 8px 12px 14px; gap: 10px; }
+            .top-bar { padding: 0; gap: 8px; min-width: 0; justify-content: flex-start; }
+            .brand, #install-wrapper { display: none !important; }
+            .top-bar .btn-m3 { width: 48px; height: 48px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-radius: 16px; }
+            .top-bar .btn-m3:hover { transform: none; }
+            #top-actions { display: contents !important; }
+            .m-add { order: -2; } .m-title { order: -1; }
+            .m-only { display: flex; }
+            .m-title { display: block; flex: 1; font-size: calc(20px * var(--font-scale-factor, 1)); font-weight: 600; color: var(--md-sys-color-on-surface); padding-left: 6px; }
+            #output-device-btn { width: auto !important; padding: 0 12px; }
+            #output-device-btn > span:last-child { display: none; }
+            .top-extra { display: none; position: fixed; top: 64px; right: 12px; z-index: 3500; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--md-sys-color-surface-container-high, #2B2930); box-shadow: 0 8px 28px rgba(0,0,0,.5); }
+            body.m-more-open .top-extra { display: flex; }
+
+            .main-content { flex: 1; min-height: 0; flex-direction: column; gap: 0; }
+            .visual-stage { flex: 1; min-height: 0; width: 100%; border-radius: 28px; }
+            #visualizer { border-radius: 28px; }
+            /* Ảnh bìa lớn hiện ngay trong khung chính */
+            #fs-stage-overlay.hidden { display: flex !important; }
+            #fs-stage-overlay { padding: 12px !important; background: none !important; }
+            #fs-cover-wrap { width: min(100%, 56vh) !important; height: auto !important; aspect-ratio: 1; margin-bottom: 0 !important; border-radius: 28px !important; }
+            #fs-title, #fs-artist { display: none !important; }
+            #fs-lyric { font-size: calc(16px * var(--font-scale-factor, 1)) !important; min-height: 0 !important; margin-top: 10px; }
+
+            /* Playlist: tờ phủ toàn màn hình, mở bằng nút trên thanh trên */
+            .playlist-card { display: none; }
+            body.m-playlist-open .playlist-card { display: flex; position: fixed; z-index: 3000; left: 8px; right: 8px; top: 8px; bottom: 8px; width: auto; height: auto; background: var(--md-sys-color-surface, #1C1B1F) !important; backdrop-filter: none !important; box-shadow: 0 0 0 100vmax rgba(0,0,0,.6); }
+            body.reorder-active .playlist-card { display: flex; position: static; }
+
+            /* Khối điều khiển */
+            .player-shell { background: none; border: none; backdrop-filter: none; padding: 0; border-radius: 0;
+                display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 10px; row-gap: 8px;
+                grid-template-areas: "info info lyric" "seek seek seek" "time time time" "prev play next" "shuf rep spd"; align-items: center; }
+            .controls-group { display: contents; }
+            .volume-group, #pip-btn, .mini-art { display: none !important; }
+            .track-info { grid-area: info; }
+            .track-text h4 { font-size: calc(26px * var(--font-scale-factor, 1)); }
+            .track-text p { font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .75; }
+            .track-name-text { padding-right: 40px; }
+            #lyric-btn { grid-area: lyric; justify-self: end; width: 56px; height: 56px; border-radius: 50%; background: var(--md-sys-color-secondary-container); }
+            .seek-container { position: static; grid-area: seek; }
+            #seek-slider { height: 8px; border-radius: 4px; }
+            #seek-slider::-webkit-slider-thumb { opacity: 1; width: 6px; height: 28px; border-radius: 3px; }
+            .player-shell:hover #seek-slider::-webkit-slider-thumb { opacity: 1; }
+            .time-labels { position: static; grid-area: time; opacity: .8; font-size: calc(12px * var(--font-scale-factor, 1)); margin-top: -2px; }
+            .controls-group .btn-m3 { height: 72px; width: 100%; border-radius: 36px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+            .controls-group .btn-m3:hover { transform: none; }
+            #prev-btn { grid-area: prev; } #next-btn { grid-area: next; }
+            #play-btn { grid-area: play; width: 100% !important; height: 80px !important; border-radius: 28px !important; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+            #shuffle-btn, #repeat-btn, .controls-group > div { height: 56px; }
+            #shuffle-btn { grid-area: shuf; border-radius: 28px 10px 10px 28px !important; background: var(--md-sys-color-surface-variant) !important; }
+            #repeat-btn { grid-area: rep; border-radius: 10px !important; background: var(--md-sys-color-surface-variant) !important; }
+            #repeat-btn.active, #shuffle-btn.active { background: var(--md-sys-color-tertiary-container, var(--md-sys-color-primary-container)) !important; color: var(--md-sys-color-on-tertiary-container, inherit) !important; }
+            .controls-group > div { grid-area: spd; width: 100%; }
+            .controls-group > div > #speed-btn { width: 100% !important; height: 56px !important; border-radius: 10px 28px 28px 10px !important; background: var(--md-sys-color-surface-variant) !important; }
+            body.reorder-active .player-shell { display: none; }
         }
-        html.is-android-app #pip-btn, html.is-android-app #install-btn, html.is-android-app #install-wrapper { display: none !important; }
+        @media (max-width: 720px) and (max-height: 640px) {
+            #fs-cover-wrap { width: min(100%, 40vh) !important; }
+            .controls-group .btn-m3, #play-btn { height: 56px !important; }
+        }
         /* Fullscreen trên điện thoại: thanh điều khiển gọn lại, nút fullscreen lên góc trên để không bị che */
         @media (max-width: 720px) {
-            body.fullscreen-active .player-shell { bottom: 8px !important; width: calc(var(--vw) - 16px) !important; padding: 20px 10px 8px; }
+            body.fullscreen-active .player-shell { bottom: 8px !important; width: calc(var(--vw) - 16px) !important; padding: 14px 10px 8px; background: var(--shell-bg); border: 1px solid var(--playlist-border); border-radius: 24px; backdrop-filter: blur(50px); row-gap: 4px; }
+            body.fullscreen-active .track-text h4 { font-size: calc(16px * var(--font-scale-factor, 1)); }
+            body.fullscreen-active .controls-group .btn-m3, body.fullscreen-active #play-btn { height: 48px !important; border-radius: 24px; }
+            body.fullscreen-active #shuffle-btn, body.fullscreen-active #repeat-btn, body.fullscreen-active #speed-btn, body.fullscreen-active #lyric-btn { height: 40px !important; }
+            body.fullscreen-active #lyric-btn { width: 40px; }
+            body.fullscreen-active .seek-container { padding: 0; }
+            body.fullscreen-active #fs-stage-overlay { padding-bottom: 200px !important; }
             body.fullscreen-active #fullscreen-btn { top: calc(12px + env(safe-area-inset-top, 0px)) !important; bottom: auto !important; right: 12px !important; }
-            body.fullscreen-active .mini-art { width: 40px; height: 40px; }
-            body.fullscreen-active .controls-group .btn-m3 { width: 34px; height: 34px; }
-            body.fullscreen-active .controls-group .btn-play { width: 48px; height: 48px; }
             body.has-video.fullscreen-active #fs-stage-overlay { padding-bottom: 170px !important; }
         }
         @media (max-height: 520px) and (orientation: landscape) {
@@ -859,10 +897,6 @@
             body.fullscreen-active .controls-group { flex-wrap: nowrap; }
             body.fullscreen-active #fullscreen-btn { top: 10px !important; bottom: auto !important; right: 10px !important; }
             body.has-video.fullscreen-active #fs-stage-overlay { padding-bottom: 90px !important; }
-        }
-        @media (max-width: 720px) and (max-height: 520px) {
-            .playlist-card { height: 55%; }
-            .top-bar { display: none; }
         }
 
         /* --- GIẢM HIỆU ỨNG CHUYỂN ĐỘNG ---
@@ -1998,20 +2032,24 @@
                 <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
                 <span>MEDIAPLAYER V2026.11.12-build160713</span>
             </div>
-            <div style="display: flex; gap: 8px; position: relative;">
+            <span class="m-title" data-i18n="mobile.now_playing">Now Playing</span>
+            <div id="top-actions" style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
                     <button class="btn-m3" id="install-btn" title="Cài đặt ứng dụng" data-i18n-title="topbar.install">
                         <span class="material-symbols-outlined">install_desktop</span>
                     </button>
                     <div class="install-tooltip" data-i18n="topbar.install_tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
                 </div>
-                <div style="position:relative;">
+                <div style="position:relative;" class="m-out">
                     <button class="btn-m3" id="output-device-btn" title="Chọn thiết bị phát âm thanh" data-i18n-title="player.output_device" style="display:flex; align-items:center; justify-content:center; gap:1px; width:auto; padding:0 8px;">
                         <span class="material-symbols-outlined" style="font-size:20px;">headphones</span>
                         <span class="material-symbols-outlined" style="font-size:16px;">keyboard_arrow_down</span>
                     </button>
                     <md-menu id="output-device-menu" anchor="output-device-btn"></md-menu>
                 </div>
+                <button class="btn-m3 m-only" id="m-playlist-btn" title="Playlist"><span class="material-symbols-outlined">queue_music</span></button>
+                <button class="btn-m3 m-only" id="m-more-btn" title="More"><span class="material-symbols-outlined">more_vert</span></button>
+                <div class="top-extra">
                 <div style="position:relative;">
                     <button class="btn-m3" id="sleep-btn" title="Hẹn giờ tạm dừng" data-i18n-title="sleep.title">
                         <span class="material-symbols-outlined sl-ico sl-main" style="font-size:20px;">timer</span><span class="material-symbols-outlined sl-ico sl-fb" id="sleep-fb" style="font-size:20px;">check</span><span id="sleep-badge"></span>
@@ -2029,9 +2067,10 @@
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="share-btn" title="Chia sẻ" data-i18n-title="topbar.share"><span class="material-symbols-outlined">share</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
+                </div>
                 
                 <!-- Nút add_circle mở menu Material Web -->
-                <div style="position:relative;">
+                <div style="position:relative;" class="m-add">
                     <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc / video" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined" id="add-music-icon">add_circle</span><md-circular-progress id="add-music-spinner" indeterminate style="display:none; --md-circular-progress-size:24px; --md-circular-progress-active-indicator-width:12;"></md-circular-progress></button>
                     <md-menu id="add-music-menu" anchor="add-music-trigger" positioning="popover">
                         <md-menu-item id="btn-fs-pick-files">
@@ -6410,6 +6449,27 @@
             });
         }
 
+        // --- UI điện thoại: lớp m-ui, nút playlist/more ---
+        (function () {
+            const mq = window.matchMedia('(max-width: 720px)');
+            const apply = () => { document.documentElement.classList.toggle('m-ui', mq.matches); if (mq.matches) { try { updateFsUI(); } catch (e) {} } else document.body.classList.remove('m-playlist-open', 'm-more-open'); };
+            (mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply));
+            apply();
+            document.getElementById('m-playlist-btn').addEventListener('click', () => {
+                if (playlistCard.classList.contains('collapsed')) togglePlaylist();
+                document.body.classList.add('m-playlist-open'); document.body.classList.remove('m-more-open');
+            });
+            document.querySelector('#playlist-card .playlist-header').addEventListener('click', (e) => {
+                if (!document.documentElement.classList.contains('m-ui') || document.body.classList.contains('reorder-active')) return;
+                e.stopImmediatePropagation(); document.body.classList.remove('m-playlist-open');
+            }, true);
+            document.getElementById('m-more-btn').addEventListener('click', (e) => { e.stopPropagation(); document.body.classList.toggle('m-more-open'); });
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('#m-more-btn') || e.target.closest('#sleep-btn') || e.target.closest('#sleep-menu')) return;
+                document.body.classList.remove('m-more-open');
+            });
+        })();
+
         // --- CẦU NỐI VỚI APP ANDROID (WebView) ---
         // App native gọi window.__nativeOpenFiles([{url,name,type}]) với url dạng
         // https://appassets.local/f/<id> (được app chặn request và trả dữ liệu content://).
@@ -8785,7 +8845,7 @@
         fullscreenBtn.addEventListener('click', toggleFullscreen);
 
         function updateFsUI() {
-            if (!document.body.classList.contains('fullscreen-active')) return;
+            if (!document.body.classList.contains('fullscreen-active') && !document.documentElement.classList.contains('m-ui')) return;
             const track = playlist[currentIndex];
             if (track) {
                 fsTitle.innerText = track.name;

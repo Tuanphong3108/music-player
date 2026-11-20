@@ -6,6 +6,7 @@
 # =========================================================
 
 ## --- Top bar ---
+mobile.now_playing=Now Playing
 topbar.install=Install app
 topbar.install_tooltip=Install to open files directly from your computer
 topbar.settings=Settings

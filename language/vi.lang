@@ -6,6 +6,7 @@
 # =========================================================
 
 ## --- Thanh trên cùng ---
+mobile.now_playing=Đang phát
 topbar.install=Cài đặt ứng dụng
 topbar.install_tooltip=Cài đặt để có thể mở file trực tiếp từ máy tính
 topbar.settings=Cài đặt
