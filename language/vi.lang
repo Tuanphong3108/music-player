@@ -6,6 +6,8 @@
 # =========================================================
 
 ## --- Thanh trên cùng ---
+lyric.mode_synced=Đồng bộ
+lyric.mode_static=Tĩnh
 mobile.now_playing=Đang phát
 topbar.install=Cài đặt ứng dụng
 topbar.install_tooltip=Cài đặt để có thể mở file trực tiếp từ máy tính

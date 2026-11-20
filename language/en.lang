@@ -6,6 +6,8 @@
 # =========================================================
 
 ## --- Top bar ---
+lyric.mode_synced=Synced
+lyric.mode_static=Static
 mobile.now_playing=Now Playing
 topbar.install=Install app
 topbar.install_tooltip=Install to open files directly from your computer

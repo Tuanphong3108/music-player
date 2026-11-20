@@ -881,11 +881,29 @@
             .lyric-line { font-size: calc(30px * var(--font-scale-factor, 1)); margin: 18px 0; max-width: 100%; letter-spacing: -.2px; }
             .lyric-line.active { font-size: calc(34px * var(--font-scale-factor, 1)); transform: none; text-shadow: none; }
             .lyric-info { max-width: 100%; }
-            #m-lyric-close { display: none; }
-            body.lyrics-open #m-lyric-close { display: grid; place-items: center; position: fixed; z-index: 2600; left: calc(var(--vw) / 2 - 28px); bottom: 24px; width: 56px; height: 56px;
+            #m-lyric-close { display: none !important; }
+            body.lyrics-open #m-lyric-close-unused { display: grid; place-items: center; position: fixed; z-index: 2600; left: calc(var(--vw) / 2 - 28px); bottom: 24px; width: 56px; height: 56px;
                 border: none; border-radius: 50%; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: 0 6px 20px rgba(0,0,0,.35); cursor: pointer; }
             #m-lyric-close .material-symbols-outlined { font-size: 28px; }
             body.lyrics-open .lyric-search-bar, body.lyrics-open .lyric-credit { display: none; }
+            body.lyric-static .lyric-line.active { font-size: calc(30px * var(--font-scale-factor, 1)); color: var(--lyric-text); font-weight: 600; }
+            #m-lyric-panel { display: none; position: fixed; z-index: 2600; left: 0; width: var(--vw); bottom: 0; flex-direction: column; gap: 12px; padding: 12px 16px 22px;
+                transform: translateY(110%); transition: transform .35s cubic-bezier(.2,.8,.2,1); background: linear-gradient(to bottom, transparent, var(--md-sys-color-primary-container) 30%); padding-top: 40px; }
+            body.lyrics-open #m-lyric-panel { display: flex; }
+            body.lyrics-open.m-lyric-ui #m-lyric-panel { transform: none; }
+            body.lyrics-open:not(.m-lyric-ui) #m-lyric-panel { pointer-events: none; }
+            body.lyrics-open.fullscreen-active #m-lyric-panel { display: none; }
+            .mlp-row { display: flex; align-items: center; gap: 10px; }
+            .mlp-play { width: 78px; height: 78px; flex-shrink: 0; border: none; border-radius: 50%; background: var(--md-sys-color-tertiary-container, #633B48); color: var(--md-sys-color-on-tertiary-container, #FFD8E4); display: grid; place-items: center; cursor: pointer; }
+            .mlp-play .material-symbols-outlined { font-size: 34px; font-variation-settings: 'FILL' 1; }
+            .mlp-seek { flex: 1; height: 50px; border-radius: 25px; background: #101014; display: flex; align-items: center; padding: 0 18px; }
+            #m-lyric-seek { width: 100%; height: 6px; border-radius: 3px; appearance: none; background: rgba(255,255,255,.18); }
+            #m-lyric-seek::-webkit-slider-thumb { appearance: none; width: 8px; height: 28px; border-radius: 4px; background: var(--md-sys-color-primary); }
+            .mlp-bottom { gap: 8px; }
+            .mlp-round { width: 40px; height: 40px; flex-shrink: 0; border: none; border-radius: 50%; background: #101014; color: #fff; display: grid; place-items: center; cursor: pointer; }
+            .mlp-chip { flex: 1; height: 50px; border: none; background: #101014; color: #fff; font: 600 calc(16px * var(--font-scale-factor, 1)) var(--app-font, sans-serif); cursor: pointer; border-radius: 10px; }
+            #m-lyric-synced { border-radius: 25px 10px 10px 25px; } #m-lyric-static { border-radius: 10px 25px 25px 10px; }
+            .mlp-chip.on { background: var(--md-sys-color-primary-container, #4F378B); color: var(--md-sys-color-on-primary-container, #EADDFF); filter: brightness(1.5); }
             body.lyrics-open.fullscreen-active #m-lyric-close { display: none; }
             body.reorder-active .player-shell { display: none; }
             .reorder-done-btn { z-index: 3600; }
@@ -2194,6 +2212,18 @@
                 </div>
                 <div class="lyric-credit" id="lyric-credit">Lyric powered by LRCLIB</div>
                 <button class="m-only" id="m-lyric-close" title="Đóng lời bài hát"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                <div class="m-only" id="m-lyric-panel">
+                    <div class="mlp-row">
+                        <button id="m-lyric-play" class="mlp-play"><span class="material-symbols-outlined">play_arrow</span></button>
+                        <div class="mlp-seek"><input type="range" id="m-lyric-seek" min="0" max="100" step="any" value="0"></div>
+                    </div>
+                    <div class="mlp-row mlp-bottom">
+                        <button id="m-lyric-back" class="mlp-round"><span class="material-symbols-outlined">arrow_back</span></button>
+                        <button id="m-lyric-synced" class="mlp-chip on" data-i18n="lyric.mode_synced">Synced</button>
+                        <button id="m-lyric-static" class="mlp-chip" data-i18n="lyric.mode_static">Static</button>
+                        <button id="m-lyric-more" class="mlp-round"><span class="material-symbols-outlined">more_vert</span></button>
+                    </div>
+                </div>
                 <div class="lyric-overlay" id="lyric-overlay">
                     <div class="lyric-placeholder" data-i18n="lyric.placeholder">KÉO THẢ FILE AUDIO CÙNG FILE .LRC<br>ĐỂ ĐỒNG BỘ LỜI BÀI HÁT</div>
                 </div>
@@ -4963,6 +4993,7 @@
             }
 
             if (!isLyricVisible) return;
+            if (document.body.classList.contains('lyric-static')) return;
 
             if (activeIdx !== -1) {
                 const lines = lyricOverlay.querySelectorAll('.lyric-line');
@@ -4990,7 +5021,35 @@
             }
         });
 
-        document.getElementById('m-lyric-close').addEventListener('click', () => lyricBtn.click());
+        // --- Bảng điều khiển lyric (điện thoại): chạm vào lyric để trượt lên, 5s không chạm thì tự trượt xuống ---
+        (function () {
+            const body = document.body, panel = document.getElementById('m-lyric-panel');
+            const playB = document.getElementById('m-lyric-play'), seek = document.getElementById('m-lyric-seek');
+            let hideT = null, dragging = false;
+            const arm = () => { clearTimeout(hideT); if (dragging) return; hideT = setTimeout(() => body.classList.remove('m-lyric-ui'), 5000); };
+            const show = () => { body.classList.add('m-lyric-ui'); arm(); };
+            lyricOverlay.addEventListener('click', () => { if (document.documentElement.classList.contains('m-ui')) show(); });
+            panel.addEventListener('pointerdown', arm); panel.addEventListener('click', arm);
+            seek.addEventListener('pointerdown', () => { dragging = true; clearTimeout(hideT); });
+            window.addEventListener('pointerup', () => { if (dragging) { dragging = false; arm(); } });
+            seek.addEventListener('input', () => { if (isFinite(audio.duration)) audio.currentTime = seek.value / 100 * audio.duration; });
+            audio.addEventListener('timeupdate', () => { if (!dragging && isFinite(audio.duration) && audio.duration > 0) seek.value = audio.currentTime / audio.duration * 100; });
+            const icon = () => { playB.firstElementChild.textContent = audio.paused ? 'play_arrow' : 'pause'; };
+            audio.addEventListener('play', icon); audio.addEventListener('pause', icon); icon();
+            playB.addEventListener('click', () => document.getElementById('play-btn').click());
+            document.getElementById('m-lyric-back').addEventListener('click', () => { body.classList.remove('m-lyric-ui'); if (isLyricVisible) lyricBtn.click(); });
+            const syncB = document.getElementById('m-lyric-synced'), statB = document.getElementById('m-lyric-static');
+            const setMode = (st) => {
+                body.classList.toggle('lyric-static', st);
+                syncB.classList.toggle('on', !st); statB.classList.toggle('on', st);
+                if (st) { const a = lyricOverlay.querySelector('.lyric-line.active'); if (a) a.classList.remove('active'); }
+                else { try { syncLyrics(); } catch (e) {} }
+            };
+            syncB.addEventListener('click', () => setMode(false));
+            statB.addEventListener('click', () => setMode(true));
+            document.getElementById('m-lyric-more').addEventListener('click', () => { try { openLyricSearchFromView(); } catch (e) {} });
+            lyricBtn.addEventListener('click', () => { if (!isLyricVisible) body.classList.remove('m-lyric-ui'); else show(); });
+        })();
 
         // Thanh tìm kiếm trong Lyric View -> mở Metadata Editor + giao diện tìm lời
         let openLrcSearchPending = false;
