@@ -909,6 +909,7 @@
             .reorder-done-btn { z-index: 3600; }
             body.reorder-active .playlist-items { padding-bottom: 110px; }
             body.reorder-active.m-playlist-open .playlist-card { position: fixed; }
+            #fullscreen-btn, div:has(> md-switch#setting-wake-lock) { display: none !important; }
         }
         @media (max-width: 720px) and (max-height: 640px) {
             #fs-cover-wrap { width: min(100%, 40vh) !important; }
