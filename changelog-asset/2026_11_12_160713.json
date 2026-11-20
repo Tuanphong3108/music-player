@@ -74,7 +74,7 @@
       "icon": "speed"
     },
     {
-      "content": "Bỏ chặn Googlebook (laptop chạy Chrome Android): nhận diện qua UA Android không phải di động, màn hình lớn và có chuột/touchpad",
+      "content": "Bỏ chặn thiết bị (dùng được trên Googlebook): chỉ còn yêu cầu trình duyệt nền Chromium",
       "icon": "laptop_chromebook"
     }
   ],
@@ -152,7 +152,7 @@
       "icon": "speed"
     },
     {
-      "content": "Googlebook (laptops running Chrome Android) is no longer blocked: detected as non-mobile Android with a large screen and mouse/touchpad",
+      "content": "Device blocking removed (works on Googlebook): only a Chromium-based browser is required",
       "icon": "laptop_chromebook"
     }
   ]
