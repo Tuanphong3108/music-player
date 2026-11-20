@@ -18,7 +18,11 @@ import android.widget.FrameLayout;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import android.util.Base64;
+import androidx.core.content.FileProvider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -254,6 +258,36 @@ public class MainActivity extends Activity {
     }
 
     class Bridge {
+        private FileOutputStream shareOut; private File shareFile; private String shareId;
+
+        @JavascriptInterface
+        public void shareChunk(String id, String b64, boolean last, String name, String mime) {
+            try {
+                if (shareOut == null || !id.equals(shareId)) {
+                    File dir = new File(getCacheDir(), "share");
+                    dir.mkdirs();
+                    File[] old = dir.listFiles();
+                    if (old != null) for (File f : old) f.delete();
+                    shareId = id;
+                    shareFile = new File(dir, name.replaceAll("[\\\\/:*?\"<>|]", "_"));
+                    shareOut = new FileOutputStream(shareFile);
+                }
+                shareOut.write(Base64.decode(b64, Base64.DEFAULT));
+                if (last) {
+                    shareOut.close(); shareOut = null;
+                    final Uri u = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", shareFile);
+                    final String m = (mime == null || mime.isEmpty()) ? "*/*" : mime;
+                    runOnUiThread(() -> {
+                        Intent i = new Intent(Intent.ACTION_SEND);
+                        i.setType(m);
+                        i.putExtra(Intent.EXTRA_STREAM, u);
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(i, null));
+                    });
+                }
+            } catch (Exception e) { shareOut = null; }
+        }
+
         @JavascriptInterface
         public void setPlaying(boolean playing, String title) {
             Intent i = new Intent(MainActivity.this, MediaService.class);

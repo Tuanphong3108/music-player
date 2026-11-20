@@ -48,6 +48,12 @@
             </intent-filter>
         </activity>
 
+        <provider android:name="androidx.core.content.FileProvider"
+            android:authorities="com.tuanphong.mediaplayer.fp" android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+        </provider>
+
         <service android:name=".MediaService" android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
     </application>

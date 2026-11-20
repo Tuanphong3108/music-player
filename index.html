@@ -4386,6 +4386,18 @@
             if (!track || !track.file) { showToast(tr2('share.no_file', 'Chưa có tệp nào đang phát để chia sẻ'), 'share'); return; }
             try {
                 const data = { files: [track.file], title: track.name || track.file.name };
+                if (window.AndroidBridge && AndroidBridge.shareChunk) {
+                    // WebView không có navigator.share cho file → gửi từng khúc base64 sang app native rồi mở khung chia sẻ Android
+                    const f = track.file, CH = 768 * 1024;
+                    const sid = String(Date.now());
+                    for (let o = 0; o < f.size || o === 0; o += CH) {
+                        const buf = new Uint8Array(await f.slice(o, o + CH).arrayBuffer());
+                        let bin = ''; for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
+                        AndroidBridge.shareChunk(sid, btoa(bin), o + CH >= f.size, f.name || 'media', f.type || '');
+                        if (f.size === 0) break;
+                    }
+                    return;
+                }
                 if (navigator.canShare && navigator.canShare(data)) await navigator.share(data);
                 else showToast(tr2('share.unsupported', 'Trình duyệt này chưa hỗ trợ chia sẻ tệp'), 'share');
             } catch (e) {
