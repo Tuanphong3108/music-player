@@ -76,6 +76,10 @@
     {
       "content": "Bỏ chặn thiết bị (dùng được trên Googlebook): chỉ còn yêu cầu trình duyệt nền Chromium",
       "icon": "laptop_chromebook"
+    },
+    {
+      "content": "Giao diện điện thoại (màn hình hẹp) và app Android dùng WebView: tự cập nhật theo repo, dùng offline, mở/chia sẻ file nhạc & video vào app, phát nền có thông báo",
+      "icon": "android"
     }
   ],
   "en": [
@@ -154,6 +158,10 @@
     {
       "content": "Device blocking removed (works on Googlebook): only a Chromium-based browser is required",
       "icon": "laptop_chromebook"
+    },
+    {
+      "content": "Phone layout and an Android WebView app: auto-updates with the repo, works offline, open/share audio & video into the app, background playback with notification",
+      "icon": "android"
     }
   ]
 }
