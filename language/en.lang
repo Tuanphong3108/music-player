@@ -74,6 +74,7 @@ lyric.right_click_hint=Right-click on the song to load lyrics
 moreinfo.title=Other info
 moreinfo.file_type=File
 moreinfo.date_modified=Date modified
+moreinfo.quality=Audio quality
 moreinfo.duration=Duration
 moreinfo.title_label=Title
 moreinfo.artist_label=Artist

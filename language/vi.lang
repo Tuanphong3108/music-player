@@ -74,6 +74,7 @@ lyric.right_click_hint=Chuột phải vào bài hát để nạp lẻ
 moreinfo.title=Thông tin khác
 moreinfo.file_type=Tệp
 moreinfo.date_modified=Ngày sửa đổi
+moreinfo.quality=Chất lượng âm thanh
 moreinfo.duration=Thời lượng
 moreinfo.title_label=Tên bài hát
 moreinfo.artist_label=Nghệ sĩ
