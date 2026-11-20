@@ -318,7 +318,7 @@ public class MainActivity extends Activity {
         private FileOutputStream shareOut; private File shareFile; private String shareId;
 
         @JavascriptInterface
-        public void shareChunk(String id, String b64, boolean last, String name, String mime) {
+        public String shareChunk(String id, String b64, boolean last, String name, String mime) {
             try {
                 if (shareOut == null || !id.equals(shareId)) {
                     File dir = new File(getCacheDir(), "share");
@@ -335,14 +335,26 @@ public class MainActivity extends Activity {
                     final Uri u = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", shareFile);
                     final String m = (mime == null || mime.isEmpty()) ? "*/*" : mime;
                     runOnUiThread(() -> {
-                        Intent i = new Intent(Intent.ACTION_SEND);
-                        i.setType(m);
-                        i.putExtra(Intent.EXTRA_STREAM, u);
-                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        startActivity(Intent.createChooser(i, null));
+                        try {
+                            Intent i = new Intent(Intent.ACTION_SEND);
+                            i.setType(m);
+                            i.putExtra(Intent.EXTRA_STREAM, u);
+                            i.setClipData(android.content.ClipData.newRawUri("", u));
+                            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            Intent ch = Intent.createChooser(i, null);
+                            ch.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            startActivity(ch);
+                        } catch (Exception e) {
+                            callJs("window.showToast&&showToast(" + JSONObject.quote("Không mở được khung chia sẻ: " + e) + ")");
+                        }
                     });
                 }
-            } catch (Exception e) { shareOut = null; }
+                return "";
+            } catch (Throwable e) {
+                try { if (shareOut != null) shareOut.close(); } catch (Exception ignored) {}
+                shareOut = null;
+                return String.valueOf(e);
+            }
         }
 
         @JavascriptInterface
