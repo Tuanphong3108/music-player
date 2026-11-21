@@ -6,3 +6,4 @@
   - **Widget Lời bài hát (`Media Player - Lời bài hát`)**: Hiển thị lời bài hát đang phát, có nút chuyển nhanh giữa chế độ **Synced** (chạy từng câu) và **Static** (đoạn lời tĩnh), chạm để mở thẳng trang Lyrics trong app.
 - **Công tắc Tắt tối ưu hóa pin (Android)**: Thêm tùy chọn trong *Cài đặt → Chung* tự kiểm tra trạng thái tối ưu hóa pin và mở hộp thoại hệ thống để cấp quyền chạy nền không giới hạn.
 - **Ghi đè Metadata & Thumbnail trực tiếp vào tệp gốc**: Lưu thẳng thẻ bài hát và ảnh bìa mới vào file nhạc gốc trên thiết bị qua cầu nối native.
+- **Tối ưu luồng Release Notes & đồng bộ Service Worker**: Chuẩn hóa xử lý xuống dòng ghi chú phát hành APK và cập nhật cache version mới.
