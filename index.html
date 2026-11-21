@@ -7703,7 +7703,13 @@
                     const lang = localStorage.getItem('settings_language') || 'vi';
                     if (AB && AB.setLanguage) AB.setLanguage(lang);
                     if (AB && AB.pongReady) AB.pongReady();
-                    if (typeof triggerAndroidUpdateCheck === 'function') triggerAndroidUpdateCheck();
+                    // Mỗi lần app ping trang (mở app, quay lại từ nền) thì kiểm tra bản cập nhật luôn; giãn tối thiểu 30 giây để khỏi chạm giới hạn API của GitHub
+                    const now = Date.now();
+                    if (typeof triggerAndroidUpdateCheck === 'function') {
+                        if (now - (window.__lastUpdCheckAt || 0) > 30000) { window.__lastUpdCheckAt = now; triggerAndroidUpdateCheck(); }
+                    } else {
+                        window.__pendingUpdCheck = true;   // hàm kiểm tra chưa nạp xong: sẽ chạy ngay khi sẵn sàng
+                    }
                 } catch (e) {}
             };
             try {
@@ -8184,7 +8190,7 @@
                     banner.classList.add('show');
                 } catch (e) {}
             };
-            if (typeof triggerAndroidUpdateCheck === 'function') triggerAndroidUpdateCheck();
+            if (typeof triggerAndroidUpdateCheck === 'function') { window.__lastUpdCheckAt = Date.now(); window.__pendingUpdCheck = false; triggerAndroidUpdateCheck(); }
         })();
 
         if ('serviceWorker' in navigator) {

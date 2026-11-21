@@ -128,6 +128,10 @@
     {
       "content": "Ghi chú cập nhật dài hiện mũi tên xuống ở đáy khi còn nội dung chưa cuộn tới",
       "icon": "keyboard_arrow_down"
+    },
+    {
+      "content": "Mỗi lần app ping trang (mở app, quay lại từ nền) trang tự kiểm tra bản cập nhật Android luôn",
+      "icon": "system_update"
     }
   ],
   "en": [
@@ -258,6 +262,10 @@
     {
       "content": "Long update notes show a down arrow at the bottom while more content remains below",
       "icon": "keyboard_arrow_down"
+    },
+    {
+      "content": "Every time the app pings the page (launch, return from background) the page now also checks for Android updates",
+      "icon": "system_update"
     }
   ]
 }
