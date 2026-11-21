@@ -656,7 +656,14 @@ public class MainActivity extends Activity {
             ArrayList<Uri> l = i.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
             if (l != null) uris.addAll(l);
         }
-        if (uris.isEmpty()) return;
+        if (uris.isEmpty()) {
+            String widgetCmd = i.getStringExtra("widget_cmd");
+            if (widgetCmd != null && !widgetCmd.isEmpty()) {
+                i.removeExtra("widget_cmd");
+                sendCmd(widgetCmd);
+            }
+            return;
+        }
         i.setAction(Intent.ACTION_MAIN); // tránh nạp lại khi xoay màn hình
         queueUris(uris);
     }
@@ -1428,6 +1435,8 @@ public class MainActivity extends Activity {
                         MainActivity.this,
                         getSharedPreferences(MediaWidgetProvider.PREFS, MODE_PRIVATE).getBoolean("playing", false),
                         null, null, null, fullColor);
+                QueueWidgetProvider.updateTheme(MainActivity.this, fullColor);
+                LyricsWidgetProvider.updateTheme(MainActivity.this, fullColor);
                 runOnUiThread(() -> applyTheme(c));
             } catch (Exception ignored) {}
         }
@@ -1435,6 +1444,27 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void setWidgetLyric(String lyricLine) {
             MediaWidgetProvider.saveLyricLine(MainActivity.this, lyricLine == null ? "" : lyricLine);
+        }
+
+        @JavascriptInterface
+        public void setWidgetDetails(boolean shuffle, int repeatMode, long posMs, long durMs) {
+            MediaWidgetProvider.saveModesAndProgress(MainActivity.this, shuffle, repeatMode, posMs, durMs);
+        }
+
+        @JavascriptInterface
+        public void setWidgetQueue(String queueJson) {
+            QueueWidgetProvider.saveQueue(MainActivity.this, queueJson == null ? "" : queueJson);
+        }
+
+        @JavascriptInterface
+        public void setWidgetLyricsData(String syncedLine, String staticBlock, String trackTitle, boolean hasLyrics) {
+            LyricsWidgetProvider.saveLyricsData(
+                    MainActivity.this,
+                    syncedLine == null ? "" : syncedLine,
+                    staticBlock == null ? "" : staticBlock,
+                    trackTitle == null ? "" : trackTitle,
+                    hasLyrics
+            );
         }
 
         @JavascriptInterface
