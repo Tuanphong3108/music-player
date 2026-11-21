@@ -1049,6 +1049,9 @@ public class MainActivity extends Activity {
             }
             filePathCb.onReceiveValue(out);
             filePathCb = null;
+        } else if (req == 47) {
+            boolean ignored = isIgnoringBatteryOptimizationsInternal();
+            callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(" + ignored + ")");
         }
         super.onActivityResult(req, res, data);
     }
@@ -1207,6 +1210,7 @@ public class MainActivity extends Activity {
         }
         callJs("window.__systemAccentChanged&&__systemAccentChanged()");
         callJs("window.__onAndroidPipModeChanged&&window.__onAndroidPipModeChanged(false)");
+        callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(" + isIgnoringBatteryOptimizationsInternal() + ")");
     }
 
     @Override
@@ -1576,9 +1580,48 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public boolean isIgnoringBatteryOptimizations() {
+            return isIgnoringBatteryOptimizationsInternal();
+        }
+
+        @JavascriptInterface
+        public void requestIgnoreBatteryOptimizations() {
+            runOnUiThread(() -> {
+                if (isIgnoringBatteryOptimizationsInternal()) {
+                    callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(true)");
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 23) {
+                    try {
+                        Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivityForResult(intent, 47);
+                        return;
+                    } catch (Throwable ignored) {}
+                    try {
+                        Intent fallback = new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                        startActivityForResult(fallback, 47);
+                        return;
+                    } catch (Throwable ignored) {}
+                }
+                callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(" + isIgnoringBatteryOptimizationsInternal() + ")");
+            });
+        }
+
+        @JavascriptInterface
         public void startUpdateDownload(String url) {
             if (url == null || url.trim().isEmpty()) return;
             startUpdateDownloadInternal(url.trim());
+        }
+    }
+
+    private boolean isIgnoringBatteryOptimizationsInternal() {
+        if (Build.VERSION.SDK_INT < 23) return true;
+        try {
+            android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+            return pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+        } catch (Throwable ignored) {
+            return false;
         }
     }
 
