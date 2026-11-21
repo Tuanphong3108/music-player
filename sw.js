@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'media-player-';
 const LEGACY_PREFIX = 'audio-player-';   // tên cũ trước khi đổi sang Media Player, để dọn cache cũ
-const CACHE_VERSION = 'v2026_11_21_android_gs_2';
+const CACHE_VERSION = 'v2026_11_21_android_gs_3';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
@@ -69,6 +69,10 @@ self.addEventListener('activate', event => {
       .filter(name => (name.startsWith(CACHE_PREFIX) || name.startsWith(LEGACY_PREFIX)) && name !== SHELL_CACHE && name !== RUNTIME_CACHE)
       .map(name => caches.delete(name)));
     await self.clients.claim();
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of clients) {
+      try { c.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION }); } catch (e) {}
+    }
   })());
 });
 
@@ -88,7 +92,11 @@ self.addEventListener('fetch', event => {
   const isAllowedCdn = !isSameOrigin && CDN_HOSTS.has(requestUrl.hostname);
   if (!CACHEABLE_DESTINATIONS.has(request.destination) || (!isSameOrigin && !isAllowedCdn)) return;
 
-  event.respondWith(cacheFirstAsset(request));
+  if (isSameOrigin) {
+    event.respondWith(staleWhileRevalidateAsset(request));
+  } else {
+    event.respondWith(cacheFirstAsset(request));
+  }
 });
 
 async function networkFirstNavigation(request) {
@@ -113,6 +121,28 @@ async function networkFirstNavigation(request) {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
   }
+}
+
+async function staleWhileRevalidateAsset(request) {
+  const cachedResponse = await caches.match(request);
+  const fetchPromise = fetch(request).then(async (response) => {
+    if (response && response.ok && (response.type === 'basic' || response.type === 'cors')) {
+      const runtimeCache = await caches.open(RUNTIME_CACHE);
+      await runtimeCache.put(request, response.clone());
+    }
+    return response;
+  }).catch(() => null);
+
+  if (cachedResponse) {
+    eventOrBackground(fetchPromise);
+    return cachedResponse;
+  }
+  const networkResponse = await fetchPromise;
+  return networkResponse || Response.error();
+}
+
+function eventOrBackground(promise) {
+  try { promise.catch(() => {}); } catch (e) {}
 }
 
 async function cacheFirstAsset(request) {
