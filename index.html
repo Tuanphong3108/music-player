@@ -6857,11 +6857,13 @@
                 } catch (e) { console.log('native-open failed', e); }
             };
             window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
+            let triggerAndroidUpdateCheck = null;
             window.__androidPing = function () {
                 try {
                     const lang = localStorage.getItem('settings_language') || 'vi';
                     if (AB && AB.setLanguage) AB.setLanguage(lang);
                     if (AB && AB.pongReady) AB.pongReady();
+                    if (typeof triggerAndroidUpdateCheck === 'function') triggerAndroidUpdateCheck();
                 } catch (e) {}
             };
             try {
@@ -6967,7 +6969,8 @@
                 });
             }
 
-            (async function checkGitHubAndroidRelease() {
+            let updateCheckBound = false;
+            triggerAndroidUpdateCheck = async function checkGitHubAndroidRelease() {
                 if (!banner || (!curVerName && !curVerCode)) return;
                 try {
                     const res = await fetch('https://api.github.com/repos/Tuanphong3108/music-player/releases?per_page=20', {
@@ -7068,11 +7071,13 @@
 
                     if (moreUpdateBtn) {
                         moreUpdateBtn.classList.add('has-update');
-                        moreUpdateBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            document.body.classList.remove('m-more-open');
-                            openConfirmFullscreen();
-                        });
+                        if (!updateCheckBound) {
+                            moreUpdateBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                document.body.classList.remove('m-more-open');
+                                openConfirmFullscreen();
+                            });
+                        }
                     }
 
                     if (linkEl) {
@@ -7086,7 +7091,7 @@
                             triggerDownloadNow();
                         };
                     }
-                    if (btnInner) {
+                    if (btnInner && !updateCheckBound) {
                         btnInner.addEventListener('click', function (ev) {
                             ev.preventDefault();
                             ev.stopPropagation();
@@ -7097,6 +7102,7 @@
                             triggerDownloadNow();
                         });
                     }
+                    updateCheckBound = true;
                     window.__onAndroidUpdateProgress = function (pct, doneBytes, totalBytes) {
                         if (!progWrap) progWrap.classList.add('show');
                         if (pct >= 0) {
@@ -7138,7 +7144,8 @@
                     if (btnInner) btnInner.textContent = isEn ? 'Update' : 'Cập nhật';
                     banner.classList.add('show');
                 } catch (e) {}
-            })();
+            };
+            if (typeof triggerAndroidUpdateCheck === 'function') triggerAndroidUpdateCheck();
         })();
 
         if ('serviceWorker' in navigator) {
