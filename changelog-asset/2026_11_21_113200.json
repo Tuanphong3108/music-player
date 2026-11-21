@@ -108,6 +108,10 @@
     {
       "content": "Lyric khi đang phát video nằm trên đầu khung phát kể cả khi tắt sóng nhạc (PC); trên điện thoại luôn cố định ở trên đầu",
       "icon": "lyrics"
+    },
+    {
+      "content": "Làm lại banner cập nhật ứng dụng Android: biểu tượng bo góc nổi bật, tiêu đề và phiên bản rõ ràng, nút xếp hàng riêng bên dưới",
+      "icon": "system_update"
     }
   ],
   "en": [
@@ -218,6 +222,10 @@
     {
       "content": "While a video plays, the lyric line now stays at the top of the player even with the visualizer off (PC); on phones it is always pinned to the top",
       "icon": "lyrics"
+    },
+    {
+      "content": "Redesigned the Android app update banner: prominent rounded icon, clearer title and version, buttons on their own row",
+      "icon": "system_update"
     }
   ]
 }
