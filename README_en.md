@@ -105,4 +105,4 @@ This is a free and open-source project created by Phong VN. Check out the projec
 Built with ❤️ by [Phong VN](https://tuanphong3108.github.io).
 
 ## 📱 Android build (WebView)
-Download `MediaPlayer.apk` from [Releases → latest](https://github.com/Tuanphong3108/music-player/releases/tag/latest). The app wraps the site in a WebView, so it **updates automatically with the repo** and works **offline** (after the first online launch). Supports "Open with"/"Share" for audio/video files and background playback with a notification.
+Download `MediaPlayer.apk` from [Releases](https://github.com/Tuanphong3108/music-player/releases/). The app wraps the site in a WebView, so it **updates automatically with the repo** and works **offline** (after the first online launch). Supports "Open with"/"Share" for audio files and background playback with a notification.
