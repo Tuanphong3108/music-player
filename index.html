@@ -5360,6 +5360,8 @@
                         lyricsRaw: lyricsRaw || "",
                         file: file,
                         fileHandle: file.fileHandle || null,
+                        nativeId: file.__nativeId || null,
+                        nativeName: file.__nativeName || file.name,
                         rawName: file.name.replace(/\.[^/.]+$/, "") 
                     };
                     playlist.push(newTrack);
@@ -7285,7 +7287,10 @@
                         }
                         const r = await fetch(it.url);
                         const b = await r.blob();
-                        files.push(new File([b], name, { type: it.type || b.type || '' }));
+                        const f = new File([b], name, { type: it.type || b.type || '' });
+                        f.__nativeId = it.id || ((it.url || '').match(/\/f\/([^/?#]+)/) || [])[1] || null;
+                        f.__nativeName = name;
+                        files.push(f);
                     }
                     if (files.length) handleFiles(files);
                 } catch (e) { console.log('native-open failed', e); }
@@ -9993,8 +9998,42 @@
                         console.warn("Lỗi ghi trực tiếp đĩa (thiếu quyền ghi hoặc handle đã cũ), chỉ giữ lưu trữ tạm thời:", fsErr);
                     }
                 }
+                if (!persisted && window.AndroidBridge && typeof window.AndroidBridge.overwriteFileChunk === 'function' && (track.nativeId || track.nativeName)) {
+                    try {
+                        const CH = 768 * 1024;
+                        const txId = 'ov_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                        const total = taggedBlob.size;
+                        let okWrite = true;
+                        for (let o = 0; o < total || o === 0; o += CH) {
+                            const buf = new Uint8Array(await taggedBlob.slice(o, o + CH).arrayBuffer());
+                            let bin = '';
+                            for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
+                            const err = window.AndroidBridge.overwriteFileChunk(
+                                track.nativeId || '',
+                                txId,
+                                btoa(bin),
+                                o + CH >= total,
+                                track.nativeName || (track.file && track.file.name) || ''
+                            );
+                            if (err) {
+                                console.warn("Lỗi ghi đè tệp qua khung app Android:", err);
+                                okWrite = false;
+                                break;
+                            }
+                            if (total === 0) break;
+                        }
+                        if (okWrite) {
+                            persisted = true;
+                            console.log("Đã ghi đè trực tiếp tệp gốc thông qua AndroidBridge!");
+                        }
+                    } catch (abErr) {
+                        console.warn("Lỗi gửi dữ liệu ghi đè tới khung app Android:", abErr);
+                    }
+                }
 
                 const newFile = new File([taggedBlob], (meta.title || track.name) + ".mp3", { type: 'audio/mpeg' });
+                newFile.__nativeId = track.nativeId || null;
+                newFile.__nativeName = track.nativeName || (track.file && track.file.name) || newFile.name;
                 track.file = newFile;
                 track.name = meta.title || track.name;
                 track.artist = meta.artist || 'UNKNOWN ARTIST';
