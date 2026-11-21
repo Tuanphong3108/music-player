@@ -926,6 +926,97 @@
         @media (max-height: 640px) {
             html.m-ui .controls-group .btn-m3, html.m-ui #play-btn { height: 56px !important; }
         }
+        /* Màn hình ngang trên Android (máy tính bảng / điện thoại xoay ngang): khung lớn bên trái, điều khiển bên phải */
+        @media (orientation: landscape) and (min-width: 600px) {
+            html.m-ui .app-container {
+                display: grid;
+                grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+                grid-template-rows: auto minmax(0, 1fr);
+                grid-template-areas:
+                    "top top"
+                    "stage controls";
+                column-gap: 16px;
+                row-gap: 12px;
+                padding: 10px 16px 16px;
+            }
+            html.m-ui .top-bar {
+                grid-area: top;
+                width: 100%;
+            }
+            html.m-ui .main-content {
+                grid-area: stage;
+                min-width: 0;
+                min-height: 0;
+                height: 100%;
+            }
+            html.m-ui .visual-stage {
+                height: 100%;
+                width: 100%;
+            }
+            html.m-ui #fs-stage-overlay {
+                padding: 56px 16px 16px !important;
+            }
+            html.m-ui .player-shell {
+                grid-area: controls;
+                min-width: 0;
+                max-height: 100%;
+                align-self: center;
+                padding: 8px 4px;
+                row-gap: 12px;
+            }
+            html.m-ui .controls-group .btn-m3 {
+                height: 64px;
+            }
+            html.m-ui #play-btn {
+                height: 72px !important;
+            }
+            html.m-ui #shuffle-btn,
+            html.m-ui #repeat-btn,
+            html.m-ui .controls-group > div,
+            html.m-ui .controls-group > div > #speed-btn {
+                height: 52px !important;
+            }
+            html.m-ui body.reorder-active .app-container {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+        @media (orientation: landscape) and (min-width: 600px) and (max-height: 520px) {
+            html.m-ui .app-container {
+                padding: 8px 14px 10px;
+                row-gap: 8px;
+                column-gap: 14px;
+            }
+            html.m-ui .top-bar .btn-m3 {
+                width: 42px;
+                height: 42px;
+                border-radius: 14px;
+            }
+            html.m-ui .player-shell {
+                row-gap: 6px;
+                padding: 0;
+            }
+            html.m-ui .track-text h4 {
+                font-size: calc(20px * var(--font-scale-factor, 1));
+            }
+            html.m-ui #lyric-btn {
+                width: 46px;
+                height: 46px;
+            }
+            html.m-ui .controls-group .btn-m3 {
+                height: 48px !important;
+            }
+            html.m-ui #play-btn {
+                height: 54px !important;
+                border-radius: 22px !important;
+            }
+            html.m-ui #shuffle-btn,
+            html.m-ui #repeat-btn,
+            html.m-ui .controls-group > div,
+            html.m-ui .controls-group > div > #speed-btn {
+                height: 42px !important;
+            }
+        }
         /* Fullscreen trên điện thoại: thanh điều khiển gọn lại, nút fullscreen lên góc trên để không bị che */
         html.m-ui body.fullscreen-active .player-shell { bottom: 8px !important; width: calc(var(--vw) - 16px) !important; padding: 14px 10px 8px; background: var(--shell-bg); border: 1px solid var(--playlist-border); border-radius: 24px; backdrop-filter: blur(50px); row-gap: 4px; }
         html.m-ui body.fullscreen-active .track-text h4 { font-size: calc(16px * var(--font-scale-factor, 1)); }
