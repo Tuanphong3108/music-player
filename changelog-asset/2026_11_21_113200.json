@@ -76,6 +76,10 @@
     {
       "content": "Điện thoại: mọi dropdown/menu (Hẹn giờ, Thiết bị phát, Thêm nhạc, Tốc độ...) thành bottom sheet; thêm animation chuyển trang (Settings, danh sách phát, lyric...); nút Shuffle/Repeat/Tốc độ/Play bo vuông → bo tròn khi kích hoạt; chưa có bài thì chỉ còn các nút trên cùng và nút Thêm ở giữa",
       "icon": "animation"
+    },
+    {
+      "content": "Thanh tua kiểu Material 3 Expressive: đoạn đã phát là sóng (wavelength 40dp, biên độ 3dp), tạm dừng thì phẳng dần thành đường thẳng; nút ⋮ trong Lyric View đổi thành nút tìm kiếm; bản Android bỏ chữ \"video\" ở nút Thêm",
+      "icon": "waves"
     }
   ],
   "en": [
@@ -154,6 +158,10 @@
     {
       "content": "Phone: every dropdown/menu (Sleep timer, Output device, Add media, Speed...) is now a bottom sheet; page-transition animations (Settings, playlist, lyrics...); Shuffle/Repeat/Speed/Play morph from rounded-square to round when active; with nothing loaded only the top buttons and a centred Add button remain",
       "icon": "animation"
+    },
+    {
+      "content": "Material 3 Expressive seek bar: the played part is a wave (40dp wavelength, 3dp amplitude) that flattens into a straight line on pause; the ⋮ button in Lyric View is now a search button; Android build drops the word \"video\" from the Add button",
+      "icon": "waves"
     }
   ]
 }
