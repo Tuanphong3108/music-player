@@ -7212,8 +7212,14 @@
                         else {
                             isLyricVisible = false;
                             document.body.classList.remove('lyrics-open', 'm-lyric-ui');
-                            if (typeof lyricOverlay !== 'undefined' && lyricOverlay) lyricOverlay.classList.remove('visible');
-                            if (typeof lyricBtn !== 'undefined' && lyricBtn) lyricBtn.classList.remove('active');
+                            const lo = document.getElementById('lyric-overlay') || (typeof lyricOverlay !== 'undefined' ? lyricOverlay : null);
+                            if (lo) {
+                                lo.classList.remove('visible');
+                                lo.style.opacity = '0';
+                                lo.style.pointerEvents = 'none';
+                            }
+                            const lb = document.getElementById('lyric-btn') || (typeof lyricBtn !== 'undefined' ? lyricBtn : null);
+                            if (lb) lb.classList.remove('active');
                         }
                         return true;
                     }
