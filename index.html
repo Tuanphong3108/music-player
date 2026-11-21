@@ -814,133 +814,129 @@
             .playlist-card { width: 280px; }
         }
 
-        /* --- GIAO DIỆN ĐIỆN THOẠI: kiểu "Now Playing" (màn hình hẹp / app Android WebView) --- */
+        /* --- GIAO DIỆN ĐIỆN THOẠI: kiểu "Now Playing" (chỉ bật trên Android: ?android=true hoặc User-Agent Android) --- */
         .m-only, .m-title { display: none; }
         .top-extra { display: contents; }
-        @media (max-width: 720px) {
-            .app-container { padding: 8px 12px 14px; gap: 10px; }
-            .top-bar { padding: 0; gap: 8px; min-width: 0; justify-content: flex-start; }
-            .brand, #install-wrapper { display: none !important; }
-            .top-bar .btn-m3 { width: 48px; height: 48px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-radius: 16px; }
-            .top-bar .btn-m3:hover { transform: none; }
-            #top-actions { display: contents !important; }
-            .m-add { order: -2; } .m-title { order: -1; }
-            .m-only { display: flex; }
-            #m-playlist-btn { position: relative; }
-            .m-pl-badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font: 800 calc(10px * var(--font-scale-factor, 1))/18px var(--app-font); text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.35); pointer-events: none; }
-            .m-pl-badge:empty { display: none; }
-            .m-title { display: block; flex: 1; font-size: calc(20px * var(--font-scale-factor, 1)); font-weight: 600; color: var(--md-sys-color-on-surface); padding-left: 6px; }
-            #output-device-btn { width: auto !important; padding: 0 12px; }
-            #output-device-btn > span:last-child { display: none; }
-            .top-extra { display: none; position: fixed; top: 64px; right: 12px; z-index: 3500; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--md-sys-color-surface-container-high, #2B2930); box-shadow: 0 8px 28px rgba(0,0,0,.5); }
-            body.m-more-open .top-extra { display: flex; }
+        html.m-ui .app-container { padding: 8px 12px 14px; gap: 10px; }
+        html.m-ui .top-bar { padding: 0; gap: 8px; min-width: 0; justify-content: flex-start; }
+        html.m-ui .brand, html.m-ui #install-wrapper { display: none !important; }
+        html.m-ui .top-bar .btn-m3 { width: 48px; height: 48px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-radius: 16px; }
+        html.m-ui .top-bar .btn-m3:hover { transform: none; }
+        html.m-ui #top-actions { display: contents !important; }
+        html.m-ui .m-add { order: -2; } html.m-ui .m-title { order: -1; }
+        html.m-ui .m-only { display: flex; }
+        html.m-ui #m-playlist-btn { position: relative; }
+        html.m-ui .m-pl-badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font: 800 calc(10px * var(--font-scale-factor, 1))/18px var(--app-font); text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.35); pointer-events: none; }
+        html.m-ui .m-pl-badge:empty { display: none; }
+        html.m-ui .m-title { display: block; flex: 1; font-size: calc(20px * var(--font-scale-factor, 1)); font-weight: 600; color: var(--md-sys-color-on-surface); padding-left: 6px; }
+        html.m-ui #output-device-btn { width: auto !important; padding: 0 12px; }
+        html.m-ui #output-device-btn > span:last-child { display: none; }
+        html.m-ui .top-extra { display: none; position: fixed; top: 64px; right: 12px; z-index: 3500; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--md-sys-color-surface-container-high, #2B2930); box-shadow: 0 8px 28px rgba(0,0,0,.5); }
+        html.m-ui body.m-more-open .top-extra { display: flex; }
 
-            .main-content { flex: 1; min-height: 0; flex-direction: column; gap: 0; }
-            .visual-stage { flex: 1; min-height: 0; width: 100%; border-radius: 28px; }
-            /* Video: khung bằng đúng tỉ lệ video → hình lấp đầy khung, không viền đen, không bị cắt */
-            body.has-video:not(.fullscreen-active) .visual-stage { flex: 0 1 auto; aspect-ratio: var(--vid-ar, 16 / 9); align-self: center; margin: auto 0; max-height: 100%; }
-            body.has-video #audio-element { object-fit: cover; }
-            #visualizer { border-radius: 28px; }
-            /* Ảnh bìa lớn hiện ngay trong khung chính */
-            #fs-stage-overlay.hidden { display: flex !important; }
-            #fs-stage-overlay { padding: 96px 12px 12px !important; background: none !important; container-type: size; }
-            #fs-cover-wrap { width: min(100cqw, 100cqh) !important; height: auto !important; aspect-ratio: 1 / 1; flex: none; margin-bottom: 0 !important; border-radius: 28px !important; }
-            #fs-title, #fs-artist { display: none !important; }
-            #fs-lyric { font-size: calc(16px * var(--font-scale-factor, 1)) !important; min-height: 0 !important; margin-top: 10px; }
+        html.m-ui .main-content { flex: 1; min-height: 0; flex-direction: column; gap: 0; }
+        html.m-ui .visual-stage { flex: 1; min-height: 0; width: 100%; border-radius: 28px; }
+        /* Video: khung bằng đúng tỉ lệ video → hình lấp đầy khung, không viền đen, không bị cắt */
+        html.m-ui body.has-video:not(.fullscreen-active) .visual-stage { flex: 0 1 auto; aspect-ratio: var(--vid-ar, 16 / 9); align-self: center; margin: auto 0; max-height: 100%; }
+        html.m-ui body.has-video #audio-element { object-fit: cover; }
+        html.m-ui #visualizer { border-radius: 28px; }
+        /* Ảnh bìa lớn hiện ngay trong khung chính */
+        html.m-ui #fs-stage-overlay.hidden { display: flex !important; }
+        html.m-ui #fs-stage-overlay { padding: 96px 12px 12px !important; background: none !important; container-type: size; }
+        html.m-ui #fs-cover-wrap { width: min(100cqw, 100cqh) !important; height: auto !important; aspect-ratio: 1 / 1; flex: none; margin-bottom: 0 !important; border-radius: 28px !important; }
+        html.m-ui #fs-title, html.m-ui #fs-artist { display: none !important; }
+        html.m-ui #fs-lyric { font-size: calc(16px * var(--font-scale-factor, 1)) !important; min-height: 0 !important; margin-top: 10px; }
 
-            /* Playlist: tờ phủ toàn màn hình, mở bằng nút trên thanh trên */
-            .playlist-card { display: none; }
-            body.m-playlist-open .playlist-card { display: flex; position: fixed; z-index: 3000; left: 8px; right: 8px; top: 8px; bottom: 8px; width: auto; height: auto; background: var(--md-sys-color-surface, #1C1B1F) !important; backdrop-filter: none !important; box-shadow: 0 0 0 100vmax rgba(0,0,0,.6); }
-            body.reorder-active .playlist-card { display: flex; position: static; }
+        /* Playlist: tờ phủ toàn màn hình, mở bằng nút trên thanh trên */
+        html.m-ui .playlist-card { display: none; }
+        html.m-ui body.m-playlist-open .playlist-card { display: flex; position: fixed; z-index: 3000; left: 8px; right: 8px; top: 8px; bottom: 8px; width: auto; height: auto; background: var(--md-sys-color-surface, #1C1B1F) !important; backdrop-filter: none !important; box-shadow: 0 0 0 100vmax rgba(0,0,0,.6); }
+        html.m-ui body.reorder-active .playlist-card { display: flex; position: static; }
 
-            /* Khối điều khiển */
-            .player-shell { background: none; border: none; backdrop-filter: none; padding: 0; border-radius: 0;
-                display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 10px; row-gap: 8px;
-                grid-template-areas: "info info lyric" "seek seek seek" "time time time" "prev play next" "shuf rep spd"; align-items: center; }
-            .controls-group { display: contents; }
-            .volume-group, #pip-btn, .mini-art { display: none !important; }
-            .track-info { grid-area: info; }
-            .track-text h4 { font-size: calc(26px * var(--font-scale-factor, 1)); }
-            .track-text p { font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .75; }
-            .track-name-text { padding-right: 40px; }
-            #lyric-btn { grid-area: lyric; justify-self: end; width: 56px; height: 56px; border-radius: 50%; background: var(--md-sys-color-secondary-container); }
-            .seek-container { position: static; grid-area: seek; }
-            #seek-slider { height: 8px; border-radius: 4px; }
-            #seek-slider::-webkit-slider-thumb { opacity: 1; width: 6px; height: 28px; border-radius: 3px; }
-            .player-shell:hover #seek-slider::-webkit-slider-thumb { opacity: 1; }
-            .time-labels { position: static; grid-area: time; opacity: .8; font-size: calc(12px * var(--font-scale-factor, 1)); margin-top: -2px; }
-            .controls-group .btn-m3 { height: 72px; width: 100%; border-radius: 36px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
-            .controls-group .btn-m3:hover { transform: none; }
-            #prev-btn { grid-area: prev; } #next-btn { grid-area: next; }
-            #play-btn { grid-area: play; width: 100% !important; height: 80px !important; border-radius: 28px !important; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
-            #shuffle-btn, #repeat-btn, .controls-group > div { height: 56px; }
-            #shuffle-btn { grid-area: shuf; border-radius: 28px 10px 10px 28px !important; background: var(--md-sys-color-surface-variant) !important; }
-            #repeat-btn { grid-area: rep; border-radius: 10px !important; background: var(--md-sys-color-surface-variant) !important; }
-            #repeat-btn.active, #shuffle-btn.active { background: var(--md-sys-color-tertiary-container, var(--md-sys-color-primary-container)) !important; color: var(--md-sys-color-on-tertiary-container, inherit) !important; }
-            .controls-group > div { grid-area: spd; width: 100%; }
-            .controls-group > div > #speed-btn { width: 100% !important; height: 56px !important; border-radius: 10px 28px 28px 10px !important; background: var(--md-sys-color-surface-variant) !important; }
-            /* Bản điện thoại không có PiP / Toàn màn hình -> ẩn 2 cài đặt lyric tương ứng; lyric trên trình phát nhỏ lại để câu dài không bị cắt */
-            html.m-ui div:has(> #setting-pip-lyric), html.m-ui div:has(> #setting-fs-lyric) { display: none !important; }
-            .top-active-lyric { top: 10px; width: 94%; font-size: calc(15px * var(--font-scale-factor, 1)); line-height: 1.3; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,.85); }
-            /* Lyric toàn màn hình kiểu Android: chữ to giữa màn hình, dòng đang hát nổi bật, nút ^ ở đáy để đóng */
-            .lyric-overlay { position: fixed; left: 0; top: 0; width: var(--vw); height: var(--vh); border-radius: 0; z-index: 2500;
-                --lyric-bg: var(--md-sys-color-primary-container); --lyric-text: color-mix(in srgb, var(--md-sys-color-on-primary-container) 38%, transparent); --lyric-active: var(--md-sys-color-primary);
-                backdrop-filter: none; padding: 34vh 22px 34vh; }
-            body:not(.has-video) .lyric-overlay { background: var(--md-sys-color-primary-container); }
-            .lyric-line { font-size: calc(30px * var(--font-scale-factor, 1)); margin: 18px 0; max-width: 100%; letter-spacing: -.2px; }
-            .lyric-line.active { font-size: calc(34px * var(--font-scale-factor, 1)); transform: none; text-shadow: none; }
-            .lyric-info { max-width: 100%; }
-            #m-lyric-close { display: none !important; }
-            body.lyrics-open #m-lyric-close-unused { display: grid; place-items: center; position: fixed; z-index: 2600; left: calc(var(--vw) / 2 - 28px); bottom: 24px; width: 56px; height: 56px;
-                border: none; border-radius: 50%; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: 0 6px 20px rgba(0,0,0,.35); cursor: pointer; }
-            #m-lyric-close .material-symbols-outlined { font-size: 28px; }
-            body.lyrics-open .lyric-search-bar, body.lyrics-open .lyric-credit { display: none; }
-            body.lyric-static .lyric-line.active { font-size: calc(30px * var(--font-scale-factor, 1)); color: var(--lyric-text); font-weight: 600; }
-            #m-lyric-panel { display: none; position: fixed; z-index: 2600; left: 0; width: var(--vw); bottom: 0; flex-direction: column; gap: 12px; padding: 12px 16px 22px;
-                transform: none; transition: transform .35s cubic-bezier(.2,.8,.2,1); background: linear-gradient(to bottom, transparent, var(--md-sys-color-primary-container) 30%); padding-top: 40px; }
-            body.lyrics-open #m-lyric-panel { display: flex; pointer-events: auto; }
-            body.lyrics-open.m-lyric-ui #m-lyric-panel { transform: none; }
-            body.lyrics-open:not(.m-lyric-ui) #m-lyric-panel { transform: none; pointer-events: auto; }
-            body.lyrics-open.fullscreen-active #m-lyric-panel { display: none; }
-            .mlp-row { display: flex; align-items: center; gap: 10px; }
-            .mlp-play { width: 78px; height: 78px; flex-shrink: 0; border: none; border-radius: 50%; background: var(--md-sys-color-tertiary-container, #633B48); color: var(--md-sys-color-on-tertiary-container, #FFD8E4); display: grid; place-items: center; cursor: pointer; }
-            .mlp-play .material-symbols-outlined { font-size: 34px; font-variation-settings: 'FILL' 1; }
-            .mlp-seek { flex: 1; height: 50px; border-radius: 25px; background: #101014; display: flex; align-items: center; padding: 0 18px; }
-            #m-lyric-seek { width: 100%; height: 6px; border-radius: 3px; appearance: none; background: rgba(255,255,255,.18); }
-            #m-lyric-seek::-webkit-slider-thumb { appearance: none; width: 8px; height: 28px; border-radius: 4px; background: var(--md-sys-color-primary); }
-            .mlp-bottom { gap: 8px; }
-            .mlp-round { width: 40px; height: 40px; flex-shrink: 0; border: none; border-radius: 50%; background: #101014; color: #fff; display: grid; place-items: center; cursor: pointer; }
-            .mlp-chip { flex: 1; height: 50px; border: none; background: #101014; color: #fff; font: 600 calc(16px * var(--font-scale-factor, 1)) var(--app-font, sans-serif); cursor: pointer; border-radius: 10px; }
-            #m-lyric-synced { border-radius: 25px 10px 10px 25px; } #m-lyric-static { border-radius: 10px 25px 25px 10px; }
-            .mlp-chip.on { background: var(--md-sys-color-primary-container, #4F378B); color: var(--md-sys-color-on-primary-container, #EADDFF); filter: brightness(1.5); }
-            body.lyrics-open.fullscreen-active #m-lyric-close { display: none; }
-            body.reorder-active .player-shell { display: none; }
-            .reorder-done-btn { z-index: 3600; }
-            body.reorder-active .playlist-items { padding-bottom: 110px; }
-            body.reorder-active.m-playlist-open .playlist-card { position: fixed; }
-            #fullscreen-btn, div:has(> md-switch#setting-wake-lock) { display: none !important; }
-        }
-        @media (max-width: 720px) and (max-height: 640px) {
-            .controls-group .btn-m3, #play-btn { height: 56px !important; }
+        /* Khối điều khiển */
+        html.m-ui .player-shell { background: none; border: none; backdrop-filter: none; padding: 0; border-radius: 0;
+            display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 10px; row-gap: 8px;
+            grid-template-areas: "info info lyric" "seek seek seek" "time time time" "prev play next" "shuf rep spd"; align-items: center; }
+        html.m-ui .controls-group { display: contents; }
+        html.m-ui .volume-group, html.m-ui #pip-btn, html.m-ui .mini-art { display: none !important; }
+        html.m-ui .track-info { grid-area: info; }
+        html.m-ui .track-text h4 { font-size: calc(26px * var(--font-scale-factor, 1)); }
+        html.m-ui .track-text p { font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .75; }
+        html.m-ui .track-name-text { padding-right: 40px; }
+        html.m-ui #lyric-btn { grid-area: lyric; justify-self: end; width: 56px; height: 56px; border-radius: 50%; background: var(--md-sys-color-secondary-container); }
+        html.m-ui .seek-container { position: static; grid-area: seek; }
+        html.m-ui #seek-slider { height: 8px; border-radius: 4px; }
+        html.m-ui #seek-slider::-webkit-slider-thumb { opacity: 1; width: 6px; height: 28px; border-radius: 3px; }
+        html.m-ui .player-shell:hover #seek-slider::-webkit-slider-thumb { opacity: 1; }
+        html.m-ui .time-labels { position: static; grid-area: time; opacity: .8; font-size: calc(12px * var(--font-scale-factor, 1)); margin-top: -2px; }
+        html.m-ui .controls-group .btn-m3 { height: 72px; width: 100%; border-radius: 36px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+        html.m-ui .controls-group .btn-m3:hover { transform: none; }
+        html.m-ui #prev-btn { grid-area: prev; } html.m-ui #next-btn { grid-area: next; }
+        html.m-ui #play-btn { grid-area: play; width: 100% !important; height: 80px !important; border-radius: 28px !important; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        html.m-ui #shuffle-btn, html.m-ui #repeat-btn, html.m-ui .controls-group > div { height: 56px; }
+        html.m-ui #shuffle-btn { grid-area: shuf; border-radius: 28px 10px 10px 28px !important; background: var(--md-sys-color-surface-variant) !important; }
+        html.m-ui #repeat-btn { grid-area: rep; border-radius: 10px !important; background: var(--md-sys-color-surface-variant) !important; }
+        html.m-ui #repeat-btn.active, html.m-ui #shuffle-btn.active { background: var(--md-sys-color-tertiary-container, var(--md-sys-color-primary-container)) !important; color: var(--md-sys-color-on-tertiary-container, inherit) !important; }
+        html.m-ui .controls-group > div { grid-area: spd; width: 100%; }
+        html.m-ui .controls-group > div > #speed-btn { width: 100% !important; height: 56px !important; border-radius: 10px 28px 28px 10px !important; background: var(--md-sys-color-surface-variant) !important; }
+        /* Bản điện thoại không có PiP / Toàn màn hình -> ẩn 2 cài đặt lyric tương ứng; lyric trên trình phát nhỏ lại để câu dài không bị cắt */
+        html.m-ui div:has(> #setting-pip-lyric), html.m-ui div:has(> #setting-fs-lyric) { display: none !important; }
+        html.m-ui .top-active-lyric { top: 10px; width: 94%; font-size: calc(15px * var(--font-scale-factor, 1)); line-height: 1.3; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,.85); }
+        /* Lyric toàn màn hình kiểu Android: chữ to giữa màn hình, dòng đang hát nổi bật, nút ^ ở đáy để đóng */
+        html.m-ui .lyric-overlay { position: fixed; left: 0; top: 0; width: var(--vw); height: var(--vh); border-radius: 0; z-index: 2500;
+            --lyric-bg: var(--md-sys-color-primary-container); --lyric-text: color-mix(in srgb, var(--md-sys-color-on-primary-container) 38%, transparent); --lyric-active: var(--md-sys-color-primary);
+            backdrop-filter: none; padding: 34vh 22px 34vh; }
+        html.m-ui body:not(.has-video) .lyric-overlay { background: var(--md-sys-color-primary-container); }
+        html.m-ui .lyric-line { font-size: calc(30px * var(--font-scale-factor, 1)); margin: 18px 0; max-width: 100%; letter-spacing: -.2px; }
+        html.m-ui .lyric-line.active { font-size: calc(34px * var(--font-scale-factor, 1)); transform: none; text-shadow: none; }
+        html.m-ui .lyric-info { max-width: 100%; }
+        html.m-ui #m-lyric-close { display: none !important; }
+        html.m-ui body.lyrics-open #m-lyric-close-unused { display: grid; place-items: center; position: fixed; z-index: 2600; left: calc(var(--vw) / 2 - 28px); bottom: 24px; width: 56px; height: 56px;
+            border: none; border-radius: 50%; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: 0 6px 20px rgba(0,0,0,.35); cursor: pointer; }
+        html.m-ui #m-lyric-close .material-symbols-outlined { font-size: 28px; }
+        html.m-ui body.lyrics-open .lyric-search-bar, html.m-ui body.lyrics-open .lyric-credit { display: none; }
+        html.m-ui body.lyric-static .lyric-line.active { font-size: calc(30px * var(--font-scale-factor, 1)); color: var(--lyric-text); font-weight: 600; }
+        html.m-ui #m-lyric-panel { display: none; position: fixed; z-index: 2600; left: 0; width: var(--vw); bottom: 0; flex-direction: column; gap: 12px; padding: 12px 16px 22px;
+            transform: none; transition: transform .35s cubic-bezier(.2,.8,.2,1); background: linear-gradient(to bottom, transparent, var(--md-sys-color-primary-container) 30%); padding-top: 40px; }
+        html.m-ui body.lyrics-open #m-lyric-panel { display: flex; pointer-events: auto; }
+        html.m-ui body.lyrics-open.m-lyric-ui #m-lyric-panel { transform: none; }
+        html.m-ui body.lyrics-open:not(.m-lyric-ui) #m-lyric-panel { transform: none; pointer-events: auto; }
+        html.m-ui body.lyrics-open.fullscreen-active #m-lyric-panel { display: none; }
+        html.m-ui .mlp-row { display: flex; align-items: center; gap: 10px; }
+        html.m-ui .mlp-play { width: 78px; height: 78px; flex-shrink: 0; border: none; border-radius: 50%; background: var(--md-sys-color-tertiary-container, #633B48); color: var(--md-sys-color-on-tertiary-container, #FFD8E4); display: grid; place-items: center; cursor: pointer; }
+        html.m-ui .mlp-play .material-symbols-outlined { font-size: 34px; font-variation-settings: 'FILL' 1; }
+        html.m-ui .mlp-seek { flex: 1; height: 50px; border-radius: 25px; background: #101014; display: flex; align-items: center; padding: 0 18px; }
+        html.m-ui #m-lyric-seek { width: 100%; height: 6px; border-radius: 3px; appearance: none; background: rgba(255,255,255,.18); }
+        html.m-ui #m-lyric-seek::-webkit-slider-thumb { appearance: none; width: 8px; height: 28px; border-radius: 4px; background: var(--md-sys-color-primary); }
+        html.m-ui .mlp-bottom { gap: 8px; }
+        html.m-ui .mlp-round { width: 40px; height: 40px; flex-shrink: 0; border: none; border-radius: 50%; background: #101014; color: #fff; display: grid; place-items: center; cursor: pointer; }
+        html.m-ui .mlp-chip { flex: 1; height: 50px; border: none; background: #101014; color: #fff; font: 600 calc(16px * var(--font-scale-factor, 1)) var(--app-font, sans-serif); cursor: pointer; border-radius: 10px; }
+        html.m-ui #m-lyric-synced { border-radius: 25px 10px 10px 25px; } html.m-ui #m-lyric-static { border-radius: 10px 25px 25px 10px; }
+        html.m-ui .mlp-chip.on { background: var(--md-sys-color-primary-container, #4F378B); color: var(--md-sys-color-on-primary-container, #EADDFF); filter: brightness(1.5); }
+        html.m-ui body.lyrics-open.fullscreen-active #m-lyric-close { display: none; }
+        html.m-ui body.reorder-active .player-shell { display: none; }
+        html.m-ui .reorder-done-btn { z-index: 3600; }
+        html.m-ui body.reorder-active .playlist-items { padding-bottom: 110px; }
+        html.m-ui body.reorder-active.m-playlist-open .playlist-card { position: fixed; }
+        html.m-ui #fullscreen-btn, html.m-ui div:has(> md-switch#setting-wake-lock) { display: none !important; }
+        @media (max-height: 640px) {
+            html.m-ui .controls-group .btn-m3, html.m-ui #play-btn { height: 56px !important; }
         }
         /* Fullscreen trên điện thoại: thanh điều khiển gọn lại, nút fullscreen lên góc trên để không bị che */
-        @media (max-width: 720px) {
-            body.fullscreen-active .player-shell { bottom: 8px !important; width: calc(var(--vw) - 16px) !important; padding: 14px 10px 8px; background: var(--shell-bg); border: 1px solid var(--playlist-border); border-radius: 24px; backdrop-filter: blur(50px); row-gap: 4px; }
-            body.fullscreen-active .track-text h4 { font-size: calc(16px * var(--font-scale-factor, 1)); }
-            body.fullscreen-active .controls-group .btn-m3, body.fullscreen-active #play-btn { height: 48px !important; border-radius: 24px; }
-            body.fullscreen-active #shuffle-btn, body.fullscreen-active #repeat-btn, body.fullscreen-active #speed-btn, body.fullscreen-active #lyric-btn { height: 40px !important; }
-            body.fullscreen-active #lyric-btn { width: 40px; }
-            body.fullscreen-active .seek-container { padding: 0; }
-            body.fullscreen-active #fs-stage-overlay { padding-bottom: 200px !important; }
-            body.fullscreen-active #fullscreen-btn { top: calc(12px + env(safe-area-inset-top, 0px)) !important; bottom: auto !important; right: 12px !important; }
-            body.has-video.fullscreen-active #fs-stage-overlay { padding-bottom: 170px !important; }
-        }
+        html.m-ui body.fullscreen-active .player-shell { bottom: 8px !important; width: calc(var(--vw) - 16px) !important; padding: 14px 10px 8px; background: var(--shell-bg); border: 1px solid var(--playlist-border); border-radius: 24px; backdrop-filter: blur(50px); row-gap: 4px; }
+        html.m-ui body.fullscreen-active .track-text h4 { font-size: calc(16px * var(--font-scale-factor, 1)); }
+        html.m-ui body.fullscreen-active .controls-group .btn-m3, html.m-ui body.fullscreen-active #play-btn { height: 48px !important; border-radius: 24px; }
+        html.m-ui body.fullscreen-active #shuffle-btn, html.m-ui body.fullscreen-active #repeat-btn, html.m-ui body.fullscreen-active #speed-btn, html.m-ui body.fullscreen-active #lyric-btn { height: 40px !important; }
+        html.m-ui body.fullscreen-active #lyric-btn { width: 40px; }
+        html.m-ui body.fullscreen-active .seek-container { padding: 0; }
+        html.m-ui body.fullscreen-active #fs-stage-overlay { padding-bottom: 200px !important; }
+        html.m-ui body.fullscreen-active #fullscreen-btn { top: calc(12px + env(safe-area-inset-top, 0px)) !important; bottom: auto !important; right: 12px !important; }
+        html.m-ui body.has-video.fullscreen-active #fs-stage-overlay { padding-bottom: 170px !important; }
         @media (max-height: 520px) and (orientation: landscape) {
-            body.fullscreen-active .player-shell { grid-template-columns: minmax(0, 1fr) auto !important; padding: 18px 12px 6px; gap: 8px; width: calc(var(--vw) - 24px) !important; bottom: 6px !important; }
-            body.fullscreen-active .player-shell .volume-group { display: none; }
-            body.fullscreen-active .controls-group { flex-wrap: nowrap; }
-            body.fullscreen-active #fullscreen-btn { top: 10px !important; bottom: auto !important; right: 10px !important; }
-            body.has-video.fullscreen-active #fs-stage-overlay { padding-bottom: 90px !important; }
+            html.m-ui body.fullscreen-active .player-shell { grid-template-columns: minmax(0, 1fr) auto !important; padding: 18px 12px 6px; gap: 8px; width: calc(var(--vw) - 24px) !important; bottom: 6px !important; }
+            html.m-ui body.fullscreen-active .player-shell .volume-group { display: none; }
+            html.m-ui body.fullscreen-active .controls-group { flex-wrap: nowrap; }
+            html.m-ui body.fullscreen-active #fullscreen-btn { top: 10px !important; bottom: auto !important; right: 10px !important; }
+            html.m-ui body.has-video.fullscreen-active #fs-stage-overlay { padding-bottom: 90px !important; }
         }
 
         /* --- GIẢM HIỆU ỨNG CHUYỂN ĐỘNG ---
@@ -6645,12 +6641,12 @@
             ['loadedmetadata', 'resize'].forEach(ev => audio.addEventListener(ev, upd));
         })();
 
-        // --- UI điện thoại: lớp m-ui, nút playlist/more ---
+        // --- UI điện thoại: lớp m-ui chỉ bật trên Android (?android=true hoặc User-Agent Android) ---
         (function () {
-            const mq = window.matchMedia('(max-width: 720px)');
-            const apply = () => { document.documentElement.classList.toggle('m-ui', mq.matches); if (mq.matches) { try { updateFsUI(); } catch (e) {} } else document.body.classList.remove('m-playlist-open', 'm-more-open'); };
-            (mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply));
-            apply();
+            const isAndroidUi = !!(window.IS_ANDROID_DEVICE || window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || /Android/i.test(navigator.userAgent || ''));
+            document.documentElement.classList.toggle('m-ui', isAndroidUi);
+            if (isAndroidUi) { try { updateFsUI(); } catch (e) {} }
+            else document.body.classList.remove('m-playlist-open', 'm-more-open');
             document.getElementById('m-playlist-btn').addEventListener('click', () => {
                 if (playlistCard.classList.contains('collapsed')) togglePlaylist();
                 document.body.classList.add('m-playlist-open'); document.body.classList.remove('m-more-open');
