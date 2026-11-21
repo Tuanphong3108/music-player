@@ -666,19 +666,29 @@ public class MainActivity extends Activity {
             } catch (Exception ex) { start = 0; end = total - 1; partial = false; }
         }
         final long len = end - start + 1;
-        final java.io.FileInputStream fis = new java.io.FileInputStream(afd.getFileDescriptor());
-        fis.getChannel().position(afd.getStartOffset() + start);
+        final long baseOffset = afd.getStartOffset() + start;
+        final java.io.FileDescriptor fd = afd.getFileDescriptor();
         final android.content.res.AssetFileDescriptor fafd = afd;
         InputStream bounded = new InputStream() {
+            final java.io.FileInputStream fis = new java.io.FileInputStream(fd);
+            long pos = baseOffset;
             long left = len;
+            boolean channelReady = false;
             @Override public int read() throws java.io.IOException { byte[] b = new byte[1]; return read(b, 0, 1) < 0 ? -1 : (b[0] & 0xff); }
-            @Override public int read(byte[] b, int off, int n) throws java.io.IOException {
+            @Override public synchronized int read(byte[] b, int off, int n) throws java.io.IOException {
                 if (left <= 0) return -1;
+                if (!channelReady) {
+                    fis.getChannel().position(pos);
+                    channelReady = true;
+                }
                 int r = fis.read(b, off, (int) Math.min(n, left));
-                if (r > 0) left -= r;
+                if (r > 0) {
+                    left -= r;
+                    pos += r;
+                }
                 return r;
             }
-            @Override public void close() throws java.io.IOException { try { fis.close(); } finally { fafd.close(); } }
+            @Override public synchronized void close() throws java.io.IOException { try { fis.close(); } finally { fafd.close(); } }
         };
         h.put("Content-Length", String.valueOf(len));
         if (partial) {
