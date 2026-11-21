@@ -1197,7 +1197,8 @@
         #font-manage-dialog .fnt-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
         #font-manage-dialog .fnt-row-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
         #font-manage-dialog .fnt-row-name { font-weight: 700; font-size: calc(16px * var(--font-scale-factor, 1)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        #font-manage-dialog .fnt-row-sample { font-size: calc(20px * var(--font-scale-factor, 1)); opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #android-update-banner { display: none; position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 4800; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent); border-radius: 24px; padding: 14px 18px; box-shadow: 0 12px 32px rgba(0,0,0,.45); align-items: center; justify-content: space-between; gap: 12px; }
+        #android-update-banner.show { display: flex; }
         #font-manage-dialog .fnt-row-tag { flex-shrink: 0; font-size: calc(11px * var(--font-scale-factor, 1)); font-weight: 700; padding: 2px 10px; border-radius: 8px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
         #font-manage-dialog .fnt-row.current { border-color: var(--md-sys-color-primary); }
         #font-manage-dialog .fnt-row-actions { display: flex; align-items: center; flex-shrink: 0; }
@@ -2152,6 +2153,20 @@
 
     <!-- Embedded Metadata Frame (Hidden initially at right offscreen) -->
     <iframe id="metadata-iframe" style="position: fixed; top: 0; right: calc(-1 * var(--vw)); width: var(--vw); height: var(--vh); border: none; z-index: 4000; transition: right 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); background: transparent;" srcdoc=""></iframe>
+
+    <div id="android-update-banner" role="region" aria-live="polite">
+        <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+            <span class="material-symbols-outlined" style="font-size:26px; flex-shrink:0; font-variation-settings:'FILL' 1;">system_update</span>
+            <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+                <strong id="android-update-title" style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:800;">Có bản cập nhật Android mới</strong>
+                <span id="android-update-sub" style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+            <md-text-button id="android-update-dismiss" type="button">Để sau</md-text-button>
+            <a id="android-update-link" href="https://github.com/Tuanphong3108/music-player/releases" target="_blank" rel="noopener" style="text-decoration:none;"><md-filled-button type="button" id="android-update-btn">Cập nhật</md-filled-button></a>
+        </div>
+    </div>
 
     <div class="ambient-bg"></div>
 
@@ -6721,6 +6736,64 @@
                 } catch (e) {}
             };
             if (themeMeta) { new MutationObserver(sendTheme).observe(themeMeta, { attributes: true, attributeFilter: ['content'] }); sendTheme(); }
+
+            // Truyền phiên bản app Android vào trang và đối chiếu với Release mới nhất trên GitHub
+            function parseVerParts(raw) {
+                const m = String(raw || '').trim().match(/(\d+(?:\.\d+)*)/);
+                return m ? m[1].split('.').map(n => parseInt(n, 10) || 0) : [0];
+            }
+            function compareVerParts(a, b) {
+                const len = Math.max(a.length, b.length);
+                for (let i = 0; i < len; i++) {
+                    const av = a[i] || 0, bv = b[i] || 0;
+                    if (av > bv) return 1;
+                    if (av < bv) return -1;
+                }
+                return 0;
+            }
+            const curVerName = (AB.getAppVersion && AB.getAppVersion()) || '';
+            const curVerCode = (AB.getAppVersionCode && AB.getAppVersionCode()) || 0;
+            window.ANDROID_APP_VERSION = curVerName;
+            window.ANDROID_APP_VERSION_CODE = curVerCode;
+
+            const banner = document.getElementById('android-update-banner');
+            const titleEl = document.getElementById('android-update-title');
+            const subEl = document.getElementById('android-update-sub');
+            const linkEl = document.getElementById('android-update-link');
+            const dismissEl = document.getElementById('android-update-dismiss');
+            if (dismissEl && banner) dismissEl.addEventListener('click', () => banner.classList.remove('show'));
+
+            (async function checkGitHubAndroidRelease() {
+                if (!banner || (!curVerName && !curVerCode)) return;
+                try {
+                    const res = await fetch('https://api.github.com/repos/Tuanphong3108/music-player/releases/latest', {
+                        headers: { Accept: 'application/vnd.github+json' }
+                    });
+                    if (!res.ok) return;
+                    const rel = await res.json();
+                    if (!rel || rel.draft || rel.prerelease) return;
+                    const tag = String(rel.tag_name || '').trim();
+                    if (!tag || /^latest$/i.test(tag)) return;
+                    const remoteParts = parseVerParts(tag);
+                    const localParts = parseVerParts(curVerName);
+                    const hasNewer = compareVerParts(remoteParts, localParts) > 0;
+                    if (!hasNewer) return;
+                    const apkAsset = Array.isArray(rel.assets)
+                        ? rel.assets.find(a => /\.apk$/i.test(a.name || ''))
+                        : null;
+                    const dlUrl = (apkAsset && apkAsset.browser_download_url) || rel.html_url || 'https://github.com/Tuanphong3108/music-player/releases';
+                    const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
+                    if (titleEl) titleEl.textContent = isEn ? 'Android app update available' : 'Có bản cập nhật Android mới';
+                    if (subEl) subEl.textContent = isEn
+                        ? `Current ${curVerName || curVerCode} → ${tag}`
+                        : `Hiện tại ${curVerName || curVerCode} → ${tag}`;
+                    if (linkEl) linkEl.href = dlUrl;
+                    if (dismissEl) dismissEl.textContent = isEn ? 'Later' : 'Để sau';
+                    const btnInner = document.getElementById('android-update-btn');
+                    if (btnInner) btnInner.textContent = isEn ? 'Update' : 'Cập nhật';
+                    banner.classList.add('show');
+                } catch (e) {}
+            })();
         })();
 
         if ('serviceWorker' in navigator) {
