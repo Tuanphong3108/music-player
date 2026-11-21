@@ -1203,6 +1203,15 @@
         #android-update-progress-wrap.show { display: flex; }
         #android-update-progress-track { width: 100%; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 20%, transparent); overflow: hidden; }
         #android-update-progress-fill { height: 100%; width: 0%; border-radius: 999px; background: var(--md-sys-color-primary); transition: width .2s ease; }
+        html.android-pip-mode .top-bar,
+        html.android-pip-mode .playlist-card,
+        html.android-pip-mode .player-shell,
+        html.android-pip-mode .lyric-overlay,
+        html.android-pip-mode #android-update-banner { display: none !important; }
+        html.android-pip-mode .app-container { padding: 0 !important; gap: 0 !important; width: 100vw !important; height: 100vh !important; }
+        html.android-pip-mode .main-content { width: 100% !important; height: 100% !important; }
+        html.android-pip-mode .visual-stage { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; border-radius: 0 !important; z-index: 5000 !important; }
+        html.android-pip-mode #audio-element { width: 100% !important; height: 100% !important; object-fit: contain !important; }
         #font-manage-dialog .fnt-row-tag { flex-shrink: 0; font-size: calc(11px * var(--font-scale-factor, 1)); font-weight: 700; padding: 2px 10px; border-radius: 8px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
         #font-manage-dialog .fnt-row.current { border-color: var(--md-sys-color-primary); }
         #font-manage-dialog .fnt-row-actions { display: flex; align-items: center; flex-shrink: 0; }
@@ -6707,6 +6716,22 @@
                 } catch (e) { console.log('native-open failed', e); }
             };
             window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
+            window.__onAndroidLeaveApp = function () {
+                try {
+                    const tr = playlist[currentIndex];
+                    if (tr && tr.isVideo && !audio.paused && !audio.ended && AB && AB.enterVideoPip) {
+                        const vw = audio.videoWidth || 16;
+                        const vh = audio.videoHeight || 9;
+                        AB.enterVideoPip(vw, vh);
+                    }
+                } catch (e) {}
+            };
+            window.__onAndroidPipModeChanged = function (inPip) {
+                try {
+                    document.documentElement.classList.toggle('android-pip-mode', !!inPip);
+                    document.body.classList.toggle('android-pip-mode', !!inPip);
+                } catch (e) {}
+            };
             if (window.__pendingNativeFiles) { const q = window.__pendingNativeFiles; window.__pendingNativeFiles = null; window.__nativeOpenFiles(q); }
             const report = () => {
                 try {
