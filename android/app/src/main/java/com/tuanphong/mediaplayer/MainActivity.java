@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
@@ -48,13 +49,12 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         instance = this;
-        getWindow().setStatusBarColor(0xFF1C1B1F);
-        getWindow().setNavigationBarColor(0xFF1C1B1F);
         root = new FrameLayout(this);
-        root.setBackgroundColor(0xFF1C1B1F);
+        themeColor = getSharedPreferences("app", MODE_PRIVATE).getInt("theme", 0xFF1C1B1F);
         web = new WebView(this);
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
         setContentView(root);
+        applyTheme(themeColor);
 
         if (Build.VERSION.SDK_INT >= 33 &&
                 checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -69,7 +69,6 @@ public class MainActivity extends Activity {
         s.setAllowContentAccess(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         s.setUserAgentString(s.getUserAgentString() + " MediaPlayerApp/1.0");
-        web.setBackgroundColor(0xFF1C1B1F);
         web.addJavascriptInterface(new Bridge(), "AndroidBridge");
 
         web.setWebViewClient(new WebViewClient() {
@@ -153,11 +152,33 @@ public class MainActivity extends Activity {
         handleIntent(getIntent());
     }
 
+    private int themeColor = 0xFF1C1B1F;
+
+    private int barFlags() {
+        double lum = (0.299 * ((themeColor >> 16) & 255) + 0.587 * ((themeColor >> 8) & 255) + 0.114 * (themeColor & 255)) / 255.0;
+        int f = View.SYSTEM_UI_FLAG_VISIBLE;
+        if (lum > 0.6) {
+            if (Build.VERSION.SDK_INT >= 23) f |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (Build.VERSION.SDK_INT >= 26) f |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        }
+        return f;
+    }
+
+    /** Khung app (thanh trạng thái, thanh điều hướng, nền WebView) ăn theo màu accent của trang. */
+    void applyTheme(int c) {
+        themeColor = 0xFF000000 | c;
+        getWindow().setStatusBarColor(themeColor);
+        getWindow().setNavigationBarColor(themeColor);
+        if (root != null) root.setBackgroundColor(themeColor);
+        if (web != null) web.setBackgroundColor(themeColor);
+        if (customView == null) getWindow().getDecorView().setSystemUiVisibility(barFlags());
+    }
+
     private void hideBars(boolean hide) {
         getWindow().getDecorView().setSystemUiVisibility(hide
                 ? View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                   | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                : View.SYSTEM_UI_FLAG_VISIBLE);
+                : barFlags());
     }
 
     private boolean isOnline() {
@@ -367,6 +388,15 @@ public class MainActivity extends Activity {
             i.putExtra("pos", posMs);
             i.putExtra("dur", durMs);
             startSvc(i);
+        }
+
+        @JavascriptInterface
+        public void setThemeColor(String hex) {
+            try {
+                final int c = Color.parseColor(hex);
+                getSharedPreferences("app", MODE_PRIVATE).edit().putInt("theme", 0xFF000000 | c).apply();
+                runOnUiThread(() -> applyTheme(c));
+            } catch (Exception ignored) {}
         }
 
         @JavascriptInterface

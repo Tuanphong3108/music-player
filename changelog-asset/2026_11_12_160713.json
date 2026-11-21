@@ -96,6 +96,10 @@
     {
       "content": "Android: nút Thêm nhạc mở trình chọn tệp / thư mục của hệ thống (quét cả thư mục con, kèm .lrc), nhận tệp từ \"Mở bằng\"/\"Chia sẻ\" rộng hơn, điều khiển phát qua MediaSession của hệ thống (màn hình khoá, Cài đặt nhanh, tai nghe) thay cho thông báo điều khiển",
       "icon": "folder_open"
+    },
+    {
+      "content": "Android: thanh trạng thái và thanh điều hướng của app ăn theo màu accent của trang",
+      "icon": "palette"
     }
   ],
   "en": [
@@ -194,6 +198,10 @@
     {
       "content": "Android: Add music opens the system file / folder picker (scans subfolders, incl. .lrc), broader \"Open with\"/\"Share\" support, and playback is controlled through the system MediaSession (lock screen, Quick Settings, headset) instead of a controls notification",
       "icon": "folder_open"
+    },
+    {
+      "content": "Android: the app's status and navigation bars follow the page's accent color",
+      "icon": "palette"
     }
   ]
 }

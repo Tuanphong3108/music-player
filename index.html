@@ -6603,6 +6603,16 @@
             };
             ['play', 'pause', 'ended', 'loadedmetadata', 'seeked', 'ratechange'].forEach(ev => audio.addEventListener(ev, report));
             audio.addEventListener('loadedmetadata', () => { setTimeout(() => { sendArt(); report(); }, 1500); });
+            // Khung app (thanh trạng thái / điều hướng) ăn theo màu accent: theo dõi theme-color của trang
+            const themeMeta = document.getElementById('theme-meta');
+            const sendTheme = () => {
+                try {
+                    const cv = document.createElement('canvas').getContext('2d');
+                    cv.fillStyle = '#000'; cv.fillStyle = themeMeta.getAttribute('content');
+                    AB.setThemeColor(cv.fillStyle);
+                } catch (e) {}
+            };
+            if (themeMeta) { new MutationObserver(sendTheme).observe(themeMeta, { attributes: true, attributeFilter: ['content'] }); sendTheme(); }
         })();
 
         if ('serviceWorker' in navigator) {
