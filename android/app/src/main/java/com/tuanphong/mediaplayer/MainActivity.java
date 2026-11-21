@@ -642,13 +642,25 @@ public class MainActivity extends Activity {
     /** Phát nội dung content:// kèm hỗ trợ HTTP Range để video tua/phát theo từng đoạn, không nạp cả tệp vào RAM. */
     private WebResourceResponse serveContent(Uri src, Map<String, String> reqHeaders) throws Exception {
         String mime = getContentResolver().getType(src);
-        if (mime == null) mime = "application/octet-stream";
+        if (mime == null || "application/octet-stream".equals(mime)) {
+            String name = displayName(src).toLowerCase();
+            if (name.endsWith(".mp4") || name.endsWith(".m4v")) mime = "video/mp4";
+            else if (name.endsWith(".webm")) mime = "video/webm";
+            else if (name.endsWith(".mkv")) mime = "video/x-matroska";
+            else if (name.endsWith(".mp3")) mime = "audio/mpeg";
+            else if (name.endsWith(".flac")) mime = "audio/flac";
+            else if (name.endsWith(".m4a") || name.endsWith(".aac")) mime = "audio/mp4";
+            else if (name.endsWith(".ogg") || name.endsWith(".oga")) mime = "audio/ogg";
+            else if (name.endsWith(".opus")) mime = "audio/opus";
+            else if (name.endsWith(".wav")) mime = "audio/wav";
+            else if (mime == null) mime = "application/octet-stream";
+        }
         Map<String, String> h = new HashMap<>();
         h.put("Access-Control-Allow-Origin", "*");
         h.put("Accept-Ranges", "bytes");
         android.content.res.AssetFileDescriptor afd = getContentResolver().openAssetFileDescriptor(src, "r");
         long total = afd == null ? -1 : afd.getLength();
-        if (afd == null || total < 0) {
+        if (afd == null || total <= 0) {
             if (afd != null) afd.close();
             InputStream in = getContentResolver().openInputStream(src);
             return new WebResourceResponse(mime, null, 200, "OK", h, in);
@@ -667,29 +679,56 @@ public class MainActivity extends Activity {
             } catch (Exception ex) { start = 0; end = total - 1; partial = false; }
         }
         final long len = end - start + 1;
-        final long baseOffset = afd.getStartOffset() + start;
-        final java.io.FileDescriptor fd = afd.getFileDescriptor();
         final android.content.res.AssetFileDescriptor fafd = afd;
         InputStream bounded = new InputStream() {
-            final java.io.FileInputStream fis = new java.io.FileInputStream(fd);
-            long pos = baseOffset;
+            InputStream raw = null;
+            long toSkip = start;
             long left = len;
-            boolean channelReady = false;
-            @Override public int read() throws java.io.IOException { byte[] b = new byte[1]; return read(b, 0, 1) < 0 ? -1 : (b[0] & 0xff); }
+            boolean closed = false;
+
+            private void ensureStream() throws java.io.IOException {
+                if (raw != null) return;
+                raw = fafd.createInputStream();
+                long rem = toSkip;
+                while (rem > 0) {
+                    long sk = raw.skip(rem);
+                    if (sk > 0) {
+                        rem -= sk;
+                    } else {
+                        byte[] tmp = new byte[(int) Math.min(8192, rem)];
+                        int r = raw.read(tmp);
+                        if (r <= 0) break;
+                        rem -= r;
+                    }
+                }
+            }
+
+            @Override public synchronized int read() throws java.io.IOException {
+                byte[] b = new byte[1];
+                int r = read(b, 0, 1);
+                return r < 0 ? -1 : (b[0] & 0xff);
+            }
+
             @Override public synchronized int read(byte[] b, int off, int n) throws java.io.IOException {
-                if (left <= 0) return -1;
-                if (!channelReady) {
-                    fis.getChannel().position(pos);
-                    channelReady = true;
-                }
-                int r = fis.read(b, off, (int) Math.min(n, left));
-                if (r > 0) {
-                    left -= r;
-                    pos += r;
-                }
+                if (closed || left <= 0 || n <= 0) return -1;
+                ensureStream();
+                int r = raw.read(b, off, (int) Math.min(n, left));
+                if (r > 0) left -= r;
                 return r;
             }
-            @Override public synchronized void close() throws java.io.IOException { try { fis.close(); } finally { fafd.close(); } }
+
+            @Override public synchronized int available() throws java.io.IOException {
+                if (closed || left <= 0) return 0;
+                ensureStream();
+                int av = raw.available();
+                return (int) Math.min(left, Math.max(0, av));
+            }
+
+            @Override public synchronized void close() throws java.io.IOException {
+                if (closed) return;
+                closed = true;
+                try { if (raw != null) raw.close(); } finally { fafd.close(); }
+            }
         };
         h.put("Content-Length", String.valueOf(len));
         if (partial) {
