@@ -76,38 +76,6 @@
     {
       "content": "Bỏ chặn thiết bị (dùng được trên Googlebook): chỉ còn yêu cầu trình duyệt nền Chromium",
       "icon": "laptop_chromebook"
-    },
-    {
-      "content": "Giao diện điện thoại (màn hình hẹp) và app Android dùng WebView: tự cập nhật theo repo, dùng offline, mở/chia sẻ file nhạc & video vào app, phát nền có thông báo",
-      "icon": "android"
-    },
-    {
-      "content": "Giao diện điện thoại kiểu Now Playing: ảnh bìa lớn, nút pill Prev/Play/Next, hàng Shuffle/Repeat/Tốc độ, playlist dạng tờ toàn màn hình, menu ⋮ chứa Cài đặt/Hẹn giờ/Chia sẻ/Phản hồi, Fullscreen gọn lại (PC giữ nguyên)",
-      "icon": "smartphone"
-    },
-    {
-      "content": "Thông tin khác: thêm Chất lượng âm thanh (tần số lấy mẫu, bitrate, định dạng)",
-      "icon": "graphic_eq"
-    },
-    {
-      "content": "Android: nút Chia sẻ gửi được tệp đang phát qua khung chia sẻ của hệ thống",
-      "icon": "share"
-    },
-    {
-      "content": "Android: nút Thêm nhạc mở trình chọn tệp / thư mục của hệ thống (quét cả thư mục con, kèm .lrc), nhận tệp từ \"Mở bằng\"/\"Chia sẻ\" rộng hơn, điều khiển phát qua MediaSession của hệ thống (màn hình khoá, Cài đặt nhanh, tai nghe) thay cho thông báo điều khiển",
-      "icon": "folder_open"
-    },
-    {
-      "content": "Android: thanh trạng thái và thanh điều hướng của app ăn theo màu accent của trang",
-      "icon": "palette"
-    },
-    {
-      "content": "Trang Cài đặt trên điện thoại: thanh tìm kiếm thu thành nút, thanh trượt/dropdown xuống dòng chiếm đủ chiều ngang; Android thêm tuỳ chọn màu chủ đạo \"Hệ thống\" (Material You, mặc định); cập nhật Getting Started",
-      "icon": "settings"
-    },
-    {
-      "content": "Cài đặt trên điện thoại làm lại: danh sách danh mục (icon màu + mô tả) → trang chi tiết có tiêu đề lớn, thu gọn lên thanh khi cuộn; dropdown thành nút pill + bottom sheet; thanh kéo kiểu expressive có vạch chấm (cả PC lẫn điện thoại)",
-      "icon": "tune"
     }
   ],
   "en": [
@@ -186,38 +154,6 @@
     {
       "content": "Device blocking removed (works on Googlebook): only a Chromium-based browser is required",
       "icon": "laptop_chromebook"
-    },
-    {
-      "content": "Phone layout and an Android WebView app: auto-updates with the repo, works offline, open/share audio & video into the app, background playback with notification",
-      "icon": "android"
-    },
-    {
-      "content": "Now Playing phone UI: large cover art, pill Prev/Play/Next, Shuffle/Repeat/Speed row, full-screen playlist sheet, ⋮ menu for Settings/Sleep/Share/Feedback, tighter Fullscreen (desktop unchanged)",
-      "icon": "smartphone"
-    },
-    {
-      "content": "More info: added Audio quality (sample rate, bitrate, format)",
-      "icon": "graphic_eq"
-    },
-    {
-      "content": "Android: the Share button can send the playing file via the system share sheet",
-      "icon": "share"
-    },
-    {
-      "content": "Android: Add music opens the system file / folder picker (scans subfolders, incl. .lrc), broader \"Open with\"/\"Share\" support, and playback is controlled through the system MediaSession (lock screen, Quick Settings, headset) instead of a controls notification",
-      "icon": "folder_open"
-    },
-    {
-      "content": "Android: the app's status and navigation bars follow the page's accent color",
-      "icon": "palette"
-    },
-    {
-      "content": "Settings on phones: search bar collapses into a button, sliders/dropdowns use the full width; Android adds a \"System\" accent option (Material You, default); Getting Started updated",
-      "icon": "settings"
-    },
-    {
-      "content": "Phone Settings rebuilt: category list (coloured icons + descriptions) → detail page with a large title that collapses into the bar on scroll; dropdowns became pills + bottom sheets; expressive dotted-tick sliders (PC and phone)",
-      "icon": "tune"
     }
   ]
 }
