@@ -395,6 +395,12 @@
         .song-item.song-exit { transition: transform .28s cubic-bezier(.4,0,1,1), opacity .28s ease !important; transform: scale(.3) !important; opacity: 0; pointer-events: none; }
         html.reduce-motion .song-item.song-enter { animation: none; }
         .song-item.active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        .song-item .song-more-btn {
+            width: 34px; height: 34px; flex-shrink: 0; margin-left: auto;
+            opacity: 0.75;
+        }
+        .song-item .song-more-btn:hover { opacity: 1; }
+        body.reorder-active .song-item .song-more-btn { display: none !important; }
 
         .visual-stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; border-radius: 32px; overflow: hidden; transition: var(--m3-transition); }
         #visualizer { width: 100%; height: 100%; border-radius: 32px; z-index: 2; position: absolute; inset: 0;}
@@ -5975,6 +5981,9 @@
                             <div style="font-weight:700; font-size: calc(14px * var(--font-scale-factor, 1)); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
                             <div style="font-family:'Minecraft'; font-size: calc(8px * var(--font-scale-factor, 1)); opacity: 0.6; margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''} ${track.fileHandle ? '• FS' : ''}</div>
                         </div>
+                        <button type="button" class="btn-m3 song-more-btn" title="${tr2('contextmenu.more_options', 'Tùy chọn')}" aria-label="${tr2('contextmenu.more_options', 'Tùy chọn')}">
+                            <span class="material-symbols-outlined" style="font-size:20px;">more_vert</span>
+                        </button>
                         <span class="reorder-num">${index + 1}</span>
                     `;
                     // Số thứ tự đổi -> số cũ zoom-out rồi số mới zoom-in
@@ -5995,6 +6004,23 @@
                     }
 
                     
+                    const moreBtn = item.querySelector('.song-more-btn');
+                    if (moreBtn) {
+                        moreBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            if (isReorderMode) return;
+                            const isSameOpen = contextMenu.style.display === 'flex' && targetMenuIndex === index;
+                            if (isSameOpen) {
+                                contextMenu.style.display = 'none';
+                                return;
+                            }
+                            targetMenuIndex = index;
+                            contextMenu.style.display = 'flex';
+                            const r = moreBtn.getBoundingClientRect();
+                            window.__placeMenu(contextMenu, r.right, r.bottom + 4);
+                        });
+                    }
+
                     if (isReorderMode) {
                         item.addEventListener('pointerdown', (e) => startReorderDrag(e, item, index));
                     } else if (!isReorderMode) {
