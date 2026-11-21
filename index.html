@@ -831,8 +831,10 @@
         html.m-ui .m-title { display: block; flex: 1; font-size: calc(20px * var(--font-scale-factor, 1)); font-weight: 600; color: var(--md-sys-color-on-surface); padding-left: 6px; }
         html.m-ui #output-device-btn { width: auto !important; padding: 0 12px; }
         html.m-ui #output-device-btn > span:last-child { display: none; }
-        html.m-ui .top-extra { display: none; position: fixed; top: 64px; right: 12px; z-index: 4200; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--md-sys-color-surface-container-high, #2B2930); box-shadow: 0 8px 28px rgba(0,0,0,.5); }
-        html.m-ui #sleep-menu { z-index: 4600 !important; }
+        html.m-ui .top-extra { display: none; position: fixed; top: 64px; right: 12px; z-index: 5200; flex-direction: column; gap: 6px; padding: 8px; border-radius: 20px; background: var(--md-sys-color-surface-container-high, #2B2930); box-shadow: 0 8px 28px rgba(0,0,0,.5); }
+        html.m-ui #sleep-menu { z-index: 6200 !important; }
+        #m-more-update-btn { display: none; }
+        html.m-ui #m-more-update-btn.has-update { display: inline-flex; }
         html.m-ui body.m-more-open .top-extra { display: flex; }
 
         html.m-ui .main-content { flex: 1; min-height: 0; flex-direction: column; gap: 0; }
@@ -1203,6 +1205,8 @@
         #android-update-banner.fullscreen-toast { inset: 0; left: 0; right: 0; bottom: 0; width: var(--vw); height: var(--vh); max-width: none; max-height: none; border-radius: 0; border: none; padding: 32px 24px; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 24px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); z-index: 99990; }
         #android-update-banner.fullscreen-toast > div:first-child { flex-direction: column; align-items: center; gap: 16px; max-width: 420px; width: 100%; }
         #android-update-banner.fullscreen-toast #android-update-sub { white-space: normal; }
+        #android-update-banner.fullscreen-toast #android-update-desc { display: block; font-size: calc(13px * var(--font-scale-factor, 1)); line-height: 1.55; opacity: .88; }
+        #android-update-banner #android-update-desc { display: none; }
         #android-update-banner.fullscreen-toast #android-update-progress-wrap { width: 100%; margin-top: 12px; gap: 8px; }
         #android-update-banner.fullscreen-toast #android-update-progress-track { height: 10px; }
         #android-update-banner.fullscreen-toast > div:last-child { justify-content: center; width: 100%; margin-top: 8px; }
@@ -2176,18 +2180,19 @@
 
     <div id="android-update-banner" role="region" aria-live="polite">
         <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
-            <span class="material-symbols-outlined" style="font-size:26px; flex-shrink:0; font-variation-settings:'FILL' 1;">system_update</span>
-            <div style="display:flex; flex-direction:column; gap:2px; min-width:0; flex:1;">
-                <strong id="android-update-title" style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:800;">Có bản cập nhật Android mới</strong>
-                <span id="android-update-sub" style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+            <span class="material-symbols-outlined" id="android-update-icon" style="font-size:28px; flex-shrink:0; font-variation-settings:'FILL' 1;">system_update</span>
+            <div style="display:flex; flex-direction:column; gap:4px; min-width:0; flex:1;">
+                <strong id="android-update-title" style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:800;">Đã có bản cập nhật cho ứng dụng Android</strong>
+                <span id="android-update-sub" style="font-size: calc(12px * var(--font-scale-factor, 1)); font-weight:700; opacity:.9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                <p id="android-update-desc" style="margin:0;"></p>
                 <div id="android-update-progress-wrap">
                     <div id="android-update-progress-track"><div id="android-update-progress-fill"></div></div>
                     <span id="android-update-progress-text" style="font-size: calc(11px * var(--font-scale-factor, 1)); font-weight:700; opacity:.9;"></span>
                 </div>
             </div>
         </div>
-        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-            <md-text-button id="android-update-dismiss" type="button">Để sau</md-text-button>
+        <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+            <md-text-button id="android-update-dismiss" type="button">Hủy</md-text-button>
             <a id="android-update-link" href="https://github.com/Tuanphong3108/music-player/releases" target="_blank" rel="noopener" style="text-decoration:none;"><md-filled-button type="button" id="android-update-btn">Cập nhật</md-filled-button></a>
         </div>
     </div>
@@ -2235,6 +2240,7 @@
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
                 <button class="btn-m3" id="share-btn" title="Chia sẻ" data-i18n-title="topbar.share"><span class="material-symbols-outlined">share</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
+                <button class="btn-m3" id="m-more-update-btn" title="Cập nhật ứng dụng Android"><span class="material-symbols-outlined">system_update</span></button>
                 </div>
                 
                 <!-- Nút add_circle mở menu Material Web -->
@@ -6819,11 +6825,19 @@
             window.ANDROID_APP_VERSION_CODE = curVerCode;
 
             const banner = document.getElementById('android-update-banner');
+            const iconEl = document.getElementById('android-update-icon');
             const titleEl = document.getElementById('android-update-title');
             const subEl = document.getElementById('android-update-sub');
+            const descEl = document.getElementById('android-update-desc');
             const linkEl = document.getElementById('android-update-link');
             const dismissEl = document.getElementById('android-update-dismiss');
-            if (dismissEl && banner) dismissEl.addEventListener('click', () => banner.classList.remove('show'));
+            const moreUpdateBtn = document.getElementById('m-more-update-btn');
+            if (dismissEl && banner) {
+                dismissEl.addEventListener('click', () => {
+                    banner.classList.remove('show');
+                    banner.classList.remove('fullscreen-toast');
+                });
+            }
 
             (async function checkGitHubAndroidRelease() {
                 if (!banner || (!curVerName && !curVerCode)) return;
@@ -6854,22 +6868,72 @@
                     const progFill = document.getElementById('android-update-progress-fill');
                     const progText = document.getElementById('android-update-progress-text');
                     const btnInner = document.getElementById('android-update-btn');
-                    if (titleEl) titleEl.textContent = isEn ? 'Android app update available' : 'Có bản cập nhật Android mới';
+                    const fromVer = curVerName || String(curVerCode);
+                    const toVer = displayVer;
+                    const releaseNotes = (rel.body && String(rel.body).trim())
+                        || (isEn
+                            ? 'Includes improvements, bug fixes, and smoother Android experience.'
+                            : 'Bản cập nhật mới cải thiện hiệu năng, sửa lỗi và tối ưu trải nghiệm trên Android.');
+
+                    if (iconEl) iconEl.style.fontSize = '36px';
+                    if (titleEl) titleEl.textContent = isEn ? 'Android app update available' : 'Đã có bản cập nhật cho ứng dụng Android';
                     if (subEl) subEl.textContent = isEn
-                        ? `Current ${curVerName || curVerCode} → ${displayVer}`
-                        : `Hiện tại ${curVerName || curVerCode} → ${displayVer}`;
+                        ? `Version ${fromVer} → ${toVer}`
+                        : `Phiên bản ${fromVer} → ${toVer}`;
+                    if (descEl) {
+                        descEl.textContent = (isEn
+                            ? `Upgrade from ${fromVer} to ${toVer}. `
+                            : `Nâng cấp từ phiên bản ${fromVer} lên ${toVer}. `) + releaseNotes;
+                    }
+                    if (dismissEl) dismissEl.textContent = isEn ? 'Cancel' : 'Hủy';
+                    if (btnInner) { btnInner.textContent = isEn ? 'Update' : 'Cập nhật'; btnInner.disabled = false; }
+                    if (progWrap) progWrap.classList.remove('show');
+
+                    let updateConfirmed = false;
+                    const openConfirmFullscreen = () => {
+                        updateConfirmed = false;
+                        if (banner) {
+                            banner.classList.add('show');
+                            banner.classList.add('fullscreen-toast');
+                        }
+                        if (dismissEl) {
+                            dismissEl.style.display = '';
+                            dismissEl.textContent = isEn ? 'Cancel' : 'Hủy';
+                        }
+                        if (btnInner) {
+                            btnInner.textContent = isEn ? 'Update' : 'Cập nhật';
+                            btnInner.disabled = false;
+                        }
+                        if (progWrap) progWrap.classList.remove('show');
+                    };
+
+                    if (moreUpdateBtn) {
+                        moreUpdateBtn.classList.add('has-update');
+                        moreUpdateBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            document.body.classList.remove('m-more-open');
+                            openConfirmFullscreen();
+                        });
+                    }
+
                     if (linkEl) {
                         linkEl.href = dlUrl;
                         linkEl.onclick = function (ev) {
+                            ev.preventDefault();
+                            if (!updateConfirmed) {
+                                updateConfirmed = true;
+                                openConfirmFullscreen();
+                                return;
+                            }
+                            if (dismissEl) dismissEl.style.display = 'none';
+                            if (btnInner) btnInner.disabled = true;
+                            if (progWrap) progWrap.classList.add('show');
+                            if (progFill) progFill.style.width = '0%';
+                            if (progText) progText.textContent = isEn ? 'Downloading update... 0%' : 'Đang tải bản cập nhật... 0%';
                             if (AB && AB.startUpdateDownload && apkAsset && apkAsset.browser_download_url) {
-                                ev.preventDefault();
-                                if (banner) banner.classList.add('fullscreen-toast');
-                                if (dismissEl) dismissEl.style.display = 'none';
-                                if (btnInner) btnInner.disabled = true;
-                                if (progWrap) progWrap.classList.add('show');
-                                if (progFill) progFill.style.width = '0%';
-                                if (progText) progText.textContent = isEn ? 'Downloading update... 0%' : 'Đang tải bản cập nhật... 0%';
                                 AB.startUpdateDownload(apkAsset.browser_download_url);
+                            } else {
+                                window.open(dlUrl, '_blank', 'noopener');
                             }
                         };
                     }
