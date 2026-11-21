@@ -61,8 +61,8 @@
             }
         }
 
-        .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined';
+        .material-symbols-rounded {
+            font-family: 'Material Symbols Rounded';
             font-weight: normal; font-style: normal; font-size: 24px;
             line-height: 1; display: inline-block; white-space: nowrap;
             -webkit-font-feature-settings: 'liga';
@@ -103,8 +103,8 @@
         }
         .cm-item:hover { background: rgba(158, 158, 158, 0.2); }
         .cm-item.danger { color: #F44336; }
-        .cm-item .material-symbols-outlined { color: var(--icon-color); }
-        .cm-item.danger .material-symbols-outlined { color: #F44336; }
+        .cm-item .material-symbols-rounded { color: var(--icon-color); }
+        .cm-item.danger .material-symbols-rounded { color: #F44336; }
 
         .app-container {
             display: flex; flex-direction: column; height: 100vh;
@@ -136,7 +136,7 @@
         }
         .btn-m3:hover { background: rgba(158, 158, 158, 0.2); transform: none; }
         .btn-m3.active { color: var(--accent); }
-        .btn-m3.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+        .btn-m3.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
         
         .repeat-badge {
             position: absolute; font-size: 10px; font-weight: 700; bottom: 8px; right: 8px;
@@ -213,8 +213,8 @@
         }
         .song-item:hover { background: rgba(158, 158, 158, 0.1); }
         .song-item.active { background: rgba(158, 158, 158, 0.2); }
-        .song-item .material-symbols-outlined { color: var(--icon-color); }
-        .song-item.active .material-symbols-outlined { color: var(--accent); }
+        .song-item .material-symbols-rounded { color: var(--icon-color); }
+        .song-item.active .material-symbols-rounded { color: var(--accent); }
 
         .visual-stage { 
             flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; 
@@ -404,11 +404,11 @@
 
     <div id="context-menu">
         <div class="cm-item danger" id="cm-delete">
-            <span class="material-symbols-outlined">delete</span>
+            <span class="material-symbols-rounded">delete</span>
             <span>Xoá khỏi playlist</span>
         </div>
         <div class="cm-item" id="cm-add-lrc">
-            <span class="material-symbols-outlined">description</span>
+            <span class="material-symbols-rounded">description</span>
             <span>Thêm lời lẻ (.lrc)</span>
         </div>
     </div>
@@ -416,11 +416,11 @@
     <div class="app-container">
         <div class="top-bar">
             <div class="brand">
-                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
+                <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">library_music</span>
                 <span>PLAYER V2026.05.31</span>
             </div>
             <div class="top-bar-actions">
-                <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-outlined">add</span></button>
+                <button class="btn-m3" onclick="document.getElementById('file-input').click()"><span class="material-symbols-rounded">add</span></button>
             </div>
         </div>
 
@@ -428,7 +428,7 @@
             <div class="playlist-card" id="playlist-card">
                 <div class="playlist-header" onclick="togglePlaylist()">
                     <div class="expand-icon-group">
-                        <span class="material-symbols-outlined expand-icon">arrow_back</span>
+                        <span class="material-symbols-rounded expand-icon">arrow_back</span>
                         <span class="hide-text">Ẩn</span>
                     </div>
                     <h3 id="pl-title">Playlist</h3>
@@ -437,10 +437,10 @@
                 
                 <div class="search-container">
                     <div class="search-wrapper">
-                        <span class="material-symbols-outlined search-icon">search</span>
+                        <span class="material-symbols-rounded search-icon">search</span>
                         <input type="text" id="playlist-search" class="search-input" placeholder="Tìm kiếm bài hát...">
                         <button class="btn-m3" id="reorder-btn" style="width: 32px; height: 32px; background: transparent; margin-left: auto;" title="Chế độ sửa danh sách">
-                            <span class="material-symbols-outlined" style="font-size: 20px;">sort</span>
+                            <span class="material-symbols-rounded" style="font-size: 20px;">sort</span>
                         </button>
                     </div>
                 </div>
@@ -450,10 +450,10 @@
 
             <div class="visual-stage">
                 <div class="pause-overlay" id="pause-overlay">
-                    <div class="pause-icon-bg"><span class="material-symbols-outlined">pause</span></div>
+                    <div class="pause-icon-bg"><span class="material-symbols-rounded">pause</span></div>
                 </div>
                 <div id="drop-zone" style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">
-                    <span class="material-symbols-outlined" style="font-size:72px; color: rgba(255,255,255,0.2)">upload_file</span>
+                    <span class="material-symbols-rounded" style="font-size:72px; color: rgba(255,255,255,0.2)">upload_file</span>
                     <p style="font-size:14px; margin-top:16px; color: rgba(255,255,255,0.5)">Kéo thả file âm thanh vào đây</p>
                 </div>
                 <div id="bg-preview" class="bg-thumb-preview"></div>
@@ -475,7 +475,7 @@
             <div class="track-info">
                 <div class="mini-art" id="player-mini-art">
                     <img src="" id="art-img" class="hidden" alt="art">
-                    <span id="art-placeholder" class="material-symbols-outlined placeholder-icon" style="font-variation-settings:'FILL' 1">music_note</span>
+                    <span id="art-placeholder" class="material-symbols-rounded placeholder-icon" style="font-variation-settings:'FILL' 1">music_note</span>
                 </div>
                 <div class="track-text">
                     <div class="marquee-container" id="name-container">
@@ -487,27 +487,27 @@
                 </div>
             </div>
             <div class="controls-group">
-                <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)"><span class="material-symbols-outlined">picture_in_picture_alt</span></button>
-                <button class="btn-m3" id="shuffle-btn"><span class="material-symbols-outlined">shuffle</span></button>
-                <button class="btn-m3" id="prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
-                <button class="btn-m3 btn-play" id="play-btn"><span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span></button>
-                <button class="btn-m3" id="next-btn"><span class="material-symbols-outlined">skip_next</span></button>
+                <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)"><span class="material-symbols-rounded">picture_in_picture_alt</span></button>
+                <button class="btn-m3" id="shuffle-btn"><span class="material-symbols-rounded">shuffle</span></button>
+                <button class="btn-m3" id="prev-btn"><span class="material-symbols-rounded">skip_previous</span></button>
+                <button class="btn-m3 btn-play" id="play-btn"><span class="material-symbols-rounded" style="font-size: 32px;">play_arrow</span></button>
+                <button class="btn-m3" id="next-btn"><span class="material-symbols-rounded">skip_next</span></button>
                 <button class="btn-m3" id="repeat-btn">
-                    <span class="material-symbols-outlined">repeat</span>
+                    <span class="material-symbols-rounded">repeat</span>
                     <div class="repeat-badge">1</div>
                 </button>
                 <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát">
-                    <span class="material-symbols-outlined">lyrics</span>
+                    <span class="material-symbols-rounded">lyrics</span>
                 </button>
             </div>
             <div class="volume-group">
-                <span class="material-symbols-outlined">volume_up</span>
+                <span class="material-symbols-rounded">volume_up</span>
                 <input type="range" id="volume-slider" min="0" max="100" value="80">
             </div>
         </div>
 
         <button id="reorder-done-btn" class="reorder-done-btn" title="Hoàn tất">
-            <span class="material-symbols-outlined">check</span>
+            <span class="material-symbols-rounded">check</span>
             HOÀN TẤT
         </button>
     </div>
@@ -909,8 +909,8 @@
                     item.dataset.index = index;
                     
                     item.innerHTML = `
-                        <span class="material-symbols-outlined icon-play">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'music_note'}</span>
-                        <span class="material-symbols-outlined icon-drag" title="Nắm để kéo thả">drag_handle</span>
+                        <span class="material-symbols-rounded icon-play">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'music_note'}</span>
+                        <span class="material-symbols-rounded icon-drag" title="Nắm để kéo thả">drag_handle</span>
                         <div class="track-text">
                             <div style="font-weight:500; font-size: 14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
                             <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''}</div>
@@ -1191,7 +1191,7 @@
                 const item = customPipWindow.document.createElement('div');
                 item.className = `pip-song-item ${index === currentIndex ? 'active' : ''}`;
                 item.innerHTML = `
-                    <span class="material-symbols-outlined" style="font-size: 18px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'music_note'}</span>
+                    <span class="material-symbols-rounded" style="font-size: 18px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'music_note'}</span>
                     <div class="pip-song-info">
                         <div class="pip-song-name">${track.name}</div>
                         <div class="pip-song-artist">${track.artist}</div>
@@ -1232,13 +1232,13 @@
                     bgEl.innerHTML = '';
                 } else {
                     bgEl.style.backgroundImage = 'none';
-                    bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
+                    bgEl.innerHTML = '<span class="material-symbols-rounded" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
                 }
             } else {
                 titleEl.innerText = 'Chưa có bài hát';
                 artistEl.innerText = 'Studio Standby';
                 bgEl.style.backgroundImage = 'none';
-                bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
+                bgEl.innerHTML = '<span class="material-symbols-rounded" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
             }
 
             playSpan.innerText = audio.paused ? 'play_arrow' : 'pause';
@@ -1350,13 +1350,13 @@
                     }
                     .btn-play:hover { background: #F50057; box-shadow: 0 4px 5px 0 rgba(0,0,0,0.14); }
                     
-                    .material-symbols-outlined {
-                        font-family: 'Material Symbols Outlined';
+                    .material-symbols-rounded {
+                        font-family: 'Material Symbols Rounded';
                         font-weight: normal; font-style: normal; font-size: 24px;
                         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
                     }
-                    .btn-play .material-symbols-outlined { font-size: 32px; font-variation-settings: 'FILL' 1; color: #FFFFFF; }
-                    .active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+                    .btn-play .material-symbols-rounded { font-size: 32px; font-variation-settings: 'FILL' 1; color: #FFFFFF; }
+                    .active .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
                     
                     .repeat-badge {
                         position: absolute; font-size: 9px; font-weight: 700; 
@@ -1383,7 +1383,7 @@
                     }
                     .pip-song-item:hover { background: rgba(255,255,255,0.1); }
                     .pip-song-item.active { background: rgba(255,255,255,0.2); }
-                    .pip-song-item.active .material-symbols-outlined { color: #FF4081; }
+                    .pip-song-item.active .material-symbols-rounded { color: #FF4081; }
                     .pip-song-info { display: flex; flex-direction: column; overflow: hidden; }
                     .pip-song-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                     .pip-song-artist { font-size: 12px; opacity: 0.7; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1425,18 +1425,18 @@
                                 <h4 id="pip-title" class="pip-title">Studio Standby</h4>
                                 <p id="pip-artist" class="pip-artist">ENGINE IDLE | SYSTEM</p>
                             </div>
-                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;"><span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span></button>
+                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;"><span class="material-symbols-rounded" style="font-size: 20px;">expand_more</span></button>
                         </div>
                         
                         <div id="pip-lyric" class="pip-lyric"></div>
 
                         <div class="pip-controls">
-                            <button class="btn-m3" id="pip-shuffle-btn"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                            <button class="btn-m3" id="pip-prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
-                            <button class="btn-m3 btn-play" id="pip-play-btn"><span class="material-symbols-outlined">play_arrow</span></button>
-                            <button class="btn-m3" id="pip-next-btn"><span class="material-symbols-outlined">skip_next</span></button>
+                            <button class="btn-m3" id="pip-shuffle-btn"><span class="material-symbols-rounded" style="font-size: 20px;">shuffle</span></button>
+                            <button class="btn-m3" id="pip-prev-btn"><span class="material-symbols-rounded">skip_previous</span></button>
+                            <button class="btn-m3 btn-play" id="pip-play-btn"><span class="material-symbols-rounded">play_arrow</span></button>
+                            <button class="btn-m3" id="pip-next-btn"><span class="material-symbols-rounded">skip_next</span></button>
                             <button class="btn-m3" id="pip-repeat-btn">
-                                <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
+                                <span class="material-symbols-rounded" style="font-size: 20px;">repeat</span>
                                 <div id="pip-repeat-badge" class="repeat-badge">1</div>
                             </button>
                         </div>
@@ -1445,7 +1445,7 @@
                     <div class="pip-playlist-section" id="pip-playlist-section">
                         <div class="pip-playlist-header">
                             <span style="font-size: 14px; font-weight: 500;">Danh sách phát</span>
-                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;"><span class="material-symbols-outlined" style="font-size: 18px;">close</span></button>
+                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;"><span class="material-symbols-rounded" style="font-size: 18px;">close</span></button>
                         </div>
                         <div class="pip-playlist-container" id="pip-playlist-container"></div>
                     </div>
@@ -1454,7 +1454,7 @@
                     <div class="pip-context-menu" id="pip-context-menu">
                         <div class="pip-cm-title" id="pip-cm-title">Song Name</div>
                         <button class="pip-cm-btn" id="pip-cm-delete">
-                            <span class="material-symbols-outlined">delete</span>
+                            <span class="material-symbols-rounded">delete</span>
                             Xoá khỏi playlist
                         </button>
                     </div>
