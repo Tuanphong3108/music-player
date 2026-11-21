@@ -5528,6 +5528,25 @@
             audio.addEventListener('play', icon); audio.addEventListener('pause', icon); icon();
             playB.addEventListener('click', () => document.getElementById('play-btn').click());
             document.getElementById('m-lyric-back').addEventListener('click', () => { body.classList.remove('m-lyric-ui'); if (isLyricVisible) lyricBtn.click(); });
+            window.__mLyricBackClose = () => {
+                body.classList.remove('m-lyric-ui');
+                const lb = document.getElementById('lyric-btn') || (typeof lyricBtn !== 'undefined' ? lyricBtn : null);
+                if (typeof isLyricVisible !== 'undefined' && isLyricVisible && lb) {
+                    lb.click();
+                } else {
+                    if (typeof isLyricVisible !== 'undefined') isLyricVisible = false;
+                    body.classList.remove('lyrics-open', 'm-lyric-ui');
+                    const lo = document.getElementById('lyric-overlay') || (typeof lyricOverlay !== 'undefined' ? lyricOverlay : null);
+                    if (lo) {
+                        lo.classList.remove('visible');
+                        lo.style.opacity = '';
+                        lo.style.visibility = '';
+                        lo.style.display = '';
+                        lo.style.pointerEvents = '';
+                    }
+                    if (lb) lb.classList.remove('active');
+                }
+            };
             const syncB = document.getElementById('m-lyric-synced'), statB = document.getElementById('m-lyric-static');
             const setMode = (st) => {
                 body.classList.toggle('lyric-static', st);
@@ -7207,6 +7226,10 @@
                         return true;
                     }
                     if (document.body.classList.contains('lyrics-open')) {
+                        if (typeof window.__mLyricBackClose === 'function') {
+                            window.__mLyricBackClose();
+                            return true;
+                        }
                         if (typeof closeLyrics === 'function') closeLyrics();
                         else if (typeof toggleLyrics === 'function') toggleLyrics();
                         const lo = document.getElementById('lyric-overlay') || (typeof lyricOverlay !== 'undefined' ? lyricOverlay : null);
