@@ -1,6 +1,11 @@
 name: Build Android APK
 on:
   workflow_dispatch:
+    inputs:
+      release_notes:
+        description: "Release notes (leave empty to use android/RELEASE_NOTES.md or recent commits)"
+        required: false
+        type: string
   push:
     branches: [main]
     paths: ['android/**', '.github/workflows/android.yml']
@@ -11,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
@@ -21,6 +28,20 @@ jobs:
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: 1.0.${{ github.run_number }}
         run: gradle --no-daemon assembleRelease
+      - name: Prepare release notes
+        env:
+          RELEASE_NOTES_INPUT: ${{ github.event.inputs.release_notes }}
+        run: |
+          if [ -n "$RELEASE_NOTES_INPUT" ]; then
+            printf '%s\\n' "$RELEASE_NOTES_INPUT" > release_notes.txt
+          elif [ -f android/RELEASE_NOTES.md ]; then
+            sed '/<!--/d' android/RELEASE_NOTES.md > release_notes.txt
+            if [ ! -s release_notes.txt ]; then
+              git log -20 --pretty=format:'- %s' -- android/ .github/workflows/android.yml > release_notes.txt
+            fi
+          else
+            git log -20 --pretty=format:'- %s' -- android/ .github/workflows/android.yml > release_notes.txt
+          fi
       - name: Publish versioned release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -29,4 +50,4 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk MediaPlayer.apk
           gh release delete "$TAG" --yes --cleanup-tag || true
           gh release create "$TAG" MediaPlayer.apk --title "Media Player (Android) $TAG" --latest \
-            --notes "APK Android (WebView) phiên bản $TAG (build #${{ github.run_number }}). App tự cập nhật nội dung theo repo, dùng được offline."
+            --notes-file release_notes.txt
