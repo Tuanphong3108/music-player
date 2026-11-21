@@ -393,9 +393,9 @@
         <div class="card pc-only"><div class="ico"><span class="ms">fullscreen</span></div><div class="card-body"><h3 data-i="s3_c4t">Toàn màn hình</h3><p data-i="s3_c4d">Ảnh bìa, lời và sóng nhạc (hoặc hình video) trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.</p></div></div>
         <div class="card"><div class="ico"><span class="ms">timer</span></div><div class="card-body"><h3 data-i="s3_c5t">Hẹn giờ tạm dừng</h3><p data-i="s3_c5d">Tự dừng nhạc sau một khoảng thời gian hoặc sau một số bài nhất định.</p></div></div>
         <div class="card"><div class="ico"><span class="ms">headphones</span></div><div class="card-body"><h3 data-i="s3_c6t">Thiết bị âm thanh</h3><p data-i="s3_c6d">Chọn loa hoặc tai nghe phát nhạc ngay từ thanh trên cùng.</p></div></div>
-        <div class="card"><div class="ico"><span class="ms">movie</span></div><div class="card-body"><h3 data-i="s3_c7t"></h3><p data-i="s3_c7d"></p></div></div>
+        <div class="card pc-only"><div class="ico"><span class="ms">movie</span></div><div class="card-body"><h3 data-i="s3_c7t"></h3><p data-i="s3_c7d"></p></div></div>
         <div class="card"><div class="ico"><span class="ms">equalizer</span></div><div class="card-body"><h3 data-i="s3_c8t"></h3><p data-i="s3_c8d"></p></div></div>
-        <div class="card"><div class="ico"><span class="ms">subtitles</span></div><div class="card-body"><h3 data-i="s3_c9t"></h3><p data-i="s3_c9d"></p></div></div>
+        <div class="card pc-only"><div class="ico"><span class="ms">subtitles</span></div><div class="card-body"><h3 data-i="s3_c9t"></h3><p data-i="s3_c9d"></p></div></div>
         <div class="card"><div class="ico"><span class="ms">phone_android</span></div><div class="card-body"><h3 data-i="s3_c10t"></h3><p data-i="s3_c10d"></p></div></div>
       </div>
     </div></section>
@@ -618,7 +618,26 @@
 
   /* ---------- Dịch ---------- */
   function applyLang() {
-    var d = T[st.lang];
+    var d = Object.assign({}, T[st.lang]);
+    if (isAndroid) {
+      if (st.lang === 'en') {
+        d.names_and = ['Welcome','Add music','Features','Touch gestures','Quick settings'];
+        d.s1_desc = 'A local music player running right on your phone: synced lyrics, ID3 tag editing, Material 3 design and full offline support.';
+        d.s2_title = 'Add music to the player';
+        d.s2_desc = 'Music is read straight from your device and never uploaded to any server.';
+        d.s2_c1t = 'Add music button';
+        d.s2_c1d = 'Tap the plus button at the top to pick audio files or a whole music folder (mp3, flac, m4a, ogg, wav...).';
+        d.s2_c2d_and = 'Use "Open with" or "Share" on audio files from your File Manager or messaging apps to play directly in Media Player.';
+      } else {
+        d.names_and = ['Chào mừng','Thêm nhạc','Tính năng','Thao tác cảm ứng','Cài đặt nhanh'];
+        d.s1_desc = 'Trình phát nhạc chạy ngay trên điện thoại của bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.';
+        d.s2_title = 'Thêm nhạc vào trình phát';
+        d.s2_desc = 'Nhạc được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.';
+        d.s2_c1t = 'Nút Thêm nhạc';
+        d.s2_c1d = 'Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc (mp3, flac, m4a, ogg, wav...).';
+        d.s2_c2d_and = 'Chọn "Mở bằng" hoặc "Chia sẻ" tệp nhạc từ Trình quản lý tệp, Zalo, Telegram... sang Media Player để phát ngay.';
+      }
+    }
     document.documentElement.lang = st.lang;
     $$('[data-i]').forEach(function (el) {
       var k = el.getAttribute('data-i'); if (d[k] === undefined) return;
