@@ -6898,7 +6898,7 @@
 
                     let updateConfirmed = false;
                     const openConfirmFullscreen = () => {
-                        updateConfirmed = false;
+                        updateConfirmed = true;
                         if (banner) {
                             banner.classList.add('show');
                             banner.classList.add('fullscreen-toast');
@@ -6912,6 +6912,22 @@
                             btnInner.disabled = false;
                         }
                         if (progWrap) progWrap.classList.remove('show');
+                    };
+
+                    const triggerDownloadNow = () => {
+                        if (dismissEl) dismissEl.style.display = 'none';
+                        if (btnInner) btnInner.disabled = true;
+                        if (progWrap) progWrap.classList.add('show');
+                        if (progFill) progFill.style.width = '0%';
+                        if (progText) progText.textContent = isEn ? 'Downloading update... 0%' : 'Đang tải bản cập nhật... 0%';
+                        const apkUrl = (apkAsset && apkAsset.browser_download_url) || '';
+                        if (AB && AB.startUpdateDownload && apkUrl) {
+                            AB.startUpdateDownload(apkUrl);
+                        } else if (apkUrl) {
+                            window.location.href = apkUrl;
+                        } else {
+                            window.open(dlUrl, '_blank', 'noopener');
+                        }
                     };
 
                     if (moreUpdateBtn) {
@@ -6928,21 +6944,22 @@
                         linkEl.onclick = function (ev) {
                             ev.preventDefault();
                             if (!updateConfirmed) {
-                                updateConfirmed = true;
                                 openConfirmFullscreen();
                                 return;
                             }
-                            if (dismissEl) dismissEl.style.display = 'none';
-                            if (btnInner) btnInner.disabled = true;
-                            if (progWrap) progWrap.classList.add('show');
-                            if (progFill) progFill.style.width = '0%';
-                            if (progText) progText.textContent = isEn ? 'Downloading update... 0%' : 'Đang tải bản cập nhật... 0%';
-                            if (AB && AB.startUpdateDownload && apkAsset && apkAsset.browser_download_url) {
-                                AB.startUpdateDownload(apkAsset.browser_download_url);
-                            } else {
-                                window.open(dlUrl, '_blank', 'noopener');
-                            }
+                            triggerDownloadNow();
                         };
+                    }
+                    if (btnInner) {
+                        btnInner.addEventListener('click', function (ev) {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            if (!updateConfirmed) {
+                                openConfirmFullscreen();
+                                return;
+                            }
+                            triggerDownloadNow();
+                        });
                     }
                     window.__onAndroidUpdateProgress = function (pct, doneBytes, totalBytes) {
                         if (!progWrap) progWrap.classList.add('show');
