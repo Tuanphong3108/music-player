@@ -1645,9 +1645,11 @@
         html.m-ui #settings-dialog:not(.searching) #settings-header { background: transparent; border-bottom: none; transition: background .2s; }
         html.m-ui #settings-dialog.st-m-scrolled:not(.searching) #settings-header { background: var(--md-sys-color-surface-container, var(--md-sys-color-surface-variant)); }
         html.m-ui #settings-dialog:not(.searching) #settings-header h2 { opacity: 0; transition: opacity .2s; }
-        html.m-ui #settings-dialog.st-m-scrolled:not(.searching) #settings-header h2 { opacity: 1; }
+        html.m-ui #settings-dialog.st-m-scrolled:not(.searching) #settings-header h2,
+        html.m-ui #settings-dialog.st-m-detail:not(.searching) #settings-header h2 { opacity: 1; }
         html.m-ui #settings-dialog.st-m-detail:not(.searching) .st-title-normal { display: none; }
         html.m-ui #settings-dialog.st-m-detail:not(.searching) .st-title-m { display: inline; }
+        html.m-ui #settings-dialog.st-m-detail .st-pane-about .cl-header:not(:has(#cl-back-btn-wrap.show)) { display: none !important; }
         html.m-ui #settings-dialog:not(.st-m-detail):not(.searching) .st-pane { display: none !important; }
         html.m-ui #settings-dialog:not(.st-m-detail):not(.searching) #st-m-list { display: flex; }
         html.m-ui #settings-dialog:not(.st-m-detail):not(.searching) #st-m-bigtitle { display: block; }
