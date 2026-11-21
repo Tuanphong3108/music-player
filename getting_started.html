@@ -47,7 +47,7 @@
   html { zoom:var(--z); }
   html,body { margin:0; height:100%; }
   body { font-family:var(--font); color:var(--on-surface); background:var(--surface); overflow:hidden; user-select:none; }
-  .ms { font-family:'Material Symbols Outlined'; font-weight:normal; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; white-space:nowrap; font-feature-settings:'liga'; font-variation-settings:'FILL' 1,'wght' 500,'opsz' 24; display:inline-block; vertical-align:middle; }
+  .ms { font-family:'Material Symbols Rounded'; font-weight:normal; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; white-space:nowrap; font-feature-settings:'liga'; font-variation-settings:'FILL' 1,'wght' 500,'opsz' 24; display:inline-block; vertical-align:middle; }
   .no-icons .ms { display:none; }
 
   .app { position:fixed; inset:0; display:flex; flex-direction:column; background:var(--bg-grad); transition:background .5s; }
@@ -905,7 +905,7 @@
   (function ping() { if (inited || tries++ > 20) return; toParent({ type: 'gs-ready' }); setTimeout(ping, 400); })();
 
   try {
-    document.fonts.load('24px "Material Symbols Outlined"', 'check').then(function (f) { if (!f.length) document.documentElement.classList.add('no-icons'); }).catch(function () { document.documentElement.classList.add('no-icons'); });
+    document.fonts.load('24px "Material Symbols Rounded"', 'check').then(function (f) { if (!f.length) document.documentElement.classList.add('no-icons'); }).catch(function () { document.documentElement.classList.add('no-icons'); });
   } catch (e) {}
 })();
 </script>
