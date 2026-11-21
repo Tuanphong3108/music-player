@@ -61,5 +61,18 @@
 
         <service android:name=".MediaService" android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+
+        <receiver
+            android:name=".MediaWidgetProvider"
+            android:exported="true"
+            android:label="Media Player">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.tuanphong.mediaplayer.WIDGET_CMD" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/media_widget_info" />
+        </receiver>
     </application>
 </manifest>
