@@ -642,7 +642,7 @@ public class MainActivity extends Activity {
     /** Phát nội dung content:// kèm hỗ trợ HTTP Range để video tua/phát theo từng đoạn, không nạp cả tệp vào RAM. */
     private WebResourceResponse serveContent(Uri src, Map<String, String> reqHeaders) throws Exception {
         String mime = getContentResolver().getType(src);
-        if (mime == null || "application/octet-stream".equals(mime)) {
+        if (mime == null || "application/octet-stream".equals(mime) || "video/*".equals(mime) || "audio/*".equals(mime)) {
             String name = displayName(src).toLowerCase();
             if (name.endsWith(".mp4") || name.endsWith(".m4v")) mime = "video/mp4";
             else if (name.endsWith(".webm")) mime = "video/webm";
@@ -660,6 +660,10 @@ public class MainActivity extends Activity {
         h.put("Accept-Ranges", "bytes");
         android.content.res.AssetFileDescriptor afd = getContentResolver().openAssetFileDescriptor(src, "r");
         long total = afd == null ? -1 : afd.getLength();
+        if (total <= 0) {
+            long queried = querySize(src);
+            if (queried > 0) total = queried;
+        }
         if (afd == null || total <= 0) {
             if (afd != null) afd.close();
             InputStream in = getContentResolver().openInputStream(src);
@@ -690,7 +694,10 @@ public class MainActivity extends Activity {
 
             private void ensureStream() throws java.io.IOException {
                 if (raw != null) return;
-                raw = fafd.createInputStream();
+                try {
+                    raw = getContentResolver().openInputStream(src);
+                } catch (Throwable ignored) {}
+                if (raw == null) raw = fafd.createInputStream();
                 long rem = toSkip;
                 while (rem > 0) {
                     long sk = raw.skip(rem);
