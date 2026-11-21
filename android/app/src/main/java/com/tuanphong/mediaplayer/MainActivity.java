@@ -41,6 +41,7 @@ public class MainActivity extends Activity {
     private WebChromeClient.CustomViewCallback customCb;
     private ValueCallback<Uri[]> filePathCb;
     private final Map<String, Uri> served = new HashMap<>();
+    private final Map<String, String> servedLocations = new HashMap<>();
     private final Map<String, File> cachedMediaFiles = new HashMap<>();
     private int nextId = 1;
     private boolean pageReady = false;
@@ -872,14 +873,70 @@ public class MainActivity extends Activity {
                 || ln.endsWith(".3gp") || ln.endsWith(".avi");
     }
 
+    private String resolveUriLocation(Uri u) {
+        if (u == null) return "";
+        try {
+            if ("file".equalsIgnoreCase(u.getScheme())) {
+                String p = u.getPath();
+                if (p != null && !p.isEmpty()) return p;
+            }
+            try (Cursor c = getContentResolver().query(u, new String[]{"_data", "relative_path", OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                if (c != null && c.moveToFirst()) {
+                    int dataIdx = c.getColumnIndex("_data");
+                    if (dataIdx >= 0 && !c.isNull(dataIdx)) {
+                        String absPath = c.getString(dataIdx);
+                        if (absPath != null && !absPath.trim().isEmpty()) return absPath.trim();
+                    }
+                    int relIdx = c.getColumnIndex("relative_path");
+                    int nameIdx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    String rel = (relIdx >= 0 && !c.isNull(relIdx)) ? c.getString(relIdx) : "";
+                    String disp = (nameIdx >= 0 && !c.isNull(nameIdx)) ? c.getString(nameIdx) : "";
+                    if (rel != null && !rel.isEmpty()) {
+                        return "/storage/emulated/0/" + rel + (disp != null ? disp : "");
+                    }
+                }
+            } catch (Throwable ignored) {}
+            if (DocumentsContract.isDocumentUri(this, u)) {
+                String docId = DocumentsContract.getDocumentId(u);
+                if (docId != null && docId.startsWith("primary:")) {
+                    return "/storage/emulated/0/" + docId.substring("primary:".length());
+                }
+                if (docId != null && docId.startsWith("raw:")) {
+                    return docId.substring("raw:".length());
+                }
+            }
+        } catch (Throwable ignored) {}
+        return u.toString();
+    }
+
+    private void takePersistableRwPermission(Uri u, Intent sourceIntent) {
+        if (u == null) return;
+        try {
+            int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+            if (sourceIntent != null) {
+                int granted = sourceIntent.getFlags() & flags;
+                if (granted != 0) flags = granted;
+            }
+            getContentResolver().takePersistableUriPermission(u, flags);
+        } catch (Throwable ignored) {
+            try {
+                getContentResolver().takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Throwable ignored2) {}
+        }
+    }
+
     private void queueUris(List<Uri> uris) {
         for (Uri u : uris) {
             try {
                 if (isDisallowedVideoUri(u)) continue;
                 String id = String.valueOf(nextId++);
+                String loc = resolveUriLocation(u);
                 served.put(id, u);
+                if (loc != null && !loc.isEmpty()) servedLocations.put(id, loc);
                 JSONObject o = new JSONObject();
                 o.put("id", id);
+                o.put("location", loc);
+                o.put("uri", u.toString());
                 o.put("url", "https://" + ASSET_HOST + "/f/" + id);
                 o.put("name", displayName(u));
                 String t = getContentResolver().getType(u);
@@ -939,11 +996,21 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int req, int res, Intent data) {
         if (req == 43 || req == 44) {
             if (res != RESULT_OK || data == null) { callJs("window.addBtnCancel&&addBtnCancel()"); }
-            else if (req == 44 && data.getData() != null) scanTree(data.getData());
-            else {
+            else if (req == 44 && data.getData() != null) {
+                takePersistableRwPermission(data.getData(), data);
+                scanTree(data.getData());
+            } else {
                 List<Uri> l = new ArrayList<>();
-                if (data.getClipData() != null) for (int k = 0; k < data.getClipData().getItemCount(); k++) l.add(data.getClipData().getItemAt(k).getUri());
-                else if (data.getData() != null) l.add(data.getData());
+                if (data.getClipData() != null) {
+                    for (int k = 0; k < data.getClipData().getItemCount(); k++) {
+                        Uri itemUri = data.getClipData().getItemAt(k).getUri();
+                        takePersistableRwPermission(itemUri, data);
+                        l.add(itemUri);
+                    }
+                } else if (data.getData() != null) {
+                    takePersistableRwPermission(data.getData(), data);
+                    l.add(data.getData());
+                }
                 if (l.isEmpty()) callJs("window.addBtnCancel&&addBtnCancel()"); else queueUris(l);
             }
         } else if (req == 46) {
@@ -1337,8 +1404,50 @@ public class MainActivity extends Activity {
         private File overwriteTmpFile;
         private String overwriteTxId;
 
+        private boolean writeTempToUri(File srcFile, Uri destUri) {
+            if (srcFile == null || !srcFile.exists() || destUri == null) return false;
+            java.io.OutputStream dest = null;
+            for (String mode : new String[]{"wt", "w", "rwt"}) {
+                try {
+                    dest = getContentResolver().openOutputStream(destUri, mode);
+                    if (dest != null) break;
+                } catch (Throwable ignored) {}
+            }
+            if (dest == null) return false;
+            try (java.io.InputStream in = new java.io.FileInputStream(srcFile);
+                 java.io.OutputStream out = dest) {
+                byte[] buf = new byte[65536];
+                int r;
+                while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
+                out.flush();
+                return true;
+            } catch (Throwable ignored) {
+                return false;
+            }
+        }
+
+        private boolean writeTempToFilePath(File srcFile, String filePath) {
+            if (srcFile == null || !srcFile.exists() || filePath == null || filePath.isEmpty()) return false;
+            try {
+                File targetFile = filePath.startsWith("file://")
+                        ? new File(Uri.parse(filePath).getPath())
+                        : new File(filePath);
+                if (!targetFile.exists() || !targetFile.canWrite()) return false;
+                try (java.io.InputStream in = new java.io.FileInputStream(srcFile);
+                     java.io.OutputStream out = new FileOutputStream(targetFile, false)) {
+                    byte[] buf = new byte[65536];
+                    int r;
+                    while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
+                    out.flush();
+                    return true;
+                }
+            } catch (Throwable ignored) {
+                return false;
+            }
+        }
+
         @JavascriptInterface
-        public String overwriteFileChunk(String nativeId, String txId, String b64, boolean last, String fallbackName) {
+        public String overwriteFileChunk(String nativeId, String nativeLocation, String txId, String b64, boolean last, String fallbackName) {
             try {
                 if (overwriteOut == null || txId == null || !txId.equals(overwriteTxId)) {
                     try { if (overwriteOut != null) overwriteOut.close(); } catch (Exception ignored) {}
@@ -1359,53 +1468,63 @@ public class MainActivity extends Activity {
                 overwriteOut = null;
 
                 Uri targetUri = (nativeId != null && !nativeId.isEmpty()) ? served.get(nativeId) : null;
+                String targetLoc = (nativeLocation != null && !nativeLocation.isEmpty())
+                        ? nativeLocation
+                        : ((nativeId != null && !nativeId.isEmpty()) ? servedLocations.get(nativeId) : null);
+
+                if (targetUri == null && targetLoc != null && (targetLoc.startsWith("content://") || targetLoc.startsWith("file://"))) {
+                    try { targetUri = Uri.parse(targetLoc); } catch (Throwable ignored) {}
+                }
                 if (targetUri == null && fallbackName != null && !fallbackName.isEmpty()) {
-                    for (Uri candidate : served.values()) {
+                    for (Map.Entry<String, Uri> entry : served.entrySet()) {
                         try {
-                            if (fallbackName.equalsIgnoreCase(displayName(candidate))) {
-                                targetUri = candidate;
+                            if (fallbackName.equalsIgnoreCase(displayName(entry.getValue()))) {
+                                targetUri = entry.getValue();
+                                if (targetLoc == null || targetLoc.isEmpty()) targetLoc = servedLocations.get(entry.getKey());
                                 break;
                             }
                         } catch (Exception ignored) {}
                     }
                 }
-                if (targetUri == null) {
-                    if (overwriteTmpFile != null) overwriteTmpFile.delete();
-                    overwriteTmpFile = null;
-                    return "Target file URI not found";
+
+                boolean wrote = false;
+                if (targetUri != null) {
+                    wrote = writeTempToUri(overwriteTmpFile, targetUri);
+                }
+                if (!wrote && targetLoc != null && !targetLoc.isEmpty() && !targetLoc.startsWith("content://")) {
+                    wrote = writeTempToFilePath(overwriteTmpFile, targetLoc);
                 }
 
-                java.io.OutputStream dest = null;
-                Throwable openErr = null;
-                for (String mode : new String[]{"wt", "w", "rwt"}) {
-                    try {
-                        dest = getContentResolver().openOutputStream(targetUri, mode);
-                        if (dest != null) break;
-                    } catch (Throwable t) {
-                        openErr = t;
+                try { if (overwriteTmpFile != null) overwriteTmpFile.delete(); } catch (Exception ignored) {}
+                overwriteTmpFile = null;
+
+                if (!wrote) {
+                    if (Build.VERSION.SDK_INT >= 30 && !android.os.Environment.isExternalStorageManager()) {
+                        runOnUiThread(() -> {
+                            try {
+                                Intent permIntent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                                permIntent.setData(Uri.parse("package:" + getPackageName()));
+                                permIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(permIntent);
+                            } catch (Throwable ex) {
+                                try {
+                                    Intent fallbackPerm = new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                                    fallbackPerm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(fallbackPerm);
+                                } catch (Throwable ignored) {}
+                            }
+                        });
+                        return "NEED_FILE_PERMISSION";
                     }
-                }
-                if (dest == null) {
-                    if (overwriteTmpFile != null) overwriteTmpFile.delete();
-                    overwriteTmpFile = null;
-                    return "Cannot open target file for writing" + (openErr != null ? ": " + openErr.getMessage() : "");
+                    return "Cannot open target file for writing";
                 }
 
-                try (java.io.InputStream in = new java.io.FileInputStream(overwriteTmpFile);
-                     java.io.OutputStream out = dest) {
-                    byte[] buf = new byte[65536];
-                    int r;
-                    while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
-                    out.flush();
-                } finally {
-                    try { if (overwriteTmpFile != null) overwriteTmpFile.delete(); } catch (Exception ignored) {}
-                    overwriteTmpFile = null;
-                }
-
-                synchronized (cachedMediaFiles) {
-                    File cached = cachedMediaFiles.remove(targetUri.toString());
-                    if (cached != null && cached.exists()) {
-                        try { cached.delete(); } catch (Exception ignored) {}
+                if (targetUri != null) {
+                    synchronized (cachedMediaFiles) {
+                        File cached = cachedMediaFiles.remove(targetUri.toString());
+                        if (cached != null && cached.exists()) {
+                            try { cached.delete(); } catch (Exception ignored) {}
+                        }
                     }
                 }
                 return "";
