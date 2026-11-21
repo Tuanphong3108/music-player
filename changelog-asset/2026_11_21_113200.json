@@ -96,6 +96,10 @@
     {
       "content": "Thoát có animation: bấm \"Chạy dưới nền\" / \"Thoát hẳn\" thì UI zoom-out + fade-out và cửa sổ mờ dần trước khi thoát, không còn đóng đột ngột",
       "icon": "logout"
+    },
+    {
+      "content": "Predictive Back giờ cũng áp dụng cho các hộp thoại Material Web (hẹn giờ, xác nhận, phông chữ...): vuốt Back để xem trước và đóng đúng hộp thoại trên cùng",
+      "icon": "arrow_back"
     }
   ],
   "en": [
@@ -194,6 +198,10 @@
     {
       "content": "Animated exit: \"Run in background\" / \"Exit completely\" now zoom/fade the UI out and fade the window before leaving, instead of closing abruptly",
       "icon": "logout"
+    },
+    {
+      "content": "Predictive Back now also covers Material Web dialogs (sleep timer, confirmations, fonts...): swipe back to preview and close the top-most dialog",
+      "icon": "arrow_back"
     }
   ]
 }

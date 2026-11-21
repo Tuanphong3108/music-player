@@ -7335,11 +7335,25 @@
                 } catch (e) { console.log('native-open failed', e); }
             };
             window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
+            // Theo dõi thứ tự mở của các md-dialog để Back đóng đúng cái trên cùng
+            (function () {
+                const stack = [];
+                document.addEventListener('open', (e) => { const d = e.target; if (d && d.tagName === 'MD-DIALOG') { const i = stack.indexOf(d); if (i >= 0) stack.splice(i, 1); stack.push(d); } }, true);
+                document.addEventListener('closed', (e) => { const d = e.target; const i = stack.indexOf(d); if (i >= 0) stack.splice(i, 1); }, true);
+                window.__mdTopDialog = function () {
+                    for (let i = stack.length - 1; i >= 0; i--) if (stack[i].open) return stack[i];
+                    // dự phòng: dialog đang mở mà chưa kịp ghi nhận
+                    return Array.from(document.querySelectorAll('md-dialog')).filter(d => d.open).pop() || null;
+                };
+            })();
             const handleBackNavigation = function () {
                 try {
                     if (document.body.classList.contains('screen-animating')) {
                         return true;
                     }
+                    // Dialog của Material Web (md-dialog) nằm trong top layer nên luôn nằm trên mọi thứ khác -> đóng trước
+                    const mdTop = window.__mdTopDialog && window.__mdTopDialog();
+                    if (mdTop) { try { mdTop.close(); } catch (e) { mdTop.open = false; } return true; }
                     const stSheet = document.getElementById('st-sheet');
                     if (stSheet && (stSheet.classList.contains('open') || stSheet.classList.contains('show'))) {
                         stSheet.classList.remove('show');
@@ -7458,6 +7472,8 @@
                 const exitOv = document.getElementById('exit-confirm-overlay');
                 function target() {
                     if (document.body.classList.contains('screen-animating')) return null;
+                    const md = window.__mdTopDialog && window.__mdTopDialog();
+                    if (md) return (md.shadowRoot && md.shadowRoot.querySelector('.container')) || md;
                     const sh = document.getElementById('st-sheet');
                     if (sh && (sh.classList.contains('open') || sh.classList.contains('show'))) return sh.querySelector('.st-sheet-box');
                     const ov = Array.from(document.querySelectorAll('.cl-overlay.open, dialog[open]')).filter(visible).sort((a, b) => z(b) - z(a))[0];
