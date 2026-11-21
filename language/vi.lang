@@ -406,3 +406,4 @@ metaeditor.saved_subtitle=Đã lưu phụ đề trong ứng dụng (không ghi v
 player.error_title=Lỗi khi phát
 player.error_desc=“{name}” có thể không được hỗ trợ. Quá trình phát có thể gặp một số vấn đề.
 player.error_code=Mã lỗi: {code}
+settings.download_android=Tải bản Android
