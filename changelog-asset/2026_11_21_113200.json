@@ -72,6 +72,10 @@
     {
       "content": "App Android: báo \"đã phản hồi\" ngay đầu trang nên không còn bị báo nhầm \"Trang không phản hồi\" khi CDN chậm hoặc có lỗi script",
       "icon": "bug_report"
+    },
+    {
+      "content": "Điện thoại: mọi dropdown/menu (Hẹn giờ, Thiết bị phát, Thêm nhạc, Tốc độ...) thành bottom sheet; thêm animation chuyển trang (Settings, danh sách phát, lyric...); nút Shuffle/Repeat/Tốc độ/Play bo vuông → bo tròn khi kích hoạt; chưa có bài thì chỉ còn các nút trên cùng và nút Thêm ở giữa",
+      "icon": "animation"
     }
   ],
   "en": [
@@ -146,6 +150,10 @@
     {
       "content": "Android app: the page now signals it is alive at the very top of <head>, so a slow CDN or a script error no longer triggers a false \"Page not responding\"",
       "icon": "bug_report"
+    },
+    {
+      "content": "Phone: every dropdown/menu (Sleep timer, Output device, Add media, Speed...) is now a bottom sheet; page-transition animations (Settings, playlist, lyrics...); Shuffle/Repeat/Speed/Play morph from rounded-square to round when active; with nothing loaded only the top buttons and a centred Add button remain",
+      "icon": "animation"
     }
   ]
 }
