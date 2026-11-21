@@ -24,6 +24,7 @@ public class MediaService extends Service {
     private boolean playing = false;
     private String title = "", artist = "";
     private long pos = 0, dur = 0;
+    private float speed = 0f;
     private Bitmap art;
 
     @Override
@@ -36,9 +37,9 @@ public class MediaService extends Service {
             @Override public void onSkipToNext() { cmd("next"); }
             @Override public void onSkipToPrevious() { cmd("prev"); }
             @Override public void onSeekTo(long p) { cmd("seek:" + p); }
-            @Override public void onStop() { if (playing) cmd("toggle"); }
+            @Override public void onStop() { clearSession(); stopSelf(); }
         });
-        session.setActive(true);
+        session.setActive(false);
     }
 
     private void cmd(String c) { if (MainActivity.instance != null) MainActivity.instance.sendCmd(c); }
@@ -56,9 +57,31 @@ public class MediaService extends Service {
             artist = nz(i.getStringExtra("artist"));
             pos = i.getLongExtra("pos", 0);
             dur = i.getLongExtra("dur", 0);
+            speed = i.getFloatExtra("speed", playing ? 1f : 0f);
         }
         publish();
         return START_NOT_STICKY;
+    }
+
+    private void clearSession() {
+        playing = false;
+        if (session != null) {
+            try {
+                session.setPlaybackState(new PlaybackState.Builder()
+                        .setState(PlaybackState.STATE_NONE, 0, 0f, SystemClock.elapsedRealtime())
+                        .build());
+                session.setMetadata(null);
+                session.setActive(false);
+            } catch (Exception ignored) {}
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= 24) stopForeground(STOP_FOREGROUND_REMOVE);
+            else stopForeground(true);
+        } catch (Exception ignored) {}
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (nm != null) nm.cancel(1);
+        } catch (Exception ignored) {}
     }
 
     private static String nz(String s) { return s == null ? "" : s; }
@@ -69,8 +92,13 @@ public class MediaService extends Service {
     }
 
     private void publish() {
+        if (title.isEmpty() && dur <= 0 && !playing) {
+            clearSession();
+            return;
+        }
+        if (session != null && !session.isActive()) session.setActive(true);
         MediaMetadata.Builder mb = new MediaMetadata.Builder()
-                .putString(MediaMetadata.METADATA_KEY_TITLE, title.isEmpty() ? "Media Player" : title)
+                .putString(MediaMetadata.METADATA_KEY_TITLE, title)
                 .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, dur);
         if (art != null) mb.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, art);
@@ -79,7 +107,7 @@ public class MediaService extends Service {
                 | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_STOP;
         session.setPlaybackState(new PlaybackState.Builder()
                 .setActions(actions)
-                .setState(playing ? PlaybackState.STATE_PLAYING : PlaybackState.STATE_PAUSED, pos, playing ? 1f : 0f, SystemClock.elapsedRealtime())
+                .setState(playing ? PlaybackState.STATE_PLAYING : PlaybackState.STATE_PAUSED, pos, playing ? (speed > 0f ? speed : 1f) : 0f, SystemClock.elapsedRealtime())
                 .build());
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -110,8 +138,16 @@ public class MediaService extends Service {
     }
 
     @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        clearSession();
+        stopSelf();
+        super.onTaskRemoved(rootIntent);
+    }
+
+    @Override
     public void onDestroy() {
-        if (session != null) { session.setActive(false); session.release(); }
+        clearSession();
+        if (session != null) { session.release(); session = null; }
         super.onDestroy();
     }
 
