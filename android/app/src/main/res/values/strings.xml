@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_desc">Điều khiển phát nhạc nhanh và xem lời bài hát trực tiếp trên màn hình chính</string>
+    <string name="widget_desc">Điều khiển phát nhạc nhanh, tiến trình phát và lời bài hát trên màn hình chính (kéo giãn để mở rộng)</string>
+    <string name="queue_widget_label">Media Player - Hàng đợi</string>
+    <string name="queue_widget_desc">Xem nhanh danh sách bài tiếp theo và chạm để phát ngay trên màn hình chính</string>
+    <string name="lyrics_widget_label">Media Player - Lời bài hát</string>
+    <string name="lyrics_widget_desc">Hiển thị lời bài hát đang phát (Synced / Static) trực tiếp trên màn hình chính</string>
 </resources>
