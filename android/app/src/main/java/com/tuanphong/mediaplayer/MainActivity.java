@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends Activity {
-    static final String APP_URL = "https://tuanphong3108.github.io/music-player/index.html";
+    static final String APP_URL = "https://tuanphong3108.github.io/music-player/index.html?android=true";
     static final String ASSET_HOST = "appassets.local";
     static MainActivity instance;
 
@@ -330,6 +330,18 @@ public class MainActivity extends Activity {
     protected void onSaveInstanceState(Bundle b) { super.onSaveInstanceState(b); }
 
     @Override
+    public void onConfigurationChanged(android.content.res.Configuration c) {
+        super.onConfigurationChanged(c);
+        callJs("window.__systemAccentChanged&&__systemAccentChanged()");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        callJs("window.__systemAccentChanged&&__systemAccentChanged()");
+    }
+
+    @Override
     protected void onDestroy() {
         if (instance == this) instance = null;
         super.onDestroy();
@@ -388,6 +400,18 @@ public class MainActivity extends Activity {
             i.putExtra("pos", posMs);
             i.putExtra("dur", durMs);
             startSvc(i);
+        }
+
+        /** Màu accent hệ thống (Material You, Android 12+); trả "" nếu không có. */
+        @JavascriptInterface
+        public String getSystemAccent() {
+            try {
+                if (Build.VERSION.SDK_INT >= 31) {
+                    int c = getResources().getColor(android.R.color.system_accent1_600, getTheme());
+                    return String.format("#%06X", c & 0xFFFFFF);
+                }
+            } catch (Throwable ignored) {}
+            return "";
         }
 
         @JavascriptInterface

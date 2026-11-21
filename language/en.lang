@@ -179,6 +179,7 @@ settings.dynamic_accent=Change accent color based on the playing track
 settings.dynamic_accent_desc=Analyzes the album art of the current track and uses its dominant color as the accent color for the whole interface, including the title bar and PiP. Automatically returns to your chosen color when a track has no album art or music has been stopped for over 10 seconds.
 settings.accent=Accent Color
 settings.accent_desc=Pick a vivid color to represent your M3 interface
+settings.accent_system=System
 settings.accent_purple=Purple
 settings.accent_lime=Lime
 settings.accent_cyan=Cyan

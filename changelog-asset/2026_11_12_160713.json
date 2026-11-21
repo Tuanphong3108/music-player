@@ -100,6 +100,10 @@
     {
       "content": "Android: thanh trạng thái và thanh điều hướng của app ăn theo màu accent của trang",
       "icon": "palette"
+    },
+    {
+      "content": "Trang Cài đặt trên điện thoại: thanh tìm kiếm thu thành nút, thanh trượt/dropdown xuống dòng chiếm đủ chiều ngang; Android thêm tuỳ chọn màu chủ đạo \"Hệ thống\" (Material You, mặc định); cập nhật Getting Started",
+      "icon": "settings"
     }
   ],
   "en": [
@@ -202,6 +206,10 @@
     {
       "content": "Android: the app's status and navigation bars follow the page's accent color",
       "icon": "palette"
+    },
+    {
+      "content": "Settings on phones: search bar collapses into a button, sliders/dropdowns use the full width; Android adds a \"System\" accent option (Material You, default); Getting Started updated",
+      "icon": "settings"
     }
   ]
 }

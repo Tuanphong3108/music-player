@@ -1278,9 +1278,23 @@
         .st-row-hidden { display: none !important; }
         @media (max-width: 760px) {
             .st-body.searching .st-sidebar { margin-left: 0; max-height: 0; padding: 0; border: none; overflow: hidden; }
-            #settings-header { padding: 12px 16px !important; gap: 8px !important; }
-            .st-title-normal, #settings-header h2 { font-size: calc(16px * var(--font-scale-factor, 1)) !important; }
-            #settings-dialog:not(.searching) #settings-header h2 { display: none; }
+            #settings-header { padding: 10px 12px !important; gap: 8px !important; }
+            .st-title-normal, #settings-header h2 { font-size: calc(18px * var(--font-scale-factor, 1)) !important; letter-spacing: 0 !important; }
+            #settings-dialog:not(.searching) #settings-header > div:first-child { flex: 1; min-width: 0; padding-left: 8px; }
+            #settings-dialog.searching #settings-header h2 { display: none; }
+            /* Thanh tìm kiếm thu thành nút tìm kiếm; bấm vào thì mở rộng ra */
+            #settings-dialog:not(.searching) .st-search { flex: 0 0 48px; width: 48px; max-width: 48px; padding: 0; margin: 0; justify-content: center; }
+            #settings-dialog:not(.searching) .st-search input { width: 0; flex: 0; opacity: 0; pointer-events: none; }
+            #settings-dialog:not(.searching) .st-search-clear { display: none !important; }
+            #settings-dialog.searching .st-search { max-width: none; margin: 0; }
+            #settings-dialog.searching #settings-close-btn { display: none; }
+            /* Hàng cài đặt: thanh trượt / dropdown xuống dòng, chiếm cả chiều ngang */
+            .st-pane { padding: 16px 16px 28px; gap: 20px; }
+            .st-pane > div:has(md-slider), .st-pane > div:has(md-outlined-select) { flex-direction: column; align-items: stretch !important; gap: 10px !important; }
+            .st-pane > div:has(md-slider) > div:last-child { width: 100%; }
+            .st-pane md-slider { flex: 1; width: auto !important; min-width: 0; }
+            .st-pane md-outlined-select { width: 100%; }
+            .st-tab { padding: 10px 16px; border-radius: 20px; }
         }
 
         /* ===== Khung báo lỗi phát tệp (Playback Error Overlay) ===== */
@@ -1349,6 +1363,10 @@
             font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .6; letter-spacing: .3px; user-select: text;
         }
 </style>
+<script>
+    // App Android (WebView) nạp trang với ?android=true
+    (function () { try { if (new URLSearchParams(location.search).get('android') === 'true') { window.IS_ANDROID_APP = true; document.documentElement.classList.add('is-android-app'); } } catch (e) {} })();
+</script>
 </head>
 <body>
     <md-dialog id="confirm-dialog" type="alert" style="max-width:min(92vw,420px); font-family:var(--app-font);">
@@ -3231,7 +3249,7 @@
             perf: loadPerf(),   // Hiệu năng & hiệu ứng: bật/tắt từng thành phần
             wakeLockEnabled: localStorage.getItem('settings_wake_lock') !== 'false', // Mặc định ON
             theme: localStorage.getItem('settings_theme') || 'dark',
-            accent: localStorage.getItem('settings_accent') || 'purple',
+            accent: localStorage.getItem('settings_accent') || (window.IS_ANDROID_APP ? 'system' : 'purple'),
             dynamicAccent: localStorage.getItem('settings_dynamic_accent') !== 'false' // Mặc định ON
         };
 
@@ -3920,6 +3938,16 @@
 
         // Màu chủ đạo động (trích từ album art bài đang phát). null = dùng màu người dùng chọn
         let dynamicAccentHex = null;
+        // Màu accent của hệ thống Android (Material You) do app native cung cấp
+        let systemAccentHex = null;
+        function readSystemAccent() {
+            try {
+                const h = window.AndroidBridge && AndroidBridge.getSystemAccent && AndroidBridge.getSystemAccent();
+                systemAccentHex = /^#[0-9a-f]{6}$/i.test(h || '') ? h : null;
+            } catch (e) { systemAccentHex = null; }
+        }
+        readSystemAccent();
+        window.__systemAccentChanged = () => { readSystemAccent(); try { applyAccentColor(); } catch (e) {} };
         let dynamicAccentResetTimer = null;
 
         // Áp các class hiệu năng lên <html> theo đúng settings.perf hiện tại
@@ -3994,6 +4022,7 @@
         // Lấy bảng màu đang hiệu lực (ưu tiên màu động nếu đang bật và có)
         function getActivePalette(resolvedMode) {
             if (settings.dynamicAccent && dynamicAccentHex) return buildPaletteFromHex(dynamicAccentHex, resolvedMode);
+            if (settings.accent === 'system' && systemAccentHex) return buildPaletteFromHex(systemAccentHex, resolvedMode);
             return accents[settings.accent] ? accents[settings.accent][resolvedMode] : accents.purple[resolvedMode];
         }
 
@@ -7362,6 +7391,10 @@
         const settingDynamicAccent = document.getElementById('setting-dynamic-accent');
         const settingTheme = document.getElementById('setting-theme');
         const settingAccent = document.getElementById('setting-accent');
+        if (window.IS_ANDROID_APP || (window.AndroidBridge && AndroidBridge.getSystemAccent)) {
+            settingAccent.insertAdjacentHTML('afterbegin', '<md-select-option value="system"><div slot="headline" data-i18n="settings.accent_system">Hệ thống (System)</div></md-select-option>');
+            try { applyTranslations(currentLangDict, settingAccent); } catch (e) {}
+        }
 
         settingMainLyric.selected = settings.showMainLyric;
         settingPipLyric.selected = settings.showPipLyric;

@@ -179,6 +179,7 @@ settings.dynamic_accent=Thay đổi màu chủ đạo dựa trên bài đang ph�
 settings.dynamic_accent_desc=Phân tích ảnh bìa (album art) của bài đang phát để lấy màu nổi bật nhất làm màu chủ đạo cho toàn bộ giao diện, kể cả thanh tiêu đề và PiP. Tự trả về màu bạn đã chọn khi bài không có ảnh bìa hoặc nhạc dừng quá 10 giây.
 settings.accent=Màu chủ đạo (Accent Color)
 settings.accent_desc=Lựa chọn màu sắc rực rỡ đại diện cho giao diện M3 của bạn
+settings.accent_system=Hệ thống (System)
 settings.accent_purple=Tím (Purple)
 settings.accent_lime=Chanh (Lime)
 settings.accent_cyan=Lam (Cyan)
