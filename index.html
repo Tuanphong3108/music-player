@@ -1225,6 +1225,9 @@
         .st-tab.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-primary-container); }
         .st-tab.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; color: var(--md-sys-color-primary); }
         .st-tab-spacer { flex: 1; min-height: 12px; }
+        .st-tab-link { text-decoration: none; color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent); }
+        .st-tab-link:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent); }
+        html.is-android-app #st-android-apk-btn { display: none !important; }
         .st-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
         .st-pane { display: none; flex-direction: column; gap: 32px; padding: 32px 6%; }
         .st-pane.active { display: flex; }
@@ -1601,6 +1604,7 @@
                     <button class="st-tab" data-tab="mixer"><span class="material-symbols-outlined">equalizer</span><span data-i18n="settings.cat_mixer">Bộ trộn âm thanh</span></button>
                     <button class="st-tab" data-tab="performance"><span class="material-symbols-outlined">speed</span><span data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</span></button>
                     <div class="st-tab-spacer"></div>
+                    <a class="st-tab st-tab-link" id="st-android-apk-btn" href="https://github.com/Tuanphong3108/music-player/releases/latest/download/MediaPlayer.apk" target="_blank" rel="noopener"><span class="material-symbols-outlined">android</span><span data-i18n="settings.download_android">Tải bản Android</span></a>
                     <button class="st-tab" data-tab="about"><span class="material-symbols-outlined">info</span><span data-i18n="about.title">About</span></button>
                 </nav>
                 <div class="st-content">
@@ -7241,7 +7245,8 @@
             'lyric.search_placeholder': 'Search lyrics on LRCLIB',
             'metaeditor.saved_disk': 'Directly overwrote the original file on disk successfully!',
             'metaeditor.saved_download': 'The browser has no permission to write to the original file, so the MP3 with updated tags was downloaded automatically — use the downloaded file to replace the original if you want to keep it permanently.',
-            'metaeditor.saved_success': 'Metadata saved successfully!'
+            'metaeditor.saved_success': 'Metadata saved successfully!',
+            'settings.download_android': 'Download Android app'
         };
         async function loadLanguage(lang) {
             try {
