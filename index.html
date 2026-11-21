@@ -2,6 +2,15 @@
 <html lang="vi">
 <head>
     <script>
+    // Báo ngay cho app Android rằng trang đã chạy được JS (chạy đầu tiên trong <head>) để KHÔNG bị báo nhầm "Trang không phản hồi":
+    // trước đây pongReady nằm sâu trong script lớn nên chỉ cần CDN chậm hoặc 1 lỗi cú pháp ở đâu đó là app tưởng trang treo.
+    (function () {
+        function pong() { try { var AB = window.AndroidBridge; if (AB && AB.pongReady) AB.pongReady(); } catch (e) {} }
+        pong();
+        window.__androidPing = pong;   // script chính sẽ ghi đè bằng bản đầy đủ (đồng bộ ngôn ngữ, kiểm tra cập nhật)
+    })();
+    </script>
+    <script>
     // === Yêu cầu tối thiểu: trình duyệt Chromium trên máy tính/laptop ===
     // Kiểm tra bằng nhiều tín hiệu để không bị qua mặt bởi "Trang web cho máy tính" (PC View) trên điện thoại.
     (function () {

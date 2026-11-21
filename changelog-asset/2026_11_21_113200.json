@@ -68,6 +68,10 @@
     {
       "content": "App Android: video phát thẳng theo từng đoạn (hỗ trợ HTTP Range) thay vì nạp cả tệp vào RAM — mở video nặng không còn khựng, tua nhanh hơn",
       "icon": "movie"
+    },
+    {
+      "content": "App Android: báo \"đã phản hồi\" ngay đầu trang nên không còn bị báo nhầm \"Trang không phản hồi\" khi CDN chậm hoặc có lỗi script",
+      "icon": "bug_report"
     }
   ],
   "en": [
@@ -138,6 +142,10 @@
     {
       "content": "Android app: video now streams in chunks (HTTP Range) instead of loading the whole file into RAM — large videos open without stalling and seek faster",
       "icon": "movie"
+    },
+    {
+      "content": "Android app: the page now signals it is alive at the very top of <head>, so a slow CDN or a script error no longer triggers a false \"Page not responding\"",
+      "icon": "bug_report"
     }
   ]
 }
