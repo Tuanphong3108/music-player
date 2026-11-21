@@ -315,7 +315,7 @@
             background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
             width: 14px; height: 14px; border-radius: 4px; display: none; align-items: center; justify-content: center;
         }
-        .btn-m3.repeat-one .repeat-badge { display: flex; }
+        .btn-m3.repeat-one .repeat-badge { display: none; }   /* dùng icon repeat_one thay cho badge số 1 */
 
         .btn-play {
             width: 64px; height: 64px; background: var(--md-sys-color-primary-container);
@@ -4807,7 +4807,7 @@
                 repeatBtnEl.classList.toggle('active', repeatMode > 0);
                 repeatBtnEl.classList.toggle('repeat-one', repeatMode === 2);
                 const badge = repeatBtnEl.querySelector('.repeat-badge');
-                if (badge) badge.innerText = repeatMode === 2 ? '1' : '';
+                { const ic = repeatBtnEl.querySelector('.material-symbols-outlined'); if (ic) ic.textContent = repeatMode === 2 ? 'repeat_one' : 'repeat'; }
             }
         })();
 
@@ -6262,7 +6262,7 @@
             repeatMode = (repeatMode + 1) % 3;
             this.classList.toggle('active', repeatMode > 0);
             this.classList.toggle('repeat-one', repeatMode === 2);
-            this.querySelector('.repeat-badge').innerText = repeatMode === 2 ? '1' : '';
+            this.querySelector('.material-symbols-outlined').textContent = repeatMode === 2 ? 'repeat_one' : 'repeat';
             localStorage.setItem('settings_repeat_mode', repeatMode);
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
         });
@@ -6628,7 +6628,7 @@
             const b = document.getElementById('repeat-btn');
             b.classList.toggle('active', repeatMode > 0);
             b.classList.toggle('repeat-one', repeatMode === 2);
-            b.querySelector('.repeat-badge').innerText = repeatMode === 2 ? '1' : '';
+            b.querySelector('.material-symbols-outlined').textContent = repeatMode === 2 ? 'repeat_one' : 'repeat';
             if (typeof updatePiPUI === 'function') updatePiPUI();
         }
         function isEditorOpen() {
@@ -7841,7 +7841,7 @@
             shuffleBtn.classList.toggle('active', isShuffle);
             repeatBtn.classList.toggle('active', repeatMode > 0);
             repeatBadge.innerText = repeatMode === 2 ? '1' : '';
-            repeatBadge.style.display = repeatMode === 2 ? 'flex' : 'none';
+            { const ic = repeatBtn.querySelector('.material-symbols-outlined'); if (ic) ic.textContent = repeatMode === 2 ? 'repeat_one' : 'repeat'; }
 
             const playlistSection = doc.getElementById('pip-playlist-section');
             if (playlistSection && playlistSection.style.display !== 'none') {
@@ -7964,7 +7964,7 @@
                         position: absolute; font-size: calc(9px * var(--font-scale-factor, 1)); font-weight: 900; 
                         bottom: 6px; right: 6px; background: var(--pip-primary, #D0BCFF); color: var(--pip-on-primary, #381E72);
                         width: 14px; height: 14px; border-radius: 4px; 
-                        display: none; align-items: center; justify-content: center;
+                        display: none !important; align-items: center; justify-content: center;
                     }
 
                     /* Video trong PiP: khung video quyết định kích thước, nút trên/dưới tự ẩn và hiện khi rê chuột vào */
