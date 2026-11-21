@@ -7445,6 +7445,51 @@
                 } catch (e) { return false; }
             };
             window.__androidHandleBack = handleBackNavigation;
+
+            // ===== Predictive Back: xem trước theo ngón tay vuốt (Android 14+: app nhận tiến trình từ OnBackAnimationCallback) =====
+            (function () {
+                let el = null, dir = 1, timer = 0;
+                const z = (e) => { const v = parseFloat(getComputedStyle(e).zIndex); return Number.isFinite(v) ? v : 0; };
+                const visible = (e) => { const st = getComputedStyle(e); return st.display !== 'none' && st.visibility !== 'hidden' && parseFloat(st.opacity || '1') > 0.05; };
+                // Lớp trên cùng mà nút Back sẽ đóng — cùng thứ tự ưu tiên với handleBackNavigation
+                function target() {
+                    if (document.body.classList.contains('screen-animating')) return null;
+                    const sh = document.getElementById('st-sheet');
+                    if (sh && (sh.classList.contains('open') || sh.classList.contains('show'))) return sh.querySelector('.st-sheet-box');
+                    const ov = Array.from(document.querySelectorAll('.cl-overlay.open, dialog[open]')).filter(visible).sort((a, b) => z(b) - z(a))[0];
+                    if (ov) return ov.id === 'settings-overlay' ? document.getElementById('settings-dialog') : (ov.tagName === 'DIALOG' ? ov : (ov.firstElementChild || ov));
+                    const b = document.body.classList;
+                    if (b.contains('m-more-open')) return document.querySelector('.top-extra');
+                    if (b.contains('m-playlist-open')) return document.querySelector('.playlist-card');
+                    if (b.contains('lyrics-open')) return document.getElementById('lyric-overlay');
+                    return null;
+                }
+                function reset(animated) {
+                    const e = el; el = null; if (!e) return;
+                    clearTimeout(timer);
+                    e.style.transition = animated ? 'transform .25s cubic-bezier(.2,0,0,1), border-radius .25s' : 'none';
+                    e.style.transform = ''; e.style.borderRadius = '';
+                    timer = setTimeout(() => { e.style.transition = ''; e.style.willChange = ''; }, 320);
+                }
+                window.__pbStart = function (edge) {
+                    reset(false);
+                    el = target(); dir = edge === 1 ? -1 : 1;
+                    if (el) { clearTimeout(timer); el.style.transition = 'none'; el.style.willChange = 'transform'; }
+                };
+                window.__pbProgress = function (p) {
+                    if (!el) return;
+                    const k = Math.min(1, Math.max(0, p));
+                    el.style.transform = 'translateX(' + (dir * k * 24).toFixed(1) + 'px) scale(' + (1 - 0.1 * k).toFixed(3) + ')';
+                    el.style.borderRadius = Math.round(k * 28) + 'px';
+                };
+                window.__pbCancel = function () { reset(true); };
+                // Hoàn tất: để lớp tự đóng bằng animation của nó, sau đó trả style về (nếu lớp vẫn còn, ví dụ Settings chi tiết -> danh sách, thì trượt về chỗ cũ)
+                window.__pbCommit = function () {
+                    const e = el; if (!e) return;
+                    clearTimeout(timer);
+                    timer = setTimeout(() => { if (el === e) reset(true); }, 140);
+                };
+            })();
             try {
                 if (!window.__androidPopstateBound) {
                     window.__androidPopstateBound = true;

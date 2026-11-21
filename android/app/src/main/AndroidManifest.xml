@@ -17,6 +17,7 @@
         android:icon="@drawable/ic_launcher"
         android:usesCleartextTraffic="false"
         android:allowBackup="true"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
 
         <activity

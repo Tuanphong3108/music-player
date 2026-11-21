@@ -84,6 +84,10 @@
     {
       "content": "MediaSession chính xác từng giây, từng trạng thái: trang và khung app Android gửi đủ playing/paused/buffering/ended/error, vị trí chụp đúng thời điểm, tốc độ phát và vùng đã đệm; thông báo không bị dựng lại mỗi giây",
       "icon": "play_circle"
+    },
+    {
+      "content": "Hỗ trợ Predictive Back Gesture (Android 13+, bắt buộc từ Android 16): vuốt Back sẽ thu nhỏ và trượt lớp trên cùng (Settings, danh sách phát, Lyric, bottom sheet, hộp thoại) theo ngón tay, thả ra thì quay lại, vuốt ngược để huỷ",
+      "icon": "arrow_back"
     }
   ],
   "en": [
@@ -170,6 +174,10 @@
     {
       "content": "Per-second, per-state MediaSession: the page and the Android shell now send playing/paused/buffering/ended/error, a timestamped position, playback speed and buffered range; the notification is no longer rebuilt every second",
       "icon": "play_circle"
+    },
+    {
+      "content": "Predictive Back Gesture support (Android 13+, mandatory from Android 16): swiping Back shrinks and slides the top layer (Settings, playlist, lyrics, bottom sheets, dialogs) under your finger; release to go back, swipe back to cancel",
+      "icon": "arrow_back"
     }
   ]
 }

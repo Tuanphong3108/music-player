@@ -84,6 +84,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        setupPredictiveBack();
         instance = this;
         root = new FrameLayout(this);
         themeColor = getSharedPreferences("app", MODE_PRIVATE).getInt("theme", 0xFF1C1B1F);
@@ -1056,8 +1057,45 @@ public class MainActivity extends Activity {
         super.onActivityResult(req, res, data);
     }
 
+    // ===== Predictive Back (Android 13+ opt-in, mặc định bắt buộc từ Android 16) =====
+    // Đăng ký OnBackInvokedCallback thay cho onBackPressed. Từ API 34 dùng OnBackAnimationCallback để nhận tiến trình vuốt
+    // và chuyển cho trang chạy hiệu ứng xem trước (thu nhỏ + trượt lớp trên cùng) trước khi quyết định quay lại.
+    private Object backCallback;
+
+    private void setupPredictiveBack() {
+        if (Build.VERSION.SDK_INT < 33) return;
+        try {
+            final android.window.OnBackInvokedCallback cb;
+            if (Build.VERSION.SDK_INT >= 34) {
+                cb = new android.window.OnBackAnimationCallback() {
+                    @Override public void onBackStarted(android.window.BackEvent e) { callJs("window.__pbStart&&__pbStart(" + e.getSwipeEdge() + ")"); }
+                    @Override public void onBackProgressed(android.window.BackEvent e) { callJs("window.__pbProgress&&__pbProgress(" + e.getProgress() + "," + e.getSwipeEdge() + ")"); }
+                    @Override public void onBackCancelled() { callJs("window.__pbCancel&&__pbCancel()"); }
+                    @Override public void onBackInvoked() { callJs("window.__pbCommit&&__pbCommit()"); handleBack(); }
+                };
+            } else {
+                cb = new android.window.OnBackInvokedCallback() {
+                    @Override public void onBackInvoked() { handleBack(); }
+                };
+            }
+            backCallback = cb;
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, cb);
+        } catch (Throwable ignored) { backCallback = null; }
+    }
+
+    private void teardownPredictiveBack() {
+        if (Build.VERSION.SDK_INT >= 33 && backCallback != null) {
+            try { getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((android.window.OnBackInvokedCallback) backCallback); } catch (Throwable ignored) {}
+            backCallback = null;
+        }
+    }
+
     @Override
-    public void onBackPressed() {
+    public void onBackPressed() {   // Android < 13 (hoặc khi hệ thống vẫn gọi kiểu cũ)
+        handleBack();
+    }
+
+    private void handleBack() {
         if (customView != null) { web.getWebChromeClient().onHideCustomView(); return; }
         if (web != null && pageReady) {
             web.evaluateJavascript(
@@ -1215,6 +1253,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        teardownPredictiveBack();
         if (instance == this) instance = null;
         updateInstallPending = false;
         updateDownloadCancelled = true;
