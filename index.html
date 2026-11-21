@@ -2070,6 +2070,17 @@
                     </md-switch>
                 </div>
 
+                <div id="setting-battery-opt-row" style="display: none; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="settings.battery_opt">Tắt tối ưu hóa pin</span>
+                        <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.battery_opt_desc">Cho phép ứng dụng chạy nền không bị hệ thống hạn chế pin để phát nhạc liên tục, mượt mà hơn khi tắt màn hình hoặc chuyển sang ứng dụng khác.</span>
+                    </div>
+                    <md-switch icons id="setting-battery-opt">
+                        <span class="material-symbols-outlined" slot="on-icon">check</span>
+                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+
                 <div style="display: flex; justify-content: flex-start; padding-top: 12px;">
                     <md-text-button id="factory-reset-btn" type="button" data-i18n="settings.factory_reset" style="font-family: var(--app-font); --md-text-button-label-text-font: var(--app-font);">Đặt lại về cài đặt gốc</md-text-button>
                 </div>
@@ -7601,6 +7612,44 @@
                 } catch (e) {}
             };
             if (themeMeta) { new MutationObserver(sendTheme).observe(themeMeta, { attributes: true, attributeFilter: ['content'] }); sendTheme(); }
+
+            // Công tắc "Tắt tối ưu hóa pin" (chỉ hiện trên Android app)
+            (function () {
+                const row = document.getElementById('setting-battery-opt-row');
+                const sw = document.getElementById('setting-battery-opt');
+                if (!row || !sw) return;
+                row.style.display = 'flex';
+                const applyState = (ignored) => {
+                    const ok = !!ignored;
+                    sw.selected = ok;
+                    sw.disabled = ok;
+                    row.style.opacity = ok ? '0.6' : '1';
+                };
+                window.__onAndroidBatteryOptResult = applyState;
+                let initialIgnored = false;
+                try {
+                    if (AB && typeof AB.isIgnoringBatteryOptimizations === 'function') {
+                        initialIgnored = !!AB.isIgnoringBatteryOptimizations();
+                    }
+                } catch (e) {}
+                applyState(initialIgnored);
+                sw.addEventListener('change', () => {
+                    if (sw.disabled) {
+                        sw.selected = true;
+                        return;
+                    }
+                    if (!sw.selected) return;
+                    try {
+                        if (AB && typeof AB.requestIgnoreBatteryOptimizations === 'function') {
+                            AB.requestIgnoreBatteryOptimizations();
+                        } else {
+                            applyState(false);
+                        }
+                    } catch (e) {
+                        applyState(false);
+                    }
+                });
+            })();
 
             // Truyền phiên bản app Android vào trang và đối chiếu với Release mới nhất trên GitHub
             function parseVerParts(raw) {
