@@ -788,6 +788,16 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void setLanguage(String lang) {
+            if (lang == null) return;
+            String norm = lang.trim().toLowerCase().startsWith("en") ? "en" : "vi";
+            if (!norm.equals(appLang)) {
+                appLang = norm;
+                getSharedPreferences("app", MODE_PRIVATE).edit().putString("lang", norm).apply();
+            }
+        }
+
+        @JavascriptInterface
         public void pongReady() {
             pageResponded = true;
             pingHandler.removeCallbacks(loadTimeoutRunnable);
