@@ -6838,8 +6838,14 @@
                         const name = it.name || 'media';
                         const ext = (name.match(/\.([^.]+)$/) || ['', ''])[1].toLowerCase();
                         if (it.size > 0 && ((it.type || '').startsWith('video/') || VIDEO_EXTS.includes(ext))) {
-                            // Video: KHÔNG nạp cả tệp vào RAM, phát thẳng qua URL (app native hỗ trợ Range). Chỉ đọc từng đoạn khi cần (chia sẻ, thông tin kỹ thuật)
+                            // Video: dùng Blob/File chuẩn cho tệp nhỏ/vừa (<= 64MB) để tránh lỗi decode khi Range tua/đệm; chỉ dùng URL stream trực tiếp cho tệp lớn
                             const url = it.url, size = it.size;
+                            if (size <= 64 * 1024 * 1024) {
+                                const r = await fetch(url);
+                                const b = await r.blob();
+                                files.push(new File([b], name, { type: it.type || b.type || 'video/mp4', lastModified: it.modified || Date.now() }));
+                                continue;
+                            }
                             const f = new File([], name, { type: it.type || '', lastModified: it.modified || Date.now() });
                             Object.defineProperty(f, 'size', { get: () => size });
                             f.__nativeUrl = url;
