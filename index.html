@@ -515,6 +515,13 @@
             position: relative;
         }
         .cl-overlay.open .cl-dialog { transform: scale(1); opacity: 1; }
+        html.reduce-motion .cl-overlay,
+        html.reduce-motion .cl-dialog,
+        html.reduce-motion .lyric-overlay,
+        html.reduce-motion .playlist-card,
+        html.reduce-motion .player-shell {
+            transition: none !important;
+        }
         
         .cl-header {
             padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
@@ -7156,6 +7163,9 @@
             window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
             const handleBackNavigation = function () {
                 try {
+                    if (document.body.classList.contains('screen-animating')) {
+                        return true;
+                    }
                     const stSheet = document.getElementById('st-sheet');
                     if (stSheet && (stSheet.classList.contains('open') || stSheet.classList.contains('show'))) {
                         stSheet.classList.remove('show');
@@ -8539,16 +8549,26 @@
             const originX = btnCx - window.innerWidth / 2;
             const originY = btnCy - window.innerHeight / 2;
             settingsDialog.style.transformOrigin = `calc(50% + ${originX}px) calc(50% + ${originY}px)`;
+            const reduceAnim = document.documentElement.classList.contains('reduce-motion');
+            if (!reduceAnim) {
+                document.body.classList.add('screen-animating');
+                setTimeout(() => document.body.classList.remove('screen-animating'), 480);
+            }
             settingsOverlay.classList.add('open');
         });
 
         settingsCloseBtn.addEventListener('click', () => {
+            const reduceAnim = document.documentElement.classList.contains('reduce-motion');
+            if (!reduceAnim) {
+                document.body.classList.add('screen-animating');
+                setTimeout(() => document.body.classList.remove('screen-animating'), 450);
+            }
             settingsOverlay.classList.remove('open');
-            setTimeout(() => { if (typeof resetSettingsNavigation === 'function') resetSettingsNavigation(); }, 450);
+            setTimeout(() => { if (typeof resetSettingsNavigation === 'function') resetSettingsNavigation(); }, reduceAnim ? 0 : 450);
             setTimeout(() => {
                 settingsBtn.classList.add('cl-bounce-anim');
                 setTimeout(() => settingsBtn.classList.remove('cl-bounce-anim'), 600);
-            }, 400); 
+            }, reduceAnim ? 0 : 400); 
         });
 
         settingsOverlay.addEventListener('click', (e) => {
