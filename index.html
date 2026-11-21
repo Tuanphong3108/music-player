@@ -4932,9 +4932,11 @@
             const audioFiles = [];
             const lrcFiles = [];
             let lastAutoPlayIndex = -1;
-            
+            const disallowVideoOnAndroid = !!(window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || document.documentElement.classList.contains('is-android-app'));
+
             Array.from(files).forEach(file => {
                 if (file.name.toLowerCase().endsWith('.lrc')) lrcFiles.push(file);
+                else if (disallowVideoOnAndroid && isVideoFile(file)) return;
                 else if (file.type.startsWith('audio/') || isVideoFile(file) || file.name.toLowerCase().endsWith('.mp3') || file.name.toLowerCase().endsWith('.m4a')) audioFiles.push(file);
             });
 
@@ -6801,8 +6803,28 @@
 
         // --- UI điện thoại: lớp m-ui chỉ bật trên Android (?android=true hoặc User-Agent Android) ---
         (function () {
-            const isAndroidUi = !!(window.IS_ANDROID_DEVICE || window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || /Android/i.test(navigator.userAgent || ''));
-            document.documentElement.classList.toggle('m-ui', isAndroidUi);
+            const hasAndroidParam = /[?&]android=true/.test(location.search);
+            const isAndroidDevice = !!(window.IS_ANDROID_DEVICE || window.IS_ANDROID_APP || hasAndroidParam || /Android/i.test(navigator.userAgent || ''));
+            const isAndroidAudioOnly = isAndroidDevice && hasAndroidParam;
+            document.documentElement.classList.toggle('m-ui', isAndroidDevice);
+            document.documentElement.classList.toggle('is-android-audio-only', isAndroidAudioOnly);
+            if (isAndroidAudioOnly) {
+                const applyAndroidAudioLabels = () => {
+                    const en = /^en/i.test(localStorage.getItem('settings_language') || '');
+                    const fHead = document.querySelector('#btn-fs-pick-files [slot="headline"]');
+                    const dHead = document.querySelector('#btn-fs-pick-directory [slot="headline"]');
+                    const trig = document.getElementById('add-music-trigger');
+                    const finp = document.getElementById('file-input');
+                    if (fHead) fHead.textContent = en ? 'Choose music files' : 'Chọn tệp nhạc';
+                    if (dHead) dHead.textContent = en ? 'Choose music folder' : 'Chọn thư mục nhạc';
+                    if (trig) trig.title = en ? 'Add music' : 'Thêm nhạc';
+                    if (finp) finp.setAttribute('accept', 'audio/*,.lrc');
+                };
+                applyAndroidAudioLabels();
+                window.__applyAndroidAudioLabels = applyAndroidAudioLabels;
+                const langSel = document.getElementById('setting-language');
+                if (langSel) langSel.addEventListener('change', () => setTimeout(applyAndroidAudioLabels, 60));
+            }
             if (isAndroidUi) { try { updateFsUI(); } catch (e) {} }
             else document.body.classList.remove('m-playlist-open', 'm-more-open');
             document.getElementById('m-playlist-btn').addEventListener('click', () => {
@@ -6840,10 +6862,12 @@
             window.__nativeOpenFiles = async function (list) {
                 try {
                     const files = [];
+                    const disallowVideoOnAndroid = !!(window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || document.documentElement.classList.contains('is-android-app'));
                     for (const it of list || []) {
                         const name = it.name || 'media';
                         const ext = (name.match(/\.([^.]+)$/) || ['', ''])[1].toLowerCase();
-                        if (it.size > 0 && ((it.type || '').startsWith('video/') || VIDEO_EXTS.includes(ext))) {
+                        if ((it.type || '').startsWith('video/') || VIDEO_EXTS.includes(ext)) {
+                            if (disallowVideoOnAndroid) continue;
                             // Video: phát trực tiếp qua URL stream HTTP Range của app native (tránh fetch() tải nguyên tệp vào RAM và tránh mở decoder phụ)
                             const url = it.url, size = it.size;
                             const f = new File([], name, { type: it.type || 'video/mp4', lastModified: it.modified || Date.now() });
