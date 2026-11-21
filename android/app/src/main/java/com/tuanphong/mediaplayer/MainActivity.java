@@ -44,6 +44,19 @@ public class MainActivity extends Activity {
     private int nextId = 1;
     private boolean pageReady = false;
     private final List<JSONObject> pending = new ArrayList<>();
+    private final android.os.Handler pingHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private boolean appLeftHome = false;
+    private boolean pageResponded = false;
+    private boolean hangAlertShown = false;
+    private android.view.View hangOverlay = null;
+    private final Runnable loadTimeoutRunnable = () -> {
+        if (appLeftHome || pageResponded) return;
+        showUnresponsiveDialog();
+    };
+    private final Runnable pingTimeoutRunnable = () -> {
+        if (appLeftHome || pageResponded) return;
+        showUnresponsiveDialog();
+    };
 
     @Override
     protected void onCreate(Bundle b) {
@@ -109,6 +122,7 @@ public class MainActivity extends Activity {
                 if (url.startsWith("https://tuanphong3108.github.io/")) {
                     pageReady = true;
                     flushPending();
+                    if (!appLeftHome && !pageResponded) sendHandshakePing();
                 } else pageReady = false;
             }
         });
@@ -149,7 +163,110 @@ public class MainActivity extends Activity {
 
         if (b != null) web.restoreState(b);
         else web.loadUrl(isOnline() ? APP_URL : APP_URL); // SW của trang tự phục vụ offline; lỗi thì rơi về offline.html
+        armLoadWatchdog();
         handleIntent(getIntent());
+    }
+
+    private void armLoadWatchdog() {
+        appLeftHome = false;
+        pageResponded = false;
+        hangAlertShown = false;
+        hideUnresponsiveDialog();
+        pingHandler.removeCallbacks(loadTimeoutRunnable);
+        pingHandler.removeCallbacks(pingTimeoutRunnable);
+        pingHandler.postDelayed(loadTimeoutRunnable, 5000);
+    }
+
+    private void cancelWatchdogOnLeave() {
+        appLeftHome = true;
+        pingHandler.removeCallbacks(loadTimeoutRunnable);
+        pingHandler.removeCallbacks(pingTimeoutRunnable);
+    }
+
+    private void sendHandshakePing() {
+        if (appLeftHome || pageResponded || hangAlertShown) return;
+        pingHandler.removeCallbacks(loadTimeoutRunnable);
+        pingHandler.removeCallbacks(pingTimeoutRunnable);
+        pingHandler.postDelayed(pingTimeoutRunnable, 5000);
+        callJs("window.__androidPing&&window.__androidPing()");
+    }
+
+    private void showUnresponsiveDialog() {
+        if (appLeftHome || pageResponded || hangAlertShown) return;
+        hangAlertShown = true;
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed() || hangOverlay != null) return;
+            android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+            box.setOrientation(android.widget.LinearLayout.VERTICAL);
+            box.setGravity(android.view.Gravity.CENTER);
+            int pad = (int) (28 * getResources().getDisplayMetrics().density);
+            box.setPadding(pad, pad, pad, pad);
+            box.setBackgroundColor(0xEE141218);
+            box.setClickable(true);
+            box.setFocusable(true);
+
+            android.widget.TextView title = new android.widget.TextView(this);
+            title.setText("Trang không phản hồi");
+            title.setTextColor(0xFFFFFFFF);
+            title.setTextSize(20f);
+            title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+            title.setGravity(android.view.Gravity.CENTER);
+
+            android.widget.TextView desc = new android.widget.TextView(this);
+            desc.setText("Ứng dụng đã chờ quá thời gian nhưng không nhận được phản hồi từ trang web.");
+            desc.setTextColor(0xFFD0C9DC);
+            desc.setTextSize(14f);
+            desc.setGravity(android.view.Gravity.CENTER);
+            android.widget.LinearLayout.LayoutParams descLp = new android.widget.LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            descLp.topMargin = (int) (10 * getResources().getDisplayMetrics().density);
+            descLp.bottomMargin = (int) (22 * getResources().getDisplayMetrics().density);
+            desc.setLayoutParams(descLp);
+
+            android.widget.Button restartBtn = new android.widget.Button(this);
+            restartBtn.setText("Restart app");
+            restartBtn.setAllCaps(false);
+            restartBtn.setTextColor(0xFF1C1B1F);
+            restartBtn.setTextSize(15f);
+            restartBtn.setTypeface(restartBtn.getTypeface(), android.graphics.Typeface.BOLD);
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(0xFFD0BCFF);
+            bg.setCornerRadius(999f);
+            restartBtn.setBackground(bg);
+            int btnPadH = (int) (28 * getResources().getDisplayMetrics().density);
+            int btnPadV = (int) (12 * getResources().getDisplayMetrics().density);
+            restartBtn.setPadding(btnPadH, btnPadV, btnPadH, btnPadV);
+            restartBtn.setOnClickListener(v -> restartApp());
+
+            box.addView(title);
+            box.addView(desc);
+            box.addView(restartBtn);
+            hangOverlay = box;
+            root.addView(hangOverlay, new FrameLayout.LayoutParams(-1, -1));
+        });
+    }
+
+    private void hideUnresponsiveDialog() {
+        runOnUiThread(() -> {
+            if (hangOverlay != null) {
+                root.removeView(hangOverlay);
+                hangOverlay = null;
+            }
+        });
+    }
+
+    private void restartApp() {
+        pingHandler.removeCallbacks(loadTimeoutRunnable);
+        pingHandler.removeCallbacks(pingTimeoutRunnable);
+        try {
+            Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+        } catch (Throwable ignored) {}
+        finish();
+        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     private int themeColor = 0xFF1C1B1F;
@@ -338,6 +455,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
+        cancelWatchdogOnLeave();
         callJs("window.__onAndroidLeaveApp&&window.__onAndroidLeaveApp()");
     }
 
@@ -351,6 +469,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
+        cancelWatchdogOnLeave();
         if (Build.VERSION.SDK_INT >= 26 && !isInPictureInPictureMode()) {
             callJs("window.__onAndroidLeaveApp&&window.__onAndroidLeaveApp()");
         }
@@ -359,6 +478,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        appLeftHome = false;
+        if (!pageResponded && !hangAlertShown) {
+            pingHandler.removeCallbacks(loadTimeoutRunnable);
+            pingHandler.removeCallbacks(pingTimeoutRunnable);
+            pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, 5000);
+            if (pageReady) sendHandshakePing();
+        }
         callJs("window.__systemAccentChanged&&__systemAccentChanged()");
         callJs("window.__onAndroidPipModeChanged&&window.__onAndroidPipModeChanged(false)");
     }
@@ -366,6 +492,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (instance == this) instance = null;
+        pingHandler.removeCallbacks(loadTimeoutRunnable);
+        pingHandler.removeCallbacks(pingTimeoutRunnable);
         try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {}
         super.onDestroy();
     }
@@ -429,6 +557,14 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void setState(boolean playing, String title, String artist, long posMs, long durMs) {
             setState(playing, title, artist, posMs, durMs, playing ? 1f : 0f);
+        }
+
+        @JavascriptInterface
+        public void pongReady() {
+            pageResponded = true;
+            pingHandler.removeCallbacks(loadTimeoutRunnable);
+            pingHandler.removeCallbacks(pingTimeoutRunnable);
+            hideUnresponsiveDialog();
         }
 
         @JavascriptInterface
