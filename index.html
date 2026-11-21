@@ -6724,10 +6724,26 @@
             window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
             window.__androidPing = function () {
                 try {
+                    const lang = localStorage.getItem('settings_language') || 'vi';
+                    if (AB && AB.setLanguage) AB.setLanguage(lang);
                     if (AB && AB.pongReady) AB.pongReady();
                 } catch (e) {}
             };
             window.__androidPing();
+            try {
+                const syncNativeLang = () => {
+                    try {
+                        const lang = localStorage.getItem('settings_language') || 'vi';
+                        if (AB && AB.setLanguage) AB.setLanguage(lang);
+                    } catch (e) {}
+                };
+                const langSel = document.getElementById('setting-language');
+                if (langSel) langSel.addEventListener('change', () => setTimeout(syncNativeLang, 50));
+                window.addEventListener('storage', (ev) => {
+                    if (ev && ev.key === 'settings_language') syncNativeLang();
+                });
+                syncNativeLang();
+            } catch (e) {}
             window.__onAndroidLeaveApp = function () {
                 try {
                     const tr = playlist[currentIndex];
