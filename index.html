@@ -1199,6 +1199,10 @@
         #font-manage-dialog .fnt-row-name { font-weight: 700; font-size: calc(16px * var(--font-scale-factor, 1)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #android-update-banner { display: none; position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 4800; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent); border-radius: 24px; padding: 14px 18px; box-shadow: 0 12px 32px rgba(0,0,0,.45); align-items: center; justify-content: space-between; gap: 12px; }
         #android-update-banner.show { display: flex; }
+        #android-update-progress-wrap { display: none; margin-top: 8px; flex-direction: column; gap: 4px; }
+        #android-update-progress-wrap.show { display: flex; }
+        #android-update-progress-track { width: 100%; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 20%, transparent); overflow: hidden; }
+        #android-update-progress-fill { height: 100%; width: 0%; border-radius: 999px; background: var(--md-sys-color-primary); transition: width .2s ease; }
         #font-manage-dialog .fnt-row-tag { flex-shrink: 0; font-size: calc(11px * var(--font-scale-factor, 1)); font-weight: 700; padding: 2px 10px; border-radius: 8px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
         #font-manage-dialog .fnt-row.current { border-color: var(--md-sys-color-primary); }
         #font-manage-dialog .fnt-row-actions { display: flex; align-items: center; flex-shrink: 0; }
@@ -2155,11 +2159,15 @@
     <iframe id="metadata-iframe" style="position: fixed; top: 0; right: calc(-1 * var(--vw)); width: var(--vw); height: var(--vh); border: none; z-index: 4000; transition: right 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); background: transparent;" srcdoc=""></iframe>
 
     <div id="android-update-banner" role="region" aria-live="polite">
-        <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+        <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
             <span class="material-symbols-outlined" style="font-size:26px; flex-shrink:0; font-variation-settings:'FILL' 1;">system_update</span>
-            <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+            <div style="display:flex; flex-direction:column; gap:2px; min-width:0; flex:1;">
                 <strong id="android-update-title" style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:800;">Có bản cập nhật Android mới</strong>
                 <span id="android-update-sub" style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                <div id="android-update-progress-wrap">
+                    <div id="android-update-progress-track"><div id="android-update-progress-fill"></div></div>
+                    <span id="android-update-progress-text" style="font-size: calc(11px * var(--font-scale-factor, 1)); font-weight:700; opacity:.9;"></span>
+                </div>
             </div>
         </div>
         <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
@@ -6785,13 +6793,45 @@
                         : null;
                     const dlUrl = (apkAsset && apkAsset.browser_download_url) || rel.html_url || 'https://github.com/Tuanphong3108/music-player/releases';
                     const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
+                    const progWrap = document.getElementById('android-update-progress-wrap');
+                    const progFill = document.getElementById('android-update-progress-fill');
+                    const progText = document.getElementById('android-update-progress-text');
+                    const btnInner = document.getElementById('android-update-btn');
                     if (titleEl) titleEl.textContent = isEn ? 'Android app update available' : 'Có bản cập nhật Android mới';
                     if (subEl) subEl.textContent = isEn
                         ? `Current ${curVerName || curVerCode} → ${displayVer}`
                         : `Hiện tại ${curVerName || curVerCode} → ${displayVer}`;
-                    if (linkEl) linkEl.href = dlUrl;
+                    if (linkEl) {
+                        linkEl.href = dlUrl;
+                        linkEl.onclick = function (ev) {
+                            if (AB && AB.startUpdateDownload && apkAsset && apkAsset.browser_download_url) {
+                                ev.preventDefault();
+                                if (btnInner) btnInner.disabled = true;
+                                if (progWrap) progWrap.classList.add('show');
+                                if (progFill) progFill.style.width = '0%';
+                                if (progText) progText.textContent = isEn ? 'Downloading update... 0%' : 'Đang tải bản cập nhật... 0%';
+                                AB.startUpdateDownload(apkAsset.browser_download_url);
+                            }
+                        };
+                    }
+                    window.__onAndroidUpdateProgress = function (pct, doneBytes, totalBytes) {
+                        if (!progWrap) progWrap.classList.add('show');
+                        if (pct >= 0) {
+                            if (progFill) progFill.style.width = pct + '%';
+                            if (progText) progText.textContent = (isEn ? 'Downloading update... ' : 'Đang tải bản cập nhật... ') + pct + '%';
+                        } else {
+                            const mb = (doneBytes / (1024 * 1024)).toFixed(2);
+                            if (progText) progText.textContent = (isEn ? `Downloading... ${mb} MB` : `Đang tải... ${mb} MB`);
+                        }
+                        if (pct >= 100 && progText) {
+                            progText.textContent = isEn ? 'Opening installer...' : 'Đang mở trình cài đặt...';
+                        }
+                    };
+                    window.__onAndroidUpdateError = function (errMsg) {
+                        if (btnInner) btnInner.disabled = false;
+                        if (progText) progText.textContent = (isEn ? 'Download failed: ' : 'Lỗi tải: ') + errMsg;
+                    };
                     if (dismissEl) dismissEl.textContent = isEn ? 'Later' : 'Để sau';
-                    const btnInner = document.getElementById('android-update-btn');
                     if (btnInner) btnInner.textContent = isEn ? 'Update' : 'Cập nhật';
                     banner.classList.add('show');
                 } catch (e) {}
