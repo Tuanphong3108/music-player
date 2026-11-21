@@ -513,7 +513,7 @@ public class MainActivity extends Activity {
             int btnPadV = (int) (12 * getResources().getDisplayMetrics().density);
 
             android.widget.Button waitBtn = new android.widget.Button(this);
-            waitBtn.setText("Wait");
+            waitBtn.setText(en ? "Wait" : "Chờ");
             waitBtn.setAllCaps(false);
             waitBtn.setTextColor(0xFFE6E0E9);
             waitBtn.setTextSize(15f);
@@ -521,7 +521,8 @@ public class MainActivity extends Activity {
             android.graphics.drawable.GradientDrawable waitBg = new android.graphics.drawable.GradientDrawable();
             waitBg.setColor(0xFF332D41);
             waitBg.setCornerRadius(999f);
-            waitBtn.setBackground(waitBg);
+            waitBtn.setBackground(pillRipple(waitBg, 0x33FFFFFF));
+            pillReset(waitBtn);
             waitBtn.setPadding(btnPadH, btnPadV, btnPadH, btnPadV);
             waitBtn.setOnClickListener(v -> {
                 hangAlertShown = false;
@@ -538,7 +539,7 @@ public class MainActivity extends Activity {
             waitBtn.setLayoutParams(waitLp);
 
             android.widget.Button restartBtn = new android.widget.Button(this);
-            restartBtn.setText("Restart app");
+            restartBtn.setText(en ? "Restart app" : "Khởi động lại ứng dụng");
             restartBtn.setAllCaps(false);
             restartBtn.setTextColor(0xFF1C1B1F);
             restartBtn.setTextSize(15f);
@@ -546,7 +547,8 @@ public class MainActivity extends Activity {
             android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
             bg.setColor(0xFFD0BCFF);
             bg.setCornerRadius(999f);
-            restartBtn.setBackground(bg);
+            restartBtn.setBackground(pillRipple(bg, 0x33000000));
+            pillReset(restartBtn);
             restartBtn.setPadding(btnPadH, btnPadV, btnPadH, btnPadV);
             restartBtn.setOnClickListener(v -> restartApp());
 
@@ -559,6 +561,23 @@ public class MainActivity extends Activity {
             hangOverlay = box;
             root.addView(hangOverlay, new FrameLayout.LayoutParams(-1, -1));
         });
+    }
+
+    /** Nền bo tròn hoàn toàn + hiệu ứng ripple cũng bo theo, thay cho nền mặc định của Button. */
+    private android.graphics.drawable.Drawable pillRipple(android.graphics.drawable.GradientDrawable bg, int rippleColor) {
+        android.graphics.drawable.GradientDrawable mask = new android.graphics.drawable.GradientDrawable();
+        mask.setColor(0xFFFFFFFF);
+        mask.setCornerRadius(999f);
+        return new android.graphics.drawable.RippleDrawable(
+                android.content.res.ColorStateList.valueOf(rippleColor), bg, mask);
+    }
+
+    /** Bỏ độ cao/viền mặc định của Button để hình viên thuốc không bị méo. */
+    private void pillReset(android.widget.Button b) {
+        b.setMinHeight(0); b.setMinimumHeight(0); b.setMinWidth(0); b.setMinimumWidth(0);
+        b.setStateListAnimator(null);
+        b.setElevation(0f);
+        b.setSingleLine(true);
     }
 
     private void hideUnresponsiveDialog() {
