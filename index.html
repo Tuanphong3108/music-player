@@ -984,6 +984,19 @@
             html.m-ui body.lyrics-open .main-content {
                 position: relative;
                 z-index: 2510;
+                background: transparent !important;
+                pointer-events: none;
+            }
+            html.m-ui body.lyrics-open .visual-stage {
+                background: transparent !important;
+                overflow: visible !important;
+                pointer-events: none;
+            }
+            html.m-ui body.lyrics-open .visual-stage > :not(#fs-stage-overlay):not(.lyric-overlay) {
+                pointer-events: none;
+            }
+            html.m-ui body.lyrics-open #fs-stage-overlay {
+                pointer-events: auto;
             }
             html.m-ui body.lyrics-open .lyric-overlay {
                 position: fixed !important;
@@ -995,6 +1008,7 @@
                 border-radius: 28px 0 0 28px !important;
                 padding: 36px 20px 24px !important;
                 z-index: 2500 !important;
+                pointer-events: auto !important;
             }
             html.m-ui body.lyrics-open #m-lyric-panel {
                 left: auto !important;
