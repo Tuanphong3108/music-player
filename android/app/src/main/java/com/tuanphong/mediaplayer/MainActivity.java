@@ -336,9 +336,31 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        callJs("window.__onAndroidLeaveApp&&window.__onAndroidLeaveApp()");
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, android.content.res.Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        hideBars(isInPictureInPictureMode);
+        callJs("window.__onAndroidPipModeChanged&&window.__onAndroidPipModeChanged(" + isInPictureInPictureMode + ")");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (Build.VERSION.SDK_INT >= 26 && !isInPictureInPictureMode()) {
+            callJs("window.__onAndroidLeaveApp&&window.__onAndroidLeaveApp()");
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         callJs("window.__systemAccentChanged&&__systemAccentChanged()");
+        callJs("window.__onAndroidPipModeChanged&&window.__onAndroidPipModeChanged(false)");
     }
 
     @Override
@@ -467,6 +489,22 @@ public class MainActivity extends Activity {
                 i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "video/*", "text/*", "application/octet-stream", "application/x-subrip"});
                 try { startActivityForResult(i, 43); } catch (Exception e) { callJs("window.addBtnCancel&&addBtnCancel()"); }
+            });
+        }
+
+        @JavascriptInterface
+        public void enterVideoPip(int width, int height) {
+            if (Build.VERSION.SDK_INT < 26) return;
+            runOnUiThread(() -> {
+                try {
+                    if (isInPictureInPictureMode()) return;
+                    int w = width > 0 ? width : 16;
+                    int h = height > 0 ? height : 9;
+                    android.app.PictureInPictureParams params = new android.app.PictureInPictureParams.Builder()
+                            .setAspectRatio(new android.util.Rational(w, h))
+                            .build();
+                    enterPictureInPictureMode(params);
+                } catch (Throwable ignored) {}
             });
         }
 
