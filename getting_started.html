@@ -268,18 +268,35 @@
     gap: 12px;
   }
   html.is-android .seg button {
-    padding: 11px 8px;
-    font-size: 12.5px;
-    gap: 6px;
+    padding: 10px 6px;
+    font-size: 12px;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  html.is-android .seg button .ms {
+    font-size: 18px;
   }
   html.is-android .swatches {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 10px;
   }
   html.is-android .sw {
-    width: 44px; height: 44px; border-radius: 22px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-width: 52px;
+    justify-self: center;
+    border-radius: 50%;
   }
   html.is-android .sw.sw-sys {
-    width: auto; height: 44px; padding: 0 14px; border-radius: 22px;
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+    height: 46px;
+    aspect-ratio: auto;
+    border-radius: 16px;
+    justify-content: center;
   }
   html.is-android .scale-row {
     gap: 8px;
@@ -302,12 +319,14 @@
   html.is-android footer .btn {
     flex: 1;
     height: 52px;
-    padding: 0 18px;
+    padding: 0 14px;
     border-radius: 26px;
-    font-size: 14px;
+    font-size: 13.5px;
+    white-space: nowrap;
   }
   html.is-android footer #btn-back {
-    flex: 0.72;
+    flex: 0 0 auto;
+    padding: 0 18px;
   }
 
   @media (max-width:720px) {
