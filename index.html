@@ -2534,6 +2534,28 @@
         </div>
     </div>
 
+    <div id="exit-confirm-overlay" class="cl-overlay" style="z-index: 9500;">
+        <div class="cl-dialog" style="max-width: 380px; height: auto; max-height: 90%; border-radius: 28px;">
+            <div class="cl-header" style="padding: 16px 20px;">
+                <h2 id="exit-confirm-title" style="font-size: calc(18px * var(--font-scale-factor, 1)); font-weight: 700; font-family: var(--app-font);">Bạn muốn thoát?</h2>
+            </div>
+            <div style="padding: 20px 24px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-m3" id="exit-bg-btn" type="button" style="width: 100%; height: 48px; border-radius: 16px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span class="material-symbols-outlined">picture_in_picture_alt</span>
+                    <span id="exit-bg-label">Chạy dưới nền</span>
+                </button>
+                <button class="btn-m3" id="exit-full-btn" type="button" style="width: 100%; height: 48px; border-radius: 16px; background: var(--md-sys-color-error); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span class="material-symbols-outlined">power_settings_new</span>
+                    <span id="exit-full-label">Thoát hẳn</span>
+                </button>
+                <button class="btn-m3" id="exit-stay-btn" type="button" style="width: 100%; height: 48px; border-radius: 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span class="material-symbols-outlined">close</span>
+                    <span id="exit-stay-label">Ở lại</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="ambient-bg"></div>
 
     <div class="app-container">
@@ -7285,6 +7307,49 @@
                 }
             } catch (e) {}
             let triggerAndroidUpdateCheck = null;
+            window.__showExitConfirmDialog = function () {
+                try {
+                    const ov = document.getElementById('exit-confirm-overlay');
+                    if (!ov) {
+                        if (AB && AB.exitBackground) AB.exitBackground();
+                        return;
+                    }
+                    const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
+                    const tEl = document.getElementById('exit-confirm-title');
+                    const bgEl = document.getElementById('exit-bg-label');
+                    const fullEl = document.getElementById('exit-full-label');
+                    const stayEl = document.getElementById('exit-stay-label');
+                    if (tEl) tEl.textContent = isEn ? 'Do you want to exit?' : 'Bạn muốn thoát?';
+                    if (bgEl) bgEl.textContent = isEn ? 'Run in background' : 'Chạy dưới nền';
+                    if (fullEl) fullEl.textContent = isEn ? 'Exit completely' : 'Thoát hẳn';
+                    if (stayEl) stayEl.textContent = isEn ? 'Stay' : 'Ở lại';
+                    ov.classList.add('open');
+                } catch (e) {}
+            };
+            (function () {
+                const ov = document.getElementById('exit-confirm-overlay');
+                if (!ov) return;
+                const hideExitDialog = () => ov.classList.remove('open');
+                const bgBtn = document.getElementById('exit-bg-btn');
+                const fullBtn = document.getElementById('exit-full-btn');
+                const stayBtn = document.getElementById('exit-stay-btn');
+                if (bgBtn) bgBtn.addEventListener('click', () => {
+                    hideExitDialog();
+                    try {
+                        if (window.AndroidBridge && window.AndroidBridge.exitBackground) window.AndroidBridge.exitBackground();
+                        else if (AB && AB.exitBackground) AB.exitBackground();
+                    } catch (e) {}
+                });
+                if (fullBtn) fullBtn.addEventListener('click', () => {
+                    hideExitDialog();
+                    try {
+                        if (window.AndroidBridge && window.AndroidBridge.exitAppCompletely) window.AndroidBridge.exitAppCompletely();
+                        else if (AB && AB.exitAppCompletely) AB.exitAppCompletely();
+                    } catch (e) {}
+                });
+                if (stayBtn) stayBtn.addEventListener('click', hideExitDialog);
+                ov.addEventListener('click', (e) => { if (e.target === ov) hideExitDialog(); });
+            })();
             window.__androidPing = function () {
                 try {
                     const lang = localStorage.getItem('settings_language') || 'vi';
