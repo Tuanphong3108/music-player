@@ -66,14 +66,39 @@ public class MainActivity extends Activity {
         if (appLeftHome || pageResponded || hangAlertShown) return;
         showMd3LoadingOverlay();
     };
+    private int autoRecoveries = 0;
     private final Runnable loadTimeoutRunnable = () -> {
         if (appLeftHome || pageResponded) return;
-        showUnresponsiveDialog();
+        onWatchdogTimeout();
     };
     private final Runnable pingTimeoutRunnable = () -> {
         if (appLeftHome || pageResponded) return;
-        showUnresponsiveDialog();
+        onWatchdogTimeout();
     };
+
+    /** Sau khi bị hệ thống đóng băng/giải phóng bộ nhớ, trang thường không tự sống lại: tự tải lại tối đa 2 lần rồi mới báo lỗi. */
+    private void onWatchdogTimeout() {
+        if (autoRecoveries < 2 && web != null) {
+            autoRecoveries++;
+            recoverPage();
+        } else {
+            showUnresponsiveDialog();
+        }
+    }
+
+    private void recoverPage() {
+        try {
+            pageReady = false;
+            pageResponded = false;
+            web.onResume();
+            web.resumeTimers();
+            web.stopLoading();
+            web.loadUrl(APP_URL);
+        } catch (Throwable ignored) {}
+        pingHandler.removeCallbacks(loadTimeoutRunnable);
+        pingHandler.removeCallbacks(pingTimeoutRunnable);
+        pingHandler.postDelayed(loadTimeoutRunnable, 10000);
+    }
     private final Runnable installerTimeoutRunnable = () -> {
         if (!updateInstallPending) return;
         updateInstallPending = false;
@@ -135,6 +160,19 @@ public class MainActivity extends Activity {
             @Override
             public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {
                 if (r.isForMainFrame()) v.loadUrl("file:///android_asset/offline.html");
+            }
+
+            @Override
+            public boolean onRenderProcessGone(WebView v, android.webkit.RenderProcessGoneDetail detail) {
+                // Tiến trình hiển thị của WebView bị hệ thống thu hồi (thiếu RAM/đóng băng): dựng lại WebView thay vì để app bị kill
+                pageReady = false;
+                pageResponded = false;
+                pingHandler.removeCallbacks(loadTimeoutRunnable);
+                pingHandler.removeCallbacks(pingTimeoutRunnable);
+                try { root.removeView(v); v.destroy(); } catch (Throwable ignored) {}
+                autoRecoveries = 0;
+                if (!isFinishing() && !isDestroyed()) pingHandler.post(() -> { try { recreate(); } catch (Throwable ignored) {} });
+                return true;
             }
 
             @Override
@@ -1266,7 +1304,16 @@ public class MainActivity extends Activity {
                     isEnglishLang() ? "Installer closed without completing update" : "Trình cài đặt đã đóng hoặc gặp lỗi khi cài") + ")");
         }
         appLeftHome = false;
-        if (!pageResponded && !hangAlertShown) {
+        try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Throwable ignored) {}
+        if (pageResponded && pageReady && !hangAlertShown) {
+            // Trang từng chạy bình thường: kiểm tra lại sau khi quay về từ nền (có thể đã bị đóng băng)
+            pageResponded = false;
+            autoRecoveries = 0;
+            pingHandler.removeCallbacks(loadTimeoutRunnable);
+            pingHandler.removeCallbacks(pingTimeoutRunnable);
+            pingHandler.postDelayed(pingTimeoutRunnable, 6000);
+            callJs("window.__androidPing&&window.__androidPing()");
+        } else if (!pageResponded && !hangAlertShown) {
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
             pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, 10000);
@@ -1389,6 +1436,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void pongReady() {
             pageResponded = true;
+            autoRecoveries = 0;
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
             hideMd3LoadingOverlay();
