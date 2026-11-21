@@ -49,6 +49,8 @@ public class MainActivity extends Activity {
     private boolean pageResponded = false;
     private boolean hangAlertShown = false;
     private boolean updateInstallPending = false;
+    private boolean waitingUnknownSourcePermission = false;
+    private String pendingUpdateUrl = null;
     private volatile boolean updateDownloadCancelled = false;
     private android.view.View hangOverlay = null;
     private android.view.View loadingOverlay = null;
@@ -734,6 +736,21 @@ public class MainActivity extends Activity {
                 else if (data.getData() != null) l.add(data.getData());
                 if (l.isEmpty()) callJs("window.addBtnCancel&&addBtnCancel()"); else queueUris(l);
             }
+        } else if (req == 46) {
+            waitingUnknownSourcePermission = false;
+            String resumeUrl = pendingUpdateUrl;
+            pendingUpdateUrl = null;
+            if (canInstallUnknownSources()) {
+                File apkFile = new File(new File(getCacheDir(), "updates"), "MediaPlayer-update.apk");
+                if (apkFile.exists() && apkFile.length() > 0) {
+                    launchApkInstaller(apkFile);
+                } else if (resumeUrl != null && !resumeUrl.isEmpty()) {
+                    startUpdateDownloadInternal(resumeUrl);
+                }
+            } else {
+                callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                        isEnglishLang() ? "Permission to install from this source was not granted" : "Chưa cấp quyền cài đặt ứng dụng từ nguồn này") + ")");
+            }
         } else if (req == 45) {
             pingHandler.removeCallbacks(installerTimeoutRunnable);
             updateInstallPending = false;
@@ -796,9 +813,83 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean canInstallUnknownSources() {
+        if (Build.VERSION.SDK_INT < 26) return true;
+        try {
+            return getPackageManager().canRequestPackageInstalls();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private void openUnknownSourcesSettings(String apkUrl) {
+        if (Build.VERSION.SDK_INT < 26) return;
+        waitingUnknownSourcePermission = true;
+        pendingUpdateUrl = apkUrl;
+        runOnUiThread(() -> {
+            try {
+                Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + getPackageName()));
+                startActivityForResult(i, 46);
+            } catch (Throwable ex) {
+                waitingUnknownSourcePermission = false;
+                pendingUpdateUrl = null;
+                callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                        isEnglishLang() ? "Cannot open install permission screen: " + ex : "Không mở được trang cấp quyền cài đặt: " + ex) + ")");
+            }
+        });
+    }
+
+    private void launchApkInstaller(File apkFile) {
+        if (apkFile == null || !apkFile.exists()) {
+            if (pendingUpdateUrl != null && !pendingUpdateUrl.isEmpty()) {
+                String retryUrl = pendingUpdateUrl;
+                pendingUpdateUrl = null;
+                startUpdateDownloadInternal(retryUrl);
+            } else {
+                callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                        isEnglishLang() ? "Update APK file not found" : "Không tìm thấy tệp APK cập nhật") + ")");
+            }
+            return;
+        }
+        final Uri apkUri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", apkFile);
+        runOnUiThread(() -> {
+            try {
+                if (updateDownloadCancelled) return;
+                Intent installIntent = new Intent(Intent.ACTION_VIEW);
+                installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                updateInstallPending = true;
+                pingHandler.removeCallbacks(installerTimeoutRunnable);
+                pingHandler.postDelayed(installerTimeoutRunnable, 10000);
+                startActivityForResult(installIntent, 45);
+            } catch (Throwable ex) {
+                updateInstallPending = false;
+                pingHandler.removeCallbacks(installerTimeoutRunnable);
+                callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(String.valueOf(ex)) + ")");
+            }
+        });
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        if (waitingUnknownSourcePermission) {
+            waitingUnknownSourcePermission = false;
+            String resumeUrl = pendingUpdateUrl;
+            pendingUpdateUrl = null;
+            if (canInstallUnknownSources()) {
+                File apkFile = new File(new File(getCacheDir(), "updates"), "MediaPlayer-update.apk");
+                if (apkFile.exists() && apkFile.length() > 0) {
+                    launchApkInstaller(apkFile);
+                } else if (resumeUrl != null && !resumeUrl.isEmpty()) {
+                    startUpdateDownloadInternal(resumeUrl);
+                }
+            } else {
+                callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                        isEnglishLang() ? "Permission to install from this source was not granted" : "Chưa cấp quyền cài đặt ứng dụng từ nguồn này") + ")");
+            }
+        }
         if (updateInstallPending) {
             pingHandler.removeCallbacks(installerTimeoutRunnable);
             updateInstallPending = false;
@@ -1005,16 +1096,28 @@ public class MainActivity extends Activity {
         public void cancelUpdateDownload() {
             updateDownloadCancelled = true;
             updateInstallPending = false;
+            waitingUnknownSourcePermission = false;
+            pendingUpdateUrl = null;
             pingHandler.removeCallbacks(installerTimeoutRunnable);
         }
 
         @JavascriptInterface
         public void startUpdateDownload(String url) {
             if (url == null || url.trim().isEmpty()) return;
-            final String targetUrl = url.trim();
+            startUpdateDownloadInternal(url.trim());
+        }
+    }
+
+    private void startUpdateDownloadInternal(final String targetUrl) {
             updateDownloadCancelled = false;
             updateInstallPending = false;
+            waitingUnknownSourcePermission = false;
+            pendingUpdateUrl = targetUrl;
             pingHandler.removeCallbacks(installerTimeoutRunnable);
+            if (!canInstallUnknownSources()) {
+                openUnknownSourcesSettings(targetUrl);
+                return;
+            }
             new Thread(() -> {
                 java.io.InputStream in = null;
                 java.io.FileOutputStream out = null;
@@ -1067,23 +1170,11 @@ public class MainActivity extends Activity {
                     in.close(); in = null;
                     if (updateDownloadCancelled) return;
                     callJs("window.__onAndroidUpdateProgress&&window.__onAndroidUpdateProgress(100," + downloaded + "," + (total > 0 ? total : downloaded) + ")");
-                    final Uri apkUri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", apkFile);
-                    runOnUiThread(() -> {
-                        try {
-                            if (updateDownloadCancelled) return;
-                            Intent installIntent = new Intent(Intent.ACTION_VIEW);
-                            installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-                            installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            updateInstallPending = true;
-                            pingHandler.removeCallbacks(installerTimeoutRunnable);
-                            pingHandler.postDelayed(installerTimeoutRunnable, 10000);
-                            startActivityForResult(installIntent, 45);
-                        } catch (Throwable ex) {
-                            updateInstallPending = false;
-                            pingHandler.removeCallbacks(installerTimeoutRunnable);
-                            callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(String.valueOf(ex)) + ")");
-                        }
-                    });
+                    if (!canInstallUnknownSources()) {
+                        openUnknownSourcesSettings(targetUrl);
+                        return;
+                    }
+                    launchApkInstaller(apkFile);
                 } catch (Throwable t) {
                     if (!updateDownloadCancelled) {
                         updateInstallPending = false;
@@ -1096,6 +1187,4 @@ public class MainActivity extends Activity {
                     try { if (conn != null) conn.disconnect(); } catch (Exception ignored) {}
                 }
             }).start();
-        }
     }
-}
