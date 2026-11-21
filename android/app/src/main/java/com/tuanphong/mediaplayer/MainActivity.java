@@ -879,6 +879,7 @@ public class MainActivity extends Activity {
                 String id = String.valueOf(nextId++);
                 served.put(id, u);
                 JSONObject o = new JSONObject();
+                o.put("id", id);
                 o.put("url", "https://" + ASSET_HOST + "/f/" + id);
                 o.put("name", displayName(u));
                 String t = getContentResolver().getType(u);
@@ -1315,6 +1316,7 @@ public class MainActivity extends Activity {
                 i.setType("audio/*");
                 i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "text/*", "application/x-subrip"});
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
                 try { startActivityForResult(i, 43); } catch (Exception e) { callJs("window.addBtnCancel&&addBtnCancel()"); }
             });
         }
@@ -1322,9 +1324,98 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void pickFolder() {
             runOnUiThread(() -> {
-                try { startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 44); }
+                try {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                    startActivityForResult(i, 44);
+                }
                 catch (Exception e) { callJs("window.addBtnCancel&&addBtnCancel()"); }
             });
+        }
+
+        private FileOutputStream overwriteOut;
+        private File overwriteTmpFile;
+        private String overwriteTxId;
+
+        @JavascriptInterface
+        public String overwriteFileChunk(String nativeId, String txId, String b64, boolean last, String fallbackName) {
+            try {
+                if (overwriteOut == null || txId == null || !txId.equals(overwriteTxId)) {
+                    try { if (overwriteOut != null) overwriteOut.close(); } catch (Exception ignored) {}
+                    try { if (overwriteTmpFile != null && overwriteTmpFile.exists()) overwriteTmpFile.delete(); } catch (Exception ignored) {}
+                    File dir = new File(getCacheDir(), "overwrite");
+                    if (!dir.exists()) dir.mkdirs();
+                    overwriteTxId = (txId == null || txId.isEmpty()) ? String.valueOf(System.currentTimeMillis()) : txId;
+                    overwriteTmpFile = new File(dir, overwriteTxId.replaceAll("[^a-zA-Z0-9._-]", "_") + ".tmp");
+                    overwriteOut = new FileOutputStream(overwriteTmpFile);
+                }
+                if (b64 != null && !b64.isEmpty()) {
+                    overwriteOut.write(Base64.decode(b64, Base64.DEFAULT));
+                }
+                if (!last) return "";
+
+                overwriteOut.flush();
+                overwriteOut.close();
+                overwriteOut = null;
+
+                Uri targetUri = (nativeId != null && !nativeId.isEmpty()) ? served.get(nativeId) : null;
+                if (targetUri == null && fallbackName != null && !fallbackName.isEmpty()) {
+                    for (Uri candidate : served.values()) {
+                        try {
+                            if (fallbackName.equalsIgnoreCase(displayName(candidate))) {
+                                targetUri = candidate;
+                                break;
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+                if (targetUri == null) {
+                    if (overwriteTmpFile != null) overwriteTmpFile.delete();
+                    overwriteTmpFile = null;
+                    return "Target file URI not found";
+                }
+
+                java.io.OutputStream dest = null;
+                Throwable openErr = null;
+                for (String mode : new String[]{"wt", "w", "rwt"}) {
+                    try {
+                        dest = getContentResolver().openOutputStream(targetUri, mode);
+                        if (dest != null) break;
+                    } catch (Throwable t) {
+                        openErr = t;
+                    }
+                }
+                if (dest == null) {
+                    if (overwriteTmpFile != null) overwriteTmpFile.delete();
+                    overwriteTmpFile = null;
+                    return "Cannot open target file for writing" + (openErr != null ? ": " + openErr.getMessage() : "");
+                }
+
+                try (java.io.InputStream in = new java.io.FileInputStream(overwriteTmpFile);
+                     java.io.OutputStream out = dest) {
+                    byte[] buf = new byte[65536];
+                    int r;
+                    while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
+                    out.flush();
+                } finally {
+                    try { if (overwriteTmpFile != null) overwriteTmpFile.delete(); } catch (Exception ignored) {}
+                    overwriteTmpFile = null;
+                }
+
+                synchronized (cachedMediaFiles) {
+                    File cached = cachedMediaFiles.remove(targetUri.toString());
+                    if (cached != null && cached.exists()) {
+                        try { cached.delete(); } catch (Exception ignored) {}
+                    }
+                }
+                return "";
+            } catch (Throwable e) {
+                try { if (overwriteOut != null) overwriteOut.close(); } catch (Exception ignored) {}
+                overwriteOut = null;
+                try { if (overwriteTmpFile != null && overwriteTmpFile.exists()) overwriteTmpFile.delete(); } catch (Exception ignored) {}
+                overwriteTmpFile = null;
+                return String.valueOf(e);
+            }
         }
 
         @JavascriptInterface
