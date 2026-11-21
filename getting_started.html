@@ -2,13 +2,32 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Getting Started - Media Player</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght,ROND@100..1000,0..100&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<script>
+  (function () {
+    try {
+      var ua = navigator.userAgent || '';
+      var uad = navigator.userAgentData;
+      var hasParentAndroid = false;
+      try {
+        hasParentAndroid = !!(window.parent && (window.parent.IS_ANDROID_DEVICE || window.parent.IS_ANDROID_APP));
+      } catch (e) {}
+      var isAndroid = hasParentAndroid
+        || /Android/i.test(ua)
+        || !!(uad && uad.platform === 'Android')
+        || /[?&]android=true/.test(location.search)
+        || (navigator.maxTouchPoints > 0 && /Linux/i.test(navigator.platform || '') && !/CrOS/i.test(ua));
+      window.__IS_ANDROID__ = isAndroid;
+      if (isAndroid) document.documentElement.classList.add('is-android');
+    } catch (e) {}
+  })();
+</script>
 <style>
   /* Bảng màu mặc định (tối/tím) – sẽ được app cha ghi đè qua postMessage */
   :root {
@@ -101,6 +120,16 @@
   .key-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; border-radius:20px; background:var(--surface-1); font-size:13px; font-weight:700; }
   .key-row .k { display:flex; gap:6px; align-items:center; flex-shrink:0; }
 
+  /* Touch Gestures (Android) */
+  .gesture-list { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .gesture-card { background:var(--surface-1); border-radius:26px; padding:18px; display:flex; align-items:flex-start; gap:14px; border:1px solid color-mix(in srgb, var(--outline) 18%, transparent); transition:transform .25s var(--spring), background .2s; }
+  .gesture-card:active { transform:scale(.98); background:var(--surface-2); }
+  .gesture-badge { width:46px; height:46px; border-radius:16px; background:var(--primary-container); color:var(--on-primary-container); display:grid; place-items:center; flex-shrink:0; font-size:24px; }
+  .gesture-body { min-width:0; flex:1; }
+  .gesture-tag { display:inline-block; font-size:11px; font-weight:800; letter-spacing:.4px; padding:3px 9px; border-radius:99px; background:var(--secondary-container); color:var(--primary); margin-bottom:6px; }
+  .gesture-card h3 { margin:0 0 4px; font-size:15px; font-weight:800; }
+  .gesture-card p { margin:0; font-size:13px; line-height:1.5; color:var(--on-surface-variant); }
+
   /* Settings slide */
   .set-card { background:var(--surface-1); border-radius:28px; padding:20px 22px; display:flex; flex-direction:column; gap:14px; }
   .set-head { display:flex; align-items:center; gap:12px; }
@@ -116,6 +145,10 @@
   .sw:hover { transform:scale(1.1); border-radius:16px; }
   .sw.sel { border-color:var(--on-surface); border-radius:16px; transform:scale(1.08); }
   .sw .ms { opacity:0; transition:opacity .2s; } .sw.sel .ms { opacity:1; }
+  .sw-sys { width:auto; padding:0 16px; gap:8px; display:inline-flex; background:linear-gradient(135deg, var(--primary-container), var(--secondary-container)); color:var(--on-primary-container); font:800 13px var(--font); border:2px solid color-mix(in srgb, var(--primary) 45%, transparent); }
+  .sw-sys .ms { opacity:1; font-size:19px; color:var(--primary); }
+  .sw-sys.sel { background:var(--primary); color:var(--on-primary); border-color:var(--on-surface); }
+  .sw-sys.sel .ms { color:var(--on-primary); }
   .sw-name { font-size:13px; font-weight:800; color:var(--primary); }
   .scale-row { display:flex; align-items:center; gap:14px; }
   .scale-row input[type=range] { flex:1; -webkit-appearance:none; appearance:none; height:16px; background:transparent; margin:0; cursor:pointer; }
@@ -131,8 +164,8 @@
   .settings-grid .wide { grid-column:1/-1; }
 
   /* ===== Footer ===== */
-  footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px clamp(16px,4vw,40px) 22px; flex-shrink:0; }
-  .btn { border:none; font:800 14px var(--font); padding:14px 26px; border-radius:25px; cursor:pointer; display:inline-flex; align-items:center; gap:10px; transition:border-radius .35s var(--ease-r), transform .25s var(--spring), filter .2s, opacity .2s; }
+  footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px clamp(16px,4vw,40px) calc(22px + env(safe-area-inset-bottom, 0px)); flex-shrink:0; }
+  .btn { border:none; font:800 14px var(--font); padding:14px 26px; border-radius:25px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:10px; transition:border-radius .35s var(--ease-r), transform .25s var(--spring), filter .2s, opacity .2s; }
   .btn .ms { font-size:20px; }
   .btn:hover { border-radius:18px; } .btn:active { transform:scale(.95); }
   .btn.tonal { background:var(--secondary-container); color:var(--on-surface); }
@@ -142,8 +175,143 @@
   .dot { width:8px; height:8px; border-radius:99px; background:var(--surface-variant); transition:width .35s var(--spring), background .2s; }
   .dot.active { width:26px; background:var(--primary); }
 
+  /* ==========================================================================
+     ANDROID MOBILE REDESIGN (Material Design 3 Expressive - Handheld Ergonomics)
+     ========================================================================== */
+  html.is-android .pc-only { display:none !important; }
+  html.is-android .android-only { display:block !important; }
+  html:not(.is-android) .android-only { display:none !important; }
+
+  html.is-android header {
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 6px;
+  }
+  html.is-android .brand-badge {
+    width: 40px; height: 40px; border-radius: 14px;
+  }
+  html.is-android .brand-badge img { width: 22px; height: 22px; }
+  html.is-android .brand h1 { font-size: 15px; }
+  html.is-android .btn-text {
+    background: var(--surface-2);
+    color: var(--on-surface);
+    padding: 9px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  html.is-android .stepper { padding: 6px 16px 0; gap: 6px; }
+  html.is-android .step-pill { height: 6px; }
+  html.is-android .step-meta { padding: 8px 18px 2px; font-size: 12px; }
+
+  html.is-android .slide {
+    padding: 12px 16px 24px;
+    align-items: stretch;
+  }
+  html.is-android .slide-inner {
+    margin: 0 auto;
+    gap: 16px;
+    max-width: 540px;
+  }
+  html.is-android .slide[data-step="0"] .slide-inner {
+    margin: auto 0;
+    padding-block: 8px;
+  }
+  html.is-android h2 {
+    font-size: clamp(24px, 6.8vw, 32px);
+    line-height: 1.15;
+    letter-spacing: -.4px;
+  }
+  html.is-android .lead {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  html.is-android .hero-icon {
+    width: 88px; height: 88px; border-radius: 30px; font-size: 46px;
+  }
+  html.is-android .hero-icon img { width: 48px; height: 48px; }
+  html.is-android .lang-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  html.is-android .lang-card {
+    padding: 18px 12px;
+    border-radius: 24px;
+    font-size: 15px;
+  }
+  html.is-android .grid.g3,
+  html.is-android .grid.g2,
+  html.is-android .gesture-list,
+  html.is-android .settings-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  html.is-android .card {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 24px;
+  }
+  html.is-android .card:hover { transform: none; }
+  html.is-android .card .ico {
+    width: 44px; height: 44px; border-radius: 15px; font-size: 22px; flex-shrink: 0;
+  }
+  html.is-android .card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  html.is-android .card h3 { font-size: 15px; }
+  html.is-android .card p { font-size: 13px; line-height: 1.48; }
+  html.is-android .note {
+    padding: 14px 16px;
+    border-radius: 22px;
+    font-size: 13px;
+  }
+  html.is-android .set-card {
+    padding: 16px;
+    border-radius: 24px;
+    gap: 12px;
+  }
+  html.is-android .seg button {
+    padding: 11px 8px;
+    font-size: 12.5px;
+    gap: 6px;
+  }
+  html.is-android .swatches {
+    gap: 10px;
+  }
+  html.is-android .sw {
+    width: 44px; height: 44px; border-radius: 22px;
+  }
+  html.is-android .sw.sw-sys {
+    width: auto; height: 44px; padding: 0 14px; border-radius: 22px;
+  }
+  html.is-android .scale-row {
+    gap: 8px;
+  }
+  html.is-android .icon-btn {
+    width: 38px; height: 38px; flex-shrink: 0;
+  }
+  html.is-android .scale-val {
+    min-width: 56px; padding: 7px 8px; font-size: 13px;
+  }
+  html.is-android footer {
+    padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-top: 1px solid color-mix(in srgb, var(--outline) 16%, transparent);
+    gap: 10px;
+  }
+  html.is-android footer .dots { display: none; }
+  html.is-android footer .btn {
+    flex: 1;
+    height: 52px;
+    padding: 0 18px;
+    border-radius: 26px;
+    font-size: 14px;
+  }
+  html.is-android footer #btn-back {
+    flex: 0.72;
+  }
+
   @media (max-width:720px) {
-    .g3,.g2,.keys,.settings-grid { grid-template-columns:1fr; }
+    .g3,.g2,.keys,.gesture-list,.settings-grid { grid-template-columns:1fr; }
     .dots { display:none; }
     .btn { padding:13px 20px; }
     .hero-icon img { width:46px; height:46px; }
@@ -186,11 +354,13 @@
       <h2 data-i="s2_title">Thêm nhạc hoặc video vào trình phát</h2>
       <p class="lead" data-i="s2_desc">Nhạc và video được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.</p>
       <div class="grid g3">
-        <div class="card"><div class="ico"><span class="ms">add_circle</span></div><h3 data-i="s2_c1t">Nút Thêm nhạc / video</h3><p data-i="s2_c1d">Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc/video (mp4, webm, mkv, mov...). Phím tắt: <kbd>Ctrl</kbd> + <kbd>O</kbd>.</p></div>
-        <div class="card pc-only"><div class="ico"><span class="ms">drag_pan</span></div><h3 data-i="s2_c2t">Kéo &amp; thả</h3><p data-i="s2_c2d">Kéo tệp nhạc hoặc video (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.</p></div>
-        <div class="card"><div class="ico"><span class="ms">queue_music</span></div><h3 data-i="s2_c3t">Danh sách phát</h3><p data-i="s2_c3d">Tìm bài trong danh sách, bật Ngẫu nhiên (Shuffle) và Lặp lại để nghe liên tục.</p></div>
+        <div class="card"><div class="ico"><span class="ms">add_circle</span></div><div class="card-body"><h3 data-i="s2_c1t">Nút Thêm nhạc / video</h3><p data-i="s2_c1d">Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc/video (mp4, webm, mkv, mov...). Phím tắt: <kbd>Ctrl</kbd> + <kbd>O</kbd>.</p></div></div>
+        <div class="card pc-only"><div class="ico"><span class="ms">drag_pan</span></div><div class="card-body"><h3 data-i="s2_c2t">Kéo &amp; thả</h3><p data-i="s2_c2d">Kéo tệp nhạc hoặc video (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.</p></div></div>
+        <div class="card android-only"><div class="ico"><span class="ms">share</span></div><div class="card-body"><h3 data-i="s2_c2t_and">Mở &amp; Chia sẻ từ ứng dụng khác</h3><p data-i="s2_c2d_and">Chọn "Mở bằng" hoặc "Chia sẻ" tệp nhạc/video từ Trình quản lý tệp, Zalo, Telegram... sang Media Player để phát ngay.</p></div></div>
+        <div class="card"><div class="ico"><span class="ms">queue_music</span></div><div class="card-body"><h3 data-i="s2_c3t">Danh sách phát</h3><p data-i="s2_c3d">Tìm bài trong danh sách, bật Ngẫu nhiên (Shuffle) và Lặp lại để nghe liên tục.</p></div></div>
       </div>
-      <div class="note"><span class="ms">offline_bolt</span><span data-i="s2_note">Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc/video trực tiếp từ máy và dùng offline.</span></div>
+      <div class="note pc-only"><span class="ms">offline_bolt</span><span data-i="s2_note">Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc/video trực tiếp từ máy và dùng offline.</span></div>
+      <div class="note android-only"><span class="ms">offline_bolt</span><span data-i="s2_note_and">Bản Android tự động cập nhật theo trang web, dùng offline hoàn toàn sau lần mở đầu có mạng và hỗ trợ phát nhạc nền khi tắt màn hình.</span></div>
     </div></section>
 
     <!-- 3. Tính năng -->
@@ -198,21 +368,21 @@
       <div><span class="chip"><span class="ms">auto_awesome</span><span data-i="s3_chip">Tính năng</span></span></div>
       <h2 data-i="s3_title">Những thứ hay ho đi kèm</h2>
       <div class="grid g3">
-        <div class="card"><div class="ico"><span class="ms">lyrics</span></div><h3 data-i="s3_c1t">Lời bài hát đồng bộ</h3><p data-i="s3_c1d">Tự nhận tệp .lrc cùng tên hoặc lời nhúng trong bài. Bấm vào một câu để tua tới đó.</p></div>
-        <div class="card"><div class="ico"><span class="ms">edit_note</span></div><h3 data-i="s3_c2t">Sửa thẻ &amp; ảnh bìa</h3><p data-i="s3_c2d">Chỉnh thẻ ID3, ảnh bìa và tìm lời trên lrclib ngay trong ứng dụng.</p></div>
-        <div class="card pc-only"><div class="ico"><span class="ms">picture_in_picture_alt</span></div><h3 data-i="s3_c3t">Thu nhỏ (PiP)</h3><p data-i="s3_c3d">Giữ trình phát nhỏ nổi trên màn hình (có cả thanh tua và khung video) trong lúc bạn làm việc khác.</p></div>
-        <div class="card pc-only"><div class="ico"><span class="ms">fullscreen</span></div><h3 data-i="s3_c4t">Toàn màn hình</h3><p data-i="s3_c4d">Ảnh bìa, lời và sóng nhạc (hoặc hình video) trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.</p></div>
-        <div class="card"><div class="ico"><span class="ms">timer</span></div><h3 data-i="s3_c5t">Hẹn giờ tạm dừng</h3><p data-i="s3_c5d">Tự dừng nhạc sau một khoảng thời gian hoặc sau một số bài nhất định.</p></div>
-        <div class="card"><div class="ico"><span class="ms">headphones</span></div><h3 data-i="s3_c6t">Thiết bị âm thanh</h3><p data-i="s3_c6d">Chọn loa hoặc tai nghe phát nhạc ngay từ thanh trên cùng.</p></div>
-        <div class="card"><div class="ico"><span class="ms">movie</span></div><h3 data-i="s3_c7t"></h3><p data-i="s3_c7d"></p></div>
-        <div class="card"><div class="ico"><span class="ms">equalizer</span></div><h3 data-i="s3_c8t"></h3><p data-i="s3_c8d"></p></div>
-        <div class="card"><div class="ico"><span class="ms">subtitles</span></div><h3 data-i="s3_c9t"></h3><p data-i="s3_c9d"></p></div>
-        <div class="card"><div class="ico"><span class="ms">phone_android</span></div><h3 data-i="s3_c10t"></h3><p data-i="s3_c10d"></p></div>
+        <div class="card"><div class="ico"><span class="ms">lyrics</span></div><div class="card-body"><h3 data-i="s3_c1t">Lời bài hát đồng bộ</h3><p data-i="s3_c1d">Tự nhận tệp .lrc cùng tên hoặc lời nhúng trong bài. Bấm vào một câu để tua tới đó.</p></div></div>
+        <div class="card"><div class="ico"><span class="ms">edit_note</span></div><div class="card-body"><h3 data-i="s3_c2t">Sửa thẻ &amp; ảnh bìa</h3><p data-i="s3_c2d">Chỉnh thẻ ID3, ảnh bìa và tìm lời trên lrclib ngay trong ứng dụng.</p></div></div>
+        <div class="card pc-only"><div class="ico"><span class="ms">picture_in_picture_alt</span></div><div class="card-body"><h3 data-i="s3_c3t">Thu nhỏ (PiP)</h3><p data-i="s3_c3d">Giữ trình phát nhỏ nổi trên màn hình (có cả thanh tua và khung video) trong lúc bạn làm việc khác.</p></div></div>
+        <div class="card pc-only"><div class="ico"><span class="ms">fullscreen</span></div><div class="card-body"><h3 data-i="s3_c4t">Toàn màn hình</h3><p data-i="s3_c4d">Ảnh bìa, lời và sóng nhạc (hoặc hình video) trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.</p></div></div>
+        <div class="card"><div class="ico"><span class="ms">timer</span></div><div class="card-body"><h3 data-i="s3_c5t">Hẹn giờ tạm dừng</h3><p data-i="s3_c5d">Tự dừng nhạc sau một khoảng thời gian hoặc sau một số bài nhất định.</p></div></div>
+        <div class="card"><div class="ico"><span class="ms">headphones</span></div><div class="card-body"><h3 data-i="s3_c6t">Thiết bị âm thanh</h3><p data-i="s3_c6d">Chọn loa hoặc tai nghe phát nhạc ngay từ thanh trên cùng.</p></div></div>
+        <div class="card"><div class="ico"><span class="ms">movie</span></div><div class="card-body"><h3 data-i="s3_c7t"></h3><p data-i="s3_c7d"></p></div></div>
+        <div class="card"><div class="ico"><span class="ms">equalizer</span></div><div class="card-body"><h3 data-i="s3_c8t"></h3><p data-i="s3_c8d"></p></div></div>
+        <div class="card"><div class="ico"><span class="ms">subtitles</span></div><div class="card-body"><h3 data-i="s3_c9t"></h3><p data-i="s3_c9d"></p></div></div>
+        <div class="card"><div class="ico"><span class="ms">phone_android</span></div><div class="card-body"><h3 data-i="s3_c10t"></h3><p data-i="s3_c10d"></p></div></div>
       </div>
     </div></section>
 
-    <!-- 4. Phím tắt -->
-    <section class="slide" data-step="3"><div class="slide-inner">
+    <!-- 4a. Phím tắt (Chỉ hiện trên PC) -->
+    <section class="slide pc-only" data-step="3"><div class="slide-inner">
       <div><span class="chip"><span class="ms">keyboard</span><span data-i="s4_chip">Phím tắt</span></span></div>
       <h2 data-i="s4_title">Điều khiển không cần chuột</h2>
       <div class="keys">
@@ -225,6 +395,47 @@
         <div class="key-row"><span data-i="k_settings">Mở Cài đặt</span><span class="k"><kbd>Alt</kbd><kbd>F</kbd></span></div>
         <div class="key-row"><span data-i="k_find">Tìm trong playlist</span><span class="k"><kbd>Ctrl</kbd><kbd>F</kbd></span></div>
         <div class="key-row"><span data-i="k_full">Toàn màn hình</span><span class="k"><kbd>F11</kbd></span></div>
+      </div>
+    </div></section>
+
+    <!-- 4b. Thao tác cảm ứng (Chỉ hiện trên Android) -->
+    <section class="slide android-only" data-step="3"><div class="slide-inner">
+      <div><span class="chip"><span class="ms">touch_app</span><span data-i="s4_and_chip">Thao tác cảm ứng</span></span></div>
+      <h2 data-i="s4_and_title">Điều khiển mượt mà bằng một tay</h2>
+      <p class="lead" data-i="s4_and_desc">Giao diện di động tối ưu cho thao tác chạm, vuốt và điều khiển nhanh trên điện thoại Android.</p>
+      <div class="gesture-list">
+        <div class="gesture-card">
+          <div class="gesture-badge"><span class="ms">swipe</span></div>
+          <div class="gesture-body">
+            <span class="gesture-tag" data-i="g1_tag">VUỐT NGANG</span>
+            <h3 data-i="g1_t">Chuyển nhanh các bước</h3>
+            <p data-i="g1_d">Vuốt sang trái hoặc phải ngay trên màn hình hướng dẫn này để chuyển qua lại giữa các bước mà không cần với tay xuống dưới.</p>
+          </div>
+        </div>
+        <div class="gesture-card">
+          <div class="gesture-badge"><span class="ms">lyrics</span></div>
+          <div class="gesture-body">
+            <span class="gesture-tag" data-i="g2_tag">CHẠM LỜI BÀI HÁT</span>
+            <h3 data-i="g2_t">Tua nhanh tới câu hát</h3>
+            <p data-i="g2_d">Bấm nút Lời bài hát để mở chế độ toàn màn hình, chuyển giữa Synced / Static và chạm trực tiếp vào bất kỳ câu nào để phát từ đoạn đó.</p>
+          </div>
+        </div>
+        <div class="gesture-card">
+          <div class="gesture-badge"><span class="ms">drag_indicator</span></div>
+          <div class="gesture-body">
+            <span class="gesture-tag" data-i="g3_tag">NHẤN GIỮ &amp; KÉO</span>
+            <h3 data-i="g3_t">Sắp xếp lại danh sách phát</h3>
+            <p data-i="g3_d">Mở Playlist ở thanh trên cùng, bật chế độ Sắp xếp rồi chạm giữ biểu tượng tay nắm để kéo thả thứ tự bài hát theo ý thích.</p>
+          </div>
+        </div>
+        <div class="gesture-card">
+          <div class="gesture-badge"><span class="ms">lock_open</span></div>
+          <div class="gesture-body">
+            <span class="gesture-tag" data-i="g4_tag">PHÁT NỀN &amp; MÀN HÌNH KHOÁ</span>
+            <h3 data-i="g4_t">Nghe nhạc khi tắt màn hình</h3>
+            <p data-i="g4_d">Thoát ra màn hình chính hoặc tắt màn hình: nhạc vẫn tiếp tục phát nền với đầy đủ nút điều khiển và ảnh bìa trên thanh thông báo.</p>
+          </div>
+        </div>
       </div>
     </div></section>
 
@@ -246,7 +457,7 @@
           <div class="set-head"><div class="ico"><span class="ms">palette</span></div><div><h3 data-i="a_title">Màu chủ đạo (Accent Color)</h3><p data-i="a_desc">Màu nhấn của toàn bộ ứng dụng</p></div></div>
           <div class="swatches" id="swatches"></div>
           <div class="sw-name" id="sw-name"></div>
-          <p class="android-only" data-i="a_android" style="display:none;opacity:.7;font-size:13px;margin:8px 0 0"></p>
+          <p class="android-only" data-i="a_android" style="display:none;opacity:.75;font-size:13px;margin:2px 0 0"></p>
         </div>
         <div class="set-card wide">
           <div class="set-head"><div class="ico"><span class="ms">zoom_in</span></div><div><h3 data-i="z_title">Kích thước giao diện và chữ</h3><p data-i="z_desc">Từ 50% đến 200% (100% là mặc định)</p></div></div>
@@ -271,19 +482,29 @@
 
 <script>
 (function () {
+  var isAndroid = !!window.__IS_ANDROID__;
+  var isAndroidApp = false;
+  try {
+    isAndroidApp = !!(window.parent && window.parent.IS_ANDROID_APP) || /[?&]android=true/.test(location.search);
+  } catch (e) {}
+
   var TOTAL = 5;
   var T = {
     vi: {
       hdr_sub:'Hướng dẫn bắt đầu', skip:'Bỏ qua', back:'Quay lại', next:'Tiếp theo', finish:'Bắt đầu nghe nhạc',
-      step:'Bước {n} / {t}', names:['Chào mừng','Thêm nhạc / video','Tính năng','Phím tắt','Cài đặt nhanh'],
+      step:'Bước {n} / {t}',
+      names:['Chào mừng','Thêm nhạc / video','Tính năng','Phím tắt','Cài đặt nhanh'],
+      names_and:['Chào mừng','Thêm nhạc / video','Tính năng','Thao tác cảm ứng','Cài đặt nhanh'],
       s1_title:'Chào mừng đến với Media Player',
       s1_desc:'Trình phát nhạc và video chạy ngay trên máy bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.',
       s1_pick:'Chọn ngôn ngữ',
       s2_chip:'Bắt đầu', s2_title:'Thêm nhạc hoặc video vào trình phát', s2_desc:'Nhạc và video được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.',
-      s2_c1t:'Nút Thêm nhạc / video', s2_c1d:'Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc/video (mp4, webm, mkv, mov...). Phím tắt: <kbd>Ctrl</kbd> + <kbd>O</kbd>.',
+      s2_c1t:'Nút Thêm nhạc / video', s2_c1d:'Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc/video (mp4, webm, mkv, mov...).',
       s2_c2t:'Kéo & thả', s2_c2d:'Kéo tệp nhạc hoặc video (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.',
+      s2_c2t_and:'Mở & Chia sẻ từ ứng dụng khác', s2_c2d_and:'Chọn "Mở bằng" hoặc "Chia sẻ" tệp nhạc/video từ Trình quản lý tệp, Zalo, Telegram... sang Media Player để phát ngay.',
       s2_c3t:'Danh sách phát', s2_c3d:'Tìm bài trong danh sách, bật Ngẫu nhiên (Shuffle) và Lặp lại để nghe liên tục.',
       s2_note:'Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc/video trực tiếp từ máy và dùng offline.',
+      s2_note_and:'Bản Android tự động cập nhật theo trang web, dùng offline hoàn toàn sau lần mở đầu có mạng và hỗ trợ phát nhạc nền khi tắt màn hình.',
       s3_chip:'Tính năng', s3_title:'Những thứ hay ho đi kèm',
       s3_c1t:'Lời bài hát đồng bộ', s3_c1d:'Tự nhận tệp .lrc cùng tên hoặc lời nhúng trong bài. Bấm vào một câu để tua tới đó.',
       s3_c2t:'Sửa thẻ & ảnh bìa', s3_c2d:'Chỉnh thẻ ID3, ảnh bìa và tìm lời trên lrclib ngay trong ứng dụng.',
@@ -293,31 +514,41 @@
       s3_c7t:'Phát video', s3_c7d:'Hỗ trợ mp4, webm, mkv, mov... Hình hiện ngay trong khung chính, Toàn màn hình và PiP.',
       s3_c8t:'Bộ trộn âm thanh', s3_c8d:'Chỉnh Equalizer 5 dải, khuếch đại, cân bằng trái/phải, mono trong Cài đặt.',
       s3_c10t:'Ứng dụng Android', s3_c10d:'Bản Android (WebView) tự cập nhật theo trang web, dùng được offline, mở/chia sẻ nhạc từ app khác, thêm cả thư mục và phát nền với điều khiển trên màn hình khoá. Giao diện điện thoại: playlist mở bằng nút trên thanh trên, các nút còn lại nằm trong menu ⋮.',
-      a_android:'Trên Android có thêm lựa chọn "Hệ thống" (mặc định): lấy màu accent từ hệ điều hành (Material You).',
+      a_android:'Lựa chọn "Hệ thống (System)" tự động lấy màu chủ đạo từ hình nền điện thoại (Material You) khi chạy trong app Android.',
       s3_c9t:'Phụ đề video', s3_c9d:'Bấm nút chỉnh sửa khi đang xem video để thêm lời/phụ đề (.lrc), lưu ngay trong ứng dụng.',
       s3_c6t:'Thiết bị âm thanh', s3_c6d:'Chọn loa hoặc tai nghe phát nhạc ngay từ thanh trên cùng.',
       s4_chip:'Phím tắt', s4_title:'Điều khiển không cần chuột',
       k_play:'Phát / Tạm dừng', k_mute:'Bật / Tắt tiếng', k_seek:'Tua lùi / tiến 5 giây', k_vol:'Tăng / giảm âm lượng', k_track:'Bài trước / bài sau', k_open:'Thêm nhạc / video (menu mở tại con trỏ)', k_settings:'Mở Cài đặt', k_find:'Tìm trong playlist (khi Sắp xếp thì bôi vàng như Ctrl + F)', k_full:'Toàn màn hình',
+      s4_and_chip:'Thao tác cảm ứng', s4_and_title:'Điều khiển mượt mà bằng một tay',
+      s4_and_desc:'Giao diện di động tối ưu cho thao tác chạm, vuốt và điều khiển nhanh trên điện thoại Android.',
+      g1_tag:'VUỐT NGANG', g1_t:'Chuyển nhanh các bước', g1_d:'Vuốt sang trái hoặc phải ngay trên màn hình hướng dẫn này để chuyển qua lại giữa các bước mà không cần với tay xuống dưới.',
+      g2_tag:'CHẠM LỜI BÀI HÁT', g2_t:'Tua nhanh tới câu hát', g2_d:'Bấm nút Lời bài hát để mở chế độ toàn màn hình, chuyển giữa Synced / Static và chạm trực tiếp vào bất kỳ câu nào để phát từ đoạn đó.',
+      g3_tag:'NHẤN GIỮ & KÉO', g3_t:'Sắp xếp lại danh sách phát', g3_d:'Mở Playlist ở thanh trên cùng, bật chế độ Sắp xếp rồi chạm giữ biểu tượng tay nắm để kéo thả thứ tự bài hát theo ý thích.',
+      g4_tag:'PHÁT NỀN & MÀN HÌNH KHOÁ', g4_t:'Nghe nhạc khi tắt màn hình', g4_d:'Thoát ra màn hình chính hoặc tắt màn hình: nhạc vẫn tiếp tục phát nền với đầy đủ nút điều khiển và ảnh bìa trên thanh thông báo.',
       s5_chip:'Cài đặt nhanh', s5_title:'Chọn phong cách của bạn',
       s5_desc:'Xem thử ngay trên màn hình này. Mọi thay đổi sẽ được áp dụng vào Media Player khi bạn bấm nút bắt đầu, và có thể đổi lại trong Cài đặt.',
       t_title:'Chế độ sáng / tối', t_desc:'Chọn tông nền cho giao diện', t_system:'Hệ thống', t_light:'Sáng', t_dark:'Tối',
       a_title:'Màu chủ đạo (Accent Color)', a_desc:'Màu nhấn của toàn bộ ứng dụng',
       z_title:'Kích thước giao diện và chữ', z_desc:'Từ 50% đến 200% (100% là mặc định)',
-      acc:{purple:'Tím (Purple)',lime:'Chanh (Lime)',cyan:'Lam (Cyan)',white:'Trắng (White)',green:'Lá (Green)',blue:'Dương (Blue)',yellow:'Vàng (Yellow)',orange:'Cam (Orange)',red:'Đỏ (Red)',pink:'Hồng (Pink)'}
+      acc:{system:'Hệ thống (System)',purple:'Tím (Purple)',lime:'Chanh (Lime)',cyan:'Lam (Cyan)',white:'Trắng (White)',green:'Lá (Green)',blue:'Dương (Blue)',yellow:'Vàng (Yellow)',orange:'Cam (Orange)',red:'Đỏ (Red)',pink:'Hồng (Pink)'}
     },
     en: {
       hdr_sub:'Getting started', skip:'Skip', back:'Back', next:'Next', finish:'Start listening',
-      step:'Step {n} of {t}', names:['Welcome','Add music / video','Features','Shortcuts','Quick settings'],
+      step:'Step {n} of {t}',
+      names:['Welcome','Add music / video','Features','Shortcuts','Quick settings'],
+      names_and:['Welcome','Add music / video','Features','Touch gestures','Quick settings'],
       s1_title:'Welcome to Media Player',
       s1_desc:'A music and video player that runs right on your device: synced lyrics, ID3 tag editing, Material 3 design and full offline support.',
       s1_pick:'Choose your language',
       s2_chip:'Get started', s2_title:'Add music or video to the player', s2_desc:'Music and video are read straight from your device and never uploaded to any server.',
-      s2_c1t:'Add music / video button', s2_c1d:'Click the plus button at the top to pick files or a whole music/video folder (mp4, webm, mkv, mov...). Shortcut: <kbd>Ctrl</kbd> + <kbd>O</kbd>.',
+      s2_c1t:'Add music / video button', s2_c1d:'Tap the plus button at the top to pick files or a whole music/video folder (mp4, webm, mkv, mov...).',
       s2_c2t:'Drag & drop', s2_c2d:'Drop music or video files (and .lrc lyric files) right onto the app window.',
+      s2_c2t_and:'Open & Share from other apps', s2_c2d_and:'Use "Open with" or "Share" on audio/video files from your File Manager or messaging apps to play directly in Media Player.',
       s2_c3t:'Playlist', s2_c3d:'Search the list, turn on Shuffle and Repeat to keep the music going.',
       s2_note:'Install the app (the install button in the top bar) to open music/video files directly from your computer and use it offline.',
+      s2_note_and:'The Android build updates automatically with the website, works fully offline after the first online launch, and supports background playback.',
       s3_chip:'Features', s3_title:'Handy things included',
-      s3_c1t:'Synced lyrics', s3_c1d:'Detects a matching .lrc file or lyrics embedded in the track. Click a line to jump to it.',
+      s3_c1t:'Synced lyrics', s3_c1d:'Detects a matching .lrc file or lyrics embedded in the track. Tap a line to jump to it.',
       s3_c2t:'Edit tags & cover art', s3_c2d:'Edit ID3 tags, cover art and search lyrics on lrclib without leaving the app.',
       s3_c3t:'Mini player (PiP)', s3_c3d:'Keep a small floating player (with a seek bar and the video picture) on screen while you work on something else.',
       s3_c4t:'Fullscreen', s3_c4d:'Cover art, lyrics and the visualizer (or the video picture) in Immersive mode. Shortcut: <kbd>F11</kbd>.',
@@ -325,22 +556,37 @@
       s3_c7t:'Video playback', s3_c7d:'Supports mp4, webm, mkv, mov... The picture shows in the main stage, Fullscreen and PiP.',
       s3_c8t:'Audio mixer', s3_c8d:'Tune the 5-band equalizer, preamp, left/right balance and mono in Settings.',
       s3_c10t:'Android app', s3_c10d:'The Android (WebView) build updates itself with the website, works offline, opens/shares music from other apps, adds whole folders and plays in the background with lock-screen controls. Phone UI: the playlist opens from the top bar button and the other buttons live in the ⋮ menu.',
-      a_android:'On Android there is an extra "System" option (default) that takes the accent color from the OS (Material You).',
+      a_android:'The "System" option automatically picks up your phone wallpaper accent color (Material You) when running inside the Android app.',
       s3_c9t:'Video subtitles', s3_c9d:'Press the edit button while watching a video to add lyrics/subtitles (.lrc), saved inside the app.',
       s3_c6t:'Audio output', s3_c6d:'Pick the speaker or headphones from the top bar.',
       s4_chip:'Shortcuts', s4_title:'Control it without a mouse',
       k_play:'Play / Pause', k_mute:'Mute / Unmute', k_seek:'Seek back / forward 5 seconds', k_vol:'Volume up / down', k_track:'Previous / next track', k_open:'Add music / video (menu opens at the pointer)', k_settings:'Open Settings', k_find:'Search the playlist (highlights like browser Ctrl + F in Reorder mode)', k_full:'Fullscreen',
+      s4_and_chip:'Touch gestures', s4_and_title:'Effortless one-handed control',
+      s4_and_desc:'Mobile interface crafted for natural taps, swipes, and quick playback controls on Android.',
+      g1_tag:'SWIPE HORIZONTALLY', g1_t:'Switch steps effortlessly', g1_d:'Swipe left or right anywhere on this guide to move between steps without reaching for the bottom buttons.',
+      g2_tag:'TAP LYRICS', g2_t:'Jump to any line', g2_d:'Tap the Lyrics button for full-screen view, toggle Synced / Static modes, and tap any lyric line to seek straight to it.',
+      g3_tag:'HOLD & DRAG', g3_t:'Reorder your playlist', g3_d:'Open Playlist from the top bar, enable Reorder mode, and hold the drag handle to rearrange tracks.',
+      g4_tag:'BACKGROUND PLAY', g4_t:'Keep listening with screen off', g4_d:'Switch apps or turn off your screen: playback continues smoothly with lock-screen controls and artwork.',
       s5_chip:'Quick settings', s5_title:'Pick your style',
       s5_desc:'Preview it right on this screen. Everything is applied to Media Player when you press the start button, and you can change it later in Settings.',
       t_title:'Light / dark mode', t_desc:'Choose the background tone', t_system:'System', t_light:'Light', t_dark:'Dark',
       a_title:'Accent color', a_desc:'The highlight color across the whole app',
       z_title:'Interface and text size', z_desc:'From 50% to 200% (100% is the default)',
-      acc:{purple:'Purple',lime:'Lime',cyan:'Cyan',white:'White',green:'Green',blue:'Blue',yellow:'Yellow',orange:'Orange',red:'Red',pink:'Pink'}
+      acc:{system:'System',purple:'Purple',lime:'Lime',cyan:'Cyan',white:'White',green:'Green',blue:'Blue',yellow:'Yellow',orange:'Orange',red:'Red',pink:'Pink'}
     }
   };
 
   var DRAFT_KEY = 'getting_started_draft';
-  var st = { step: 0, lang: 'vi', theme: 'dark', accent: 'purple', scale: 100, parentScale: 1, accents: null };
+  var st = {
+    step: 0,
+    lang: 'vi',
+    theme: 'dark',
+    accent: isAndroidApp ? 'system' : 'purple',
+    scale: 100,
+    parentScale: 1,
+    accents: null,
+    systemAccent: null
+  };
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
@@ -370,24 +616,88 @@
     if (st.theme === 'dark') return 'dark';
     return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
   }
+  function hexToHsl(hex) {
+    var n = parseInt(hex.slice(1), 16);
+    var r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, h = 0, sat = 0, d = max - min;
+    if (d > 0) {
+      sat = d / (1 - Math.abs(2 * l - 1));
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60; if (h < 0) h += 360;
+    }
+    return [h, sat, l];
+  }
+  function hslToHex(h, sat, l) {
+    sat = Math.max(0, Math.min(1, sat)); l = Math.max(0, Math.min(1, l));
+    var c = (1 - Math.abs(2 * l - 1)) * sat, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+    var r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
+    else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+    var to = function (v) { return Math.round((v + m) * 255).toString(16).padStart(2, '0'); };
+    return '#' + to(r) + to(g) + to(b);
+  }
+  function buildPaletteFromHex(hex, mode) {
+    var hsl = hexToHsl(hex), h = hsl[0], s0 = hsl[1];
+    var sp = s0 < 0.12 ? s0 : Math.max(0.3, Math.min(0.9, s0));
+    var sn = Math.min(0.14, s0 * 0.3), sm = Math.min(0.28, s0 * 0.5);
+    if (mode === 'dark') {
+      return {
+        primary: hslToHex(h, sp, 0.80), onPrimary: hslToHex(h, sp, 0.20),
+        primaryContainer: hslToHex(h, sp, 0.30), onPrimaryContainer: hslToHex(h, sp, 0.90),
+        secondaryContainer: hslToHex(h, sm, 0.23),
+        surface: hslToHex(h, sn, 0.105), onSurface: hslToHex(h, sn, 0.90),
+        surfaceVariant: hslToHex(h, sn, 0.29), onSurfaceVariant: hslToHex(h, sn, 0.80),
+        outline: hslToHex(h, sn, 0.60),
+        ambientGradient: 'radial-gradient(circle at 80% 20%, ' + hslToHex(h, Math.min(0.5, sp), 0.17) + ' 0%, ' + hslToHex(h, sn, 0.105) + ' 60%, #000 100%)'
+      };
+    }
+    return {
+      primary: hslToHex(h, sp, 0.40), onPrimary: '#FFFFFF',
+      primaryContainer: hslToHex(h, Math.min(1, sp + 0.1), 0.90), onPrimaryContainer: hslToHex(h, sp, 0.14),
+      secondaryContainer: hslToHex(h, Math.min(0.5, sm + 0.2), 0.89),
+      surface: hslToHex(h, Math.min(1, sn + 0.3), 0.98), onSurface: hslToHex(h, sn, 0.11),
+      surfaceVariant: hslToHex(h, Math.min(0.3, sn + 0.1), 0.90), onSurfaceVariant: hslToHex(h, sn, 0.29),
+      outline: hslToHex(h, sn, 0.47),
+      ambientGradient: 'radial-gradient(circle at 80% 20%, ' + hslToHex(h, Math.min(1, sp + 0.1), 0.90) + ' 0%, ' + hslToHex(h, Math.min(1, sn + 0.3), 0.98) + ' 60%, #fff 100%)'
+    };
+  }
+  function getSysHex() {
+    if (st.systemAccent && /^#[0-9a-f]{6}$/i.test(st.systemAccent)) return st.systemAccent;
+    try {
+      var ab = (window.parent && window.parent.AndroidBridge) || window.AndroidBridge;
+      var h = ab && ab.getSystemAccent && ab.getSystemAccent();
+      if (/^#[0-9a-f]{6}$/i.test(h || '')) { st.systemAccent = h; return h; }
+    } catch (e) {}
+    return null;
+  }
   function applyPalette() {
-    if (!st.accents) return;
-    var a = st.accents[st.accent] || st.accents.purple; if (!a) return;
-    var p = a[resolvedMode()]; if (!p) return;
-    var r = document.documentElement.style;
-    r.setProperty('--primary', p.primary); r.setProperty('--on-primary', p.onPrimary);
-    r.setProperty('--primary-container', p.primaryContainer); r.setProperty('--on-primary-container', p.onPrimaryContainer);
-    r.setProperty('--secondary-container', p.secondaryContainer || p.primaryContainer);
-    r.setProperty('--surface', p.surface); r.setProperty('--on-surface', p.onSurface);
-    r.setProperty('--surface-variant', p.surfaceVariant); r.setProperty('--on-surface-variant', p.onSurfaceVariant);
-    r.setProperty('--outline', p.outline);
-    if (p.ambientGradient) r.setProperty('--bg-grad', p.ambientGradient);
+    var mode = resolvedMode();
+    var p = null;
+    if (st.accent === 'system') {
+      var sh = getSysHex();
+      if (sh) p = buildPaletteFromHex(sh, mode);
+    }
+    if (!p && st.accents) {
+      var a = st.accents[st.accent] || st.accents.purple;
+      if (a) p = a[mode];
+    }
+    if (p) {
+      var r = document.documentElement.style;
+      r.setProperty('--primary', p.primary); r.setProperty('--on-primary', p.onPrimary);
+      r.setProperty('--primary-container', p.primaryContainer); r.setProperty('--on-primary-container', p.onPrimaryContainer);
+      r.setProperty('--secondary-container', p.secondaryContainer || p.primaryContainer);
+      r.setProperty('--surface', p.surface); r.setProperty('--on-surface', p.onSurface);
+      r.setProperty('--surface-variant', p.surfaceVariant); r.setProperty('--on-surface-variant', p.onSurfaceVariant);
+      r.setProperty('--outline', p.outline);
+      if (p.ambientGradient) r.setProperty('--bg-grad', p.ambientGradient);
+    }
     $$('.sw').forEach(function (b) { b.classList.toggle('sel', b.dataset.accent === st.accent); });
     var nm = $('#sw-name'); if (nm) nm.textContent = T[st.lang].acc[st.accent] || st.accent;
     $$('#seg-theme button').forEach(function (b) { b.classList.toggle('sel', b.dataset.theme === st.theme); });
   }
   function applyScale() {
-    // Iframe nằm trong app cha: nếu app cha đã zoom thì chỉ bù phần chênh lệch để khỏi nhân đôi
     var z = (st.scale / 100) / (st.parentScale || 1);
     document.documentElement.style.setProperty('--z', String(z));
     $('#scale').value = st.scale; $('#scale-val').textContent = st.scale + '%';
@@ -395,10 +705,26 @@
   function renderSwatches() {
     var box = $('#swatches'); if (!box || !st.accents) return;
     box.innerHTML = '';
+    var mode = resolvedMode();
+    if (isAndroid || isAndroidApp) {
+      var sysBtn = document.createElement('button');
+      sysBtn.className = 'sw sw-sys';
+      sysBtn.dataset.accent = 'system';
+      sysBtn.title = T[st.lang].acc.system || 'System';
+      var sh = getSysHex();
+      if (sh) {
+        var sc = buildPaletteFromHex(sh, mode);
+        sysBtn.style.background = sc.primaryContainer;
+        sysBtn.style.color = sc.onPrimaryContainer;
+      }
+      sysBtn.innerHTML = '<span class="ms">android</span><span>System</span>';
+      sysBtn.addEventListener('click', function () { st.accent = 'system'; applyPalette(); saveDraft(); });
+      box.appendChild(sysBtn);
+    }
     Object.keys(st.accents).forEach(function (k) {
       var b = document.createElement('button');
       b.className = 'sw'; b.dataset.accent = k; b.title = T[st.lang].acc[k] || k;
-      var mode = resolvedMode(); var c = st.accents[k][mode] || st.accents[k].dark;
+      var c = st.accents[k][mode] || st.accents[k].dark;
       b.style.background = c.primary; b.style.color = c.onPrimary;
       b.innerHTML = '<span class="ms">check</span>';
       b.addEventListener('click', function () { st.accent = k; applyPalette(); saveDraft(); });
@@ -408,6 +734,13 @@
   }
 
   /* ---------- Bước ---------- */
+  function visibleSlides() {
+    return $$('.slide').filter(function (s) {
+      if (isAndroid && s.classList.contains('pc-only')) return false;
+      if (!isAndroid && s.classList.contains('android-only')) return false;
+      return true;
+    });
+  }
   function buildStepper() {
     var s = $('#stepper'), d = $('#dots'); s.innerHTML = ''; d.innerHTML = '';
     for (var i = 0; i < TOTAL; i++) {
@@ -417,11 +750,19 @@
   }
   function updateStepUI() {
     var d = T[st.lang];
+    var slides = visibleSlides();
     $$('.step-pill').forEach(function (p, i) { p.classList.toggle('active', i === st.step); p.classList.toggle('done', i < st.step); });
     $$('.dot').forEach(function (p, i) { p.classList.toggle('active', i === st.step); });
-    $$('.slide').forEach(function (s, i) { s.classList.toggle('active', i === st.step); s.classList.toggle('before', i < st.step); if (i === st.step) s.scrollTop = 0; });
+    $$('.slide').forEach(function (s) {
+      var idx = slides.indexOf(s);
+      if (idx === -1) { s.classList.remove('active', 'before'); return; }
+      s.classList.toggle('active', idx === st.step);
+      s.classList.toggle('before', idx < st.step);
+      if (idx === st.step) s.scrollTop = 0;
+    });
     $('#step-count').textContent = d.step.replace('{n}', st.step + 1).replace('{t}', TOTAL);
-    $('#step-name').textContent = d.names[st.step];
+    var stepNames = isAndroid ? d.names_and : d.names;
+    $('#step-name').textContent = stepNames[st.step];
     $('#btn-back').disabled = st.step === 0;
     var last = st.step === TOTAL - 1;
     $('#next-text').textContent = last ? d.finish : d.next;
@@ -431,8 +772,10 @@
 
   function finish() {
     clearDraft();
-    toParent({ type: 'gs-done', settings: { lang: st.lang, theme: st.theme, accent: st.accent, scale: st.scale } });
-    toParent('tutorial done');   // tương thích bản cũ
+    var outAccent = st.accent;
+    if (outAccent === 'system' && !isAndroidApp) outAccent = 'purple';
+    toParent({ type: 'gs-done', settings: { lang: st.lang, theme: st.theme, accent: outAccent, scale: st.scale } });
+    toParent('tutorial done');
   }
 
   /* ---------- Sự kiện ---------- */
@@ -454,6 +797,29 @@
     else if (e.key === 'ArrowLeft' && st.step > 0 && e.target.type !== 'range') go(st.step - 1);
   });
   if (window.matchMedia) { try { window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function () { if (st.theme === 'system') renderSwatches(); }); } catch (e) {} }
+
+  /* ---------- Hỗ trợ vuốt ngang trên màn hình cảm ứng ---------- */
+  (function () {
+    var mainEl = $('#main');
+    var sx = 0, sy = 0, tracking = false;
+    mainEl.addEventListener('touchstart', function (e) {
+      if (!e.touches || e.touches.length !== 1) return;
+      if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'range') { tracking = false; return; }
+      sx = e.touches[0].clientX;
+      sy = e.touches[0].clientY;
+      tracking = true;
+    }, { passive: true });
+    mainEl.addEventListener('touchend', function (e) {
+      if (!tracking || !e.changedTouches || !e.changedTouches.length) return;
+      tracking = false;
+      var dx = e.changedTouches[0].clientX - sx;
+      var dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        if (dx < 0 && st.step < TOTAL - 1) go(st.step + 1);
+        else if (dx > 0 && st.step > 0) go(st.step - 1);
+      }
+    }, { passive: true });
+  })();
 
   /* ---------- Phông chữ do app cha gửi sang ---------- */
   function applyAppFont(f) {
@@ -477,12 +843,19 @@
     if (d.font) applyAppFont(d.font);
     if (d.type === 'gs-init') {
       inited = true;
+      if (typeof d.isAndroidDevice === 'boolean' && d.isAndroidDevice) {
+        isAndroid = true;
+        window.__IS_ANDROID__ = true;
+        document.documentElement.classList.add('is-android');
+      }
+      if (typeof d.isAndroidApp === 'boolean') isAndroidApp = d.isAndroidApp;
+      if (d.systemAccent) st.systemAccent = d.systemAccent;
       st.accents = d.accents || st.accents;
       st.parentScale = d.parentScale || 1;
       var draft = loadDraft();
       st.lang = (draft && draft.lang) || d.lang || 'vi';
       st.theme = (draft && draft.theme) || d.theme || 'dark';
-      st.accent = (draft && draft.accent) || d.accent || 'purple';
+      st.accent = (draft && draft.accent) || d.accent || (isAndroidApp ? 'system' : 'purple');
       st.scale = (draft && draft.scale) || d.scale || 100;
       st.step = draft && typeof draft.step === 'number' ? draft.step : 0;
       applyLang(); applyScale(); renderSwatches();
@@ -490,11 +863,9 @@
   });
 
   buildStepper(); applyLang(); applyScale();
-  // Báo cho app cha biết đã sẵn sàng nhận dữ liệu (thử lại vài lần phòng khi cha chưa kịp lắng nghe)
   var tries = 0;
   (function ping() { if (inited || tries++ > 20) return; toParent({ type: 'gs-ready' }); setTimeout(ping, 400); })();
 
-  // Phòng khi font icon không tải được (offline lần đầu)
   try {
     document.fonts.load('24px "Material Symbols Outlined"', 'check').then(function (f) { if (!f.length) document.documentElement.classList.add('no-icons'); }).catch(function () { document.documentElement.classList.add('no-icons'); });
   } catch (e) {}
@@ -524,16 +895,7 @@
 })();
 </script>
 <script>
-    // Menu chuột phải tuỳ chỉnh dùng chung của Media Player (chặn menu mặc định của trình duyệt)
     try { window.parent.__installCtxMenu(document, 'm3-plain'); } catch (e) {}
-  (function () {
-    var isAndroid = false;
-    try { isAndroid = !!(window.parent && window.parent.IS_ANDROID_APP) || /[?&]android=true/.test(location.search); } catch (e) {}
-    if (!isAndroid) return;
-    var st2 = document.createElement('style');
-    st2.textContent = '.pc-only{display:none!important}.android-only{display:block!important}';
-    document.head.appendChild(st2);
-  })();
 </script>
 </body>
 </html>
