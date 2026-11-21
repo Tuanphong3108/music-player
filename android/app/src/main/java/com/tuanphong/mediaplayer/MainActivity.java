@@ -52,6 +52,9 @@ public class MainActivity extends Activity {
     private android.view.View loadingOverlay = null;
     private android.animation.ValueAnimator md3ArcAnimator = null;
     private android.animation.ValueAnimator md3RotAnimator = null;
+    private String appLang = "vi";
+    private android.graphics.Typeface googleSansFlexRegular = null;
+    private android.graphics.Typeface googleSansFlexBold = null;
     private final Runnable loadTimeoutRunnable = () -> {
         if (appLeftHome || pageResponded) return;
         showUnresponsiveDialog();
@@ -175,9 +178,82 @@ public class MainActivity extends Activity {
 
         if (b != null) web.restoreState(b);
         else web.loadUrl(isOnline() ? APP_URL : APP_URL); // SW của trang tự phục vụ offline; lỗi thì rơi về offline.html
+        appLang = getSharedPreferences("app", MODE_PRIVATE).getString("lang", "vi");
+        ensureGoogleSansFlexLoaded();
         showMd3LoadingOverlay();
         armLoadWatchdog();
         handleIntent(getIntent());
+    }
+
+    private boolean isEnglishLang() {
+        return "en".equalsIgnoreCase(appLang);
+    }
+
+    private void ensureGoogleSansFlexLoaded() {
+        if (googleSansFlexRegular != null && googleSansFlexBold != null) return;
+        try {
+            File fontDir = new File(getCacheDir(), "fonts");
+            if (!fontDir.exists()) fontDir.mkdirs();
+            File regFile = new File(fontDir, "GoogleSansFlex-Regular.ttf");
+            if (regFile.exists() && regFile.length() > 1024) {
+                googleSansFlexRegular = android.graphics.Typeface.createFromFile(regFile);
+                googleSansFlexBold = android.graphics.Typeface.create(googleSansFlexRegular, android.graphics.Typeface.BOLD);
+                return;
+            }
+            new Thread(() -> {
+                java.net.HttpURLConnection conn = null;
+                java.io.InputStream in = null;
+                java.io.FileOutputStream out = null;
+                try {
+                    java.net.HttpURLConnection cssConn = (java.net.HttpURLConnection) new java.net.URL(
+                            "https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;700").openConnection();
+                    cssConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14)");
+                    cssConn.setConnectTimeout(8000);
+                    cssConn.setReadTimeout(8000);
+                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(cssConn.getInputStream()));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) sb.append(line).append('\n');
+                    br.close();
+                    cssConn.disconnect();
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("url\\((https://fonts\\.gstatic\\.com/[^)]+\\.(?:ttf|woff2))\\)").matcher(sb.toString());
+                    if (m.find() && m.group(1).endsWith(".ttf")) {
+                        conn = (java.net.HttpURLConnection) new java.net.URL(m.group(1)).openConnection();
+                        conn.setConnectTimeout(10000);
+                        conn.setReadTimeout(10000);
+                        in = conn.getInputStream();
+                        out = new java.io.FileOutputStream(regFile);
+                        byte[] buf = new byte[8192];
+                        int n;
+                        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                        out.flush();
+                        out.close(); out = null;
+                        in.close(); in = null;
+                        android.graphics.Typeface tf = android.graphics.Typeface.createFromFile(regFile);
+                        android.graphics.Typeface boldTf = android.graphics.Typeface.create(tf, android.graphics.Typeface.BOLD);
+                        runOnUiThread(() -> {
+                            googleSansFlexRegular = tf;
+                            googleSansFlexBold = boldTf;
+                        });
+                    }
+                } catch (Throwable ignored) {
+                } finally {
+                    try { if (out != null) out.close(); } catch (Exception ignored) {}
+                    try { if (in != null) in.close(); } catch (Exception ignored) {}
+                    try { if (conn != null) conn.disconnect(); } catch (Exception ignored) {}
+                }
+            }).start();
+        } catch (Throwable ignored) {}
+    }
+
+    private void applyFontToView(android.widget.TextView tv, boolean bold) {
+        if (tv == null) return;
+        android.graphics.Typeface tf = bold ? googleSansFlexBold : googleSansFlexRegular;
+        if (tf != null) {
+            tv.setTypeface(tf, bold ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        } else {
+            tv.setTypeface(tv.getTypeface(), bold ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        }
     }
 
     private void showMd3LoadingOverlay() {
@@ -280,7 +356,7 @@ public class MainActivity extends Activity {
         hideUnresponsiveDialog();
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
-        pingHandler.postDelayed(loadTimeoutRunnable, 5000);
+        pingHandler.postDelayed(loadTimeoutRunnable, 10000);
     }
 
     private void cancelWatchdogOnLeave() {
@@ -293,7 +369,7 @@ public class MainActivity extends Activity {
         if (appLeftHome || pageResponded || hangAlertShown) return;
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
-        pingHandler.postDelayed(pingTimeoutRunnable, 5000);
+        pingHandler.postDelayed(pingTimeoutRunnable, 10000);
         callJs("window.__androidPing&&window.__androidPing()");
     }
 
@@ -303,6 +379,7 @@ public class MainActivity extends Activity {
         hideMd3LoadingOverlay();
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed() || hangOverlay != null) return;
+            boolean en = isEnglishLang();
             android.widget.LinearLayout box = new android.widget.LinearLayout(this);
             box.setOrientation(android.widget.LinearLayout.VERTICAL);
             box.setGravity(android.view.Gravity.CENTER);
@@ -313,16 +390,19 @@ public class MainActivity extends Activity {
             box.setFocusable(true);
 
             android.widget.TextView title = new android.widget.TextView(this);
-            title.setText("Trang không phản hồi");
+            title.setText(en ? "Page not responding" : "Trang không phản hồi");
             title.setTextColor(0xFFFFFFFF);
             title.setTextSize(20f);
-            title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+            applyFontToView(title, true);
             title.setGravity(android.view.Gravity.CENTER);
 
             android.widget.TextView desc = new android.widget.TextView(this);
-            desc.setText("Ứng dụng đã chờ quá thời gian nhưng không nhận được phản hồi từ trang web.");
+            desc.setText(en
+                    ? "The app waited over 10 seconds without receiving a response from the web page."
+                    : "Ứng dụng đã chờ quá 10 giây nhưng không nhận được phản hồi từ trang web.");
             desc.setTextColor(0xFFD0C9DC);
             desc.setTextSize(14f);
+            applyFontToView(desc, false);
             desc.setGravity(android.view.Gravity.CENTER);
             android.widget.LinearLayout.LayoutParams descLp = new android.widget.LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -330,24 +410,57 @@ public class MainActivity extends Activity {
             descLp.bottomMargin = (int) (22 * getResources().getDisplayMetrics().density);
             desc.setLayoutParams(descLp);
 
+            android.widget.LinearLayout actionsRow = new android.widget.LinearLayout(this);
+            actionsRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            actionsRow.setGravity(android.view.Gravity.CENTER);
+
+            int btnPadH = (int) (24 * getResources().getDisplayMetrics().density);
+            int btnPadV = (int) (12 * getResources().getDisplayMetrics().density);
+
+            android.widget.Button waitBtn = new android.widget.Button(this);
+            waitBtn.setText("Wait");
+            waitBtn.setAllCaps(false);
+            waitBtn.setTextColor(0xFFE6E0E9);
+            waitBtn.setTextSize(15f);
+            applyFontToView(waitBtn, true);
+            android.graphics.drawable.GradientDrawable waitBg = new android.graphics.drawable.GradientDrawable();
+            waitBg.setColor(0xFF332D41);
+            waitBg.setCornerRadius(999f);
+            waitBtn.setBackground(waitBg);
+            waitBtn.setPadding(btnPadH, btnPadV, btnPadH, btnPadV);
+            waitBtn.setOnClickListener(v -> {
+                hangAlertShown = false;
+                hideUnresponsiveDialog();
+                showMd3LoadingOverlay();
+                pingHandler.removeCallbacks(loadTimeoutRunnable);
+                pingHandler.removeCallbacks(pingTimeoutRunnable);
+                pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, 10000);
+                if (pageReady) callJs("window.__androidPing&&window.__androidPing()");
+            });
+            android.widget.LinearLayout.LayoutParams waitLp = new android.widget.LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            waitLp.rightMargin = (int) (12 * getResources().getDisplayMetrics().density);
+            waitBtn.setLayoutParams(waitLp);
+
             android.widget.Button restartBtn = new android.widget.Button(this);
             restartBtn.setText("Restart app");
             restartBtn.setAllCaps(false);
             restartBtn.setTextColor(0xFF1C1B1F);
             restartBtn.setTextSize(15f);
-            restartBtn.setTypeface(restartBtn.getTypeface(), android.graphics.Typeface.BOLD);
+            applyFontToView(restartBtn, true);
             android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
             bg.setColor(0xFFD0BCFF);
             bg.setCornerRadius(999f);
             restartBtn.setBackground(bg);
-            int btnPadH = (int) (28 * getResources().getDisplayMetrics().density);
-            int btnPadV = (int) (12 * getResources().getDisplayMetrics().density);
             restartBtn.setPadding(btnPadH, btnPadV, btnPadH, btnPadV);
             restartBtn.setOnClickListener(v -> restartApp());
 
+            actionsRow.addView(waitBtn);
+            actionsRow.addView(restartBtn);
+
             box.addView(title);
             box.addView(desc);
-            box.addView(restartBtn);
+            box.addView(actionsRow);
             hangOverlay = box;
             root.addView(hangOverlay, new FrameLayout.LayoutParams(-1, -1));
         });
@@ -589,7 +702,7 @@ public class MainActivity extends Activity {
         if (!pageResponded && !hangAlertShown) {
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
-            pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, 5000);
+            pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, 10000);
             if (pageReady) sendHandshakePing();
         }
         callJs("window.__systemAccentChanged&&__systemAccentChanged()");
@@ -665,6 +778,13 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void setState(boolean playing, String title, String artist, long posMs, long durMs) {
             setState(playing, title, artist, posMs, durMs, playing ? 1f : 0f);
+        }
+
+        @JavascriptInterface
+        public void setAppLanguage(String lang) {
+            if (lang == null || lang.trim().isEmpty()) return;
+            appLang = lang.trim().toLowerCase();
+            getSharedPreferences("app", MODE_PRIVATE).edit().putString("lang", appLang).apply();
         }
 
         @JavascriptInterface
