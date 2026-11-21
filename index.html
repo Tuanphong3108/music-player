@@ -6730,7 +6730,6 @@
                     if (AB && AB.pongReady) AB.pongReady();
                 } catch (e) {}
             };
-            window.__androidPing();
             try {
                 const syncNativeLang = () => {
                     try {
@@ -6744,6 +6743,7 @@
                     if (ev && ev.key === 'settings_language') syncNativeLang();
                 });
                 syncNativeLang();
+                if (AB && AB.pongReady) AB.pongReady();
             } catch (e) {}
             window.__onAndroidLeaveApp = function () {
                 try {
