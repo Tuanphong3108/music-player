@@ -41,6 +41,7 @@ public class MainActivity extends Activity {
     private WebChromeClient.CustomViewCallback customCb;
     private ValueCallback<Uri[]> filePathCb;
     private final Map<String, Uri> served = new HashMap<>();
+    private final Map<String, File> cachedMediaFiles = new HashMap<>();
     private int nextId = 1;
     private boolean pageReady = false;
     private final List<JSONObject> pending = new ArrayList<>();
@@ -639,6 +640,50 @@ public class MainActivity extends Activity {
     }
 
 
+    /** Lấy hoặc tạo bản sao cục bộ trong cache/media_stream/ để phát Range nhanh, seek chuẩn bằng RandomAccessFile và không bị mất quyền URI khi chạy nền. */
+    private File ensureLocalSeekableFile(Uri src) {
+        String key = src.toString();
+        synchronized (cachedMediaFiles) {
+            File existing = cachedMediaFiles.get(key);
+            if (existing != null && existing.exists() && existing.length() > 0) return existing;
+        }
+        try {
+            File dir = new File(getCacheDir(), "media_stream");
+            if (!dir.exists()) dir.mkdirs();
+            File[] oldFiles = dir.listFiles();
+            if (oldFiles != null && oldFiles.length > 6) {
+                java.util.Arrays.sort(oldFiles, (a, b) -> Long.compare(a.lastModified(), b.lastModified()));
+                for (int i = 0; i < oldFiles.length - 4; i++) {
+                    try { oldFiles[i].delete(); } catch (Throwable ignored) {}
+                }
+            }
+            String safeName = displayName(src).replaceAll("[\\\\/:*?\"<>|]", "_");
+            String hash = Integer.toHexString(key.hashCode());
+            File outFile = new File(dir, hash + "_" + safeName);
+            long expectedSize = querySize(src);
+            if (outFile.exists() && outFile.length() > 0 && (expectedSize <= 0 || outFile.length() == expectedSize)) {
+                outFile.setLastModified(System.currentTimeMillis());
+                synchronized (cachedMediaFiles) { cachedMediaFiles.put(key, outFile); }
+                return outFile;
+            }
+            File tmpFile = new File(dir, hash + "_" + safeName + ".tmp");
+            try (InputStream in = getContentResolver().openInputStream(src);
+                 FileOutputStream out = new FileOutputStream(tmpFile)) {
+                if (in == null) return null;
+                byte[] buf = new byte[65536];
+                int r;
+                while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
+                out.flush();
+            }
+            if (outFile.exists()) outFile.delete();
+            if (tmpFile.renameTo(outFile) && outFile.length() > 0) {
+                synchronized (cachedMediaFiles) { cachedMediaFiles.put(key, outFile); }
+                return outFile;
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
     /** Phát nội dung content:// kèm hỗ trợ HTTP Range để video tua/phát theo từng đoạn, không nạp cả tệp vào RAM. */
     private WebResourceResponse serveContent(Uri src, Map<String, String> reqHeaders) throws Exception {
         String mime = getContentResolver().getType(src);
@@ -658,13 +703,19 @@ public class MainActivity extends Activity {
         Map<String, String> h = new HashMap<>();
         h.put("Access-Control-Allow-Origin", "*");
         h.put("Accept-Ranges", "bytes");
-        android.content.res.AssetFileDescriptor afd = getContentResolver().openAssetFileDescriptor(src, "r");
-        long total = afd == null ? -1 : afd.getLength();
+
+        final File localFile = ensureLocalSeekableFile(src);
+        long total = (localFile != null && localFile.exists()) ? localFile.length() : -1;
+        android.content.res.AssetFileDescriptor afd = null;
         if (total <= 0) {
-            long queried = querySize(src);
-            if (queried > 0) total = queried;
+            afd = getContentResolver().openAssetFileDescriptor(src, "r");
+            total = afd == null ? -1 : afd.getLength();
+            if (total <= 0) {
+                long queried = querySize(src);
+                if (queried > 0) total = queried;
+            }
         }
-        if (afd == null || total <= 0) {
+        if (total <= 0) {
             if (afd != null) afd.close();
             InputStream in = getContentResolver().openInputStream(src);
             return new WebResourceResponse(mime, null, 200, "OK", h, in);
@@ -678,7 +729,11 @@ public class MainActivity extends Activity {
                 String[] p = range.substring(6).split(",")[0].trim().split("-", -1);
                 if (p[0].isEmpty()) { long n = Long.parseLong(p[1]); rangeStart = Math.max(0, total - n); }
                 else { rangeStart = Long.parseLong(p[0]); if (p.length > 1 && !p[1].isEmpty()) rangeEnd = Math.min(rangeEnd, Long.parseLong(p[1])); }
-                if (rangeStart > rangeEnd || rangeStart >= total) { afd.close(); h.put("Content-Range", "bytes */" + total); return new WebResourceResponse(mime, null, 416, "Range Not Satisfiable", h, null); }
+                if (rangeStart > rangeEnd || rangeStart >= total) {
+                    if (afd != null) afd.close();
+                    h.put("Content-Range", "bytes */" + total);
+                    return new WebResourceResponse(mime, null, 416, "Range Not Satisfiable", h, null);
+                }
                 partial = true;
             } catch (Exception ex) { rangeStart = 0; rangeEnd = total - 1; partial = false; }
         }
@@ -687,17 +742,24 @@ public class MainActivity extends Activity {
         final long len = end - start + 1;
         final android.content.res.AssetFileDescriptor fafd = afd;
         InputStream bounded = new InputStream() {
+            java.io.RandomAccessFile raf = null;
             InputStream raw = null;
             long toSkip = start;
             long left = len;
             boolean closed = false;
 
             private void ensureStream() throws java.io.IOException {
-                if (raw != null) return;
+                if (raf != null || raw != null) return;
+                if (localFile != null && localFile.exists()) {
+                    raf = new java.io.RandomAccessFile(localFile, "r");
+                    raf.seek(toSkip);
+                    return;
+                }
                 try {
                     raw = getContentResolver().openInputStream(src);
                 } catch (Throwable ignored) {}
-                if (raw == null) raw = fafd.createInputStream();
+                if (raw == null && fafd != null) raw = fafd.createInputStream();
+                if (raw == null) throw new java.io.IOException("Cannot open stream");
                 long rem = toSkip;
                 while (rem > 0) {
                     long sk = raw.skip(rem);
@@ -721,22 +783,30 @@ public class MainActivity extends Activity {
             @Override public synchronized int read(byte[] b, int off, int n) throws java.io.IOException {
                 if (closed || left <= 0 || n <= 0) return -1;
                 ensureStream();
-                int r = raw.read(b, off, (int) Math.min(n, left));
+                int r;
+                if (raf != null) {
+                    r = raf.read(b, off, (int) Math.min(n, left));
+                } else {
+                    r = raw.read(b, off, (int) Math.min(n, left));
+                }
                 if (r > 0) left -= r;
                 return r;
             }
 
             @Override public synchronized int available() throws java.io.IOException {
                 if (closed || left <= 0) return 0;
-                ensureStream();
-                int av = raw.available();
-                return (int) Math.min(left, Math.max(0, av));
+                return (int) Math.min(left, 65536);
             }
 
             @Override public synchronized void close() throws java.io.IOException {
                 if (closed) return;
                 closed = true;
-                try { if (raw != null) raw.close(); } finally { fafd.close(); }
+                try {
+                    if (raf != null) raf.close();
+                    if (raw != null) raw.close();
+                } finally {
+                    if (fafd != null) fafd.close();
+                }
             }
         };
         h.put("Content-Length", String.valueOf(len));
