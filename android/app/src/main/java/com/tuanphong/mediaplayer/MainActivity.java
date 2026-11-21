@@ -667,17 +667,19 @@ public class MainActivity extends Activity {
         }
         String range = null;
         if (reqHeaders != null) for (Map.Entry<String, String> e : reqHeaders.entrySet()) if ("range".equalsIgnoreCase(e.getKey())) range = e.getValue();
-        long start = 0, end = total - 1;
+        long rangeStart = 0, rangeEnd = total - 1;
         boolean partial = false;
         if (range != null && range.startsWith("bytes=")) {
             try {
                 String[] p = range.substring(6).split(",")[0].trim().split("-", -1);
-                if (p[0].isEmpty()) { long n = Long.parseLong(p[1]); start = Math.max(0, total - n); }
-                else { start = Long.parseLong(p[0]); if (p.length > 1 && !p[1].isEmpty()) end = Math.min(end, Long.parseLong(p[1])); }
-                if (start > end || start >= total) { afd.close(); h.put("Content-Range", "bytes */" + total); return new WebResourceResponse(mime, null, 416, "Range Not Satisfiable", h, null); }
+                if (p[0].isEmpty()) { long n = Long.parseLong(p[1]); rangeStart = Math.max(0, total - n); }
+                else { rangeStart = Long.parseLong(p[0]); if (p.length > 1 && !p[1].isEmpty()) rangeEnd = Math.min(rangeEnd, Long.parseLong(p[1])); }
+                if (rangeStart > rangeEnd || rangeStart >= total) { afd.close(); h.put("Content-Range", "bytes */" + total); return new WebResourceResponse(mime, null, 416, "Range Not Satisfiable", h, null); }
                 partial = true;
-            } catch (Exception ex) { start = 0; end = total - 1; partial = false; }
+            } catch (Exception ex) { rangeStart = 0; rangeEnd = total - 1; partial = false; }
         }
+        final long start = rangeStart;
+        final long end = rangeEnd;
         final long len = end - start + 1;
         final android.content.res.AssetFileDescriptor fafd = afd;
         InputStream bounded = new InputStream() {
