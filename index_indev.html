@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Indev Status - Phong VN</title>
   
-  <!-- Google Sans Flex & Material Symbols Outlined -->
+  <!-- Google Sans Flex & Material Symbols Rounded -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
@@ -90,12 +90,12 @@
     }
 
     /* Material Symbols Fill on Hover */
-    .material-symbols-outlined {
+    .material-symbols-rounded {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
       transition: font-variation-settings 0.25s var(--md-motion-spring-bounce);
     }
-    button:hover .material-symbols-outlined,
-    a:hover .material-symbols-outlined {
+    button:hover .material-symbols-rounded,
+    a:hover .material-symbols-rounded {
       font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 100, 'opsz' 24;
     }
 
@@ -282,7 +282,7 @@
       
       <!-- Big Visual Icon -->
       <div class="p-8 sm:p-10 rounded-full bg-[var(--md-sys-color-surface-container)]/50 backdrop-blur-sm border border-[var(--md-sys-color-outline-variant)]/40 shadow-inner flex items-center justify-center">
-        <span id="status-main-icon" class="material-symbols-outlined text-[90px] sm:text-[120px] text-[var(--md-sys-color-primary)]">
+        <span id="status-main-icon" class="material-symbols-rounded text-[90px] sm:text-[120px] text-[var(--md-sys-color-primary)]">
           lock
         </span>
       </div>
@@ -290,7 +290,7 @@
 
     <!-- Status Badge -->
     <div id="status-badge" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-bold tracking-wider uppercase mb-3 transition-all duration-300">
-      <span id="status-badge-icon" class="material-symbols-outlined text-base">info</span>
+      <span id="status-badge-icon" class="material-symbols-rounded text-base">info</span>
       <span id="status-badge-text">STATUS</span>
     </div>
 
@@ -309,19 +309,19 @@
       
       <!-- Action 1: Quay lại -->
       <button onclick="window.history.back()" class="m3-spring-btn flex-1 flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] font-semibold text-base shadow-sm">
-        <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        <span class="material-symbols-rounded text-2xl">arrow_back</span>
         <span>Quay lại</span>
       </button>
 
       <!-- Action 2: Quay về Stable / Chuyển hướng -->
       <a id="status-primary-btn" href="index.html" target="_self" class="m3-spring-btn flex-[1.4] flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold text-base shadow-md">
-        <span id="status-button-icon" class="material-symbols-outlined text-2xl">verified</span>
+        <span id="status-button-icon" class="material-symbols-rounded text-2xl">verified</span>
         <span id="status-button-text">Quay về Stable</span>
       </a>
 
       <!-- Action 3: Danh sách ứng dụng -->
       <a href="https://tuanphong3108.github.io/apps.html" target="_self" class="m3-spring-btn flex-1 flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]/60 text-[var(--md-sys-color-primary)] font-semibold text-base shadow-sm">
-        <span class="material-symbols-outlined text-2xl">apps</span>
+        <span class="material-symbols-rounded text-2xl">apps</span>
         <span>Ứng dụng</span>
       </a>
 
