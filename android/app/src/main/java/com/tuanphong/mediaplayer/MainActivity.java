@@ -477,5 +477,74 @@ public class MainActivity extends Activity {
                 catch (Exception e) { callJs("window.addBtnCancel&&addBtnCancel()"); }
             });
         }
+
+        @JavascriptInterface
+        public void startUpdateDownload(String url) {
+            if (url == null || url.trim().isEmpty()) return;
+            final String targetUrl = url.trim();
+            new Thread(() -> {
+                java.io.InputStream in = null;
+                java.io.FileOutputStream out = null;
+                java.net.HttpURLConnection conn = null;
+                try {
+                    java.net.URL u = new java.net.URL(targetUrl);
+                    conn = (java.net.HttpURLConnection) u.openConnection();
+                    conn.setInstanceFollowRedirects(true);
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(30000);
+                    conn.setRequestProperty("User-Agent", "MediaPlayerApp/1.0");
+                    conn.connect();
+                    int code = conn.getResponseCode();
+                    if (code < 200 || code >= 300) {
+                        callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote("HTTP " + code) + ")");
+                        return;
+                    }
+                    long total = conn.getContentLengthLong();
+                    File dir = new File(getCacheDir(), "updates");
+                    if (!dir.exists()) dir.mkdirs();
+                    File apkFile = new File(dir, "MediaPlayer-update.apk");
+                    in = conn.getInputStream();
+                    out = new FileOutputStream(apkFile);
+                    byte[] buf = new byte[16384];
+                    long downloaded = 0;
+                    int lastPct = -1;
+                    int read;
+                    while ((read = in.read(buf)) != -1) {
+                        out.write(buf, 0, read);
+                        downloaded += read;
+                        if (total > 0) {
+                            int pct = (int) Math.min(100, (downloaded * 100L) / total);
+                            if (pct != lastPct) {
+                                lastPct = pct;
+                                callJs("window.__onAndroidUpdateProgress&&window.__onAndroidUpdateProgress(" + pct + "," + downloaded + "," + total + ")");
+                            }
+                        } else {
+                            callJs("window.__onAndroidUpdateProgress&&window.__onAndroidUpdateProgress(-1," + downloaded + ",0)");
+                        }
+                    }
+                    out.flush();
+                    out.close(); out = null;
+                    in.close(); in = null;
+                    callJs("window.__onAndroidUpdateProgress&&window.__onAndroidUpdateProgress(100," + downloaded + "," + (total > 0 ? total : downloaded) + ")");
+                    final Uri apkUri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", apkFile);
+                    runOnUiThread(() -> {
+                        try {
+                            Intent installIntent = new Intent(Intent.ACTION_VIEW);
+                            installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                            installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.ACTIVITY_NEW_TASK);
+                            startActivity(installIntent);
+                        } catch (Throwable ex) {
+                            callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(String.valueOf(ex)) + ")");
+                        }
+                    });
+                } catch (Throwable t) {
+                    callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(String.valueOf(t)) + ")");
+                } finally {
+                    try { if (out != null) out.close(); } catch (Exception ignored) {}
+                    try { if (in != null) in.close(); } catch (Exception ignored) {}
+                    try { if (conn != null) conn.disconnect(); } catch (Exception ignored) {}
+                }
+            }).start();
+        }
     }
 }
