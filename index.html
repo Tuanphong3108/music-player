@@ -6888,13 +6888,23 @@
                         else document.body.classList.remove('lyrics-open');
                         return true;
                     }
-                    const openModal = Array.from(document.querySelectorAll('.cl-overlay, dialog[open]')).find(el => {
+                    const openModal = Array.from(document.querySelectorAll('.cl-overlay.open, .cl-overlay[style*="display: flex"], .cl-overlay[style*="display: block"], dialog[open]')).find(el => {
                         const st = getComputedStyle(el);
                         return st.display !== 'none' && st.visibility !== 'hidden' && parseFloat(st.opacity || '1') > 0.05;
                     });
                     if (openModal) {
-                        if (openModal.tagName === 'DIALOG' && typeof openModal.close === 'function') openModal.close();
-                        else openModal.style.display = 'none';
+                        if (openModal.id === 'settings-overlay') {
+                            const sClose = document.getElementById('settings-close-btn');
+                            if (sClose) sClose.click();
+                            else openModal.classList.remove('open');
+                        } else if (openModal.id === 'more-info-modal') {
+                            openModal.classList.remove('open');
+                        } else if (openModal.tagName === 'DIALOG' && typeof openModal.close === 'function') {
+                            openModal.close();
+                        } else {
+                            openModal.classList.remove('open');
+                            if (openModal.style.display && openModal.style.display !== 'none') openModal.style.display = 'none';
+                        }
                         return true;
                     }
                     return false;
