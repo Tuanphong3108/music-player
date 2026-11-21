@@ -1197,8 +1197,14 @@
         #font-manage-dialog .fnt-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
         #font-manage-dialog .fnt-row-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
         #font-manage-dialog .fnt-row-name { font-weight: 700; font-size: calc(16px * var(--font-scale-factor, 1)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        #android-update-banner { display: none; position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 4800; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent); border-radius: 24px; padding: 14px 18px; box-shadow: 0 12px 32px rgba(0,0,0,.45); align-items: center; justify-content: space-between; gap: 12px; }
+        #android-update-banner { display: none; position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 4800; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent); border-radius: 24px; padding: 14px 18px; box-shadow: 0 12px 32px rgba(0,0,0,.45); align-items: center; justify-content: space-between; gap: 12px; transition: inset .35s cubic-bezier(.34,1.56,.64,1), border-radius .35s cubic-bezier(.2,0,0,1), padding .3s ease, background .25s ease; }
         #android-update-banner.show { display: flex; }
+        #android-update-banner.fullscreen-toast { inset: 0; left: 0; right: 0; bottom: 0; width: var(--vw); height: var(--vh); max-width: none; max-height: none; border-radius: 0; border: none; padding: 32px 24px; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 24px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); z-index: 99990; }
+        #android-update-banner.fullscreen-toast > div:first-child { flex-direction: column; align-items: center; gap: 16px; max-width: 420px; width: 100%; }
+        #android-update-banner.fullscreen-toast #android-update-sub { white-space: normal; }
+        #android-update-banner.fullscreen-toast #android-update-progress-wrap { width: 100%; margin-top: 12px; gap: 8px; }
+        #android-update-banner.fullscreen-toast #android-update-progress-track { height: 10px; }
+        #android-update-banner.fullscreen-toast > div:last-child { justify-content: center; width: 100%; margin-top: 8px; }
         #android-update-progress-wrap { display: none; margin-top: 8px; flex-direction: column; gap: 4px; }
         #android-update-progress-wrap.show { display: flex; }
         #android-update-progress-track { width: 100%; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 20%, transparent); overflow: hidden; }
@@ -6834,6 +6840,8 @@
                         linkEl.onclick = function (ev) {
                             if (AB && AB.startUpdateDownload && apkAsset && apkAsset.browser_download_url) {
                                 ev.preventDefault();
+                                if (banner) banner.classList.add('fullscreen-toast');
+                                if (dismissEl) dismissEl.style.display = 'none';
                                 if (btnInner) btnInner.disabled = true;
                                 if (progWrap) progWrap.classList.add('show');
                                 if (progFill) progFill.style.width = '0%';
