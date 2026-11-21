@@ -892,7 +892,7 @@ public class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
         if (customView != null) { web.getWebChromeClient().onHideCustomView(); return; }
-        moveTaskToBack(true); // giữ nhạc phát nền
+        callJs("(function(){if(window.__androidHandleBack&&window.__androidHandleBack())return;if(window.AndroidBridge&&window.AndroidBridge.__nativeBackFallback)window.AndroidBridge.__nativeBackFallback();})()");
     }
 
     @Override
@@ -1216,6 +1216,11 @@ public class MainActivity extends Activity {
                 try { startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 44); }
                 catch (Exception e) { callJs("window.addBtnCancel&&addBtnCancel()"); }
             });
+        }
+
+        @JavascriptInterface
+        public void __nativeBackFallback() {
+            runOnUiThread(() -> moveTaskToBack(true));
         }
 
         @JavascriptInterface
