@@ -6894,6 +6894,21 @@
                     });
                     if (openModal) {
                         if (openModal.id === 'settings-overlay') {
+                            const stDlg = document.getElementById('settings-dialog');
+                            if (stDlg && stDlg.classList.contains('searching')) {
+                                exitSettingsSearch();
+                                return true;
+                            }
+                            if (stDlg && stDlg.classList.contains('st-m-detail')) {
+                                if (typeof clPage !== 'undefined' && clPage !== 'about' && typeof clNavigateTo === 'function') {
+                                    clNavigateTo('about');
+                                    return true;
+                                }
+                                const mBack = document.getElementById('st-m-back');
+                                if (mBack) mBack.click();
+                                else if (typeof window.__stMobileReset === 'function') window.__stMobileReset();
+                                return true;
+                            }
                             const sClose = document.getElementById('settings-close-btn');
                             if (sClose) sClose.click();
                             else openModal.classList.remove('open');
