@@ -100,6 +100,10 @@
     {
       "content": "Predictive Back giờ cũng áp dụng cho các hộp thoại Material Web (hẹn giờ, xác nhận, phông chữ...): vuốt Back để xem trước và đóng đúng hộp thoại trên cùng",
       "icon": "arrow_back"
+    },
+    {
+      "content": "Thêm animation thoát cho Cài đặt, Gửi phản hồi và Lyric trên điện thoại: đóng trang thì trượt xuống và mờ dần thay vì biến mất đột ngột",
+      "icon": "animation"
     }
   ],
   "en": [
@@ -202,6 +206,10 @@
     {
       "content": "Predictive Back now also covers Material Web dialogs (sleep timer, confirmations, fonts...): swipe back to preview and close the top-most dialog",
       "icon": "arrow_back"
+    },
+    {
+      "content": "Added exit animations for Settings, Feedback and Lyrics on phones: pages now slide down and fade out instead of disappearing abruptly",
+      "icon": "animation"
     }
   ]
 }

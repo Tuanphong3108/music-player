@@ -1712,7 +1712,13 @@
         html.m-ui #settings-dialog:not(.st-m-detail) #st-m-list, html.m-ui #settings-dialog:not(.st-m-detail) #st-m-bigtitle { animation: pgInBack .32s cubic-bezier(.2, 0, 0, 1) both; }
         html.m-ui body.m-playlist-open .playlist-card { animation: pgInUp .32s cubic-bezier(.2, 0, 0, 1) both; }
         html.m-ui body.m-more-open .top-extra { animation: pgFade .22s cubic-bezier(.2, 0, 0, 1) both; }
-        body.lyrics-open .lyric-overlay { animation: pgInUp .35s cubic-bezier(.2, 0, 0, 1) both; }
+        body.lyrics-open .lyric-overlay { animation: pgInUp .35s cubic-bezier(.2, 0, 0, 1) backwards; }
+        /* Animation thoát (bản điện thoại): đóng trang thì trượt xuống + mờ dần, đối xứng với lúc mở */
+        html.m-ui .cl-overlay { transition: opacity .28s cubic-bezier(.2, 0, 0, 1); }
+        html.m-ui .cl-overlay .cl-dialog { transform: translateY(28px) scale(.96); opacity: 0; transition: transform .3s cubic-bezier(.2, 0, 0, 1), opacity .24s linear; }
+        html.m-ui .cl-overlay.open .cl-dialog { transform: none; opacity: 1; }
+        html.m-ui .lyric-overlay { transform: translateY(24px); transition: opacity .28s cubic-bezier(.2, 0, 0, 1), transform .3s cubic-bezier(.2, 0, 0, 1); }
+        html.m-ui .lyric-overlay.visible { transform: none; }
         html.reduce-motion .st-pane.active, html.reduce-motion #st-m-list, html.reduce-motion #st-m-bigtitle, html.reduce-motion .playlist-card,
         html.reduce-motion .top-extra, html.reduce-motion .lyric-overlay, html.reduce-motion #m-empty-add { animation: none !important; }
 
