@@ -272,7 +272,22 @@
         .fcard:hover .fgo { transform: translateX(4px) scale(1.1); border-radius: 14px; color: var(--m3-primary); }
         .fbadge { font-size: calc(10.5px * var(--font-scale-factor, 1)); font-weight: 900; letter-spacing: .04em; padding: 4px 10px; border-radius: 999px; }
 
-        /* Chi tiết tính năng */
+        /* ===== Android Native / Mobile UI riêng cho About ===== */
+        html.m-ui body, html.is-android-app body { padding: 12px 14px 28px; }
+        html.m-ui .bg-shape, html.is-android-app .bg-shape { opacity: .28; }
+        html.m-ui .hero-m3, html.is-android-app .hero-m3 { border-radius: 32px; padding: 20px; gap: 14px; }
+        html.m-ui .brand-row, html.is-android-app .brand-row { gap: 14px; }
+        html.m-ui .brand-blob, html.is-android-app .brand-blob { width: 62px; height: 62px; }
+        html.m-ui .brand-title, html.is-android-app .brand-title { font-size: clamp(28px, 8vw, 40px); }
+        html.m-ui .hero-actions, html.is-android-app .hero-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        html.m-ui .hero-actions md-filled-button, html.m-ui .hero-actions md-outlined-button,
+        html.is-android-app .hero-actions md-filled-button, html.is-android-app .hero-actions md-outlined-button { width: 100%; }
+        html.m-ui #featureCardsContainer, html.is-android-app #featureCardsContainer { grid-template-columns: 1fr !important; gap: 10px; }
+        html.m-ui .fcard, html.is-android-app .fcard { padding: 14px 16px; border-radius: 24px; }
+        html.m-ui .fcard .fico, html.is-android-app .fcard .fico { width: 46px; height: 46px; }
+        html.m-ui #detailView .dhead, html.is-android-app #detailView .dhead { padding: 10px 0 12px; gap: 10px; }
+        html.m-ui .dback, html.is-android-app .dback { width: 46px; height: 46px; }
+        html.m-ui .dtitle-text, html.is-android-app .dtitle-text { font-size: clamp(18px, 5vw, 24px); }
         #detailView .dhead { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px; padding-bottom: 14px; background: var(--m3-surface); flex-shrink: 0; }
         .dback { width: 56px; height: 56px; border: none; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; border-radius: 50%; background: var(--m3-secondary-container); color: var(--m3-on-secondary-container); transition: border-radius .4s var(--spring), transform .35s var(--spring); }
         .dback:hover { border-radius: 20px; transform: scale(1.06); } .dback:active { border-radius: 12px; transform: scale(.92); }
