@@ -462,7 +462,7 @@ public class MainActivity extends Activity {
         if (appLeftHome || pageResponded || hangAlertShown) return;
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
-        pingHandler.postDelayed(pingTimeoutRunnable, 10000);
+        pingHandler.postDelayed(pingTimeoutRunnable, 20000);
         callJs("window.__androidPing&&window.__androidPing()");
     }
 
