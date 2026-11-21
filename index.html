@@ -7576,7 +7576,20 @@
             };
             // Mọi sự kiện đổi trạng thái -> gửi ngay; khi đang phát thì chốt lại vị trí đúng mỗi giây (timeupdate chỉ ~4 lần/giây và không đều)
             ['play', 'playing', 'pause', 'ended', 'loadedmetadata', 'durationchange', 'seeking', 'seeked', 'waiting', 'stalled', 'canplay', 'ratechange', 'emptied', 'error', 'abort'].forEach(ev => audio.addEventListener(ev, report));
-            setInterval(() => { if (!audio.paused && !audio.ended) report(); }, 1000);
+            let lastWidgetLyric = '';
+            setInterval(() => {
+                if (!audio.paused && !audio.ended) report();
+                try {
+                    if (AB && AB.setWidgetLyric) {
+                        const topEl = document.getElementById('top-active-lyric');
+                        const line = (playlist[currentIndex] && topEl && topEl.textContent) ? topEl.textContent.trim() : '';
+                        if (line !== lastWidgetLyric) {
+                            lastWidgetLyric = line;
+                            AB.setWidgetLyric(line);
+                        }
+                    }
+                } catch (e) {}
+            }, 1000);
             audio.addEventListener('loadedmetadata', () => { sendArt(); report(); setTimeout(() => { sendArt(); report(); }, 1500); });
             // Khung app (thanh trạng thái / điều hướng) ăn theo màu accent: theo dõi theme-color của trang
             const themeMeta = document.getElementById('theme-meta');
