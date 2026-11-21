@@ -6799,12 +6799,17 @@
             (async function checkGitHubAndroidRelease() {
                 if (!banner || (!curVerName && !curVerCode)) return;
                 try {
-                    const res = await fetch('https://api.github.com/repos/Tuanphong3108/music-player/releases/latest', {
+                    const res = await fetch('https://api.github.com/repos/Tuanphong3108/music-player/releases?per_page=20', {
                         headers: { Accept: 'application/vnd.github+json' }
                     });
                     if (!res.ok) return;
-                    const rel = await res.json();
-                    if (!rel || rel.draft || rel.prerelease) return;
+                    const list = await res.json();
+                    if (!Array.isArray(list) || !list.length) return;
+                    const candidates = list.filter(r => r && !r.draft && !r.prerelease && Array.isArray(r.assets) && r.assets.some(a => /\.apk$/i.test(a.name || '')));
+                    if (!candidates.length) return;
+                    candidates.sort((a, b) => compareVerParts(parseVerParts(b.tag_name), parseVerParts(a.tag_name))
+                        || String(b.published_at || '').localeCompare(String(a.published_at || '')));
+                    const rel = candidates[0];
                     const tag = String(rel.tag_name || '').trim();
                     if (!tag) return;
                     const remoteParts = parseVerParts(tag);
@@ -6813,9 +6818,7 @@
                         || (/^latest$/i.test(tag) && Number(curVerCode) > 0 && String(rel.published_at || '') > String(localStorage.getItem('mp_android_apk_pub') || ''));
                     if (!hasNewer) return;
                     const displayVer = /^latest$/i.test(tag) ? (rel.name || 'latest') : tag;
-                    const apkAsset = Array.isArray(rel.assets)
-                        ? rel.assets.find(a => /\.apk$/i.test(a.name || ''))
-                        : null;
+                    const apkAsset = rel.assets.find(a => /\.apk$/i.test(a.name || ''));
                     const dlUrl = (apkAsset && apkAsset.browser_download_url) || rel.html_url || 'https://github.com/Tuanphong3108/music-player/releases';
                     const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
                     const progWrap = document.getElementById('android-update-progress-wrap');
