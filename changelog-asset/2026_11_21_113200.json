@@ -112,6 +112,10 @@
     {
       "content": "Làm lại banner cập nhật ứng dụng Android: biểu tượng bo góc nổi bật, tiêu đề và phiên bản rõ ràng, nút xếp hàng riêng bên dưới",
       "icon": "system_update"
+    },
+    {
+      "content": "Chuyển toàn bộ biểu tượng giao diện sang Material Symbols Rounded đồng bộ trên toàn bộ ứng dụng và các trang phụ",
+      "icon": "interests"
     }
   ],
   "en": [
@@ -226,6 +230,10 @@
     {
       "content": "Redesigned the Android app update banner: prominent rounded icon, clearer title and version, buttons on their own row",
       "icon": "system_update"
+    },
+    {
+      "content": "Switched all interface icons to Material Symbols Rounded across the entire app and subpages",
+      "icon": "interests"
     }
   ]
 }
