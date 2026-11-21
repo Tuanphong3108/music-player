@@ -80,6 +80,10 @@
     {
       "content": "Thanh tua kiểu Material 3 Expressive: đoạn đã phát là sóng (wavelength 40dp, biên độ 3dp), tạm dừng thì phẳng dần thành đường thẳng; nút ⋮ trong Lyric View đổi thành nút tìm kiếm; bản Android bỏ chữ \"video\" ở nút Thêm",
       "icon": "waves"
+    },
+    {
+      "content": "MediaSession chính xác từng giây, từng trạng thái: trang và khung app Android gửi đủ playing/paused/buffering/ended/error, vị trí chụp đúng thời điểm, tốc độ phát và vùng đã đệm; thông báo không bị dựng lại mỗi giây",
+      "icon": "play_circle"
     }
   ],
   "en": [
@@ -162,6 +166,10 @@
     {
       "content": "Material 3 Expressive seek bar: the played part is a wave (40dp wavelength, 3dp amplitude) that flattens into a straight line on pause; the ⋮ button in Lyric View is now a search button; Android build drops the word \"video\" from the Add button",
       "icon": "waves"
+    },
+    {
+      "content": "Per-second, per-state MediaSession: the page and the Android shell now send playing/paused/buffering/ended/error, a timestamped position, playback speed and buffered range; the notification is no longer rebuilt every second",
+      "icon": "play_circle"
     }
   ]
 }

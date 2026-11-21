@@ -26,6 +26,11 @@ public class MediaService extends Service {
     private long pos = 0, dur = 0;
     private float speed = 0f;
     private Bitmap art;
+    /** playing | paused | buffering | ended | error | none (trang gửi sang). */
+    private String state = "none";
+    private long buffered = 0;
+    private boolean artDirty = false;
+    private long stamp = 0;   // elapsedRealtime tại thời điểm trang chụp vị trí -> vị trí hệ thống nội suy chính xác, không trễ theo độ trễ IPC
 
     @Override
     public void onCreate() {
@@ -51,13 +56,22 @@ public class MediaService extends Service {
         if (i != null && ACTION_ART.equals(a)) {
             byte[] b = i.getByteArrayExtra("art");
             art = (b == null || b.length == 0) ? null : BitmapFactory.decodeByteArray(b, 0, b.length);
+            artDirty = false;
         } else if (i != null) {
-            playing = i.getBooleanExtra("playing", false);
-            title = nz(i.getStringExtra("title"));
-            artist = nz(i.getStringExtra("artist"));
+            String ns = nz(i.getStringExtra("state"));
+            boolean metaChanged;
+            String t = nz(i.getStringExtra("title")), ar = nz(i.getStringExtra("artist"));
+            long d = i.getLongExtra("dur", 0);
+            if (ns.isEmpty()) ns = i.getBooleanExtra("playing", false) ? "playing" : "paused";   // APK/bản trang cũ chỉ gửi playing
+            metaChanged = !t.equals(title) || !ar.equals(artist) || d != dur || !ns.equals(state);
+            state = ns;
+            playing = "playing".equals(ns) || "buffering".equals(ns);
+            title = t; artist = ar; dur = d;
             pos = i.getLongExtra("pos", 0);
-            dur = i.getLongExtra("dur", 0);
+            buffered = i.getLongExtra("buf", 0);
+            stamp = i.getLongExtra("stamp", 0);
             speed = i.getFloatExtra("speed", playing ? 1f : 0f);
+            if (!metaChanged && !artDirty && session != null && session.isActive()) { publishPlaybackOnly(); return START_NOT_STICKY; }
         }
         publish();
         return START_NOT_STICKY;
@@ -91,6 +105,32 @@ public class MediaService extends Service {
         return PendingIntent.getService(this, c.hashCode(), i, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
+
+    /** Chỉ cập nhật PlaybackState (mỗi giây): không dựng lại thông báo, vị trí + thời điểm chụp + tốc độ + bộ đệm đều chính xác. */
+    private void publishPlaybackOnly() {
+        if (session == null) return;
+        long actions = PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_PLAY_PAUSE
+                | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_STOP;
+        int st;
+        switch (state) {
+            case "playing": st = PlaybackState.STATE_PLAYING; break;
+            case "buffering": st = PlaybackState.STATE_BUFFERING; break;
+            case "error": st = PlaybackState.STATE_ERROR; break;
+            case "ended": st = PlaybackState.STATE_PAUSED; break;   // hết bài: giữ ở cuối bài, vẫn bấm Phát lại được từ thanh điều khiển hệ thống
+            default: st = PlaybackState.STATE_PAUSED;
+        }
+        long p = pos;
+        if (dur > 0) p = Math.max(0, Math.min(p, dur));
+        float sp = (st == PlaybackState.STATE_PLAYING) ? (speed > 0f ? speed : 1f) : 0f;
+        long when = stamp > 0 ? stamp : SystemClock.elapsedRealtime();
+        PlaybackState.Builder pb = new PlaybackState.Builder()
+                .setActions(actions)
+                .setState(st, p, sp, when);
+        if (buffered > 0) pb.setBufferedPosition(Math.max(p, buffered));
+        if (st == PlaybackState.STATE_ERROR) pb.setErrorMessage("Không phát được tệp này");
+        session.setPlaybackState(pb.build());
+    }
+
     private void publish() {
         if (title.isEmpty() && dur <= 0 && !playing) {
             clearSession();
@@ -103,12 +143,7 @@ public class MediaService extends Service {
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, dur);
         if (art != null) mb.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, art);
         session.setMetadata(mb.build());
-        long actions = PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_PLAY_PAUSE
-                | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_STOP;
-        session.setPlaybackState(new PlaybackState.Builder()
-                .setActions(actions)
-                .setState(playing ? PlaybackState.STATE_PLAYING : PlaybackState.STATE_PAUSED, pos, playing ? (speed > 0f ? speed : 1f) : 0f, SystemClock.elapsedRealtime())
-                .build());
+        publishPlaybackOnly();
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {

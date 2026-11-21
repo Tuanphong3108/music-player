@@ -1197,6 +1197,23 @@ public class MainActivity extends Activity {
             }
         }
 
+        /** Bản đầy đủ: state = playing | paused | buffering | ended | error | none; bufMs = vị trí đã đệm. Chụp elapsedRealtime ngay khi nhận để vị trí không bị trễ theo IPC. */
+        @JavascriptInterface
+        public void setMediaState(String state, String title, String artist, long posMs, long durMs, float speed, long bufMs) {
+            final long stamp = android.os.SystemClock.elapsedRealtime();
+            Intent i = new Intent(MainActivity.this, MediaService.class);
+            i.setAction(MediaService.ACTION_UPDATE);
+            i.putExtra("state", state == null ? "none" : state);
+            i.putExtra("title", title);
+            i.putExtra("artist", artist);
+            i.putExtra("pos", posMs);
+            i.putExtra("dur", durMs);
+            i.putExtra("speed", speed);
+            i.putExtra("buf", bufMs);
+            i.putExtra("stamp", stamp);
+            startSvc(i);
+        }
+
         @JavascriptInterface
         public void setState(boolean playing, String title, String artist, long posMs, long durMs, float speed) {
             Intent i = new Intent(MainActivity.this, MediaService.class);

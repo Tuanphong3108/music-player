@@ -6121,6 +6121,24 @@
             if (typeof updatePiPUI === 'function') updatePiPUI();
         }
 
+        // MediaSession của trình duyệt: trạng thái + vị trí chính xác (cập nhật mỗi giây khi đang phát và mỗi khi đổi trạng thái)
+        function syncMediaSessionState() {
+            try {
+                if (!('mediaSession' in navigator)) return;
+                const has = !!(playlist[currentIndex] && audio.currentSrc);
+                navigator.mediaSession.playbackState = !has ? 'none' : (audio.paused || audio.ended ? 'paused' : 'playing');
+                if (has && navigator.mediaSession.setPositionState && isFinite(audio.duration) && audio.duration > 0) {
+                    navigator.mediaSession.setPositionState({
+                        duration: audio.duration,
+                        playbackRate: audio.playbackRate || 1,
+                        position: Math.min(Math.max(0, audio.currentTime || 0), audio.duration)
+                    });
+                }
+            } catch (e) {}
+        }
+        ['play', 'playing', 'pause', 'ended', 'loadedmetadata', 'durationchange', 'seeked', 'ratechange', 'emptied'].forEach(ev => audio.addEventListener(ev, syncMediaSessionState));
+        setInterval(() => { if (!audio.paused && !audio.ended) syncMediaSessionState(); }, 1000);
+
         function updateMediaSession() {
             if ('mediaSession' in navigator) {
                 const track = playlist[currentIndex];
@@ -6141,8 +6159,12 @@
                 navigator.mediaSession.setActionHandler('previoustrack', () => document.getElementById('prev-btn').click());
                 navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
                 navigator.mediaSession.setActionHandler('seekto', (details) => {
-                    if (details.seekTime) audio.currentTime = details.seekTime;
+                    if (details && typeof details.seekTime === 'number') { audio.currentTime = details.seekTime; syncMediaSessionState(); }
                 });
+                try {
+                    navigator.mediaSession.setActionHandler('seekbackward', (d) => { audio.currentTime = Math.max(0, audio.currentTime - ((d && d.seekOffset) || 10)); });
+                    navigator.mediaSession.setActionHandler('seekforward', (d) => { audio.currentTime = Math.min(audio.duration || 1e9, audio.currentTime + ((d && d.seekOffset) || 10)); });
+                } catch (e) {}
                 
                 try {
                     navigator.mediaSession.setActionHandler('enterpictureinpicture', () => {
@@ -7473,16 +7495,36 @@
                 } catch (e) {}
             };
             if (window.__pendingNativeFiles) { const q = window.__pendingNativeFiles; window.__pendingNativeFiles = null; window.__nativeOpenFiles(q); }
+            // Trạng thái chính xác cho MediaSession: playing | paused | buffering | ended | error | none
+            const mediaState = () => {
+                if (!(playlist[currentIndex] && audio.currentSrc)) return 'none';
+                if (audio.error) return 'error';
+                if (audio.ended) return 'ended';
+                if (audio.paused) return 'paused';
+                if (audio.seeking || audio.readyState < 3) return 'buffering';
+                return 'playing';
+            };
+            const bufferedMs = () => {
+                try {
+                    const b = audio.buffered, t = audio.currentTime || 0;
+                    for (let i = 0; i < b.length; i++) if (t >= b.start(i) - 0.25 && t <= b.end(i) + 0.25) return Math.round(b.end(i) * 1000);
+                } catch (e) {}
+                return 0;
+            };
             const report = () => {
                 try {
                     const t = document.getElementById('track-name'), ar = document.getElementById('track-artist');
                     const artist = ((ar && ar.textContent) || '').split('|')[0].trim();
-                    const active = !!(playlist[currentIndex] && audio.currentSrc);
-                    AB.setState(active && !audio.paused && !audio.ended, active ? ((t && t.textContent) || '') : '', active ? artist : '',
-                        active ? Math.round((audio.currentTime || 0) * 1000) : 0, (active && isFinite(audio.duration)) ? Math.round(audio.duration * 1000) : 0,
-                        active ? (audio.playbackRate || 1) : 0);
+                    const st = mediaState(), active = st !== 'none';
+                    const title = active ? ((t && t.textContent) || '') : '', art = active ? artist : '';
+                    const pos = active ? Math.round((audio.currentTime || 0) * 1000) : 0;
+                    const dur = (active && isFinite(audio.duration)) ? Math.round(audio.duration * 1000) : 0;
+                    const rate = active ? (audio.playbackRate || 1) : 0;
+                    if (AB.setMediaState) AB.setMediaState(st, title, art, pos, dur, rate, active ? bufferedMs() : 0);
+                    else AB.setState(st === 'playing' || st === 'buffering', title, art, pos, dur, rate);
                 } catch (e) {}
             };
+            window.__reportMediaState = report;
             const sendArt = () => {
                 try {
                     const img = document.getElementById('art-img');
@@ -7495,9 +7537,9 @@
                     AB.setArtwork(c.toDataURL('image/jpeg', 0.8).split(',')[1]);
                 } catch (e) {}
             };
-            let lastPosTick = 0;
-            ['play', 'pause', 'ended', 'loadedmetadata', 'seeked', 'ratechange', 'emptied'].forEach(ev => audio.addEventListener(ev, report));
-            audio.addEventListener('timeupdate', () => { const now = Date.now(); if (now - lastPosTick >= 1000) { lastPosTick = now; report(); } });
+            // Mọi sự kiện đổi trạng thái -> gửi ngay; khi đang phát thì chốt lại vị trí đúng mỗi giây (timeupdate chỉ ~4 lần/giây và không đều)
+            ['play', 'playing', 'pause', 'ended', 'loadedmetadata', 'durationchange', 'seeking', 'seeked', 'waiting', 'stalled', 'canplay', 'ratechange', 'emptied', 'error', 'abort'].forEach(ev => audio.addEventListener(ev, report));
+            setInterval(() => { if (!audio.paused && !audio.ended) report(); }, 1000);
             audio.addEventListener('loadedmetadata', () => { sendArt(); report(); setTimeout(() => { sendArt(); report(); }, 1500); });
             // Khung app (thanh trạng thái / điều hướng) ăn theo màu accent: theo dõi theme-color của trang
             const themeMeta = document.getElementById('theme-meta');
