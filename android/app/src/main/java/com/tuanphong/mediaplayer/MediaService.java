@@ -57,6 +57,7 @@ public class MediaService extends Service {
             byte[] b = i.getByteArrayExtra("art");
             art = (b == null || b.length == 0) ? null : BitmapFactory.decodeByteArray(b, 0, b.length);
             artDirty = false;
+            MediaWidgetProvider.saveArtwork(this, art);
         } else if (i != null) {
             String ns = nz(i.getStringExtra("state"));
             boolean metaChanged;
@@ -79,6 +80,7 @@ public class MediaService extends Service {
 
     private void clearSession() {
         playing = false;
+        MediaWidgetProvider.savePlaybackState(this, false, "", "", "", 0);
         if (session != null) {
             try {
                 session.setPlaybackState(new PlaybackState.Builder()
@@ -144,6 +146,7 @@ public class MediaService extends Service {
         if (art != null) mb.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, art);
         session.setMetadata(mb.build());
         publishPlaybackOnly();
+        MediaWidgetProvider.savePlaybackState(this, playing, title, artist, null, 0);
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {
