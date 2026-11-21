@@ -124,6 +124,10 @@
     {
       "content": "Chấm đỏ báo có changelog mới: hiện ở Cài đặt, About, What's New và đúng các bản mới trong danh sách; bấm vào What's New là tắt và ghi nhớ",
       "icon": "notifications"
+    },
+    {
+      "content": "Ghi chú cập nhật dài hiện mũi tên xuống ở đáy khi còn nội dung chưa cuộn tới",
+      "icon": "keyboard_arrow_down"
     }
   ],
   "en": [
@@ -250,6 +254,10 @@
     {
       "content": "Red dots for new changelogs: shown on Settings, About, What's New and on the new versions in the list; opening What's New clears them and remembers it",
       "icon": "notifications"
+    },
+    {
+      "content": "Long update notes show a down arrow at the bottom while more content remains below",
+      "icon": "keyboard_arrow_down"
     }
   ]
 }

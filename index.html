@@ -1503,6 +1503,13 @@
         #android-update-desc { text-align: left; overflow-y: auto; overscroll-behavior: contain; }
         #android-update-banner.fullscreen-toast #android-update-desc { max-height: min(52vh, 420px); padding: 4px 4px 4px 2px; }
         #android-update-desc p { margin: 0 0 8px; }
+        #android-update-desc { position: relative; }
+        #android-update-desc .upd-more { position: sticky; bottom: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .2s; }
+        #android-update-desc .upd-more.show { opacity: 1; }
+        #android-update-desc .upd-more::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 56px; background: linear-gradient(to bottom, transparent, var(--md-sys-color-surface)); }
+        #android-update-desc .upd-more button { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; pointer-events: auto; display: grid; place-items: center; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); box-shadow: 0 2px 8px rgba(0,0,0,.3); animation: updHintBob 1.4s ease-in-out infinite; }
+        #android-update-desc .upd-more.show button { pointer-events: auto; }
+        @keyframes updHintBob { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 4px); } }
         #android-update-desc h3, #android-update-desc h4, #android-update-desc h5, #android-update-desc h6 { margin: 14px 0 6px; font-size: calc(15px * var(--font-scale-factor, 1)); font-weight: 800; line-height: 1.3; }
         #android-update-desc ul { margin: 4px 0 8px; padding-left: 20px; }
         #android-update-desc li { margin: 4px 0; }
@@ -7933,6 +7940,26 @@
             window.ANDROID_APP_VERSION = curVerName;
             window.ANDROID_APP_VERSION_CODE = curVerCode;
 
+            // Mũi tên xuống ở đáy ghi chú cập nhật khi còn nội dung bên dưới chưa cuộn tới
+            function setupUpdateDescScrollHint(descEl) {
+                const hint = document.createElement('div');
+                hint.className = 'upd-more';
+                hint.innerHTML = '<button type="button" aria-label="Scroll down"><span class="material-symbols-rounded">keyboard_arrow_down</span></button>';
+                descEl.appendChild(hint);
+                const update = () => {
+                    const more = descEl.scrollHeight - descEl.scrollTop - descEl.clientHeight > 8;
+                    hint.classList.toggle('show', more);
+                };
+                hint.querySelector('button').addEventListener('click', () => descEl.scrollBy({ top: Math.max(120, descEl.clientHeight * 0.7), behavior: 'smooth' }));
+                if (!descEl.__hintBound) {
+                    descEl.__hintBound = true;
+                    descEl.addEventListener('scroll', () => descEl.__hintUpdate && descEl.__hintUpdate(), { passive: true });
+                    try { new ResizeObserver(() => descEl.__hintUpdate && descEl.__hintUpdate()).observe(descEl); } catch (e) {}
+                }
+                descEl.__hintUpdate = update;
+                update(); setTimeout(update, 150); setTimeout(update, 600);
+            }
+            window.__setupUpdHint = setupUpdateDescScrollHint;
             // Render markdown gọn cho ghi chú phát hành: tiêu đề, in đậm/nghiêng, code, danh sách (lồng nhau), liên kết, đoạn văn
             function escHtml(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
             function renderReleaseMarkdown(md) {
@@ -8026,6 +8053,7 @@
                         descEl.innerHTML = '<p>' + escHtml(isEn
                             ? `Upgrade from ${fromVer} to ${toVer}.`
                             : `Nâng cấp từ phiên bản ${fromVer} lên ${toVer}.`) + '</p>' + renderReleaseMarkdown(releaseNotes);
+                        setupUpdateDescScrollHint(descEl);
                     }
                     if (dismissEl) dismissEl.textContent = isEn ? 'Cancel' : 'Hủy';
                     if (btnInner) { btnInner.textContent = isEn ? 'Update' : 'Cập nhật'; btnInner.disabled = false; }
