@@ -6722,6 +6722,12 @@
                 } catch (e) { console.log('native-open failed', e); }
             };
             window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
+            window.__androidPing = function () {
+                try {
+                    if (AB && AB.pongReady) AB.pongReady();
+                } catch (e) {}
+            };
+            window.__androidPing();
             window.__onAndroidLeaveApp = function () {
                 try {
                     const tr = playlist[currentIndex];
