@@ -2280,6 +2280,10 @@
                                 </div>
                             </div>
                         </div>
+                        <div style="display: flex; gap: 10px; margin-top: 4px; color: var(--md-sys-color-on-surface-variant); font-size: calc(12px * var(--font-scale-factor, 1)); line-height: 1.45; background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent); padding: 12px 14px; border-radius: 14px; align-items: center;">
+                            <span class="material-symbols-outlined" style="font-size: 18px; flex-shrink: 0; color: var(--md-sys-color-primary);">info</span>
+                            <span data-i18n="android.no_video_note">Lưu ý: Phiên bản Media Player trên Android không hỗ trợ phát video (chỉ hỗ trợ phát âm thanh và lời bài hát).</span>
+                        </div>
                         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-top: 4px;">
                             <a class="st-android-dl-btn" href="https://github.com/Tuanphong3108/music-player/releases/" target="_blank" rel="noopener">
                                 <span class="material-symbols-outlined" style="font-size: 20px;">download</span>
@@ -4954,7 +4958,7 @@
                     { label: tr2('topbar.addmusic_folder', 'Chọn thư mục nhạc hoặc video'), icon: 'folder_open', run: () => document.getElementById('btn-fs-pick-directory').click() }
                 ] },
                 { label: tr2('contextmenu.share_current', 'Chia sẻ tệp đang phát'), icon: 'share', run: () => shareCurrentFile() },
-                { label: tr2('contextmenu.fullscreen', 'Toàn màn hình'), icon: document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen', hint: 'F11', run: () => toggleFullscreen() },
+                ...(document.documentElement.classList.contains('m-ui') ? [] : [{ label: tr2('contextmenu.fullscreen', 'Toàn màn hình'), icon: document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen', hint: 'F11', run: () => toggleFullscreen() }]),
                 '-',
                 { label: tr2('contextmenu.quick_settings', 'Cài đặt nhanh'), icon: 'tune', sub: quick }
             ];
@@ -8113,6 +8117,7 @@
             'android.f3_title': 'Material You Dynamic Color',
             'android.f3_desc': 'Automatically adapts to your Android 12+ wallpaper accent color and stays up to date automatically.',
             'android.download_btn': 'Download',
+            'android.no_video_note': 'Note: The Android version of Media Player does not support video playback (audio and lyrics only).',
             'android.github_note': 'Opens the official GitHub Releases page to download MediaPlayer.apk'
         };
         async function loadLanguage(lang) {
