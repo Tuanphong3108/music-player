@@ -76,5 +76,31 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/media_widget_info" />
         </receiver>
+
+        <receiver
+            android:name=".QueueWidgetProvider"
+            android:exported="true"
+            android:label="@string/queue_widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.tuanphong.mediaplayer.WIDGET_CMD" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/queue_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".LyricsWidgetProvider"
+            android:exported="true"
+            android:label="@string/lyrics_widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.tuanphong.mediaplayer.LYRICS_WIDGET_TOGGLE_MODE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lyrics_widget_info" />
+        </receiver>
     </application>
 </manifest>
