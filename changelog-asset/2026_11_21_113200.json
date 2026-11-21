@@ -88,6 +88,10 @@
     {
       "content": "Hỗ trợ Predictive Back Gesture (Android 13+, bắt buộc từ Android 16): vuốt Back sẽ thu nhỏ và trượt lớp trên cùng (Settings, danh sách phát, Lyric, bottom sheet, hộp thoại) theo ngón tay, thả ra thì quay lại, vuốt ngược để huỷ",
       "icon": "arrow_back"
+    },
+    {
+      "content": "Predictive Back ở màn hình chính: vuốt Back thì toàn bộ UI mờ dần và lùi ra sau; thả tay thì zoom-out + fade-out rồi hiện hộp thoại thoát; đóng hộp thoại thì UI zoom-in + fade-in về như cũ",
+      "icon": "arrow_back"
     }
   ],
   "en": [
@@ -177,6 +181,10 @@
     },
     {
       "content": "Predictive Back Gesture support (Android 13+, mandatory from Android 16): swiping Back shrinks and slides the top layer (Settings, playlist, lyrics, bottom sheets, dialogs) under your finger; release to go back, swipe back to cancel",
+      "icon": "arrow_back"
+    },
+    {
+      "content": "Predictive Back on the main screen: swiping Back blurs the whole UI and pushes it back; releasing zooms/fades it out and shows the exit dialog; closing the dialog zooms/fades the UI back in",
       "icon": "arrow_back"
     }
   ]
