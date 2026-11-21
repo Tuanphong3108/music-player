@@ -125,6 +125,25 @@
     @media (min-width:900px) { .list { display:grid; grid-template-columns:1fr 1fr; gap:8px; } }
     @media (max-width:520px) { .hero { padding:22px; border-radius:32px; } .hero-blob { width:76px; height:76px; } .hero-blob .ms { font-size:38px; } .vcard.latest .vtitle { font-size: calc(28px * var(--font-scale-factor, 1)); } }
     @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+    /* ===== Android Native / Mobile UI riêng cho Changelog ===== */
+    html.m-ui .screen, html.is-android-app .screen { padding: 14px 12px 36px; }
+    html.m-ui .wrap, html.is-android-app .wrap { gap: 14px; }
+    html.m-ui .hero, html.is-android-app .hero { padding: 20px; border-radius: 32px; gap: 14px; }
+    html.m-ui .display, html.is-android-app .display { font-size: clamp(28px, 8vw, 42px); }
+    html.m-ui .hero-blob, html.is-android-app .hero-blob { width: 68px; height: 68px; border-radius: 24px; }
+    html.m-ui .hero-blob .ms, html.is-android-app .hero-blob .ms { font-size: 34px; }
+    html.m-ui .vgrid, html.is-android-app .vgrid { grid-template-columns: 1fr !important; gap: 10px; }
+    html.m-ui .vcard, html.is-android-app .vcard { padding: 16px 18px; border-radius: 24px; gap: 14px; }
+    html.m-ui .vcard.latest, html.is-android-app .vcard.latest { padding: 20px; border-radius: 28px; }
+    html.m-ui .vcard .vi, html.is-android-app .vcard .vi { width: 48px; height: 48px; border-radius: 16px; }
+    html.m-ui .vcard.latest .vi, html.is-android-app .vcard.latest .vi { width: 54px; height: 54px; }
+    html.m-ui .vcard .vtitle, html.is-android-app .vcard .vtitle { font-size: calc(20px * var(--font-scale-factor, 1)); gap: 8px; }
+    html.m-ui .vcard.latest .vtitle, html.is-android-app .vcard.latest .vtitle { font-size: calc(24px * var(--font-scale-factor, 1)); }
+    html.m-ui .backbtn, html.is-android-app .backbtn { width: 48px; height: 48px; }
+    html.m-ui .dver, html.is-android-app .dver { font-size: clamp(26px, 7vw, 36px); }
+    html.m-ui .list, html.is-android-app .list { grid-template-columns: 1fr !important; gap: 8px; }
+    html.m-ui .item, html.is-android-app .item { padding: 12px 14px; border-radius: 20px; gap: 12px; }
+    html.m-ui .item .ico, html.is-android-app .item .ico { width: 42px; height: 42px; }
     ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:var(--outline-variant); border-radius:99px; }
   </style>
 </head>
@@ -354,7 +373,12 @@ window.addEventListener('message', ev => {
   if (d === 'vi' || d.lang === 'vi' || d.language === 'vi') setLang('vi'); else if (d === 'en' || d.lang === 'en' || d.language === 'en') setLang('en');
 });
 
-applyThemeStyles(EMBED_CONFIG.defaultTheme); renderStatic(); loadList();
+applyThemeStyles(EMBED_CONFIG.defaultTheme);
+(function () {
+  const isAndroidUi = !!(window.IS_ANDROID_DEVICE || window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || /Android/i.test(navigator.userAgent || ''));
+  if (isAndroidUi) document.documentElement.classList.add('m-ui');
+})();
+renderStatic(); loadList();
 
 // Font icon không tải được -> dùng ký hiệu dự phòng
 (function () {
