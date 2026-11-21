@@ -21,11 +21,12 @@ jobs:
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: 1.0.${{ github.run_number }}
         run: gradle --no-daemon assembleRelease
-      - name: Publish release "latest"
+      - name: Publish versioned release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: v1.0.${{ github.run_number }}
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk MediaPlayer.apk
-          gh release delete latest --yes --cleanup-tag || true
-          gh release create latest MediaPlayer.apk --title "Media Player (Android)" \
-            --notes "APK Android (WebView). App tự cập nhật nội dung theo repo, dùng được offline."
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" MediaPlayer.apk --title "Media Player (Android) $TAG" --latest \
+            --notes "APK Android (WebView) phiên bản $TAG (build #${{ github.run_number }}). App tự cập nhật nội dung theo repo, dùng được offline."
