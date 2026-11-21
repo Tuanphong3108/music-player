@@ -409,6 +409,24 @@ public class MainActivity extends Activity {
             setState(playing, title, artist, posMs, durMs, playing ? 1f : 0f);
         }
 
+        @JavascriptInterface
+        public String getAppVersion() {
+            try {
+                android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+                return pi.versionName != null ? pi.versionName : "";
+            } catch (Throwable ignored) {}
+            return "";
+        }
+
+        @JavascriptInterface
+        public int getAppVersionCode() {
+            try {
+                android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+                return Build.VERSION.SDK_INT >= 28 ? (int) pi.getLongVersionCode() : pi.versionCode;
+            } catch (Throwable ignored) {}
+            return 0;
+        }
+
         /** Màu accent hệ thống (Material You, Android 12+); trả "" nếu không có. */
         @JavascriptInterface
         public String getSystemAccent() {
