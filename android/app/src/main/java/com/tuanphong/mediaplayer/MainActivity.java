@@ -994,13 +994,13 @@ public class MainActivity extends Activity {
                     result -> {
                         String val = result == null ? "" : result.replace("\"", "");
                         if (!"handled".equals(val)) {
-                            moveTaskToBack(true);
+                            callJs("if(window.__showExitConfirmDialog){window.__showExitConfirmDialog();}else if(window.AndroidBridge&&window.AndroidBridge.exitBackground){window.AndroidBridge.exitBackground();}");
                         }
                     }
             );
             return;
         }
-        moveTaskToBack(true);
+        callJs("if(window.__showExitConfirmDialog){window.__showExitConfirmDialog();}else if(window.AndroidBridge&&window.AndroidBridge.exitBackground){window.AndroidBridge.exitBackground();}");
     }
 
     @Override
@@ -1312,7 +1312,21 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void __nativeBackFallback() {
+            runOnUiThread(() -> callJs("if(window.__showExitConfirmDialog){window.__showExitConfirmDialog();}else if(window.AndroidBridge&&window.AndroidBridge.exitBackground){window.AndroidBridge.exitBackground();}"));
+        }
+
+        @JavascriptInterface
+        public void exitBackground() {
             runOnUiThread(() -> moveTaskToBack(true));
+        }
+
+        @JavascriptInterface
+        public void exitAppCompletely() {
+            runOnUiThread(() -> {
+                try { stopService(new Intent(MainActivity.this, MediaService.class)); } catch (Exception ignored) {}
+                finishAffinity();
+                android.os.Process.killProcess(android.os.Process.myPid());
+            });
         }
 
         @JavascriptInterface
