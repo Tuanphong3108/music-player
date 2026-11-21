@@ -837,7 +837,7 @@
             #visualizer { border-radius: 28px; }
             /* Ảnh bìa lớn hiện ngay trong khung chính */
             #fs-stage-overlay.hidden { display: flex !important; }
-            #fs-stage-overlay { padding: 12px !important; background: none !important; }
+            #fs-stage-overlay { padding: 96px 12px 12px !important; background: none !important; }
             #fs-cover-wrap { width: min(100%, 56vh) !important; height: auto !important; aspect-ratio: 1; margin-bottom: 0 !important; border-radius: 28px !important; }
             #fs-title, #fs-artist { display: none !important; }
             #fs-lyric { font-size: calc(16px * var(--font-scale-factor, 1)) !important; min-height: 0 !important; margin-top: 10px; }
@@ -873,6 +873,9 @@
             #repeat-btn.active, #shuffle-btn.active { background: var(--md-sys-color-tertiary-container, var(--md-sys-color-primary-container)) !important; color: var(--md-sys-color-on-tertiary-container, inherit) !important; }
             .controls-group > div { grid-area: spd; width: 100%; }
             .controls-group > div > #speed-btn { width: 100% !important; height: 56px !important; border-radius: 10px 28px 28px 10px !important; background: var(--md-sys-color-surface-variant) !important; }
+            /* Bản điện thoại không có PiP / Toàn màn hình -> ẩn 2 cài đặt lyric tương ứng; lyric trên trình phát nhỏ lại để câu dài không bị cắt */
+            html.m-ui div:has(> #setting-pip-lyric), html.m-ui div:has(> #setting-fs-lyric) { display: none !important; }
+            .top-active-lyric { top: 10px; width: 94%; font-size: calc(15px * var(--font-scale-factor, 1)); line-height: 1.3; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,.85); }
             /* Lyric toàn màn hình kiểu Android: chữ to giữa màn hình, dòng đang hát nổi bật, nút ^ ở đáy để đóng */
             .lyric-overlay { position: fixed; left: 0; top: 0; width: var(--vw); height: var(--vh); border-radius: 0; z-index: 2500;
                 --lyric-bg: var(--md-sys-color-primary-container); --lyric-text: color-mix(in srgb, var(--md-sys-color-on-primary-container) 38%, transparent); --lyric-active: var(--md-sys-color-primary);
@@ -4468,7 +4471,7 @@
                 return { label: (lab && lab.textContent.trim()) || label, checked: !!sw.selected, run: () => sw.click() };
             };
             const quick = [
-                qs('setting-main-lyric'), qs('setting-pip-lyric'), qs('setting-fs-lyric'), '-',
+                qs('setting-main-lyric'), ...(document.documentElement.classList.contains('m-ui') ? [] : [qs('setting-pip-lyric'), qs('setting-fs-lyric')]), '-',
                 qs('setting-dynamic-accent'), qs('perf-motion'), qs('perf-glass'), qs('perf-visualizer'), qs('setting-wake-lock'), '-',
                 qs('mixer-eq-on'), qs('mixer-mono'), qs('mixer-comp')
             ].filter(Boolean);
@@ -4960,7 +4963,7 @@
             
             const creditKey = lyricCreditText(track);
             const line = activeIdx !== -1 ? formatLyricLine(track.lyrics[activeIdx].text) : '';
-            const htmlTop = activeIdx !== -1 ? lyricHtml(line, track, 2) : '';
+            const htmlTop = activeIdx !== -1 ? lyricHtml(line, track, document.documentElement.classList.contains('m-ui') ? 5 : 2) : '';
             const htmlPip = activeIdx !== -1 ? lyricHtml(line, track, 3) : '';
             const htmlFs = activeIdx !== -1 ? lyricHtml(line, track, 0) : '';
             const idxStr = activeIdx.toString() + (creditKey ? '|' + creditKey : '');
