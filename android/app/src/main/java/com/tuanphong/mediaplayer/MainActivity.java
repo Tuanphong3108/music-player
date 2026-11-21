@@ -55,6 +55,10 @@ public class MainActivity extends Activity {
     private String appLang = "vi";
     private android.graphics.Typeface googleSansFlexRegular = null;
     private android.graphics.Typeface googleSansFlexBold = null;
+    private final Runnable showLoadingOverlayRunnable = () -> {
+        if (appLeftHome || pageResponded || hangAlertShown) return;
+        showMd3LoadingOverlay();
+    };
     private final Runnable loadTimeoutRunnable = () -> {
         if (appLeftHome || pageResponded) return;
         showUnresponsiveDialog();
@@ -126,11 +130,15 @@ public class MainActivity extends Activity {
             @Override
             public void onPageStarted(WebView v, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(v, url, favicon);
-                if (!pageResponded && !hangAlertShown) showMd3LoadingOverlay();
+                if (!pageResponded && !hangAlertShown) {
+                    pingHandler.removeCallbacks(showLoadingOverlayRunnable);
+                    pingHandler.postDelayed(showLoadingOverlayRunnable, 400);
+                }
             }
 
             @Override
             public void onPageFinished(WebView v, String url) {
+                pingHandler.removeCallbacks(showLoadingOverlayRunnable);
                 if (url.startsWith("https://tuanphong3108.github.io/")) {
                     pageReady = true;
                     flushPending();
@@ -180,7 +188,6 @@ public class MainActivity extends Activity {
         else web.loadUrl(isOnline() ? APP_URL : APP_URL); // SW của trang tự phục vụ offline; lỗi thì rơi về offline.html
         appLang = getSharedPreferences("app", MODE_PRIVATE).getString("lang", "vi");
         ensureGoogleSansFlexLoaded();
-        showMd3LoadingOverlay();
         armLoadWatchdog();
         handleIntent(getIntent());
     }
@@ -339,6 +346,7 @@ public class MainActivity extends Activity {
     }
 
     private void hideMd3LoadingOverlay() {
+        pingHandler.removeCallbacks(showLoadingOverlayRunnable);
         runOnUiThread(() -> {
             if (md3ArcAnimator != null) { md3ArcAnimator.cancel(); md3ArcAnimator = null; }
             if (md3RotAnimator != null) { md3RotAnimator.cancel(); md3RotAnimator = null; }
@@ -361,6 +369,7 @@ public class MainActivity extends Activity {
 
     private void cancelWatchdogOnLeave() {
         appLeftHome = true;
+        pingHandler.removeCallbacks(showLoadingOverlayRunnable);
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
     }
