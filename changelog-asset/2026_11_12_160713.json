@@ -104,6 +104,10 @@
     {
       "content": "Trang Cài đặt trên điện thoại: thanh tìm kiếm thu thành nút, thanh trượt/dropdown xuống dòng chiếm đủ chiều ngang; Android thêm tuỳ chọn màu chủ đạo \"Hệ thống\" (Material You, mặc định); cập nhật Getting Started",
       "icon": "settings"
+    },
+    {
+      "content": "Cài đặt trên điện thoại làm lại: danh sách danh mục (icon màu + mô tả) → trang chi tiết có tiêu đề lớn, thu gọn lên thanh khi cuộn; dropdown thành nút pill + bottom sheet; thanh kéo kiểu expressive có vạch chấm (cả PC lẫn điện thoại)",
+      "icon": "tune"
     }
   ],
   "en": [
@@ -210,6 +214,10 @@
     {
       "content": "Settings on phones: search bar collapses into a button, sliders/dropdowns use the full width; Android adds a \"System\" accent option (Material You, default); Getting Started updated",
       "icon": "settings"
+    },
+    {
+      "content": "Phone Settings rebuilt: category list (coloured icons + descriptions) → detail page with a large title that collapses into the bar on scroll; dropdowns became pills + bottom sheets; expressive dotted-tick sliders (PC and phone)",
+      "icon": "tune"
     }
   ]
 }
