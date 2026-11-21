@@ -64,6 +64,10 @@
     {
       "content": "Tối ưu phát video trên điện thoại: bỏ chuỗi Web Audio khi Mixer để mặc định (hết lệch tiếng/giật), tắt kính mờ khi có video, visualizer không còn chạy ngầm khi xem video và không cấp phát lại canvas mỗi khung hình",
       "icon": "speed"
+    },
+    {
+      "content": "App Android: video phát thẳng theo từng đoạn (hỗ trợ HTTP Range) thay vì nạp cả tệp vào RAM — mở video nặng không còn khựng, tua nhanh hơn",
+      "icon": "movie"
     }
   ],
   "en": [
@@ -130,6 +134,10 @@
     {
       "content": "Faster video playback on phones: Web Audio chain skipped while the Mixer is at defaults (no more audio drift/stutter), glass blur disabled during video, and the visualizer no longer runs in the background or reallocates its canvas every frame",
       "icon": "speed"
+    },
+    {
+      "content": "Android app: video now streams in chunks (HTTP Range) instead of loading the whole file into RAM — large videos open without stalling and seek faster",
+      "icon": "movie"
     }
   ]
 }

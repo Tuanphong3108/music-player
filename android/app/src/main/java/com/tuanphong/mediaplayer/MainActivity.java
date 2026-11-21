@@ -112,11 +112,7 @@ public class MainActivity extends Activity {
                     Uri src = served.get(u.getPath().substring(3));
                     if (src != null) {
                         try {
-                            InputStream in = getContentResolver().openInputStream(src);
-                            String mime = getContentResolver().getType(src);
-                            Map<String, String> h = new HashMap<>();
-                            h.put("Access-Control-Allow-Origin", "*");
-                            return new WebResourceResponse(mime == null ? "application/octet-stream" : mime, null, 200, "OK", h, in);
+                            return serveContent(src, r.getRequestHeaders());
                         } catch (Exception e) { /* fallthrough */ }
                     }
                     return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", new HashMap<>(), null);
@@ -641,6 +637,71 @@ public class MainActivity extends Activity {
         queueUris(uris);
     }
 
+
+    /** Phát nội dung content:// kèm hỗ trợ HTTP Range để video tua/phát theo từng đoạn, không nạp cả tệp vào RAM. */
+    private WebResourceResponse serveContent(Uri src, Map<String, String> reqHeaders) throws Exception {
+        String mime = getContentResolver().getType(src);
+        if (mime == null) mime = "application/octet-stream";
+        Map<String, String> h = new HashMap<>();
+        h.put("Access-Control-Allow-Origin", "*");
+        h.put("Accept-Ranges", "bytes");
+        android.content.res.AssetFileDescriptor afd = getContentResolver().openAssetFileDescriptor(src, "r");
+        long total = afd == null ? -1 : afd.getLength();
+        if (afd == null || total < 0) {
+            if (afd != null) afd.close();
+            InputStream in = getContentResolver().openInputStream(src);
+            return new WebResourceResponse(mime, null, 200, "OK", h, in);
+        }
+        String range = null;
+        if (reqHeaders != null) for (Map.Entry<String, String> e : reqHeaders.entrySet()) if ("range".equalsIgnoreCase(e.getKey())) range = e.getValue();
+        long start = 0, end = total - 1;
+        boolean partial = false;
+        if (range != null && range.startsWith("bytes=")) {
+            try {
+                String[] p = range.substring(6).split(",")[0].trim().split("-", -1);
+                if (p[0].isEmpty()) { long n = Long.parseLong(p[1]); start = Math.max(0, total - n); }
+                else { start = Long.parseLong(p[0]); if (p.length > 1 && !p[1].isEmpty()) end = Math.min(end, Long.parseLong(p[1])); }
+                if (start > end || start >= total) { afd.close(); h.put("Content-Range", "bytes */" + total); return new WebResourceResponse(mime, null, 416, "Range Not Satisfiable", h, null); }
+                partial = true;
+            } catch (Exception ex) { start = 0; end = total - 1; partial = false; }
+        }
+        final long len = end - start + 1;
+        final java.io.FileInputStream fis = new java.io.FileInputStream(afd.getFileDescriptor());
+        fis.getChannel().position(afd.getStartOffset() + start);
+        final android.content.res.AssetFileDescriptor fafd = afd;
+        InputStream bounded = new InputStream() {
+            long left = len;
+            @Override public int read() throws java.io.IOException { byte[] b = new byte[1]; return read(b, 0, 1) < 0 ? -1 : (b[0] & 0xff); }
+            @Override public int read(byte[] b, int off, int n) throws java.io.IOException {
+                if (left <= 0) return -1;
+                int r = fis.read(b, off, (int) Math.min(n, left));
+                if (r > 0) left -= r;
+                return r;
+            }
+            @Override public void close() throws java.io.IOException { try { fis.close(); } finally { fafd.close(); } }
+        };
+        h.put("Content-Length", String.valueOf(len));
+        if (partial) {
+            h.put("Content-Range", "bytes " + start + "-" + end + "/" + total);
+            return new WebResourceResponse(mime, null, 206, "Partial Content", h, bounded);
+        }
+        return new WebResourceResponse(mime, null, 200, "OK", h, bounded);
+    }
+
+    private long querySize(Uri u) {
+        try (Cursor c = getContentResolver().query(u, null, null, null, null)) {
+            if (c != null && c.moveToFirst()) { int ix = c.getColumnIndex(OpenableColumns.SIZE); if (ix >= 0 && !c.isNull(ix)) return c.getLong(ix); }
+        } catch (Exception ignored) {}
+        return -1;
+    }
+
+    private long queryModified(Uri u) {
+        try (Cursor c = getContentResolver().query(u, null, null, null, null)) {
+            if (c != null && c.moveToFirst()) { int ix = c.getColumnIndex("last_modified"); if (ix >= 0 && !c.isNull(ix)) return c.getLong(ix); }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
     private String displayName(Uri u) {
         String n = null;
         try (Cursor c = getContentResolver().query(u, null, null, null, null)) {
@@ -680,6 +741,8 @@ public class MainActivity extends Activity {
                 o.put("name", displayName(u));
                 String t = getContentResolver().getType(u);
                 o.put("type", t == null ? "" : t);
+                o.put("size", querySize(u));
+                o.put("modified", queryModified(u));
                 pending.add(o);
             } catch (Exception ignored) {}
         }

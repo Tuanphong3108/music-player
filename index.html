@@ -4949,6 +4949,7 @@
                 let lyricsRaw = "";
                 
                 await new Promise((resolve) => {
+                    if (file.__nativeUrl) return resolve();   // video phát trực tiếp qua URL: không có tag để đọc
                     window.jsmediatags.read(file, {
                         onSuccess: function(tag) {
                             if (tag.tags.title) title = tag.tags.title;
@@ -4981,7 +4982,7 @@
                     });
                 });
 
-                const url = URL.createObjectURL(file);
+                const url = file.__nativeUrl || URL.createObjectURL(file);
                 const videoFile = isVideoFile(file);
                 if (videoFile && !cover) cover = await captureVideoFrame(url);
                 if (videoFile && !lyricsRaw) lyricsRaw = loadVideoSubtitle(file);
@@ -6834,9 +6835,23 @@
                 try {
                     const files = [];
                     for (const it of list || []) {
+                        const name = it.name || 'media';
+                        const ext = (name.match(/\.([^.]+)$/) || ['', ''])[1].toLowerCase();
+                        if (it.size > 0 && ((it.type || '').startsWith('video/') || VIDEO_EXTS.includes(ext))) {
+                            // Video: KHÔNG nạp cả tệp vào RAM, phát thẳng qua URL (app native hỗ trợ Range). Chỉ đọc từng đoạn khi cần (chia sẻ, thông tin kỹ thuật)
+                            const url = it.url, size = it.size;
+                            const f = new File([], name, { type: it.type || '', lastModified: it.modified || Date.now() });
+                            Object.defineProperty(f, 'size', { get: () => size });
+                            f.__nativeUrl = url;
+                            const part = async (a, b) => (await fetch(url, { headers: { Range: 'bytes=' + a + '-' + (Math.min(b, size) - 1) } })).arrayBuffer();
+                            f.slice = (a = 0, b = size) => ({ arrayBuffer: () => part(a, b), size: Math.max(0, Math.min(b, size) - a) });
+                            f.arrayBuffer = () => part(0, size);
+                            files.push(f);
+                            continue;
+                        }
                         const r = await fetch(it.url);
                         const b = await r.blob();
-                        files.push(new File([b], it.name || 'media', { type: it.type || b.type || '' }));
+                        files.push(new File([b], name, { type: it.type || b.type || '' }));
                     }
                     if (files.length) handleFiles(files);
                 } catch (e) { console.log('native-open failed', e); }
