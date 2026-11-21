@@ -104,5 +104,6 @@ Dự án này được phát hành dưới mã nguồn mở [MIT License](https:
 Dự án này là dự án mã nguồn mở và miễn phí được làm bởi Phong VN, repo của dự án ở đây: [Media Player Repository](https://github.com/Tuanphong3108/music-player)
 
 Build with ❤️ by [Phong VN](https://tuanphong3108.github.io).
+
 ## 📱 Bản Android (WebView)
-Tải `MediaPlayer.apk` ở mục [Releases → latest](../../releases/tag/latest). App bọc trang web bằng WebView nên **tự cập nhật theo repo** và dùng được **offline** (sau lần mở đầu có mạng). Hỗ trợ "Mở bằng"/"Chia sẻ" file nhạc/video và phát nền có thông báo điều khiển.
+Tải `MediaPlayer.apk` ở mục [Releases → latest](https://github.com/Tuanphong3108/music-player/releases/tag/latest). App bọc trang web bằng WebView nên **tự cập nhật theo repo** và dùng được **offline** (sau lần mở đầu có mạng). Hỗ trợ "Mở bằng"/"Chia sẻ" file nhạc/video và phát nền có thông báo điều khiển.

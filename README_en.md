@@ -103,5 +103,6 @@ Distributed under the [MIT License](https://github.com/Tuanphong3108/music-playe
 This is a free and open-source project created by Phong VN. Check out the project repository here: [Media Player Repository](https://github.com/Tuanphong3108/music-player)
 
 Built with ❤️ by [Phong VN](https://tuanphong3108.github.io).
+
 ## 📱 Android build (WebView)
-Download `MediaPlayer.apk` from [Releases → latest](../../releases/tag/latest). The app wraps the site in a WebView, so it **updates automatically with the repo** and works **offline** (after the first online launch). Supports "Open with"/"Share" for audio/video files and background playback with a notification.
+Download `MediaPlayer.apk` from [Releases → latest](https://github.com/Tuanphong3108/music-player/releases/tag/latest). The app wraps the site in a WebView, so it **updates automatically with the repo** and works **offline** (after the first online launch). Supports "Open with"/"Share" for audio/video files and background playback with a notification.
