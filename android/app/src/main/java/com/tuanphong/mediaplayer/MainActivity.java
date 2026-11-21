@@ -165,7 +165,8 @@ public class MainActivity extends Activity {
                 filePathCb = cb;
                 Intent i = new Intent(Intent.ACTION_GET_CONTENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType("*/*");
+                i.setType("audio/*");
+                i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "text/*", "application/x-subrip"});
                 i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, p.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
                 try { startActivityForResult(Intent.createChooser(i, null), 42); }
                 catch (Exception e) { filePathCb = null; cb.onReceiveValue(null); return false; }
@@ -860,9 +861,21 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, null); });
     }
 
+    private boolean isDisallowedVideoUri(Uri u) {
+        if (u == null) return true;
+        String mime = null;
+        try { mime = getContentResolver().getType(u); } catch (Exception ignored) {}
+        if (mime != null && mime.toLowerCase().startsWith("video/")) return true;
+        String ln = displayName(u).toLowerCase();
+        return ln.endsWith(".mp4") || ln.endsWith(".m4v") || ln.endsWith(".webm")
+                || ln.endsWith(".mkv") || ln.endsWith(".mov") || ln.endsWith(".ogv")
+                || ln.endsWith(".3gp") || ln.endsWith(".avi");
+    }
+
     private void queueUris(List<Uri> uris) {
         for (Uri u : uris) {
             try {
+                if (isDisallowedVideoUri(u)) continue;
                 String id = String.valueOf(nextId++);
                 served.put(id, u);
                 JSONObject o = new JSONObject();
@@ -878,7 +891,7 @@ public class MainActivity extends Activity {
         flushPending();
     }
 
-    /** Duyệt đệ quy thư mục (SAF tree) lấy file nhạc/video + lời/phụ đề đi kèm. */
+    /** Duyệt đệ quy thư mục (SAF tree) lấy file nhạc + lời/phụ đề đi kèm (bỏ qua video). */
     private void scanTree(final Uri tree) {
         new Thread(() -> {
             List<Uri> out = new ArrayList<>();
@@ -904,10 +917,14 @@ public class MainActivity extends Activity {
                 String id = c.getString(0), mime = c.getString(1), name = c.getString(2);
                 if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) { walk(tree, id, out, depth + 1); continue; }
                 String ln = name == null ? "" : name.toLowerCase();
-                if ((mime != null && (mime.startsWith("audio/") || mime.startsWith("video/")))
+                if (mime != null && mime.toLowerCase().startsWith("video/")) continue;
+                if (ln.endsWith(".mp4") || ln.endsWith(".m4v") || ln.endsWith(".webm")
+                        || ln.endsWith(".mkv") || ln.endsWith(".mov") || ln.endsWith(".ogv")
+                        || ln.endsWith(".3gp") || ln.endsWith(".avi")) continue;
+                if ((mime != null && mime.startsWith("audio/"))
                         || ln.endsWith(".lrc") || ln.endsWith(".srt") || ln.endsWith(".vtt")
                         || ln.endsWith(".mp3") || ln.endsWith(".flac") || ln.endsWith(".m4a") || ln.endsWith(".ogg") || ln.endsWith(".opus")
-                        || ln.endsWith(".wav") || ln.endsWith(".mkv") || ln.endsWith(".mp4") || ln.endsWith(".webm"))
+                        || ln.endsWith(".wav"))
                     out.add(DocumentsContract.buildDocumentUriUsingTree(tree, id));
             }
         } catch (Exception ignored) {}
@@ -1278,26 +1295,10 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType("*/*");
+                i.setType("audio/*");
                 i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "video/*", "text/*", "application/octet-stream", "application/x-subrip"});
+                i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "text/*", "application/x-subrip"});
                 try { startActivityForResult(i, 43); } catch (Exception e) { callJs("window.addBtnCancel&&addBtnCancel()"); }
-            });
-        }
-
-        @JavascriptInterface
-        public void enterVideoPip(int width, int height) {
-            if (Build.VERSION.SDK_INT < 26) return;
-            runOnUiThread(() -> {
-                try {
-                    if (isInPictureInPictureMode()) return;
-                    int w = width > 0 ? width : 16;
-                    int h = height > 0 ? height : 9;
-                    android.app.PictureInPictureParams params = new android.app.PictureInPictureParams.Builder()
-                            .setAspectRatio(new android.util.Rational(w, h))
-                            .build();
-                    enterPictureInPictureMode(params);
-                } catch (Throwable ignored) {}
             });
         }
 
