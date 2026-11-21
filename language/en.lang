@@ -8,7 +8,7 @@
 ## --- Top bar ---
 lyric.mode_synced=Synced
 lyric.mode_static=Static
-mobile.now_playing=Now Playing
+mobile.now_playing=Media Player
 topbar.install=Install app
 topbar.install_tooltip=Install to open files directly from your computer
 topbar.settings=Settings
