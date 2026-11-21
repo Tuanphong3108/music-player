@@ -295,6 +295,17 @@
         .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 0 8px; z-index: 100; }
         .brand { display: flex; align-items: center; gap: 12px; font-family: 'Minecraft'; color: var(--md-sys-color-primary); }
 
+        /* Chấm đỏ báo có changelog mới: nút Cài đặt / Thêm (mobile) / mục About / thẻ About */
+        body.cl-unseen #settings-btn::after, body.cl-unseen #m-more-btn::after,
+        body.cl-unseen .st-tab[data-tab="about"]::after, body.cl-unseen .st-m-card[data-tab="about"]::after {
+            content: ''; position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #ff3b30;
+            box-shadow: 0 0 0 2px var(--md-sys-color-surface); pointer-events: none; animation: clDotPop .35s cubic-bezier(.34, 1.56, .64, 1);
+        }
+        body.cl-unseen #settings-btn::after, body.cl-unseen #m-more-btn::after { top: 7px; right: 7px; }
+        body.cl-unseen .st-tab[data-tab="about"], body.cl-unseen .st-m-card[data-tab="about"] { position: relative; }
+        body.cl-unseen .st-tab[data-tab="about"]::after { top: 50%; right: 16px; margin-top: -5px; }
+        body.cl-unseen .st-m-card[data-tab="about"]::after { top: 50%; right: 20px; margin-top: -5px; }
+        @keyframes clDotPop { from { transform: scale(0); } to { transform: scale(1); } }
         .btn-m3 {
             background: transparent; border: none; color: var(--md-sys-color-on-surface);
             cursor: pointer; width: 44px; height: 44px; border-radius: 50%;
@@ -9187,6 +9198,42 @@
         const clMadeByBar = document.getElementById('cl-madeby-bar');
         const clLoadingErrorText = document.getElementById('cl-loading-error-text');
 
+        // --- CHẤM ĐỎ CHANGELOG ---
+        // Lưu danh sách bản changelog đã xem; có bản mới (id chưa từng thấy) thì bật chấm đỏ ở Cài đặt/About/What's New.
+        // Bấm vào What's New: tắt hết chấm đỏ ngoài app, lưu lại, và chỉ đánh dấu các bản mới ngay trong trang changelog.
+        const CL_SEEN_KEY = 'changelog_seen_v1';
+        let clUnseen = [];        // các bản mới chưa xem
+        let clNewForPage = [];    // các bản mới cần chấm đỏ bên trong trang What's New
+        function clLoadSeen() { try { const o = JSON.parse(localStorage.getItem(CL_SEEN_KEY) || 'null'); return o && Array.isArray(o.ids) ? o : null; } catch (e) { return null; } }
+        function clSaveSeen(ids) { try { localStorage.setItem(CL_SEEN_KEY, JSON.stringify({ ids: ids, latest: ids[0] || null, count: ids.length, savedAt: Date.now() })); } catch (e) {} }
+        let clAllIds = [];
+        function clApplyDots() {
+            document.body.classList.toggle('cl-unseen', clUnseen.length > 0);
+            try { if (clIframe && clIframe.contentWindow && clPage === 'about') clIframe.contentWindow.postMessage({ changelogDot: clUnseen.length > 0 }, '*'); } catch (e) {}
+        }
+        async function clCheckNew() {
+            try {
+                const r = await fetch('changelog-asset/index.json?cb=' + Date.now(), { cache: 'no-store' });
+                if (!r.ok) return;
+                const j = await r.json();
+                const ids = (Array.isArray(j) ? j : (j.versions || [])).map(String);
+                if (!ids.length) return;
+                clAllIds = ids;
+                const seen = clLoadSeen();
+                if (!seen) { clSaveSeen(ids); return; }                 // lần đầu: ghi nhận bản hiện tại làm mốc
+                clUnseen = ids.filter(id => seen.ids.indexOf(id) < 0);
+                clApplyDots();
+            } catch (e) { /* offline: bỏ qua */ }
+        }
+        function clMarkSeen() {
+            clNewForPage = clUnseen.slice();
+            clUnseen = [];
+            if (clAllIds.length) clSaveSeen(clAllIds);
+            clApplyDots();
+        }
+        clCheckNew();
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) clCheckNew(); });
+
         // 3 "trang" dùng chung 1 dialog, điều hướng giữa chúng qua postMessage từ bên
         // trong iframe (về.html tự gửi 'whatsnew' / 'explore more' khi người dùng bấm
         // vào các mục tương ứng bên trong nó)
@@ -9205,6 +9252,8 @@
             try { clIframe.contentWindow.postMessage({ font: fontPayload() }, '*'); } catch (e) {}
             try { clIframe.contentWindow.postMessage({ fontScale: getFontScaleState().factor }, '*'); } catch (e) {}
             clIframe.contentWindow.postMessage(resolveThemeMode(settings.theme), '*');
+            if (clPage === 'about') clIframe.contentWindow.postMessage({ changelogDot: clUnseen.length > 0 }, '*');
+            else if (clPage === 'whatsnew') clIframe.contentWindow.postMessage({ changelogNew: clNewForPage }, '*');
             // Về/What's New/More apps do bên Gemini quản lý nội dung -> chỉ gửi thêm mã
             // ngôn ngữ hiện tại ("vi"/"en") qua postMessage để bên đó tự xử lý, không đụng
             // vào nội dung about.html/changelog.html/apps.html
@@ -9245,6 +9294,7 @@
             const page = CL_PAGES[pageKey];
             if (!page) return;
             clPage = pageKey;
+            if (pageKey !== 'whatsnew') clNewForPage = [];
 
             clTitle.innerText = page.title;
             clBackBtnWrap.classList.toggle('show', page.showBack);
@@ -9268,7 +9318,7 @@
         // vào mục "What's New" hoặc "Explore more" bên trong nó)
         window.addEventListener('message', (e) => {
             if (!settingsOverlay.classList.contains('open') || currentSettingsTab !== 'about') return;
-            if (e.data === 'whatsnew') clNavigateTo('whatsnew');
+            if (e.data === 'whatsnew') { clMarkSeen(); clNavigateTo('whatsnew'); }
             else if (e.data === 'explore more') clNavigateTo('more');
         });
 

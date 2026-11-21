@@ -67,6 +67,8 @@
     /* THẺ PHIÊN BẢN: to, bo lớn, đổi hình khi hover/nhấn */
     .vgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
     .vgrid > .state, .vgrid > .vcard.latest { grid-column:1/-1; }
+    .vcard { position:relative; }
+    .vcard.is-new::after { content:''; position:absolute; top:14px; right:14px; width:12px; height:12px; border-radius:50%; background:#ff3b30; box-shadow:0 0 0 2px var(--surface, #fff); }
     .vcard { display:flex; align-items:center; gap:16px; padding:20px 22px; width:100%; text-align:left; cursor:pointer; border:none; font-family:inherit; color:var(--on-surface);
       background:var(--surface-container-high); border-radius:28px; position:relative; overflow:hidden;
       animation:pop .6s var(--spring) both; transition:border-radius .45s var(--spring), transform .35s var(--spring), background .3s; }
@@ -263,6 +265,7 @@ async function loadList() {
   }
 }
 
+let newIds = [];   // các bản mới (chưa xem) do app cha gửi sang -> chấm đỏ
 function renderList() {
   const v = document.getElementById('versions'); v.innerHTML = '';
   versionIds.forEach((id, i) => {
@@ -279,6 +282,7 @@ function renderList() {
     meta.append(title, sub);
     const chev = el('div','chev'); chev.appendChild(icon('chevron_right'));
     card.append(vi, meta, chev);
+    if (newIds.indexOf(id) >= 0) card.classList.add('is-new');
     card.onclick = () => openVersion(id);
     v.appendChild(card);
   });
@@ -366,6 +370,7 @@ function setLang(l) { currentLang = l === 'en' ? 'en' : 'vi'; renderStatic(); if
 function applyFontFactor(v){var n=parseFloat(v);if(!(n>0))return;document.documentElement.style.setProperty('--font-scale-factor',String(n));}
 window.addEventListener('message', ev => {
   const d = ev.data; if (!d) return;
+  if (typeof d === 'object' && Array.isArray(d.changelogNew)) { newIds = d.changelogNew.map(String); if (versionIds.length) renderList(); return; }
   if (typeof d === 'object' && d.fontScale) { applyFontFactor(d.fontScale); return; }
   if (typeof d === 'object' && d.font) applyAppFont(d.font);
   if (d.palette && typeof d.palette === 'object') { lastPalette = d.palette; applyPalette(lastPalette); }
