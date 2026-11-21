@@ -840,8 +840,8 @@
         html.m-ui .main-content { flex: 1; min-height: 0; flex-direction: column; gap: 0; }
         html.m-ui .visual-stage { flex: 1; min-height: 0; width: 100%; border-radius: 28px; }
         /* Video: khung bằng đúng tỉ lệ video → hình lấp đầy khung, không viền đen, không bị cắt */
-        html.m-ui body.has-video:not(.fullscreen-active) .visual-stage { flex: 0 1 auto; aspect-ratio: var(--vid-ar, 16 / 9); align-self: center; margin: auto 0; max-height: 100%; }
-        html.m-ui body.has-video #audio-element { object-fit: cover; }
+        html.m-ui body.has-video:not(.fullscreen-active) .visual-stage { flex: 1 1 auto; width: auto; max-width: 100%; aspect-ratio: var(--vid-ar, 16 / 9); align-self: center; margin: 0 auto; max-height: 100%; }
+        html.m-ui body.has-video #audio-element { object-fit: contain; }
         html.m-ui #visualizer { border-radius: 28px; }
         /* Ảnh bìa lớn hiện ngay trong khung chính */
         html.m-ui #fs-stage-overlay.hidden { display: flex !important; }
