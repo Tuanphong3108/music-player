@@ -48,6 +48,8 @@ public class MainActivity extends Activity {
     private boolean appLeftHome = false;
     private boolean pageResponded = false;
     private boolean hangAlertShown = false;
+    private boolean updateInstallPending = false;
+    private volatile boolean updateDownloadCancelled = false;
     private android.view.View hangOverlay = null;
     private android.view.View loadingOverlay = null;
     private android.animation.ValueAnimator md3ArcAnimator = null;
@@ -66,6 +68,12 @@ public class MainActivity extends Activity {
     private final Runnable pingTimeoutRunnable = () -> {
         if (appLeftHome || pageResponded) return;
         showUnresponsiveDialog();
+    };
+    private final Runnable installerTimeoutRunnable = () -> {
+        if (!updateInstallPending) return;
+        updateInstallPending = false;
+        callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                isEnglishLang() ? "Installer timed out after 10s" : "Trình cài đặt không phản hồi sau 10 giây") + ")");
     };
 
     @Override
@@ -726,6 +734,15 @@ public class MainActivity extends Activity {
                 else if (data.getData() != null) l.add(data.getData());
                 if (l.isEmpty()) callJs("window.addBtnCancel&&addBtnCancel()"); else queueUris(l);
             }
+        } else if (req == 45) {
+            pingHandler.removeCallbacks(installerTimeoutRunnable);
+            updateInstallPending = false;
+            if (res == RESULT_OK) {
+                callJs("window.__onAndroidUpdateInstalled&&window.__onAndroidUpdateInstalled()");
+            } else if (res == RESULT_CANCELED) {
+                callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                        isEnglishLang() ? "Installation cancelled by user or installer error" : "Trình cài đặt đã hủy hoặc báo lỗi cài đặt") + ")");
+            }
         } else if (req == 42 && filePathCb != null) {
             Uri[] out = null;
             if (res == RESULT_OK && data != null) {
@@ -782,6 +799,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (updateInstallPending) {
+            pingHandler.removeCallbacks(installerTimeoutRunnable);
+            updateInstallPending = false;
+            callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                    isEnglishLang() ? "Installer closed without completing update" : "Trình cài đặt đã đóng hoặc gặp lỗi khi cài") + ")");
+        }
         appLeftHome = false;
         if (!pageResponded && !hangAlertShown) {
             pingHandler.removeCallbacks(loadTimeoutRunnable);
@@ -796,7 +819,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (instance == this) instance = null;
+        updateInstallPending = false;
+        updateDownloadCancelled = true;
         hideMd3LoadingOverlay();
+        pingHandler.removeCallbacks(installerTimeoutRunnable);
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
         try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {}
@@ -976,14 +1002,25 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void cancelUpdateDownload() {
+            updateDownloadCancelled = true;
+            updateInstallPending = false;
+            pingHandler.removeCallbacks(installerTimeoutRunnable);
+        }
+
+        @JavascriptInterface
         public void startUpdateDownload(String url) {
             if (url == null || url.trim().isEmpty()) return;
             final String targetUrl = url.trim();
+            updateDownloadCancelled = false;
+            updateInstallPending = false;
+            pingHandler.removeCallbacks(installerTimeoutRunnable);
             new Thread(() -> {
                 java.io.InputStream in = null;
                 java.io.FileOutputStream out = null;
                 java.net.HttpURLConnection conn = null;
                 try {
+                    if (updateDownloadCancelled) return;
                     java.net.URL u = new java.net.URL(targetUrl);
                     conn = (java.net.HttpURLConnection) u.openConnection();
                     conn.setInstanceFollowRedirects(true);
@@ -991,6 +1028,7 @@ public class MainActivity extends Activity {
                     conn.setReadTimeout(30000);
                     conn.setRequestProperty("User-Agent", "MediaPlayerApp/1.0");
                     conn.connect();
+                    if (updateDownloadCancelled) return;
                     int code = conn.getResponseCode();
                     if (code < 200 || code >= 300) {
                         callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote("HTTP " + code) + ")");
@@ -1007,6 +1045,11 @@ public class MainActivity extends Activity {
                     int lastPct = -1;
                     int read;
                     while ((read = in.read(buf)) != -1) {
+                        if (updateDownloadCancelled) {
+                            try { out.close(); } catch (Exception ignored) {}
+                            try { apkFile.delete(); } catch (Exception ignored) {}
+                            return;
+                        }
                         out.write(buf, 0, read);
                         downloaded += read;
                         if (total > 0) {
@@ -1022,20 +1065,31 @@ public class MainActivity extends Activity {
                     out.flush();
                     out.close(); out = null;
                     in.close(); in = null;
+                    if (updateDownloadCancelled) return;
                     callJs("window.__onAndroidUpdateProgress&&window.__onAndroidUpdateProgress(100," + downloaded + "," + (total > 0 ? total : downloaded) + ")");
                     final Uri apkUri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", apkFile);
                     runOnUiThread(() -> {
                         try {
+                            if (updateDownloadCancelled) return;
                             Intent installIntent = new Intent(Intent.ACTION_VIEW);
                             installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
                             installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(installIntent);
+                            updateInstallPending = true;
+                            pingHandler.removeCallbacks(installerTimeoutRunnable);
+                            pingHandler.postDelayed(installerTimeoutRunnable, 10000);
+                            startActivityForResult(installIntent, 45);
                         } catch (Throwable ex) {
+                            updateInstallPending = false;
+                            pingHandler.removeCallbacks(installerTimeoutRunnable);
                             callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(String.valueOf(ex)) + ")");
                         }
                     });
                 } catch (Throwable t) {
-                    callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(String.valueOf(t)) + ")");
+                    if (!updateDownloadCancelled) {
+                        updateInstallPending = false;
+                        pingHandler.removeCallbacks(installerTimeoutRunnable);
+                        callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(String.valueOf(t)) + ")");
+                    }
                 } finally {
                     try { if (out != null) out.close(); } catch (Exception ignored) {}
                     try { if (in != null) in.close(); } catch (Exception ignored) {}
