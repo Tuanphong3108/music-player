@@ -405,12 +405,30 @@ public class MainActivity extends Activity {
     private void hideMd3LoadingOverlay() {
         pingHandler.removeCallbacks(showLoadingOverlayRunnable);
         runOnUiThread(() -> {
-            if (md3ArcAnimator != null) { md3ArcAnimator.cancel(); md3ArcAnimator = null; }
-            if (md3RotAnimator != null) { md3RotAnimator.cancel(); md3RotAnimator = null; }
-            if (loadingOverlay != null && root != null) {
-                root.removeView(loadingOverlay);
-                loadingOverlay = null;
+            final android.view.View targetOverlay = loadingOverlay;
+            final android.animation.ValueAnimator arcAnim = md3ArcAnimator;
+            final android.animation.ValueAnimator rotAnim = md3RotAnimator;
+            loadingOverlay = null;
+            md3ArcAnimator = null;
+            md3RotAnimator = null;
+            if (targetOverlay == null) {
+                if (arcAnim != null) arcAnim.cancel();
+                if (rotAnim != null) rotAnim.cancel();
+                return;
             }
+            targetOverlay.setClickable(false);
+            targetOverlay.animate()
+                    .alpha(0f)
+                    .setDuration(280)
+                    .setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f))
+                    .withEndAction(() -> {
+                        if (arcAnim != null) arcAnim.cancel();
+                        if (rotAnim != null) rotAnim.cancel();
+                        if (root != null) {
+                            try { root.removeView(targetOverlay); } catch (Throwable ignored) {}
+                        }
+                    })
+                    .start();
         });
     }
 
