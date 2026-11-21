@@ -81,6 +81,8 @@ public class MediaService extends Service {
     private void clearSession() {
         playing = false;
         MediaWidgetProvider.savePlaybackState(this, false, "", "", "", 0);
+        QueueWidgetProvider.clearQueue(this);
+        LyricsWidgetProvider.clearLyrics(this);
         if (session != null) {
             try {
                 session.setPlaybackState(new PlaybackState.Builder()
@@ -147,6 +149,7 @@ public class MediaService extends Service {
         session.setMetadata(mb.build());
         publishPlaybackOnly();
         MediaWidgetProvider.savePlaybackState(this, playing, title, artist, null, 0);
+        MediaWidgetProvider.saveProgress(this, pos, dur);
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {
