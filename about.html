@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght,ROND@100..1000,0..100&display=swap" rel="stylesheet">
     
-    <!-- Material Symbols Outlined -->
+    <!-- Material Symbols Rounded -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 
     <!-- Tailwind CSS -->
@@ -105,16 +105,16 @@
         }
 
         /* Material Symbols Hover Effect */
-        .material-symbols-outlined {
+        .material-symbols-rounded {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             transition: font-variation-settings 0.25s cubic-bezier(0.2, 0, 0, 1);
         }
         
-        button:hover .material-symbols-outlined,
-        .feature-card:hover .material-symbols-outlined,
-        md-filled-button:hover .material-symbols-outlined,
-        md-outlined-button:hover .material-symbols-outlined,
-        md-icon-button:hover .material-symbols-outlined {
+        button:hover .material-symbols-rounded,
+        .feature-card:hover .material-symbols-rounded,
+        md-filled-button:hover .material-symbols-rounded,
+        md-outlined-button:hover .material-symbols-rounded,
+        md-icon-button:hover .material-symbols-rounded {
             font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
         }
 
@@ -330,11 +330,11 @@
             </div>
             <div class="hero-actions">
                 <md-filled-button id="whatsNewBtn">
-                    <span class="material-symbols-outlined" slot="icon">auto_awesome</span>
+                    <span class="material-symbols-rounded" slot="icon">auto_awesome</span>
                     <span id="txtWhatsNew">What's New?</span>
                 </md-filled-button>
                 <md-outlined-button id="exploreMoreBtn">
-                    <span class="material-symbols-outlined" slot="icon">explore</span>
+                    <span class="material-symbols-rounded" slot="icon">explore</span>
                     <span id="txtExploreMore">Khám phá thêm</span>
                 </md-outlined-button>
             </div>
@@ -352,9 +352,9 @@
         <div class="w-full max-w-xl mx-auto h-full flex flex-col px-4 sm:px-6 pt-4 sm:pt-6">
             <div class="dhead">
                 <button class="dback" onclick="closeFeatureDetail()" title="Quay lại">
-                    <span class="material-symbols-outlined text-3xl">arrow_back</span>
+                    <span class="material-symbols-rounded text-3xl">arrow_back</span>
                 </button>
-                <div class="dtitle-ico"><span id="detailIcon" class="material-symbols-outlined text-2xl">info</span></div>
+                <div class="dtitle-ico"><span id="detailIcon" class="material-symbols-rounded text-2xl">info</span></div>
                 <h2 id="detailTitle" class="dtitle-text">Chi tiết tính năng</h2>
             </div>
             <div id="detailScrollArea" class="flex-1 overflow-y-auto py-3 space-y-4">
@@ -574,7 +574,7 @@
                 const realIdx = data.features.indexOf(feat);
                 return `
                 <div onclick="openFeatureDetail(${realIdx})" class="fcard feature-card group" style="animation-delay:${0.1 + realIdx * 0.05}s">
-                    <div class="fico"><span class="material-symbols-outlined text-2xl">${feat.icon}</span></div>
+                    <div class="fico"><span class="material-symbols-rounded text-2xl">${feat.icon}</span></div>
                     <div class="fmeta">
                         <div class="ftitle">
                             <span>${feat.title}</span>
@@ -582,7 +582,7 @@
                         </div>
                         <p class="fsum">${feat.summary}</p>
                     </div>
-                    <div class="fgo"><span class="material-symbols-outlined text-xl">arrow_forward</span></div>
+                    <div class="fgo"><span class="material-symbols-rounded text-xl">arrow_forward</span></div>
                 </div>
             `;
             }).join('');
@@ -679,17 +679,17 @@
                     <div class="flex flex-col gap-4">
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div class="p-3 rounded-2xl bg-[var(--m3-surface-container-high)] border border-[var(--m3-outline)]/20">
-                                <span class="material-symbols-outlined text-green-500 text-xl">check_circle</span>
+                                <span class="material-symbols-rounded text-green-500 text-xl">check_circle</span>
                                 <h4 class="font-bold text-xs mt-1 text-[var(--m3-on-surface)]">${langData.summaryRightsTitle}</h4>
                                 <p class="text-[11px] text-[var(--m3-on-surface-variant)] mt-0.5">${langData.summaryRightsDesc}</p>
                             </div>
                             <div class="p-3 rounded-2xl bg-[var(--m3-surface-container-high)] border border-[var(--m3-outline)]/20">
-                                <span class="material-symbols-outlined text-amber-500 text-xl">info</span>
+                                <span class="material-symbols-rounded text-amber-500 text-xl">info</span>
                                 <h4 class="font-bold text-xs mt-1 text-[var(--m3-on-surface)]">${langData.summaryCondTitle}</h4>
                                 <p class="text-[11px] text-[var(--m3-on-surface-variant)] mt-0.5">${langData.summaryCondDesc}</p>
                             </div>
                             <div class="p-3 rounded-2xl bg-[var(--m3-surface-container-high)] border border-[var(--m3-outline)]/20">
-                                <span class="material-symbols-outlined text-blue-500 text-xl">shield</span>
+                                <span class="material-symbols-rounded text-blue-500 text-xl">shield</span>
                                 <h4 class="font-bold text-xs mt-1 text-[var(--m3-on-surface)]">${langData.summaryWarnTitle}</h4>
                                 <p class="text-[11px] text-[var(--m3-on-surface-variant)] mt-0.5">${langData.summaryWarnDesc}</p>
                             </div>
@@ -836,7 +836,7 @@ SOFTWARE.</pre>
             var st = document.getElementById('app-font-style');
             if (!st) { st = document.createElement('style'); st.id = 'app-font-style'; document.head.appendChild(st); }
             st.textContent = ':root{--md-ref-typeface-plain:' + f.stack + ';--md-ref-typeface-brand:' + f.stack + '}'
-                + 'body,body *:not(.material-symbols-outlined):not(.ms):not(code):not(pre):not(kbd){font-family:' + f.stack + ' !important}';
+                + 'body,body *:not(.material-symbols-rounded):not(.ms):not(code):not(pre):not(kbd){font-family:' + f.stack + ' !important}';
         }
 
         // Hệ số cỡ chữ do app cha gửi sang: { fontScale: <hệ số> } -> cỡ gốc x hệ số
