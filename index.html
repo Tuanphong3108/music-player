@@ -85,7 +85,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
     <!-- Bản có trục ROND (bo tròn) cho chữ đậm/tiêu đề; nếu tải lỗi thì bản trên vẫn dùng bình thường -->
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght,ROND@100..1000,0..100&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     
     <!-- Thư viện đọc và ghi đè Metadata ID3 trực tiếp trong trình duyệt (defer để không chặn render ban đầu) -->
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
@@ -228,8 +228,8 @@
             }
         }
 
-        .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined';
+        .material-symbols-rounded {
+            font-family: 'Material Symbols Rounded';
             font-weight: normal; font-style: normal; font-size: 24px;
             line-height: 1; display: inline-block; white-space: nowrap;
             -webkit-font-feature-settings: 'liga';
@@ -301,10 +301,10 @@
             position: relative; flex-shrink: 0;
         }
         .btn-m3:hover { background: var(--md-sys-color-secondary-container); transform: scale(1.1); }
-        .btn-m3:hover .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+        .btn-m3:hover .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
         .btn-m3:active { transform: scale(0.9); }
         .btn-m3.active { color: var(--md-sys-color-primary); background: var(--md-sys-color-secondary-container); }
-        .btn-m3.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+        .btn-m3.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
         .btn-m3:disabled, .btn-m3.btn-disabled {
             opacity: 0.35; cursor: not-allowed; pointer-events: none;
         }
@@ -586,7 +586,7 @@
             font-size: calc(14px * var(--font-scale-factor, 1)); opacity: 0; pointer-events: none; transition: var(--m3-transition), background .2s;
         }
         .lyric-search-bar:hover { background: var(--md-sys-color-secondary-container); }
-        .lyric-search-bar .material-symbols-outlined { font-size: 20px; opacity: .7; }
+        .lyric-search-bar .material-symbols-rounded { font-size: 20px; opacity: .7; }
         body.lyrics-open .lyric-search-bar { opacity: 1; pointer-events: auto; }
         body.fullscreen-active .lyric-search-bar, body.fullscreen-active .lyric-credit { display: none !important; }
         body.is-video-track .lyric-search-bar { display: none !important; }   /* video chưa hỗ trợ chỉnh thẻ/tìm lời */
@@ -919,7 +919,7 @@
         html.m-ui #m-lyric-close { display: none !important; }
         html.m-ui body.lyrics-open #m-lyric-close-unused { display: grid; place-items: center; position: fixed; z-index: 2600; left: calc(var(--vw) / 2 - 28px); bottom: 24px; width: 56px; height: 56px;
             border: none; border-radius: 50%; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); box-shadow: 0 6px 20px rgba(0,0,0,.35); cursor: pointer; }
-        html.m-ui #m-lyric-close .material-symbols-outlined { font-size: 28px; }
+        html.m-ui #m-lyric-close .material-symbols-rounded { font-size: 28px; }
         html.m-ui body.lyrics-open .lyric-search-bar, html.m-ui body.lyrics-open .lyric-credit { display: none; }
         html.m-ui body.lyric-static .lyric-line.active { font-size: calc(30px * var(--font-scale-factor, 1)); color: var(--lyric-text); font-weight: 600; }
         html.m-ui #m-lyric-panel { display: none; position: fixed; z-index: 2600; left: 0; width: var(--vw); bottom: 0; flex-direction: column; gap: 12px; padding: 12px 16px 22px;
@@ -930,7 +930,7 @@
         html.m-ui body.lyrics-open.fullscreen-active #m-lyric-panel { display: none; }
         html.m-ui .mlp-row { display: flex; align-items: center; gap: 10px; }
         html.m-ui .mlp-play { width: 78px; height: 78px; flex-shrink: 0; border: none; border-radius: 50%; background: var(--md-sys-color-tertiary-container, #633B48); color: var(--md-sys-color-on-tertiary-container, #FFD8E4); display: grid; place-items: center; cursor: pointer; }
-        html.m-ui .mlp-play .material-symbols-outlined { font-size: 34px; font-variation-settings: 'FILL' 1; }
+        html.m-ui .mlp-play .material-symbols-rounded { font-size: 34px; font-variation-settings: 'FILL' 1; }
         html.m-ui .mlp-seek { flex: 1; height: 50px; border-radius: 25px; background: #101014; display: flex; align-items: center; padding: 0 18px; }
         html.m-ui #m-lyric-seek { width: 100%; height: 6px; border-radius: 3px; appearance: none; background: rgba(255,255,255,.18); }
         html.m-ui #m-lyric-seek::-webkit-slider-thumb { appearance: none; width: 8px; height: 28px; border-radius: 4px; background: var(--md-sys-color-primary); }
@@ -1375,7 +1375,7 @@
         #confirm-dialog::part(scrim) { background: #000; }
 
         #add-music-trigger { perspective: 300px; }
-        #add-music-trigger .material-symbols-outlined { will-change: transform; }
+        #add-music-trigger .material-symbols-rounded { will-change: transform; }
         #add-music-menu md-menu-item { min-width: 220px; --md-menu-item-label-text-size: calc(13px * var(--font-scale-factor, 1)); }
 
         #mail-provider-dialog .mail-opts { display: flex; flex-direction: column; gap: 4px; }
@@ -1536,7 +1536,7 @@
         }
         .st-tab:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent); }
         .st-tab.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-primary-container); }
-        .st-tab.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; color: var(--md-sys-color-primary); }
+        .st-tab.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; color: var(--md-sys-color-primary); }
         .st-tab-spacer { flex: 1; min-height: 12px; }
         .st-tab-link { text-decoration: none; color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent); }
         .st-tab-link:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent); }
@@ -1545,7 +1545,7 @@
         .st-android-card { background: var(--playlist-bg); border: 1px solid var(--playlist-border); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
         .st-android-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
         .st-android-feat { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 16px; background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, transparent); }
-        .st-android-feat .material-symbols-outlined { color: var(--md-sys-color-primary); font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+        .st-android-feat .material-symbols-rounded { color: var(--md-sys-color-primary); font-size: 22px; flex-shrink: 0; margin-top: 2px; }
         .st-android-dl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 24px; border-radius: 999px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight: 700; font-size: calc(15px * var(--font-scale-factor, 1)); text-decoration: none; align-self: flex-start; transition: transform .25s cubic-bezier(.34,1.56,.64,1), border-radius .3s ease, opacity .2s; }
         .st-android-dl-btn:hover { transform: scale(1.03); border-radius: 16px; }
         .st-android-dl-btn:active { transform: scale(0.97); }
@@ -1583,7 +1583,7 @@
         .st-search input::placeholder { color: var(--md-sys-color-on-surface-variant); opacity: .7; }
         .st-search-clear { display: none; border: none; background: transparent; color: inherit; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; padding: 0; align-items: center; justify-content: center; }
         .st-search-clear:hover { background: color-mix(in srgb, currentColor 14%, transparent); }
-        .st-search-clear .material-symbols-outlined { font-size: 18px; }
+        .st-search-clear .material-symbols-rounded { font-size: 18px; }
         .st-search.has-text .st-search-clear { display: flex; }
         #settings-close-btn { transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s, width .3s, margin .3s; }
         .st-title-search { display: none; }
@@ -1656,7 +1656,7 @@
         .st-m-card { display: flex; align-items: center; gap: 16px; width: 100%; padding: 16px 18px; border: none; border-radius: 28px; cursor: pointer; text-align: left; font-family: var(--app-font); color: var(--md-sys-color-on-surface); background: var(--md-sys-color-surface-container, color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface))); transition: transform .15s, border-radius .2s; }
         .st-m-card:active { transform: scale(.98); border-radius: 22px; }
         .st-m-card .st-m-ic { flex: 0 0 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--hue) 26%, var(--md-sys-color-surface)); color: var(--hue); }
-        .st-m-card .st-m-ic .material-symbols-outlined { font-size: 26px; font-variation-settings: 'FILL' 1; }
+        .st-m-card .st-m-ic .material-symbols-rounded { font-size: 26px; font-variation-settings: 'FILL' 1; }
         .st-m-card .st-m-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .st-m-card .st-m-t { font-size: calc(17px * var(--font-scale-factor, 1)); font-weight: 700; }
         .st-m-card .st-m-d { font-size: calc(13px * var(--font-scale-factor, 1)); opacity: .65; }
@@ -1672,7 +1672,7 @@
         html.m-ui .st-pane > div:has(md-outlined-select) md-outlined-select { display: none; }
         html.m-ui .st-pane > div:has(md-outlined-select) .st-pill { display: inline-flex; }
         .st-pill { align-self: flex-start; align-items: center; gap: 8px; max-width: 100%; padding: 10px 14px 10px 18px; border: none; border-radius: 999px; cursor: pointer; font-family: var(--app-font); font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
-        .st-pill .material-symbols-outlined { font-size: 20px; }
+        .st-pill .material-symbols-rounded { font-size: 20px; }
         #st-sheet { position: fixed; inset: 0; z-index: 9600; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0); transition: background .25s; }
         #st-sheet.open { display: flex; background: rgba(0,0,0,.5); }
         #st-sheet.show { background: rgba(0,0,0,.5); }
@@ -1715,7 +1715,7 @@
         .m-empty-t { font-family: var(--app-font); font-weight: 700; font-size: calc(20px * var(--font-scale-factor, 1)); color: var(--md-sys-color-on-surface); }
         .m-empty-d { font-family: var(--app-font); font-size: calc(14px * var(--font-scale-factor, 1)); max-width: 280px; line-height: 1.4; color: var(--md-sys-color-on-surface-variant, var(--md-sys-color-on-surface)); opacity: .8; }
         #m-empty-add:active { border-radius: 56px; transform: scale(.94); }
-        #m-empty-add .material-symbols-outlined { font-size: 52px; }
+        #m-empty-add .material-symbols-rounded { font-size: 52px; }
         @keyframes mEmptyPop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
 
         /* ===== Chuyển trang (shared axis): Settings, danh sách phát, panel Thêm... ===== */
@@ -1865,16 +1865,16 @@
     <md-dialog id="mail-provider-dialog" style="max-width:min(92vw,400px); font-family:var(--app-font);">
         <div slot="headline" data-i18n="feedback.mail_title">Gửi phản hồi bằng</div>
         <div slot="content" class="mail-opts">
-            <md-list-item type="button" data-mail="gmail"><span class="material-symbols-outlined" slot="start">mail</span><div slot="headline">Gmail</div></md-list-item>
-            <md-list-item type="button" data-mail="outlook"><span class="material-symbols-outlined" slot="start">inbox</span><div slot="headline">Outlook</div></md-list-item>
-            <md-list-item type="button" data-mail="yahoo"><span class="material-symbols-outlined" slot="start">forward_to_inbox</span><div slot="headline">Yahoo Mail</div></md-list-item>
-            <md-list-item type="button" data-mail="mailto"><span class="material-symbols-outlined" slot="start">open_in_new</span><div slot="headline" data-i18n="feedback.mail_mailto">Liên kết mailto</div></md-list-item>
+            <md-list-item type="button" data-mail="gmail"><span class="material-symbols-rounded" slot="start">mail</span><div slot="headline">Gmail</div></md-list-item>
+            <md-list-item type="button" data-mail="outlook"><span class="material-symbols-rounded" slot="start">inbox</span><div slot="headline">Outlook</div></md-list-item>
+            <md-list-item type="button" data-mail="yahoo"><span class="material-symbols-rounded" slot="start">forward_to_inbox</span><div slot="headline">Yahoo Mail</div></md-list-item>
+            <md-list-item type="button" data-mail="mailto"><span class="material-symbols-rounded" slot="start">open_in_new</span><div slot="headline" data-i18n="feedback.mail_mailto">Liên kết mailto</div></md-list-item>
         </div>
         <div slot="actions"><md-text-button id="mail-provider-cancel" data-i18n="misc.cancel">Huỷ</md-text-button></div>
     </md-dialog>
 
     <md-dialog id="sleep-fired-dialog" style="max-width:min(92vw,400px); font-family:var(--app-font);">
-        <span class="material-symbols-outlined" slot="icon">bedtime</span>
+        <span class="material-symbols-rounded" slot="icon">bedtime</span>
         <div slot="headline" data-i18n="sleep.fired_title">Đã tạm dừng theo hẹn giờ</div>
         <div slot="content" id="sleep-fired-text"></div>
         <div slot="actions">
@@ -1902,7 +1902,7 @@
             <div class="fnt-panel" data-panel="file" hidden>
                 <div class="fnt-help" data-i18n="font.file_help">Chọn tệp phông chữ (.ttf, .otf, .woff, .woff2) từ máy của bạn. Phông được lưu trên thiết bị này.</div>
                 <div class="fnt-filebar">
-                    <md-outlined-button id="font-file-btn" type="button"><span class="material-symbols-outlined" slot="icon">upload_file</span><span data-i18n="font.file_choose">Chọn tệp phông chữ</span></md-outlined-button>
+                    <md-outlined-button id="font-file-btn" type="button"><span class="material-symbols-rounded" slot="icon">upload_file</span><span data-i18n="font.file_choose">Chọn tệp phông chữ</span></md-outlined-button>
                     <span id="font-file-label" class="fnt-help" style="margin:0;">Chưa chọn tệp nào</span>
                 </div>
                 <input type="file" id="font-file-input" accept=".ttf,.otf,.woff,.woff2,font/*" hidden>
@@ -1948,12 +1948,12 @@
         <div id="font-manage-dialog" class="cl-dialog" role="dialog" aria-modal="true">
             <div class="cl-header" style="padding: 16px 24px; gap: 16px;">
                 <h2 data-i18n="settings.font_manage" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Quản lý phông chữ</h2>
-                <button class="btn-m3" id="font-manage-done" title="Đóng" data-i18n-title="misc.close" style="width: 48px; height: 48px; flex-shrink:0;"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="font-manage-done" title="Đóng" data-i18n-title="misc.close" style="width: 48px; height: 48px; flex-shrink:0;"><span class="material-symbols-rounded">close</span></button>
             </div>
             <div class="fnt-body">
                 <div class="fnt-toolbar">
-                    <md-filled-tonal-button id="font-manage-add" type="button"><span class="material-symbols-outlined" slot="icon">add</span><span data-i18n="font.manage_add">Thêm phông chữ</span></md-filled-tonal-button>
-                    <md-outlined-button id="font-manage-sort" type="button"><span class="material-symbols-outlined" slot="icon">sort_by_alpha</span><span data-i18n="font.manage_sort">Sắp xếp A–Z</span></md-outlined-button>
+                    <md-filled-tonal-button id="font-manage-add" type="button"><span class="material-symbols-rounded" slot="icon">add</span><span data-i18n="font.manage_add">Thêm phông chữ</span></md-filled-tonal-button>
+                    <md-outlined-button id="font-manage-sort" type="button"><span class="material-symbols-rounded" slot="icon">sort_by_alpha</span><span data-i18n="font.manage_sort">Sắp xếp A–Z</span></md-outlined-button>
                     <md-text-button id="font-manage-reset" type="button" data-i18n="font.manage_reset">Khôi phục mặc định</md-text-button>
                     <span class="fnt-count" id="font-manage-count"></span>
                 </div>
@@ -1963,9 +1963,9 @@
     </div>
 
     <div id="output-toast" popover="manual" role="status" aria-live="polite">
-        <span class="material-symbols-outlined" id="output-toast-icon" style="font-size:20px;">headphones</span>
+        <span class="material-symbols-rounded" id="output-toast-icon" style="font-size:20px;">headphones</span>
         <span class="ot-text" id="output-toast-text"></span>
-        <button class="ot-close" id="output-toast-close" data-i18n-title="misc.close" title="Đóng"><span class="material-symbols-outlined" style="font-size:18px;">close</span></button>
+        <button class="ot-close" id="output-toast-close" data-i18n-title="misc.close" title="Đóng"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>
     </div>
 
 
@@ -1988,7 +1988,7 @@
         -->
         <a id="loading-report-btn" class="btn-m3" title="Báo cáo lỗi khẩn cấp" data-i18n-title="loading.report_title" href="mailto:phongvn406@gmail.com"
            style="margin-top: 24px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; padding: 10px 22px; border-radius: 14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-family:'Minecraft'; font-size: calc(11px * var(--font-scale-factor, 1)); letter-spacing: 1px; width: auto; height: auto;">
-            <span class="material-symbols-outlined" style="font-size:18px;">bug_report</span> <span data-i18n="loading.report_btn">BÁO CÁO</span>
+            <span class="material-symbols-rounded" style="font-size:18px;">bug_report</span> <span data-i18n="loading.report_btn">BÁO CÁO</span>
         </a>
     </div>
 
@@ -2015,18 +2015,18 @@
     <!-- Context Menu -->
     <div id="context-menu">
         <div class="cm-item danger" id="cm-delete">
-            <span class="material-symbols-outlined">delete</span>
+            <span class="material-symbols-rounded">delete</span>
             <span data-i18n="contextmenu.delete">Xoá khỏi playlist</span>
         </div>
         <div class="cm-item" id="cm-add-lrc">
-            <span class="material-symbols-outlined">description</span>
+            <span class="material-symbols-rounded">description</span>
             <span data-i18n="contextmenu.add_lrc">Thêm lời lẻ (.lrc)</span>
         </div>
     </div>
 
     <!-- Modal About / What's New / More apps (dùng chung 1 dialog, điều hướng qua postMessage) -->
     <!-- Modal Settings (Full Screen Scale with Adaptive Color selection) -->
-    <div id="m-empty"><button id="m-empty-add" title="Thêm nhạc / video" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined">add</span></button>
+    <div id="m-empty"><button id="m-empty-add" title="Thêm nhạc / video" data-i18n-title="topbar.addmusic"><span class="material-symbols-rounded">add</span></button>
         <div class="m-empty-t" data-i18n="mobile.empty_title">Chưa có gì để phát</div>
         <div class="m-empty-d" data-i18n="mobile.empty_desc">Thêm nhạc hoặc video từ thiết bị để bắt đầu nghe.</div></div>
     <div id="st-sheet"><div class="st-sheet-box"><div class="st-sheet-grip"></div><div class="st-sheet-title"></div><div class="st-sheet-list" style="display:flex;flex-direction:column;gap:2px;"></div></div></div>
@@ -2034,10 +2034,10 @@
         <div id="settings-dialog" class="cl-dialog" style="width: var(--vw); max-width: var(--vw); height: var(--vh); max-height: var(--vh); border-radius: 0;">
             <div class="cl-header" id="settings-header" style="padding: 16px 32px; gap: 16px;">
                 <div style="display:flex; align-items:center; overflow:hidden; flex-shrink:0;">
-                    <button class="btn-m3" id="st-m-back" title="Quay lại" data-i18n-title="about.back"><span class="material-symbols-outlined">arrow_back</span></button>
+                    <button class="btn-m3" id="st-m-back" title="Quay lại" data-i18n-title="about.back"><span class="material-symbols-rounded">arrow_back</span></button>
                     <div id="st-back-wrap" style="width:0; overflow:hidden; flex-shrink:0; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1);">
                         <button class="btn-m3" id="st-search-back" title="Quay lại" data-i18n-title="about.back" style="width:44px; height:44px; transform:scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);">
-                            <span class="material-symbols-outlined">arrow_back</span>
+                            <span class="material-symbols-rounded">arrow_back</span>
                         </button>
                     </div>
                     <h2 style="font-family: 'Minecraft', sans-serif; font-size: calc(24px * var(--font-scale-factor, 1)); letter-spacing: 1px; white-space:nowrap;">
@@ -2047,22 +2047,22 @@
                     </h2>
                 </div>
                 <label class="st-search" for="st-search-input">
-                    <span class="material-symbols-outlined">search</span>
+                    <span class="material-symbols-rounded">search</span>
                     <input id="st-search-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" name="settings-search-nofill" placeholder="Tìm kiếm cài đặt..." data-i18n-placeholder="settings.search_placeholder">
-                    <button type="button" id="st-search-clear" class="st-search-clear" tabindex="-1"><span class="material-symbols-outlined">close</span></button>
+                    <button type="button" id="st-search-clear" class="st-search-clear" tabindex="-1"><span class="material-symbols-rounded">close</span></button>
                 </label>
-                <button class="btn-m3" id="settings-close-btn" style="width: 52px; height: 52px;" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined" style="font-size: 28px;">close</span></button>
+                <button class="btn-m3" id="settings-close-btn" style="width: 52px; height: 52px;" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded" style="font-size: 28px;">close</span></button>
             </div>
             <div class="st-body">
                 <nav class="st-sidebar">
-                    <button class="st-tab active" data-tab="general"><span class="material-symbols-outlined">tune</span><span data-i18n="settings.cat_general">Chung</span></button>
-                    <button class="st-tab" data-tab="appearance"><span class="material-symbols-outlined">palette</span><span data-i18n="settings.cat_appearance">Giao diện</span></button>
-                    <button class="st-tab" data-tab="lyrics"><span class="material-symbols-outlined">lyrics</span><span data-i18n="settings.cat_lyrics">Lyric</span></button>
-                    <button class="st-tab" data-tab="mixer"><span class="material-symbols-outlined">equalizer</span><span data-i18n="settings.cat_mixer">Bộ trộn âm thanh</span></button>
-                    <button class="st-tab" data-tab="performance"><span class="material-symbols-outlined">speed</span><span data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</span></button>
+                    <button class="st-tab active" data-tab="general"><span class="material-symbols-rounded">tune</span><span data-i18n="settings.cat_general">Chung</span></button>
+                    <button class="st-tab" data-tab="appearance"><span class="material-symbols-rounded">palette</span><span data-i18n="settings.cat_appearance">Giao diện</span></button>
+                    <button class="st-tab" data-tab="lyrics"><span class="material-symbols-rounded">lyrics</span><span data-i18n="settings.cat_lyrics">Lyric</span></button>
+                    <button class="st-tab" data-tab="mixer"><span class="material-symbols-rounded">equalizer</span><span data-i18n="settings.cat_mixer">Bộ trộn âm thanh</span></button>
+                    <button class="st-tab" data-tab="performance"><span class="material-symbols-rounded">speed</span><span data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</span></button>
                     <div class="st-tab-spacer"></div>
-                    <button class="st-tab st-tab-link" id="st-android-apk-btn" data-tab="android"><span class="material-symbols-outlined">android</span><span data-i18n="settings.download_android">Tải bản Android</span></button>
-                    <button class="st-tab" data-tab="about"><span class="material-symbols-outlined">info</span><span data-i18n="about.title">About</span></button>
+                    <button class="st-tab st-tab-link" id="st-android-apk-btn" data-tab="android"><span class="material-symbols-rounded">android</span><span data-i18n="settings.download_android">Tải bản Android</span></button>
+                    <button class="st-tab" data-tab="about"><span class="material-symbols-rounded">info</span><span data-i18n="about.title">About</span></button>
                 </nav>
                 <div class="st-content">
                 <h1 id="st-m-bigtitle" data-i18n="settings.title">Cài đặt hệ thống</h1>
@@ -2087,8 +2087,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.wake_lock_desc">Giữ màn hình không tự tắt/khoá trong lúc đang ở chế độ Full screen, để bạn xem lyric hoặc album art mà không bị gián đoạn. Tự tắt tính năng này ngay khi thoát Full screen.</span>
                     </div>
                     <md-switch icons id="setting-wake-lock">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
 
@@ -2098,8 +2098,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.battery_opt_desc">Cho phép ứng dụng chạy nền không bị hệ thống hạn chế pin để phát nhạc liên tục, mượt mà hơn khi tắt màn hình hoặc chuyển sang ứng dụng khác.</span>
                     </div>
                     <md-switch icons id="setting-battery-opt">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
 
@@ -2146,8 +2146,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.dynamic_accent_desc">Phân tích ảnh bìa (album art) của bài đang phát để lấy màu nổi bật nhất làm màu chủ đạo cho toàn bộ giao diện, kể cả thanh tiêu đề và PiP. Tự trả về màu bạn đã chọn khi bài không có ảnh bìa hoặc nhạc dừng quá 10 giây.</span>
                     </div>
                     <md-switch icons id="setting-dynamic-accent">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
 
@@ -2195,8 +2195,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.main_lyric_desc">Hiển thị lyrics dòng hiện tại ngay góc đầu vùng Canvas sóng nhạc</span>
                     </div>
                     <md-switch icons id="setting-main-lyric">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
 
@@ -2206,8 +2206,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.pip_lyric_desc">Đồng bộ câu chữ của file lyric trực tiếp lên trình phát PiP thu nhỏ</span>
                     </div>
                     <md-switch icons id="setting-pip-lyric">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
 
@@ -2217,8 +2217,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="settings.fs_lyric_desc">Hiển thị lời bài hát ngay bên dưới tên và nghệ sĩ khi ở chế độ toàn màn hình</span>
                     </div>
                     <md-switch icons id="setting-fs-lyric">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
                 </div>
@@ -2240,8 +2240,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="mixer.eq_desc">Bật để áp dụng bộ chỉnh âm 5 dải bên dưới</span>
                     </div>
                     <md-switch icons id="mixer-eq-on">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
@@ -2282,8 +2282,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="mixer.mono_desc">Gộp hai kênh trái/phải thành một, hữu ích khi chỉ nghe bằng một tai nghe</span>
                     </div>
                     <md-switch icons id="mixer-mono">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
@@ -2292,8 +2292,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="mixer.compressor_desc">Nén bớt chênh lệch giữa đoạn nhỏ và đoạn lớn, hạn chế vỡ tiếng khi tăng âm</span>
                     </div>
                     <md-switch icons id="mixer-comp">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
                 <div style="display: flex; justify-content: flex-start;">
@@ -2321,8 +2321,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.motion_desc">Chuyển trang, mở/đóng hộp thoại, hoạt ảnh nút bấm... (chữ chạy tên bài vẫn giữ)</span>
                     </div>
                     <md-switch icons id="perf-motion">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
@@ -2331,8 +2331,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.glass_desc">Hiệu ứng mờ trong suốt ở thanh, menu và hộp thoại. Tốn GPU nhất, tắt đi giúp máy yếu mượt hơn.</span>
                     </div>
                     <md-switch icons id="perf-glass">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--playlist-border);">
@@ -2341,8 +2341,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.album_blur_desc">Ảnh bìa bài hát làm nền mờ phía sau. Tắt thì chỉ làm tối nền.</span>
                     </div>
                     <md-switch icons id="perf-album-blur">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
@@ -2351,8 +2351,8 @@
                         <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="perf.visualizer_desc">Vẽ sóng âm theo nhạc. Tắt sẽ ngừng phân tích và vẽ để tiết kiệm CPU.</span>
                     </div>
                     <md-switch icons id="perf-visualizer">
-                        <span class="material-symbols-outlined" slot="on-icon">check</span>
-                        <span class="material-symbols-outlined" slot="off-icon">close</span>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
                     </md-switch>
                 </div>
                 </div>
@@ -2361,7 +2361,7 @@
                     <div class="st-android-card">
                         <div style="display: flex; align-items: center; gap: 16px;">
                             <div style="width: 56px; height: 56px; border-radius: 18px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; flex-shrink: 0;">
-                                <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">android</span>
+                                <span class="material-symbols-rounded" style="font-size: 32px; font-variation-settings: 'FILL' 1;">android</span>
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 4px;">
                                 <span style="font-size: calc(18px * var(--font-scale-factor, 1)); font-weight: 800;" data-i18n="android.card_title">Media Player cho Android</span>
@@ -2371,21 +2371,21 @@
                         <p style="margin: 0; font-size: calc(14px * var(--font-scale-factor, 1)); line-height: 1.6; opacity: 0.85;" data-i18n="android.desc">Trải nghiệm Media Player trọn vẹn ngay trên điện thoại Android với giao diện tối ưu cho thao tác cảm ứng một tay, tự động cập nhật theo phiên bản web mới nhất và hoạt động mượt mà kể cả khi ngoại tuyến.</p>
                         <div class="st-android-features">
                             <div class="st-android-feat">
-                                <span class="material-symbols-outlined">headphones</span>
+                                <span class="material-symbols-rounded">headphones</span>
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
                                     <strong style="font-size: calc(14px * var(--font-scale-factor, 1));" data-i18n="android.f1_title">Phát nhạc nền &amp; Màn hình khoá</strong>
                                     <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="android.f1_desc">Tiếp tục nghe nhạc khi tắt màn hình hoặc chuyển ứng dụng, điều khiển nhanh trên thanh thông báo.</span>
                                 </div>
                             </div>
                             <div class="st-android-feat">
-                                <span class="material-symbols-outlined">folder_open</span>
+                                <span class="material-symbols-rounded">folder_open</span>
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
                                     <strong style="font-size: calc(14px * var(--font-scale-factor, 1));" data-i18n="android.f2_title">Mở trực tiếp &amp; Quét thư mục</strong>
                                     <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="android.f2_desc">Hỗ trợ "Mở bằng" / "Chia sẻ" tệp nhạc từ các ứng dụng khác và thêm cả thư mục lớn.</span>
                                 </div>
                             </div>
                             <div class="st-android-feat">
-                                <span class="material-symbols-outlined">palette</span>
+                                <span class="material-symbols-rounded">palette</span>
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
                                     <strong style="font-size: calc(14px * var(--font-scale-factor, 1));" data-i18n="android.f3_title">Đồng bộ màu Material You</strong>
                                     <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="android.f3_desc">Tự động lấy tông màu chủ đạo từ hình nền hệ thống Android 12+ và tự cập nhật tính năng mới.</span>
@@ -2393,12 +2393,12 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 10px; margin-top: 4px; color: var(--md-sys-color-on-surface-variant); font-size: calc(12px * var(--font-scale-factor, 1)); line-height: 1.45; background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent); padding: 12px 14px; border-radius: 14px; align-items: center;">
-                            <span class="material-symbols-outlined" style="font-size: 18px; flex-shrink: 0; color: var(--md-sys-color-primary);">info</span>
+                            <span class="material-symbols-rounded" style="font-size: 18px; flex-shrink: 0; color: var(--md-sys-color-primary);">info</span>
                             <span data-i18n="android.no_video_note">Lưu ý: Phiên bản Media Player trên Android không hỗ trợ phát video (chỉ hỗ trợ phát âm thanh và lời bài hát).</span>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-top: 4px;">
                             <a class="st-android-dl-btn" href="https://github.com/Tuanphong3108/music-player/releases/" target="_blank" rel="noopener">
-                                <span class="material-symbols-outlined" style="font-size: 20px;">download</span>
+                                <span class="material-symbols-rounded" style="font-size: 20px;">download</span>
                                 <span data-i18n="android.download_btn">Tải xuống</span>
                             </a>
                             <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="android.github_note">Mở trang GitHub Releases chính thức để tải tệp MediaPlayer.apk</span>
@@ -2410,7 +2410,7 @@
                 <div style="display:flex; align-items:center; overflow:hidden;">
                     <div id="cl-back-btn-wrap" style="width:0; overflow:hidden; flex-shrink:0; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1);">
                         <button class="btn-m3" id="cl-back-btn" title="Quay lại" data-i18n-title="about.back" style="width:40px; height:40px; transform:scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);">
-                            <span class="material-symbols-outlined">arrow_back</span>
+                            <span class="material-symbols-rounded">arrow_back</span>
                         </button>
                     </div>
                     <h2 id="cl-title" style="white-space:nowrap;" data-i18n="about.title">About</h2>
@@ -2423,10 +2423,10 @@
                         <md-circular-progress indeterminate></md-circular-progress>
                     </div>
                     <div id="cl-loading-error" style="display:none; flex-direction:column; align-items:center; gap:16px; padding: 24px; text-align:center; max-width: 340px;">
-                        <span class="material-symbols-outlined" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
+                        <span class="material-symbols-rounded" style="font-size:40px; color: var(--md-sys-color-primary);">error</span>
                         <p id="cl-loading-error-text" style="font-size: calc(14px * var(--font-scale-factor, 1)); line-height:1.5; margin:0; color: var(--md-sys-color-on-surface);" data-i18n="about.load_error">Không thể tải nội dung, vui lòng thử lại bằng cách khởi động lại ứng dụng hoặc liên hệ với Phong VN qua tính năng "Gửi phản hồi"</p>
                         <button class="btn-m3" id="cl-error-feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback" style="width:auto; height:44px; padding:0 20px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px;">
-                            <span class="material-symbols-outlined">feedback</span> <span data-i18n="topbar.feedback">Gửi phản hồi</span>
+                            <span class="material-symbols-rounded">feedback</span> <span data-i18n="topbar.feedback">Gửi phản hồi</span>
                         </button>
                     </div>
                 </div>
@@ -2448,7 +2448,7 @@
         <div class="cl-dialog" style="max-width: 420px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
                 <h2 style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700; font-family:'Minecraft'" data-i18n="feedback.title">Báo cáo lỗi hoặc gửi phản hồi</h2>
-                <button class="btn-m3" id="feedback-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="feedback-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 18px; overflow-y: auto;">
                 <div style="display:flex; flex-direction:column; gap:12px;">
@@ -2468,7 +2468,7 @@
                     <label for="feedback-include-sysinfo" style="font-size: calc(14px * var(--font-scale-factor, 1)); cursor:pointer;" data-i18n="feedback.include_sysinfo">Gửi kèm thông tin hệ thống</label>
                 </div>
                 <button class="btn-m3" id="feedback-submit" title="Gửi phản hồi qua email" data-i18n-title="feedback.submit_title" style="width:100%; height:48px; border-radius:14px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight:700; display:flex; align-items:center; gap:8px; justify-content:center;">
-                    <span class="material-symbols-outlined">send</span> <span data-i18n="feedback.submit_btn">Gửi phản hồi</span>
+                    <span class="material-symbols-rounded">send</span> <span data-i18n="feedback.submit_btn">Gửi phản hồi</span>
                 </button>
             </div>
         </div>
@@ -2479,7 +2479,7 @@
         <div class="cl-dialog" style="max-width: 400px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
                 <h2 style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700; font-family:'Minecraft'" data-i18n="moreinfo.title">Thông tin khác</h2>
-                <button class="btn-m3" id="more-info-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="more-info-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded">close</span></button>
             </div>
             <div id="more-info-body" style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 22px; overflow-y: auto;">
                 <!-- Được JS điền động -->
@@ -2492,22 +2492,22 @@
         <div class="cl-dialog" style="max-width: 380px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
                 <h2 style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700; font-family:'Minecraft'" data-i18n="editoptions.title">Chỉnh sửa bài hát</h2>
-                <button class="btn-m3" id="edit-options-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="edit-options-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; gap: 16px;">
                 
                 <button class="btn-m3" id="btn-edit-thumbnail" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;" title="Sửa thumbnail" data-i18n-title="editoptions.thumbnail">
-                    <span class="material-symbols-outlined">image</span>
+                    <span class="material-symbols-rounded">image</span>
                     <span data-i18n="editoptions.thumbnail_label">Sửa Thumbnail</span>
                 </button>
 
                 <button class="btn-m3" id="btn-edit-metadata-fields" style="width: 100%; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: flex-start; padding: 0 16px; gap: 16px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); font-weight: 600;" title="Sửa thông tin bài hát" data-i18n-title="editoptions.metadata">
-                    <span class="material-symbols-outlined">edit</span>
+                    <span class="material-symbols-rounded">edit</span>
                     <span data-i18n="editoptions.metadata">Sửa thông tin bài hát</span>
                 </button>
 
                 <div style="display: flex; gap: 10px; margin-top: 8px; color: #ff9800; font-size: calc(11px * var(--font-scale-factor, 1)); line-height: 1.4; background: rgba(255, 152, 0, 0.1); padding: 12px; border-radius: 12px; align-items: center;">
-                    <span class="material-symbols-outlined" style="font-size: 18px; flex-shrink: 0;">info</span>
+                    <span class="material-symbols-rounded" style="font-size: 18px; flex-shrink: 0;">info</span>
                     <span data-i18n="editoptions.warning">Tính năng này là tính năng thử nghiệm, vui lòng sao lưu tệp nhạc của bạn trước khi thực hiện sửa đổi</span>
                 </div>
 
@@ -2546,13 +2546,13 @@
         <div class="cl-dialog" style="max-width: 380px; height: auto; max-height: 90%; border-radius: 24px;">
             <div class="cl-header" style="padding: 16px 20px;">
                 <h2 style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700; font-family:'Minecraft'" data-i18n="thumbnail.title">Sửa Thumbnail</h2>
-                <button class="btn-m3" id="thumb-editor-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined">close</span></button>
+                <button class="btn-m3" id="thumb-editor-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded">close</span></button>
             </div>
             <div style="padding: 24px; background: var(--md-sys-color-surface); display: flex; flex-direction: column; align-items: center; gap: 20px;">
                 
                 <div style="position: relative; width: 140px; height: 140px; border-radius: 16px; overflow: hidden; background: var(--md-sys-color-surface-variant); display: flex; align-items: center; justify-content: center; border: 1px solid var(--playlist-border);">
                     <img id="thumb-editor-preview" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                    <span id="thumb-editor-placeholder" class="material-symbols-outlined" style="font-size: 56px; opacity: 0.3;">music_note</span>
+                    <span id="thumb-editor-placeholder" class="material-symbols-rounded" style="font-size: 56px; opacity: 0.3;">music_note</span>
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
@@ -2580,13 +2580,13 @@
                 <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
                     
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span class="material-symbols-outlined" style="font-size:18px;">zoom_out</span>
+                        <span class="material-symbols-rounded" style="font-size:18px;">zoom_out</span>
                         <input type="range" id="crop-zoom-slider" min="1" max="4" step="0.05" value="1" style="flex:1; height: 4px; border-radius: 2px; appearance: none; background: var(--md-sys-color-surface-variant);">
-                        <span class="material-symbols-outlined" style="font-size:18px;">zoom_in</span>
+                        <span class="material-symbols-rounded" style="font-size:18px;">zoom_in</span>
                     </div>
 
                     <button class="btn-m3" id="btn-crop-rotate" style="height: 40px; border-radius: 10px; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600; width:100%;" title="Xoay ảnh" data-i18n-title="thumbnail.rotate_title">
-                        <span class="material-symbols-outlined">rotate_right</span>
+                        <span class="material-symbols-rounded">rotate_right</span>
                         <span data-i18n="thumbnail.rotate">Xoay 90°</span>
                     </button>
 
@@ -2622,7 +2622,7 @@
 
     <div id="android-update-banner" role="region" aria-live="polite">
         <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
-            <span class="material-symbols-outlined" id="android-update-icon" style="font-size:28px; flex-shrink:0; font-variation-settings:'FILL' 1;">system_update</span>
+            <span class="material-symbols-rounded" id="android-update-icon" style="font-size:28px; flex-shrink:0; font-variation-settings:'FILL' 1;">system_update</span>
             <div style="display:flex; flex-direction:column; gap:4px; min-width:0; flex:1;">
                 <strong id="android-update-title" style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:800;">Đã có bản cập nhật cho ứng dụng Android</strong>
                 <span id="android-update-sub" style="font-size: calc(12px * var(--font-scale-factor, 1)); font-weight:700; opacity:.9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
@@ -2646,15 +2646,15 @@
             </div>
             <div style="padding: 20px 24px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); display: flex; flex-direction: column; gap: 10px;">
                 <button class="btn-m3" id="exit-bg-btn" type="button" style="width: 100%; height: 48px; border-radius: 16px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span class="material-symbols-outlined">picture_in_picture_alt</span>
+                    <span class="material-symbols-rounded">picture_in_picture_alt</span>
                     <span id="exit-bg-label">Chạy dưới nền</span>
                 </button>
                 <button class="btn-m3" id="exit-full-btn" type="button" style="width: 100%; height: 48px; border-radius: 16px; background: var(--md-sys-color-error); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span class="material-symbols-outlined">power_settings_new</span>
+                    <span class="material-symbols-rounded">power_settings_new</span>
                     <span id="exit-full-label">Thoát hẳn</span>
                 </button>
                 <button class="btn-m3" id="exit-stay-btn" type="button" style="width: 100%; height: 48px; border-radius: 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span class="material-symbols-outlined">close</span>
+                    <span class="material-symbols-rounded">close</span>
                     <span id="exit-stay-label">Ở lại</span>
                 </button>
             </div>
@@ -2666,30 +2666,30 @@
     <div class="app-container">
         <div class="top-bar">
             <div class="brand">
-                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">library_music</span>
+                <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">library_music</span>
                 <span>MEDIAPLAYER V2026.11.21-build113200</span>
             </div>
             <span class="m-title" data-i18n="mobile.now_playing">Media Player</span>
             <div id="top-actions" style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
                     <button class="btn-m3" id="install-btn" title="Cài đặt ứng dụng" data-i18n-title="topbar.install">
-                        <span class="material-symbols-outlined">install_desktop</span>
+                        <span class="material-symbols-rounded">install_desktop</span>
                     </button>
                     <div class="install-tooltip" data-i18n="topbar.install_tooltip">Cài đặt để có thể mở file trực tiếp từ máy tính</div>
                 </div>
                 <div style="position:relative;" class="m-out">
                     <button class="btn-m3" id="output-device-btn" title="Chọn thiết bị phát âm thanh" data-i18n-title="player.output_device" style="display:flex; align-items:center; justify-content:center; gap:1px; width:auto; padding:0 8px;">
-                        <span class="material-symbols-outlined" style="font-size:20px;">headphones</span>
-                        <span class="material-symbols-outlined" style="font-size:16px;">keyboard_arrow_down</span>
+                        <span class="material-symbols-rounded" style="font-size:20px;">headphones</span>
+                        <span class="material-symbols-rounded" style="font-size:16px;">keyboard_arrow_down</span>
                     </button>
                     <md-menu id="output-device-menu" anchor="output-device-btn"></md-menu>
                 </div>
-                <button class="btn-m3 m-only" id="m-playlist-btn" title="Playlist"><span class="material-symbols-outlined">queue_music</span><span class="m-pl-badge" id="m-playlist-badge"></span></button>
-                <button class="btn-m3 m-only" id="m-more-btn" title="More"><span class="material-symbols-outlined">more_vert</span></button>
+                <button class="btn-m3 m-only" id="m-playlist-btn" title="Playlist"><span class="material-symbols-rounded">queue_music</span><span class="m-pl-badge" id="m-playlist-badge"></span></button>
+                <button class="btn-m3 m-only" id="m-more-btn" title="More"><span class="material-symbols-rounded">more_vert</span></button>
                 <div class="top-extra">
                 <div style="position:relative;">
                     <button class="btn-m3" id="sleep-btn" title="Hẹn giờ tạm dừng" data-i18n-title="sleep.title">
-                        <span class="material-symbols-outlined sl-ico sl-main" style="font-size:20px;">timer</span><span class="material-symbols-outlined sl-ico sl-fb" id="sleep-fb" style="font-size:20px;">check</span><span id="sleep-badge"></span>
+                        <span class="material-symbols-rounded sl-ico sl-main" style="font-size:20px;">timer</span><span class="material-symbols-rounded sl-ico sl-fb" id="sleep-fb" style="font-size:20px;">check</span><span id="sleep-badge"></span>
                     </button>
                     <md-menu id="sleep-menu" anchor="sleep-btn">
                         <md-menu-item data-sleep="off"><div slot="headline" data-i18n="sleep.off">Không</div></md-menu-item>
@@ -2701,22 +2701,22 @@
                         <md-menu-item data-sleep="custom"><div slot="headline" data-i18n="sleep.custom">Tùy chỉnh...</div></md-menu-item>
                     </md-menu>
                 </div>
-                <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-outlined">settings</span></button>
-                <button class="btn-m3" id="share-btn" title="Chia sẻ" data-i18n-title="topbar.share"><span class="material-symbols-outlined">share</span></button>
-                <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-outlined">feedback</span></button>
-                <button class="btn-m3" id="m-more-update-btn" title="Cập nhật ứng dụng Android"><span class="material-symbols-outlined">system_update</span></button>
+                <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-rounded">settings</span></button>
+                <button class="btn-m3" id="share-btn" title="Chia sẻ" data-i18n-title="topbar.share"><span class="material-symbols-rounded">share</span></button>
+                <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-rounded">feedback</span></button>
+                <button class="btn-m3" id="m-more-update-btn" title="Cập nhật ứng dụng Android"><span class="material-symbols-rounded">system_update</span></button>
                 </div>
                 
                 <!-- Nút add_circle mở menu Material Web -->
                 <div style="position:relative;" class="m-add">
-                    <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc / video" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined" id="add-music-icon">add_circle</span><md-circular-progress id="add-music-spinner" indeterminate style="display:none; --md-circular-progress-size:24px; --md-circular-progress-active-indicator-width:12;"></md-circular-progress></button>
+                    <button class="btn-m3" id="add-music-trigger" title="Thêm nhạc / video" data-i18n-title="topbar.addmusic"><span class="material-symbols-rounded" id="add-music-icon">add_circle</span><md-circular-progress id="add-music-spinner" indeterminate style="display:none; --md-circular-progress-size:24px; --md-circular-progress-active-indicator-width:12;"></md-circular-progress></button>
                     <md-menu id="add-music-menu" anchor="add-music-trigger" positioning="popover">
                         <md-menu-item id="btn-fs-pick-files">
-                            <span class="material-symbols-outlined" slot="start">file_open</span>
+                            <span class="material-symbols-rounded" slot="start">file_open</span>
                             <div slot="headline" data-i18n="topbar.addmusic_file">Chọn tệp nhạc hoặc video</div>
                         </md-menu-item>
                         <md-menu-item id="btn-fs-pick-directory">
-                            <span class="material-symbols-outlined" slot="start">folder_open</span>
+                            <span class="material-symbols-rounded" slot="start">folder_open</span>
                             <div slot="headline" data-i18n="topbar.addmusic_folder">Chọn thư mục nhạc hoặc video</div>
                         </md-menu-item>
                     </md-menu>
@@ -2728,7 +2728,7 @@
             <div class="playlist-card" id="playlist-card">
                 <div class="playlist-header" onclick="togglePlaylist()">
                     <div class="expand-icon-group">
-                        <span class="material-symbols-outlined expand-icon">expand_more</span>
+                        <span class="material-symbols-rounded expand-icon">expand_more</span>
                         <span class="hide-text" data-i18n="playlist.hide">Ẩn</span>
                     </div>
                     <h3 id="pl-title" data-i18n="playlist.title">Playlist</h3>
@@ -2742,23 +2742,23 @@
                 
                 <div class="search-container">
                     <div class="search-wrapper">
-                        <span class="material-symbols-outlined search-icon">search</span>
+                        <span class="material-symbols-rounded search-icon">search</span>
                         <input type="text" id="playlist-search" class="search-input" placeholder="Tìm tên bài, ca sĩ..." data-i18n-placeholder="playlist.search_placeholder">
                         <span class="find-only find-count" id="find-count">0/0</span>
                         <button class="btn-m3 find-only" id="find-prev" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Kết quả trước (Shift+Enter)" disabled>
-                            <span class="material-symbols-outlined" style="font-size: 18px;">keyboard_arrow_up</span>
+                            <span class="material-symbols-rounded" style="font-size: 18px;">keyboard_arrow_up</span>
                         </button>
                         <button class="btn-m3 find-only" id="find-next" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Kết quả tiếp theo (Enter)" disabled>
-                            <span class="material-symbols-outlined" style="font-size: 18px;">keyboard_arrow_down</span>
+                            <span class="material-symbols-rounded" style="font-size: 18px;">keyboard_arrow_down</span>
                         </button>
                         <button class="btn-m3" id="locate-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Locate current track" data-i18n-title="player.locate">
-                            <span class="material-symbols-outlined" style="font-size: 18px;">my_location</span>
+                            <span class="material-symbols-rounded" style="font-size: 18px;">my_location</span>
                         </button>
                         <button class="btn-m3" id="reshuffle-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px; display:none;" title="Xáo lại danh sách Shuffle" data-i18n-title="player.reshuffle">
-                            <span class="material-symbols-outlined" style="font-size: 18px;">shuffle_on</span>
+                            <span class="material-symbols-rounded" style="font-size: 18px;">shuffle_on</span>
                         </button>
                         <button class="btn-m3" id="reorder-btn" style="width: 30px; height: 30px; background: var(--md-sys-color-surface-variant); border-radius: 10px;" title="Chế độ sửa danh sách" data-i18n-title="player.reorder">
-                            <span class="material-symbols-outlined" style="font-size: 18px;">sort</span>
+                            <span class="material-symbols-rounded" style="font-size: 18px;">sort</span>
                         </button>
                     </div>
                 </div>
@@ -2768,10 +2768,10 @@
 
             <div class="visual-stage">
                 <div class="pause-overlay" id="pause-overlay">
-                    <div class="pause-icon-bg"><span class="material-symbols-outlined">pause</span></div>
+                    <div class="pause-icon-bg"><span class="material-symbols-rounded">pause</span></div>
                 </div>
                 <div id="drop-zone" style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">
-                    <span class="material-symbols-outlined" style="font-size:56px; opacity: 0.1">upload_file</span>
+                    <span class="material-symbols-rounded" style="font-size:56px; opacity: 0.1">upload_file</span>
                     <p style="font-family:'Minecraft'; font-size: calc(10px * var(--font-scale-factor, 1)); margin-top:12px; opacity: 0.2">DRAG ASSETS OR CLICK + TO START</p>
                 </div>
                 <div id="bg-preview" class="bg-thumb-preview"></div>
@@ -2791,7 +2791,7 @@
                 
                 <!-- Full screen toggle button at bottom-right corner of visual stage -->
                 <button class="btn-m3" id="fullscreen-btn" style="position: absolute; bottom: 16px; right: 16px; z-index: 20; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); color:#fff; width:40px; height:40px;" title="Toàn màn hình" data-i18n-title="player.fullscreen">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">fullscreen</span>
+                    <span class="material-symbols-rounded" style="font-size: 20px;">fullscreen</span>
                 </button>
 
                 <!-- Fullscreen Immersive Overlay Stage (Centered like TV PiP mode) -->
@@ -2799,7 +2799,7 @@
                     <div id="fs-cover-wrap" style="width: 260px; height: 260px; border-radius: 28px; box-shadow: 0 16px 48px rgba(0,0,0,0.6); overflow: hidden; margin-bottom: 24px; transition: transform 0.5s ease; border: 1px solid rgba(255,255,255,0.1);">
                         <img id="fs-cover-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
                         <div id="fs-cover-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-primary)">
-                            <span class="material-symbols-outlined" style="font-size: 80px;">music_note</span>
+                            <span class="material-symbols-rounded" style="font-size: 80px;">music_note</span>
                         </div>
                     </div>
                     <h2 id="fs-title" style="margin: 0; font-size: calc(28px * var(--font-scale-factor, 1)); font-weight: 800; text-shadow: 0 4px 12px rgba(0,0,0,0.6);">Studio Standby</h2>
@@ -2810,21 +2810,21 @@
                 </div>
                 
                 <div class="lyric-search-bar" id="lyric-search-bar" role="button" tabindex="0">
-                    <span class="material-symbols-outlined">search</span>
+                    <span class="material-symbols-rounded">search</span>
                     <span data-i18n="lyric.search_placeholder">Tìm lời bài hát trên LRCLIB</span>
                 </div>
                 <div class="lyric-credit" id="lyric-credit">Lyric powered by LRCLIB</div>
-                <button class="m-only" id="m-lyric-close" title="Đóng lời bài hát"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+                <button class="m-only" id="m-lyric-close" title="Đóng lời bài hát"><span class="material-symbols-rounded">keyboard_arrow_up</span></button>
                 <div class="m-only" id="m-lyric-panel">
                     <div class="mlp-row">
-                        <button id="m-lyric-play" class="mlp-play"><span class="material-symbols-outlined">play_arrow</span></button>
+                        <button id="m-lyric-play" class="mlp-play"><span class="material-symbols-rounded">play_arrow</span></button>
                         <div class="mlp-seek"><input type="range" id="m-lyric-seek" min="0" max="100" step="any" value="0"></div>
                     </div>
                     <div class="mlp-row mlp-bottom">
-                        <button id="m-lyric-back" class="mlp-round"><span class="material-symbols-outlined">arrow_back</span></button>
+                        <button id="m-lyric-back" class="mlp-round"><span class="material-symbols-rounded">arrow_back</span></button>
                         <button id="m-lyric-synced" class="mlp-chip on" data-i18n="lyric.mode_synced">Synced</button>
                         <button id="m-lyric-static" class="mlp-chip" data-i18n="lyric.mode_static">Static</button>
-                        <button id="m-lyric-more" class="mlp-round" title="Tìm lời" data-i18n-title="lyric.search"><span class="material-symbols-outlined">search</span></button>
+                        <button id="m-lyric-more" class="mlp-round" title="Tìm lời" data-i18n-title="lyric.search"><span class="material-symbols-rounded">search</span></button>
                     </div>
                 </div>
                 <div class="lyric-overlay" id="lyric-overlay">
@@ -2843,7 +2843,7 @@
             <div class="track-info">
                 <div class="mini-art" id="player-mini-art">
                     <img src="" id="art-img" class="hidden" alt="art">
-                    <span id="art-placeholder" class="material-symbols-outlined placeholder-icon" style="font-variation-settings:'FILL' 1">music_note</span>
+                    <span id="art-placeholder" class="material-symbols-rounded placeholder-icon" style="font-variation-settings:'FILL' 1">music_note</span>
                 </div>
                 <div class="track-text">
                     <div style="display: flex; align-items: center; gap: 4px; min-width: 0;">
@@ -2855,10 +2855,10 @@
                         <!-- Nút Bút Chì Chỉnh Sửa Metadata + nút Thông tin khác, xếp dọc sát cạnh tên bài hát -->
                         <div style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;">
                             <button class="btn-m3" id="edit-metadata-btn" style="width: 22px; height: 22px;" title="Chỉnh sửa thông tin" data-i18n-title="player.edit">
-                                <span class="material-symbols-outlined" style="font-size: 15px;">edit</span>
+                                <span class="material-symbols-rounded" style="font-size: 15px;">edit</span>
                             </button>
                             <button class="btn-m3" id="more-info-btn" style="width: 22px; height: 22px;" title="Thông tin khác" data-i18n-title="player.more_info" disabled>
-                                <span class="material-symbols-outlined" style="font-size: 15px;">info</span>
+                                <span class="material-symbols-rounded" style="font-size: 15px;">info</span>
                             </button>
                         </div>
                     </div>
@@ -2866,20 +2866,20 @@
                 </div>
             </div>
             <div class="controls-group">
-                <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)" data-i18n-title="player.pip"><span class="material-symbols-outlined" style="font-size: 20px;">picture_in_picture_alt</span></button>
-                <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                <button class="btn-m3" id="prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-outlined">skip_previous</span></button>
+                <button class="btn-m3" id="pip-btn" title="Mở Trình phát thu nhỏ (PiP)" data-i18n-title="player.pip"><span class="material-symbols-rounded" style="font-size: 20px;">picture_in_picture_alt</span></button>
+                <button class="btn-m3" id="shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-rounded" style="font-size: 20px;">shuffle</span></button>
+                <button class="btn-m3" id="prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-rounded">skip_previous</span></button>
                 <button class="btn-m3 btn-play" id="play-btn" title="Phát/Tạm dừng" data-i18n-title="player.play_pause">
-                    <span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span>
+                    <span class="material-symbols-rounded" style="font-size: 32px;">play_arrow</span>
                     <md-circular-progress class="play-btn-spinner" indeterminate style="display:none; --md-circular-progress-size: 28px;"></md-circular-progress>
                 </button>
-                <button class="btn-m3" id="next-btn" title="Bài tiếp theo" data-i18n-title="player.next"><span class="material-symbols-outlined">skip_next</span></button>
+                <button class="btn-m3" id="next-btn" title="Bài tiếp theo" data-i18n-title="player.next"><span class="material-symbols-rounded">skip_next</span></button>
                 <button class="btn-m3" id="repeat-btn" title="Lặp lại" data-i18n-title="player.repeat">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
+                    <span class="material-symbols-rounded" style="font-size: 20px;">repeat</span>
                     <div class="repeat-badge">1</div>
                 </button>
                 <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát" data-i18n-title="player.lyrics">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">lyrics</span>
+                    <span class="material-symbols-rounded" style="font-size: 20px;">lyrics</span>
                 </button>
                 <div style="position:relative;">
                     <button class="btn-m3" id="speed-btn" title="Tốc độ phát" data-i18n-title="player.speed" style="font-family:'Minecraft'; font-size: calc(12px * var(--font-scale-factor, 1)); font-weight:700; width:auto; min-width:44px; padding:0 10px; border-radius:22px;">1x</button>
@@ -2901,13 +2901,13 @@
             </div>
             <div class="volume-group">
                 <!-- Chuyển loa thường thành loa thông minh kiêm nút bật/tắt tiếng nhanh -->
-                <button class="btn-m3" id="mute-btn" style="width: 36px; height: 36px; margin-right: -4px;" title="Tắt/Bật tiếng" data-i18n-title="player.mute"><span class="material-symbols-outlined" style="font-size: 20px;">volume_up</span></button>
+                <button class="btn-m3" id="mute-btn" style="width: 36px; height: 36px; margin-right: -4px;" title="Tắt/Bật tiếng" data-i18n-title="player.mute"><span class="material-symbols-rounded" style="font-size: 20px;">volume_up</span></button>
                 <input type="range" id="volume-slider" min="0" max="100" value="80">
             </div>
         </div>
 
         <button id="reorder-done-btn" class="reorder-done-btn" title="Hoàn tất" data-i18n-title="reorder.done_title">
-            <span class="material-symbols-outlined">check</span>
+            <span class="material-symbols-rounded">check</span>
             <span data-i18n="reorder.done">HOÀN TẤT</span>
         </button>
     </div>
@@ -4260,7 +4260,7 @@
             const mk = (value, text, i18n, icon) => {
                 const o = document.createElement('md-select-option');
                 o.value = value;
-                if (icon) { const ic = document.createElement('span'); ic.slot = 'start'; ic.className = 'material-symbols-outlined'; ic.style.fontSize = '20px'; ic.textContent = icon; o.appendChild(ic); }
+                if (icon) { const ic = document.createElement('span'); ic.slot = 'start'; ic.className = 'material-symbols-rounded'; ic.style.fontSize = '20px'; ic.textContent = icon; o.appendChild(ic); }
                 const h = document.createElement('div'); h.slot = 'headline'; h.textContent = text;
                 if (i18n) h.setAttribute('data-i18n', i18n);
                 o.appendChild(h); return o;
@@ -4497,7 +4497,7 @@
                 if (entry) {
                     const ib = (icon, title, fn, dis) => {
                         const b = document.createElement('md-icon-button'); b.title = title; b.disabled = !!dis;
-                        const s = document.createElement('span'); s.className = 'material-symbols-outlined'; s.textContent = icon; b.appendChild(s);
+                        const s = document.createElement('span'); s.className = 'material-symbols-rounded'; s.textContent = icon; b.appendChild(s);
                         b.addEventListener('click', fn); act.appendChild(b);
                     };
                     const imported = entry.kind !== 'builtin';
@@ -4859,7 +4859,7 @@
                 repeatBtnEl.classList.toggle('active', repeatMode > 0);
                 repeatBtnEl.classList.toggle('repeat-one', repeatMode === 2);
                 const badge = repeatBtnEl.querySelector('.repeat-badge');
-                { const ic = repeatBtnEl.querySelector('.material-symbols-outlined'); if (ic) ic.textContent = repeatMode === 2 ? 'repeat_one' : 'repeat'; }
+                { const ic = repeatBtnEl.querySelector('.material-symbols-rounded'); if (ic) ic.textContent = repeatMode === 2 ? 'repeat_one' : 'repeat'; }
             }
         })();
 
@@ -4925,7 +4925,7 @@
             let iconFam = '';
             try {
                 const hrefs = [...doc.querySelectorAll('link[href*="Material+Symbols"]')].map(l => l.href).join(' ');
-                if (/Symbols\+Outlined/.test(hrefs)) iconFam = "'Material Symbols Outlined'";
+                if (/Symbols\+Outlined/.test(hrefs)) iconFam = "'Material Symbols Rounded'";
                 else if (/Symbols\+Rounded/.test(hrefs)) iconFam = "'Material Symbols Rounded'";
             } catch (e) {}
             const st = doc.createElement('style');
@@ -6009,13 +6009,13 @@
                     
                     item.innerHTML = `
                         <span class="icon-play" style="font-family: inherit; font-size: calc(14px * var(--font-scale-factor, 1)); font-weight:800; width:22px; text-align:center; opacity:0.6; flex-shrink:0;">${index + 1}</span>
-                        <span class="material-symbols-outlined icon-drag" style="font-size:20px" title="Nắm để kéo thả">drag_handle</span>
+                        <span class="material-symbols-rounded icon-drag" style="font-size:20px" title="Nắm để kéo thả">drag_handle</span>
                         <div class="track-text">
                             <div style="font-weight:700; font-size: calc(14px * var(--font-scale-factor, 1)); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${track.name}</div>
                             <div style="font-family:'Minecraft'; font-size: calc(8px * var(--font-scale-factor, 1)); opacity: 0.6; margin-top: 2px;">${track.artist} | ${track.ext} ${track.lyrics ? (track.lyrics[0].time === -1 ? '• TXT' : '• LRC') : ''} ${track.fileHandle ? '• FS' : ''}</div>
                         </div>
                         <button type="button" class="btn-m3 song-more-btn" title="${tr2('contextmenu.more_options', 'Tùy chọn')}" aria-label="${tr2('contextmenu.more_options', 'Tùy chọn')}">
-                            <span class="material-symbols-outlined" style="font-size:20px;">more_vert</span>
+                            <span class="material-symbols-rounded" style="font-size:20px;">more_vert</span>
                         </button>
                         <span class="reorder-num">${index + 1}</span>
                     `;
@@ -6359,7 +6359,7 @@
             repeatMode = (repeatMode + 1) % 3;
             this.classList.toggle('active', repeatMode > 0);
             this.classList.toggle('repeat-one', repeatMode === 2);
-            this.querySelector('.material-symbols-outlined').textContent = repeatMode === 2 ? 'repeat_one' : 'repeat';
+            this.querySelector('.material-symbols-rounded').textContent = repeatMode === 2 ? 'repeat_one' : 'repeat';
             localStorage.setItem('settings_repeat_mode', repeatMode);
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
         });
@@ -6374,7 +6374,7 @@
                 if (pipPlayBtn) btns.push(pipPlayBtn);
             }
             btns.forEach(btn => {
-                const icon = btn.querySelector('.material-symbols-outlined');
+                const icon = btn.querySelector('.material-symbols-rounded');
                 const spinner = btn.querySelector('.play-btn-spinner');
                 if (!icon || !spinner) return;
                 icon.style.display = isLoading ? 'none' : '';
@@ -6725,7 +6725,7 @@
             const b = document.getElementById('repeat-btn');
             b.classList.toggle('active', repeatMode > 0);
             b.classList.toggle('repeat-one', repeatMode === 2);
-            b.querySelector('.material-symbols-outlined').textContent = repeatMode === 2 ? 'repeat_one' : 'repeat';
+            b.querySelector('.material-symbols-rounded').textContent = repeatMode === 2 ? 'repeat_one' : 'repeat';
             if (typeof updatePiPUI === 'function') updatePiPUI();
         }
         function isEditorOpen() {
@@ -8036,7 +8036,7 @@
                 const item = customPipWindow.document.createElement('div');
                 item.className = `pip-song-item ${index === currentIndex ? 'active' : ''}`;
                 item.innerHTML = `
-                    <span class="material-symbols-outlined" style="font-size: 18px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'music_note'}</span>
+                    <span class="material-symbols-rounded" style="font-size: 18px">${index === currentIndex && !audio.paused ? 'graphic_eq' : 'music_note'}</span>
                     <div class="pip-song-info">
                         <div class="pip-song-name">${track.name}</div>
                         <div class="pip-song-artist">${track.artist}</div>
@@ -8121,13 +8121,13 @@
                     bgEl.innerHTML = '';
                 } else {
                     bgEl.style.backgroundImage = 'none';
-                    bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
+                    bgEl.innerHTML = '<span class="material-symbols-rounded" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
                 }
             } else {
                 titleEl.innerText = currentLangDict['player.no_track'] || 'Chưa có bài hát';
                 artistEl.innerText = 'Studio Standby';
                 bgEl.style.backgroundImage = 'none';
-                bgEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
+                bgEl.innerHTML = '<span class="material-symbols-rounded" style="font-size: 120px; color: rgba(255,255,255,0.15)">music_note</span>';
             }
 
             if (pipLyricEl) {
@@ -8139,7 +8139,7 @@
             shuffleBtn.classList.toggle('active', isShuffle);
             repeatBtn.classList.toggle('active', repeatMode > 0);
             repeatBadge.innerText = repeatMode === 2 ? '1' : '';
-            { const ic = repeatBtn.querySelector('.material-symbols-outlined'); if (ic) ic.textContent = repeatMode === 2 ? 'repeat_one' : 'repeat'; }
+            { const ic = repeatBtn.querySelector('.material-symbols-rounded'); if (ic) ic.textContent = repeatMode === 2 ? 'repeat_one' : 'repeat'; }
 
             const playlistSection = doc.getElementById('pip-playlist-section');
             if (playlistSection && playlistSection.style.display !== 'none') {
@@ -8250,13 +8250,13 @@
                     }
                     .btn-play:hover { background: var(--pip-primary, #D0BCFF); color: var(--pip-on-primary, #381E72); }
                     
-                    .material-symbols-outlined {
-                        font-family: 'Material Symbols Outlined';
+                    .material-symbols-rounded {
+                        font-family: 'Material Symbols Rounded';
                         font-weight: normal; font-style: normal; font-size: 24px;
                         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
                     }
-                    .btn-play .material-symbols-outlined { font-size: 32px; font-variation-settings: 'FILL' 1; }
-                    .active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+                    .btn-play .material-symbols-rounded { font-size: 32px; font-variation-settings: 'FILL' 1; }
+                    .active .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
                     
                     .repeat-badge {
                         position: absolute; font-size: calc(9px * var(--font-scale-factor, 1)); font-weight: 900; 
@@ -8352,7 +8352,7 @@
                                 <h4 id="pip-title" class="pip-title">Studio Standby</h4>
                                 <p id="pip-artist" class="pip-artist">ENGINE IDLE | SYSTEM</p>
                             </div>
-                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;" title="Thu gọn/Mở rộng" data-i18n-title="pip.expand"><span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span></button>
+                            <button class="btn-m3" id="pip-expand-btn" style="width: 32px; height: 32px;" title="Thu gọn/Mở rộng" data-i18n-title="pip.expand"><span class="material-symbols-rounded" style="font-size: 20px;">expand_more</span></button>
                         </div>
                         
                         <div id="pip-lyric" class="pip-lyric"></div>
@@ -8364,15 +8364,15 @@
                         </div>
 
                         <div class="pip-controls">
-                            <button class="btn-m3" id="pip-shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-outlined" style="font-size: 20px;">shuffle</span></button>
-                            <button class="btn-m3" id="pip-prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-outlined">skip_previous</span></button>
+                            <button class="btn-m3" id="pip-shuffle-btn" title="Phát ngẫu nhiên" data-i18n-title="player.shuffle"><span class="material-symbols-rounded" style="font-size: 20px;">shuffle</span></button>
+                            <button class="btn-m3" id="pip-prev-btn" title="Bài trước" data-i18n-title="player.previous"><span class="material-symbols-rounded">skip_previous</span></button>
                             <button class="btn-m3 btn-play" id="pip-play-btn" title="Phát/Tạm dừng" data-i18n-title="player.play_pause">
-                                <span class="material-symbols-outlined">play_arrow</span>
+                                <span class="material-symbols-rounded">play_arrow</span>
                                 <md-circular-progress class="play-btn-spinner" indeterminate style="display:none; --md-circular-progress-size: 24px;"></md-circular-progress>
                             </button>
-                            <button class="btn-m3" id="pip-next-btn" title="Bài tiếp theo" data-i18n-title="player.next"><span class="material-symbols-outlined">skip_next</span></button>
+                            <button class="btn-m3" id="pip-next-btn" title="Bài tiếp theo" data-i18n-title="player.next"><span class="material-symbols-rounded">skip_next</span></button>
                             <button class="btn-m3" id="pip-repeat-btn" title="Lặp lại" data-i18n-title="player.repeat">
-                                <span class="material-symbols-outlined" style="font-size: 20px;">repeat</span>
+                                <span class="material-symbols-rounded" style="font-size: 20px;">repeat</span>
                                 <div id="pip-repeat-badge" class="repeat-badge">1</div>
                             </button>
                         </div>
@@ -8381,7 +8381,7 @@
                     <div class="pip-playlist-section" id="pip-playlist-section">
                         <div class="pip-playlist-header">
                             <span style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 600;" data-i18n="pip.playlist">Danh sách phát</span>
-                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-outlined" style="font-size: 18px;">close</span></button>
+                            <button class="btn-m3" id="pip-close-btn" style="width: 28px; height: 28px;" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded" style="font-size: 18px;">close</span></button>
                         </div>
                         <div class="pip-playlist-container" id="pip-playlist-container"></div>
                     </div>
@@ -8390,7 +8390,7 @@
                     <div class="pip-context-menu" id="pip-context-menu">
                         <div class="pip-cm-title" id="pip-cm-title">Song Name</div>
                         <button class="pip-cm-btn" id="pip-cm-delete" title="Xoá khỏi playlist" data-i18n-title="contextmenu.delete">
-                            <span class="material-symbols-outlined">delete</span>
+                            <span class="material-symbols-rounded">delete</span>
                             <span data-i18n="contextmenu.delete">Xoá khỏi playlist</span>
                         </button>
                     </div>
@@ -9251,9 +9251,9 @@
                 const key = tab.dataset.tab, m = META[key] || ['#5b8def', '', ''];
                 const card = document.createElement('button');
                 card.className = 'st-m-card'; card.dataset.tab = key; card.style.setProperty('--hue', m[0]);
-                const icon = tab.querySelector('.material-symbols-outlined').textContent;
+                const icon = tab.querySelector('.material-symbols-rounded').textContent;
                 const lbl = tab.querySelector('[data-i18n]');
-                card.innerHTML = '<span class="st-m-ic"><span class="material-symbols-outlined">' + icon + '</span></span><span class="st-m-tx"><span class="st-m-t" data-i18n="' + (lbl ? lbl.getAttribute('data-i18n') : '') + '"></span><span class="st-m-d" data-i18n="' + m[1] + '"></span></span>';
+                card.innerHTML = '<span class="st-m-ic"><span class="material-symbols-rounded">' + icon + '</span></span><span class="st-m-tx"><span class="st-m-t" data-i18n="' + (lbl ? lbl.getAttribute('data-i18n') : '') + '"></span><span class="st-m-d" data-i18n="' + m[1] + '"></span></span>';
                 card.querySelector('.st-m-t').textContent = lbl ? lbl.textContent : key;
                 card.querySelector('.st-m-d').textContent = tr(m[1], m[2]);
                 if (key === 'android') card.classList.add('st-m-android');
@@ -9310,11 +9310,11 @@
                     const b = document.createElement('button');
                     b.className = 'st-sheet-opt' + (it.selected ? ' sel' : '');
                     const main = document.createElement('span'); main.className = 'st-opt-main';
-                    if (it.icon) { const ic = document.createElement('span'); ic.className = 'material-symbols-outlined'; ic.textContent = it.icon; main.appendChild(ic); }
+                    if (it.icon) { const ic = document.createElement('span'); ic.className = 'material-symbols-rounded'; ic.textContent = it.icon; main.appendChild(ic); }
                     const tx = document.createElement('span'); tx.appendChild(document.createTextNode(it.label));
                     if (it.sub) { const sb = document.createElement('span'); sb.className = 'st-opt-sub'; sb.textContent = it.sub; tx.appendChild(sb); }
                     main.appendChild(tx); b.appendChild(main);
-                    const chk = document.createElement('span'); chk.className = 'material-symbols-outlined st-chk'; chk.textContent = 'check'; b.appendChild(chk);
+                    const chk = document.createElement('span'); chk.className = 'material-symbols-rounded st-chk'; chk.textContent = 'check'; b.appendChild(chk);
                     b.addEventListener('click', () => { closeSheet(); setTimeout(() => { try { it.pick(); } catch (e) {} }, 60); });
                     sheetList.appendChild(b);
                 });
@@ -9346,7 +9346,7 @@
                 if (menu.id === 'sleep-menu') title = document.querySelector('#sleep-dialog [slot="headline"]')?.textContent || title;
                 const items = Array.from(menu.querySelectorAll('md-menu-item')).map(mi => ({
                     label: optLabel(mi), sub: mi.querySelector('[slot="supporting-text"]')?.textContent.trim() || '',
-                    icon: (mi.querySelector('[slot="start"].material-symbols-outlined, [slot="start"] .material-symbols-outlined') || {}).textContent || '',
+                    icon: (mi.querySelector('[slot="start"].material-symbols-rounded, [slot="start"] .material-symbols-rounded') || {}).textContent || '',
                     selected: !!(mi.selected || mi.hasAttribute('selected')),
                     pick: () => mi.click()
                 }));
@@ -9364,7 +9364,7 @@
             document.querySelectorAll('.st-pane md-outlined-select').forEach(sel => {
                 const pill = document.createElement('button');
                 pill.type = 'button'; pill.className = 'st-pill';
-                pill.innerHTML = '<span class="st-pill-t"></span><span class="material-symbols-outlined">expand_more</span>';
+                pill.innerHTML = '<span class="st-pill-t"></span><span class="material-symbols-rounded">expand_more</span>';
                 sel.after(pill); sel._pill = pill;
                 // pill nằm dưới phần chữ của hàng: đưa vào cùng cột với tiêu đề
                 const row = sel.parentElement, txt = row.firstElementChild;
@@ -9698,7 +9698,7 @@
 
         // Đọc đúng version đang hiển thị ở góc trên bên trái app (span cạnh icon library_music)
         function getAppVersionText() {
-            const versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
+            const versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-rounded)');
             return versionEl ? versionEl.innerText.trim() : 'Không rõ';
         }
 
@@ -9861,7 +9861,7 @@
 
         function moreInfoRowHTML(icon, label, value) {
             return `<div style="display:flex; gap:16px; align-items:flex-start;">
-                <span class="material-symbols-outlined" style="font-size:22px; opacity:0.75; margin-top:1px;">${icon}</span>
+                <span class="material-symbols-rounded" style="font-size:22px; opacity:0.75; margin-top:1px;">${icon}</span>
                 <div style="min-width:0;">
                     <div style="font-size: calc(13px * var(--font-scale-factor, 1)); opacity:0.6;">${label}</div>
                     <div style="font-size: calc(15px * var(--font-scale-factor, 1)); font-weight:600; word-break:break-word;">${value}</div>
@@ -10940,7 +10940,7 @@
                 var timeStr = pad2(nowDt.getDate()) + '/' + pad2(nowDt.getMonth() + 1) + '/' + nowDt.getFullYear()
                     + ' ' + pad2(nowDt.getHours()) + ':' + pad2(nowDt.getMinutes()) + ':' + pad2(nowDt.getSeconds());
 
-                var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-outlined)');
+                var versionEl = document.querySelector('.top-bar .brand span:not(.material-symbols-rounded)');
                 var versionText = versionEl && versionEl.innerText.trim() ? versionEl.innerText.trim() : 'MEDIAPLAYER V2026.11.21-build113200';
 
                 var reportSubject = 'Lỗi khẩn cấp về Media Player';
