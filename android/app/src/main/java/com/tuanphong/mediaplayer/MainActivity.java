@@ -894,7 +894,19 @@ public class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
         if (customView != null) { web.getWebChromeClient().onHideCustomView(); return; }
-        callJs("(function(){if(window.__androidHandleBack&&window.__androidHandleBack())return;if(window.AndroidBridge&&window.AndroidBridge.__nativeBackFallback)window.AndroidBridge.__nativeBackFallback();})()");
+        if (web != null && pageReady) {
+            web.evaluateJavascript(
+                    "(function(){try{if(window.__androidHandleBack&&window.__androidHandleBack())return 'handled';}catch(e){}return 'fallback';})()",
+                    result -> {
+                        String val = result == null ? "" : result.replace("\"", "");
+                        if (!"handled".equals(val)) {
+                            moveTaskToBack(true);
+                        }
+                    }
+            );
+            return;
+        }
+        moveTaskToBack(true);
     }
 
     @Override
