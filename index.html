@@ -6863,6 +6863,58 @@
                 } catch (e) { console.log('native-open failed', e); }
             };
             window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
+            const handleBackNavigation = function () {
+                try {
+                    const updBanner = document.getElementById('android-update-banner');
+                    if (updBanner && updBanner.classList.contains('show')) {
+                        const disBtn = document.getElementById('android-update-dismiss');
+                        if (disBtn) disBtn.click();
+                        else { updBanner.classList.remove('show', 'fullscreen-toast'); }
+                        return true;
+                    }
+                    if (document.body.classList.contains('m-more-open')) {
+                        document.body.classList.remove('m-more-open');
+                        const lyricBtn = document.getElementById('lyric-btn');
+                        if (lyricBtn) lyricBtn.style.pointerEvents = '';
+                        return true;
+                    }
+                    if (document.body.classList.contains('m-playlist-open')) {
+                        document.body.classList.remove('m-playlist-open');
+                        return true;
+                    }
+                    if (document.body.classList.contains('lyrics-open')) {
+                        if (typeof closeLyrics === 'function') closeLyrics();
+                        else if (typeof toggleLyrics === 'function') toggleLyrics();
+                        else document.body.classList.remove('lyrics-open');
+                        return true;
+                    }
+                    const openModal = Array.from(document.querySelectorAll('.cl-overlay, dialog[open]')).find(el => {
+                        const st = getComputedStyle(el);
+                        return st.display !== 'none' && st.visibility !== 'hidden' && parseFloat(st.opacity || '1') > 0.05;
+                    });
+                    if (openModal) {
+                        if (openModal.tagName === 'DIALOG' && typeof openModal.close === 'function') openModal.close();
+                        else openModal.style.display = 'none';
+                        return true;
+                    }
+                    return false;
+                } catch (e) { return false; }
+            };
+            window.__androidHandleBack = handleBackNavigation;
+            try {
+                if (!window.__androidPopstateBound) {
+                    window.__androidPopstateBound = true;
+                    history.pushState({ mpBackGuard: 1 }, '');
+                    window.addEventListener('popstate', () => {
+                        const handled = handleBackNavigation();
+                        if (!handled && AB && AB.__nativeBackFallback) {
+                            AB.__nativeBackFallback();
+                        } else {
+                            try { history.pushState({ mpBackGuard: 1 }, ''); } catch (e) {}
+                        }
+                    });
+                }
+            } catch (e) {}
             let triggerAndroidUpdateCheck = null;
             window.__androidPing = function () {
                 try {
