@@ -6773,11 +6773,13 @@
                     const rel = await res.json();
                     if (!rel || rel.draft || rel.prerelease) return;
                     const tag = String(rel.tag_name || '').trim();
-                    if (!tag || /^latest$/i.test(tag)) return;
+                    if (!tag) return;
                     const remoteParts = parseVerParts(tag);
                     const localParts = parseVerParts(curVerName);
-                    const hasNewer = compareVerParts(remoteParts, localParts) > 0;
+                    const hasNewer = compareVerParts(remoteParts, localParts) > 0
+                        || (/^latest$/i.test(tag) && Number(curVerCode) > 0 && String(rel.published_at || '') > String(localStorage.getItem('mp_android_apk_pub') || ''));
                     if (!hasNewer) return;
+                    const displayVer = /^latest$/i.test(tag) ? (rel.name || 'latest') : tag;
                     const apkAsset = Array.isArray(rel.assets)
                         ? rel.assets.find(a => /\.apk$/i.test(a.name || ''))
                         : null;
@@ -6785,8 +6787,8 @@
                     const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
                     if (titleEl) titleEl.textContent = isEn ? 'Android app update available' : 'Có bản cập nhật Android mới';
                     if (subEl) subEl.textContent = isEn
-                        ? `Current ${curVerName || curVerCode} → ${tag}`
-                        : `Hiện tại ${curVerName || curVerCode} → ${tag}`;
+                        ? `Current ${curVerName || curVerCode} → ${displayVer}`
+                        : `Hiện tại ${curVerName || curVerCode} → ${displayVer}`;
                     if (linkEl) linkEl.href = dlUrl;
                     if (dismissEl) dismissEl.textContent = isEn ? 'Later' : 'Để sau';
                     const btnInner = document.getElementById('android-update-btn');
