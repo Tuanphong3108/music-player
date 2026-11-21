@@ -16,11 +16,16 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Build;
+import android.os.Bundle;
+import android.util.SizeF;
 import android.view.View;
 import android.widget.RemoteViews;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 public class MediaWidgetProvider extends AppWidgetProvider {
     static final String PREFS = "media_widget_state";
@@ -32,6 +37,12 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds) {
             updateSingleWidget(context, appWidgetManager, appWidgetId);
         }
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
+        updateSingleWidget(context, appWidgetManager, appWidgetId);
     }
 
     @Override
@@ -64,6 +75,26 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         if (themeColor != 0) ed.putInt("theme", themeColor);
         ed.apply();
         updateAllWidgets(context);
+        QueueWidgetProvider.updateAllWidgets(context);
+    }
+
+    static void saveProgress(Context context, long posMs, long durMs) {
+        SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long oldPos = sp.getLong("pos_ms", 0L);
+        long oldDur = sp.getLong("dur_ms", 0L);
+        if (Math.abs(posMs - oldPos) < 400 && durMs == oldDur) return;
+        sp.edit().putLong("pos_ms", Math.max(0L, posMs)).putLong("dur_ms", Math.max(0L, durMs)).apply();
+        updateAllWidgets(context);
+    }
+
+    static void saveModesAndProgress(Context context, boolean shuffle, int repeatMode, long posMs, long durMs) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean("shuffle", shuffle)
+                .putInt("repeat_mode", repeatMode)
+                .putLong("pos_ms", Math.max(0L, posMs))
+                .putLong("dur_ms", Math.max(0L, durMs))
+                .apply();
+        updateAllWidgets(context);
     }
 
     static void saveLyricLine(Context context, String lyric) {
@@ -88,6 +119,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             }
         } catch (Throwable ignored) {}
         updateAllWidgets(context);
+        QueueWidgetProvider.updateAllWidgets(context);
     }
 
     static void updateAllWidgets(Context context) {
@@ -103,8 +135,25 @@ public class MediaWidgetProvider extends AppWidgetProvider {
     }
 
     private static void updateSingleWidget(Context context, AppWidgetManager mgr, int widgetId) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            Map<SizeF, RemoteViews> sizeMap = new HashMap<>();
+            sizeMap.put(new SizeF(180f, 56f), buildViews(context, false));
+            sizeMap.put(new SizeF(180f, 118f), buildViews(context, true));
+            mgr.updateAppWidget(widgetId, new RemoteViews(sizeMap));
+            return;
+        }
+        Bundle opts = mgr.getAppWidgetOptions(widgetId);
+        int minH = opts != null ? opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 64) : 64;
+        mgr.updateAppWidget(widgetId, buildViews(context, minH >= 115));
+    }
+
+    private static RemoteViews buildViews(Context context, boolean expanded) {
         SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         boolean playing = sp.getBoolean("playing", false);
+        boolean shuffle = sp.getBoolean("shuffle", false);
+        int repeatMode = sp.getInt("repeat_mode", 0);
+        long posMs = sp.getLong("pos_ms", 0L);
+        long durMs = sp.getLong("dur_ms", 0L);
         String title = sp.getString("title", "");
         String artist = sp.getString("artist", "");
         String lyric = sp.getString("lyric", "");
@@ -113,7 +162,8 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         String lang = context.getSharedPreferences("app", Context.MODE_PRIVATE).getString("lang", "vi");
         boolean isEn = "en".equalsIgnoreCase(lang);
 
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.media_widget);
+        RemoteViews views = new RemoteViews(context.getPackageName(),
+                expanded ? R.layout.media_widget_expanded : R.layout.media_widget);
 
         views.setTextViewText(R.id.widget_title, title.isEmpty() ? "Media Player" : title);
         views.setTextViewText(R.id.widget_artist, artist.isEmpty()
@@ -144,6 +194,25 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         views.setInt(R.id.widget_prev, "setColorFilter", primaryText);
         views.setInt(R.id.widget_next, "setColorFilter", primaryText);
 
+        if (expanded) {
+            views.setTextViewText(R.id.widget_pos_time, formatTime(posMs));
+            views.setTextViewText(R.id.widget_dur_time, formatTime(durMs));
+            views.setTextColor(R.id.widget_pos_time, secondaryText);
+            views.setTextColor(R.id.widget_dur_time, secondaryText);
+            int progress = (durMs > 0) ? (int) Math.min(1000L, Math.max(0L, (posMs * 1000L) / durMs)) : 0;
+            views.setProgressBar(R.id.widget_progress, 1000, progress, false);
+
+            views.setInt(R.id.widget_shuffle, "setBackgroundResource",
+                    shuffle ? R.drawable.widget_ctrl_active_bg : R.drawable.widget_ctrl_btn_bg);
+            views.setInt(R.id.widget_shuffle, "setColorFilter", shuffle ? accentText : primaryText);
+
+            views.setImageViewResource(R.id.widget_repeat,
+                    repeatMode == 2 ? R.drawable.ic_widget_repeat_one : R.drawable.ic_widget_repeat);
+            views.setInt(R.id.widget_repeat, "setBackgroundResource",
+                    repeatMode > 0 ? R.drawable.widget_ctrl_active_bg : R.drawable.widget_ctrl_btn_bg);
+            views.setInt(R.id.widget_repeat, "setColorFilter", repeatMode > 0 ? accentText : primaryText);
+        }
+
         File artFile = new File(context.getCacheDir(), "widget_art.png");
         if (artFile.exists() && artFile.length() > 0) {
             Bitmap bmp = BitmapFactory.decodeFile(artFile.getAbsolutePath());
@@ -163,12 +232,25 @@ public class MediaWidgetProvider extends AppWidgetProvider {
                 PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
         views.setOnClickPendingIntent(R.id.widget_root, openPi);
         views.setOnClickPendingIntent(R.id.widget_art_box, openPi);
+        if (expanded) {
+            views.setOnClickPendingIntent(R.id.widget_meta_box, openPi);
+            views.setOnClickPendingIntent(R.id.widget_shuffle, buildCmdPendingIntent(context, "shuffle", 104));
+            views.setOnClickPendingIntent(R.id.widget_repeat, buildCmdPendingIntent(context, "repeat", 105));
+        }
 
         views.setOnClickPendingIntent(R.id.widget_prev, buildCmdPendingIntent(context, "prev", 101));
         views.setOnClickPendingIntent(R.id.widget_play, buildCmdPendingIntent(context, "toggle", 102));
         views.setOnClickPendingIntent(R.id.widget_next, buildCmdPendingIntent(context, "next", 103));
 
-        mgr.updateAppWidget(widgetId, views);
+        return views;
+    }
+
+    private static String formatTime(long ms) {
+        if (ms <= 0) return "0:00";
+        long totalSec = ms / 1000L;
+        long m = totalSec / 60L;
+        long s = totalSec % 60L;
+        return String.format(Locale.US, "%d:%02d", m, s);
     }
 
     private static PendingIntent buildCmdPendingIntent(Context context, String cmd, int reqCode) {
