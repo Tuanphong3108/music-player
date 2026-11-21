@@ -116,6 +116,10 @@
     {
       "content": "Chuyển toàn bộ biểu tượng giao diện sang Material Symbols Rounded đồng bộ trên toàn bộ ứng dụng và các trang phụ",
       "icon": "interests"
+    },
+    {
+      "content": "Toàn bộ biểu tượng chuyển sang Material Symbols Rounded; sửa Getting Started mất biểu tượng và ghi chú cập nhật Android hiển thị chuẩn markdown",
+      "icon": "interests"
     }
   ],
   "en": [
@@ -233,6 +237,10 @@
     },
     {
       "content": "Switched all interface icons to Material Symbols Rounded across the entire app and subpages",
+      "icon": "interests"
+    },
+    {
+      "content": "All icons switched to Material Symbols Rounded; fixed missing icons in Getting Started and the Android update notes now render as proper markdown",
       "icon": "interests"
     }
   ]
