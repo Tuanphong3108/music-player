@@ -6940,6 +6940,13 @@
             });
         })();
 
+        // Gọi pongReady sớm nhất có thể ngay khi có AndroidBridge để tránh bị báo "Trang không phản hồi" trên cả điện thoại và máy tính bảng
+        try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.pongReady === 'function') {
+                window.AndroidBridge.pongReady();
+            }
+        } catch (e) {}
+
         // --- CẦU NỐI VỚI APP ANDROID (WebView) ---
         // App native gọi window.__nativeOpenFiles([{url,name,type}]) với url dạng
         // https://appassets.local/f/<id> (được app chặn request và trả dữ liệu content://).
