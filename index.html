@@ -840,8 +840,10 @@
         html.m-ui .main-content { flex: 1; min-height: 0; flex-direction: column; gap: 0; }
         html.m-ui .visual-stage { flex: 1; min-height: 0; width: 100%; border-radius: 28px; }
         /* Video: khung bằng đúng tỉ lệ video → hình lấp đầy khung, không viền đen, không bị cắt */
-        html.m-ui body.has-video:not(.fullscreen-active) .visual-stage { flex: 0 1 auto; aspect-ratio: var(--vid-ar, 16 / 9); align-self: center; margin: auto 0; max-height: 100%; }
-        html.m-ui body.has-video #audio-element { object-fit: cover; }
+        html.m-ui body.has-video:not(.fullscreen-active) .visual-stage { flex: none; width: var(--stage-w, 100%); height: var(--stage-h, auto); aspect-ratio: var(--vid-ar, 16 / 9); align-self: center; margin: auto 0; }
+        html.m-ui body.has-video #audio-element { object-fit: contain; }
+        /* Menu Hẹn giờ trong khay ⋮ phải nằm trên cụm điều khiển (nút Lyric) */
+        html.m-ui body.m-more-open .top-bar { z-index: 3600; }
         html.m-ui #visualizer { border-radius: 28px; }
         /* Ảnh bìa lớn hiện ngay trong khung chính */
         html.m-ui #fs-stage-overlay.hidden { display: flex !important; }
@@ -6682,8 +6684,25 @@
 
         // Tỉ lệ video để khung hình trên điện thoại khớp đúng video
         (function () {
-            const upd = () => { if (audio.videoWidth && audio.videoHeight) document.documentElement.style.setProperty('--vid-ar', audio.videoWidth + ' / ' + audio.videoHeight); };
+            const root = document.documentElement;
+            // Tính kích thước khung video đúng tỉ lệ (ngang hay dọc) vừa trong vùng trống, không méo, không viền đen
+            const fit = () => {
+                const mc = document.querySelector('.main-content');
+                if (!(root.classList.contains('m-ui') && document.body.classList.contains('has-video') && !document.body.classList.contains('fullscreen-active') && audio.videoWidth && audio.videoHeight && mc)) {
+                    root.style.removeProperty('--stage-w'); root.style.removeProperty('--stage-h'); return;
+                }
+                const ar = audio.videoWidth / audio.videoHeight;
+                const cw = mc.clientWidth, ch = mc.clientHeight;
+                if (!cw || !ch) return;
+                const w = Math.min(cw, ch * ar);
+                root.style.setProperty('--stage-w', Math.floor(w) + 'px');
+                root.style.setProperty('--stage-h', Math.floor(w / ar) + 'px');
+            };
+            const upd = () => { if (audio.videoWidth && audio.videoHeight) root.style.setProperty('--vid-ar', audio.videoWidth + ' / ' + audio.videoHeight); fit(); };
             ['loadedmetadata', 'resize'].forEach(ev => audio.addEventListener(ev, upd));
+            window.addEventListener('resize', fit);
+            try { new ResizeObserver(fit).observe(document.querySelector('.main-content')); } catch (e) {}
+            new MutationObserver(fit).observe(document.body, { attributes: true, attributeFilter: ['class'] });
         })();
 
         // --- UI điện thoại: lớp m-ui chỉ bật trên Android (?android=true hoặc User-Agent Android) ---
