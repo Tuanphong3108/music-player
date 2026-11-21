@@ -1036,35 +1036,21 @@
                 z-index: 2505 !important;
             }
             /* Các màn hình phụ trên máy tính bảng Android ngang (Playlist, Metadata/Thumbnail Editor, Thông tin khác, Phản hồi): mở ở bên phải, giữ vùng ảnh bìa bên trái */
-            html.m-ui body.m-playlist-open .main-content,
-            html.m-ui body.m-playlist-open .visual-stage {
-                position: relative;
-                z-index: 2510;
-                background: transparent !important;
-                pointer-events: none;
-            }
-            html.m-ui body.m-playlist-open .visual-stage > :not(#fs-stage-overlay) {
-                pointer-events: none;
-            }
-            html.m-ui body.m-playlist-open #fs-stage-overlay {
-                pointer-events: auto;
-                position: fixed !important;
-                left: 16px !important;
-                top: 68px !important;
-                width: calc(var(--vw) * 0.50) !important;
-                height: calc(var(--vh) - 84px) !important;
-                padding: 16px !important;
-                z-index: 2515 !important;
-            }
             html.m-ui body.m-playlist-open .playlist-card {
                 left: auto !important;
                 right: 16px !important;
-                top: 68px !important;
+                top: 12px !important;
                 bottom: 16px !important;
                 width: calc(var(--vw) * 0.46) !important;
-                height: auto !important;
+                height: calc(var(--vh) - 28px) !important;
+                max-height: none !important;
                 z-index: 3000 !important;
+                pointer-events: auto !important;
                 box-shadow: 0 12px 36px rgba(0,0,0,.45) !important;
+            }
+            html.m-ui body.m-playlist-open .playlist-card,
+            html.m-ui body.m-playlist-open .playlist-card * {
+                pointer-events: auto !important;
             }
             html.m-ui .cl-overlay.open:not(#settings-overlay) {
                 justify-content: flex-end !important;
