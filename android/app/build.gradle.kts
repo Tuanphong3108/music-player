@@ -6,8 +6,8 @@ android {
         applicationId = "com.tuanphong.mediaplayer"
         minSdk = 24
         targetSdk = 34
-        versionCode = (System.getenv("VERSION_CODE") ?: "9").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "1.0.9"
+        versionCode = (System.getenv("VERSION_CODE") ?: "10").toInt()
+        versionName = System.getenv("VERSION_NAME") ?: "1.0.10"
     }
     signingConfigs {
         create("rel") {
