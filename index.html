@@ -7518,9 +7518,31 @@
                         timer = setTimeout(() => { if (els === keep) reset(true); }, 140);
                     }
                 };
+                // Thoát có animation: UI zoom-out + fade-out, cả cửa sổ mờ dần về nền tối rồi mới gọi lệnh thoát (cb).
+                // restore = true (chạy nền): sau đó trả UI về nguyên trạng để lúc mở lại app không bị trống.
+                window.__pbExitAnim = function (cb, restore) {
+                    window.__pbExiting = true;
+                    clearTimeout(timer);
+                    if (!els.length) els = rootEls();
+                    els.forEach(e => {
+                        e.style.willChange = 'transform, opacity, filter';
+                        e.style.transition = 'transform .3s cubic-bezier(.3,0,.8,.15), opacity .3s, filter .3s';
+                        e.style.transform = 'scale(.8)'; e.style.opacity = '0'; e.style.filter = 'blur(8px)';
+                    });
+                    document.body.classList.add('pb-receded');
+                    const h = document.documentElement;
+                    h.style.transition = 'opacity .3s ease-out'; h.style.opacity = '0';
+                    setTimeout(() => { try { cb(); } catch (e) {} }, 300);
+                    if (restore) setTimeout(() => {
+                        h.style.transition = 'none'; h.style.opacity = '';
+                        window.__pbExiting = false;
+                        els.forEach(e => { e.style.transition = 'none'; e.style.transform = ''; e.style.opacity = ''; e.style.filter = ''; });
+                        document.body.classList.remove('pb-receded'); els = [];
+                    }, 900);
+                };
                 // Hộp thoại thoát đóng (Ở lại / Chạy nền / bấm ra ngoài) -> UI zoom-in + fade-in
                 if (exitOv) new MutationObserver(() => {
-                    if (!exitOv.classList.contains('open') && document.body.classList.contains('pb-receded')) {
+                    if (!window.__pbExiting && !exitOv.classList.contains('open') && document.body.classList.contains('pb-receded')) {
                         clearTimeout(timer);
                         if (!els.length) els = rootEls();
                         els.forEach(e => { e.style.transform = 'scale(.8)'; e.style.opacity = '0'; e.style.filter = 'blur(8px)'; e.style.transition = 'none'; });
@@ -7569,19 +7591,24 @@
                 const bgBtn = document.getElementById('exit-bg-btn');
                 const fullBtn = document.getElementById('exit-full-btn');
                 const stayBtn = document.getElementById('exit-stay-btn');
+                const anim = (fn, restore) => { if (window.__pbExitAnim) window.__pbExitAnim(fn, restore); else fn(); };
                 if (bgBtn) bgBtn.addEventListener('click', () => {
                     hideExitDialog();
-                    try {
-                        if (window.AndroidBridge && window.AndroidBridge.exitBackground) window.AndroidBridge.exitBackground();
-                        else if (AB && AB.exitBackground) AB.exitBackground();
-                    } catch (e) {}
+                    anim(() => {
+                        try {
+                            if (window.AndroidBridge && window.AndroidBridge.exitBackground) window.AndroidBridge.exitBackground();
+                            else if (AB && AB.exitBackground) AB.exitBackground();
+                        } catch (e) {}
+                    }, true);
                 });
                 if (fullBtn) fullBtn.addEventListener('click', () => {
                     hideExitDialog();
-                    try {
-                        if (window.AndroidBridge && window.AndroidBridge.exitAppCompletely) window.AndroidBridge.exitAppCompletely();
-                        else if (AB && AB.exitAppCompletely) AB.exitAppCompletely();
-                    } catch (e) {}
+                    anim(() => {
+                        try {
+                            if (window.AndroidBridge && window.AndroidBridge.exitAppCompletely) window.AndroidBridge.exitAppCompletely();
+                            else if (AB && AB.exitAppCompletely) AB.exitAppCompletely();
+                        } catch (e) {}
+                    }, false);
                 });
                 if (stayBtn) stayBtn.addEventListener('click', hideExitDialog);
                 ov.addEventListener('click', (e) => { if (e.target === ov) hideExitDialog(); });

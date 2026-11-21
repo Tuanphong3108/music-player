@@ -92,6 +92,10 @@
     {
       "content": "Predictive Back ở màn hình chính: vuốt Back thì toàn bộ UI mờ dần và lùi ra sau; thả tay thì zoom-out + fade-out rồi hiện hộp thoại thoát; đóng hộp thoại thì UI zoom-in + fade-in về như cũ",
       "icon": "arrow_back"
+    },
+    {
+      "content": "Thoát có animation: bấm \"Chạy dưới nền\" / \"Thoát hẳn\" thì UI zoom-out + fade-out và cửa sổ mờ dần trước khi thoát, không còn đóng đột ngột",
+      "icon": "logout"
     }
   ],
   "en": [
@@ -186,6 +190,10 @@
     {
       "content": "Predictive Back on the main screen: swiping Back blurs the whole UI and pushes it back; releasing zooms/fades it out and shows the exit dialog; closing the dialog zooms/fades the UI back in",
       "icon": "arrow_back"
+    },
+    {
+      "content": "Animated exit: \"Run in background\" / \"Exit completely\" now zoom/fade the UI out and fade the window before leaving, instead of closing abruptly",
+      "icon": "logout"
     }
   ]
 }
