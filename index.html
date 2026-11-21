@@ -7156,6 +7156,29 @@
             window.__nativeCmd = function (c) { if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; } const id = { toggle: 'play-btn', next: 'next-btn', prev: 'prev-btn' }[c]; const el = id && document.getElementById(id); if (el) el.click(); };
             const handleBackNavigation = function () {
                 try {
+                    const stSheet = document.getElementById('st-sheet');
+                    if (stSheet && (stSheet.classList.contains('open') || stSheet.classList.contains('show'))) {
+                        stSheet.classList.remove('show');
+                        setTimeout(() => stSheet.classList.remove('open'), 260);
+                        return true;
+                    }
+                    const openMenus = Array.from(document.querySelectorAll('md-menu, .m3-dropdown, .ctxl')).filter(el => {
+                        if (el.tagName === 'MD-MENU') return !!el.open;
+                        const st = getComputedStyle(el);
+                        return el.classList.contains('show') || el.classList.contains('open') || st.display === 'flex' || st.display === 'block';
+                    });
+                    if (openMenus.length) {
+                        openMenus.forEach(el => {
+                            if (el.tagName === 'MD-MENU') {
+                                try { el.open = false; } catch (e) {}
+                                el.removeAttribute('open');
+                            } else {
+                                el.classList.remove('show', 'open');
+                                if (el.style.display) el.style.display = 'none';
+                            }
+                        });
+                        return true;
+                    }
                     const updBanner = document.getElementById('android-update-banner');
                     if (updBanner && updBanner.classList.contains('show')) {
                         const disBtn = document.getElementById('android-update-dismiss');
