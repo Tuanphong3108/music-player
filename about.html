@@ -871,6 +871,10 @@ SOFTWARE.</pre>
         });
 
         // Initial Render
+        (function () {
+            const isAndroidUi = !!(window.IS_ANDROID_DEVICE || window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || /Android/i.test(navigator.userAgent || ''));
+            if (isAndroidUi) document.documentElement.classList.add('m-ui');
+        })();
         renderFeatureList();
     </script>
 <script>
