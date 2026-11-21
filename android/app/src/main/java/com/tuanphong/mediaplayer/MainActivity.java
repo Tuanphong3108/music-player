@@ -828,14 +828,21 @@ public class MainActivity extends Activity {
         pendingUpdateUrl = apkUrl;
         runOnUiThread(() -> {
             try {
-                Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                        Uri.parse("package:" + getPackageName()));
+                Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+                i.setData(Uri.parse("package:" + getPackageName()));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivityForResult(i, 46);
             } catch (Throwable ex) {
-                waitingUnknownSourcePermission = false;
-                pendingUpdateUrl = null;
-                callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
-                        isEnglishLang() ? "Cannot open install permission screen: " + ex : "Không mở được trang cấp quyền cài đặt: " + ex) + ")");
+                try {
+                    Intent fallback = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+                    fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivityForResult(fallback, 46);
+                } catch (Throwable ex2) {
+                    waitingUnknownSourcePermission = false;
+                    pendingUpdateUrl = null;
+                    callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                            isEnglishLang() ? "Cannot open install permission screen: " + ex2 : "Không mở được trang cấp quyền cài đặt: " + ex2) + ")");
+                }
             }
         });
     }
@@ -875,20 +882,23 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (waitingUnknownSourcePermission) {
-            waitingUnknownSourcePermission = false;
-            String resumeUrl = pendingUpdateUrl;
-            pendingUpdateUrl = null;
-            if (canInstallUnknownSources()) {
-                File apkFile = new File(new File(getCacheDir(), "updates"), "MediaPlayer-update.apk");
-                if (apkFile.exists() && apkFile.length() > 0) {
-                    launchApkInstaller(apkFile);
-                } else if (resumeUrl != null && !resumeUrl.isEmpty()) {
-                    startUpdateDownloadInternal(resumeUrl);
+            pingHandler.postDelayed(() -> {
+                if (!waitingUnknownSourcePermission) return;
+                waitingUnknownSourcePermission = false;
+                String resumeUrl = pendingUpdateUrl;
+                pendingUpdateUrl = null;
+                if (canInstallUnknownSources()) {
+                    File apkFile = new File(new File(getCacheDir(), "updates"), "MediaPlayer-update.apk");
+                    if (apkFile.exists() && apkFile.length() > 0) {
+                        launchApkInstaller(apkFile);
+                    } else if (resumeUrl != null && !resumeUrl.isEmpty()) {
+                        startUpdateDownloadInternal(resumeUrl);
+                    }
+                } else {
+                    callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
+                            isEnglishLang() ? "Permission to install from this source was not granted" : "Chưa cấp quyền cài đặt ứng dụng từ nguồn này") + ")");
                 }
-            } else {
-                callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
-                        isEnglishLang() ? "Permission to install from this source was not granted" : "Chưa cấp quyền cài đặt ứng dụng từ nguồn này") + ")");
-            }
+            }, 250);
         }
         if (updateInstallPending) {
             pingHandler.removeCallbacks(installerTimeoutRunnable);
