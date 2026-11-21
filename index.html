@@ -6700,10 +6700,17 @@
                 if (!document.documentElement.classList.contains('m-ui') || document.body.classList.contains('reorder-active')) return;
                 e.stopImmediatePropagation(); document.body.classList.remove('m-playlist-open');
             }, true);
-            document.getElementById('m-more-btn').addEventListener('click', (e) => { e.stopPropagation(); document.body.classList.toggle('m-more-open'); });
+            document.getElementById('m-more-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = document.body.classList.toggle('m-more-open');
+                const lyricBtn = document.getElementById('lyric-btn');
+                if (lyricBtn) lyricBtn.style.pointerEvents = isOpen ? 'none' : '';
+            });
             document.addEventListener('click', (e) => {
                 if (e.target.closest('#m-more-btn') || e.target.closest('#sleep-btn') || e.target.closest('#sleep-menu')) return;
                 document.body.classList.remove('m-more-open');
+                const lyricBtn = document.getElementById('lyric-btn');
+                if (lyricBtn) lyricBtn.style.pointerEvents = '';
             });
         })();
 
