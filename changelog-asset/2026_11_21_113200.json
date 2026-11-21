@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-21",
+  "vi": [
+    {
+      "content": "Android: truyền phiên bản APK đang cài vào trang web và tự động đối chiếu với GitHub Releases để báo khi có bản mới",
+      "icon": "system_update"
+    },
+    {
+      "content": "Android: tự tải file APK cập nhật ngầm kèm thanh tiến trình mở rộng toàn màn hình (có bước xác nhận phiên bản, mô tả và nút Hủy/Cập nhật), tự mở trình cài đặt qua FileProvider và bổ sung thư mục cache/updates/ trong file_paths.xml",
+      "icon": "download"
+    },
+    {
+      "content": "Android: tự bật chế độ Picture-in-Picture (PiP) khi rời ứng dụng lúc đang phát video và tối ưu bố cục khung video trong chế độ PiP",
+      "icon": "picture_in_picture_alt"
+    },
+    {
+      "content": "Android: kiểm tra phản hồi giữa khung app và trang web với bộ đếm thời gian chờ 10 giây, nút Wait và Restart app, tự dừng kiểm tra khi thoát ra màn hình chính",
+      "icon": "hourglass_top"
+    },
+    {
+      "content": "Android: thêm màn hình chờ biến đổi hình dạng chuẩn Material 3 Expressive, đồng bộ ngôn ngữ theo lựa chọn trên trang và áp dụng phông Google Sans Flex cho khung app",
+      "icon": "auto_awesome"
+    },
+    {
+      "content": "Giao diện điện thoại: thêm nút cập nhật vào menu 3 chấm khi có bản mới, sửa lớp hiển thị để dropdown hẹn giờ ngủ không bị nút Lyric che khuất và khôi phục khung video dọc đúng tỉ lệ",
+      "icon": "tune"
+    },
+    {
+      "content": "Service Worker: dùng stale-while-revalidate cho tài nguyên cùng origin, thông báo khi kích hoạt bản SW mới và nâng phiên bản cache",
+      "icon": "cached"
+    }
+  ],
+  "en": [
+    {
+      "content": "Android: passes the installed APK version to the web app and checks GitHub Releases to notify when a newer version is available",
+      "icon": "system_update"
+    },
+    {
+      "content": "Android: downloads APK updates in the background with a full-screen progress toast (with a confirmation step showing version range, notes, and Cancel/Update actions), launches the installer via FileProvider, and adds cache/updates/ to file_paths.xml",
+      "icon": "download"
+    },
+    {
+      "content": "Android: enters Picture-in-Picture (PiP) mode when leaving the app while playing a video and optimizes the video frame layout in PiP",
+      "icon": "picture_in_picture_alt"
+    },
+    {
+      "content": "Android: checks app-to-page responsiveness with a 10s timeout, Wait and Restart app buttons, and cancels checks when leaving to the home screen",
+      "icon": "hourglass_top"
+    },
+    {
+      "content": "Android: adds a Material 3 Expressive shape-morphing loading indicator, syncs native UI language with the page setting, and applies Google Sans Flex to the app frame",
+      "icon": "auto_awesome"
+    },
+    {
+      "content": "Mobile UI: adds an update action to the three-dot menu when an update is available, fixes layering so the sleep timer dropdown isn't covered by the Lyric button, and restores vertical video aspect ratio",
+      "icon": "tune"
+    },
+    {
+      "content": "Service Worker: uses stale-while-revalidate for same-origin assets, notifies clients on activation, and bumps cache version",
+      "icon": "cached"
+    }
+  ]
+}
