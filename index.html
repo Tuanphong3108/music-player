@@ -1227,7 +1227,15 @@
         .st-tab-spacer { flex: 1; min-height: 12px; }
         .st-tab-link { text-decoration: none; color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent); }
         .st-tab-link:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent); }
+        .st-tab-link.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-primary-container); }
         html.is-android-app #st-android-apk-btn { display: none !important; }
+        .st-android-card { background: var(--playlist-bg); border: 1px solid var(--playlist-border); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .st-android-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .st-android-feat { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 16px; background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, transparent); }
+        .st-android-feat .material-symbols-outlined { color: var(--md-sys-color-primary); font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+        .st-android-dl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 24px; border-radius: 999px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-weight: 700; font-size: calc(15px * var(--font-scale-factor, 1)); text-decoration: none; align-self: flex-start; transition: transform .25s cubic-bezier(.34,1.56,.64,1), border-radius .3s ease, opacity .2s; }
+        .st-android-dl-btn:hover { transform: scale(1.03); border-radius: 16px; }
+        .st-android-dl-btn:active { transform: scale(0.97); }
         .st-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
         .st-pane { display: none; flex-direction: column; gap: 32px; padding: 32px 6%; }
         .st-pane.active { display: flex; }
@@ -1604,7 +1612,7 @@
                     <button class="st-tab" data-tab="mixer"><span class="material-symbols-outlined">equalizer</span><span data-i18n="settings.cat_mixer">Bộ trộn âm thanh</span></button>
                     <button class="st-tab" data-tab="performance"><span class="material-symbols-outlined">speed</span><span data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</span></button>
                     <div class="st-tab-spacer"></div>
-                    <a class="st-tab st-tab-link" id="st-android-apk-btn" href="https://github.com/Tuanphong3108/music-player/releases/latest/download/MediaPlayer.apk" target="_blank" rel="noopener"><span class="material-symbols-outlined">android</span><span data-i18n="settings.download_android">Tải bản Android</span></a>
+                    <button class="st-tab st-tab-link" id="st-android-apk-btn" data-tab="android"><span class="material-symbols-outlined">android</span><span data-i18n="settings.download_android">Tải bản Android</span></button>
                     <button class="st-tab" data-tab="about"><span class="material-symbols-outlined">info</span><span data-i18n="about.title">About</span></button>
                 </nav>
                 <div class="st-content">
@@ -1885,6 +1893,51 @@
                         <span class="material-symbols-outlined" slot="off-icon">close</span>
                     </md-switch>
                 </div>
+                </div>
+                <div class="st-pane" data-pane="android">
+                    <h3 class="st-pane-title" data-i18n="settings.download_android">Tải bản Android</h3>
+                    <div class="st-android-card">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div style="width: 56px; height: 56px; border-radius: 18px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; flex-shrink: 0;">
+                                <span class="material-symbols-outlined" style="font-size: 32px; font-variation-settings: 'FILL' 1;">android</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span style="font-size: calc(18px * var(--font-scale-factor, 1)); font-weight: 800;" data-i18n="android.card_title">Media Player cho Android</span>
+                                <span style="font-size: calc(13px * var(--font-scale-factor, 1)); opacity: 0.7;" data-i18n="android.card_sub">Ứng dụng Android chính thức (APK) • Miễn phí &amp; Mã nguồn mở</span>
+                            </div>
+                        </div>
+                        <p style="margin: 0; font-size: calc(14px * var(--font-scale-factor, 1)); line-height: 1.6; opacity: 0.85;" data-i18n="android.desc">Trải nghiệm Media Player trọn vẹn ngay trên điện thoại Android với giao diện tối ưu cho thao tác cảm ứng một tay, tự động cập nhật theo phiên bản web mới nhất và hoạt động mượt mà kể cả khi ngoại tuyến.</p>
+                        <div class="st-android-features">
+                            <div class="st-android-feat">
+                                <span class="material-symbols-outlined">headphones</span>
+                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                    <strong style="font-size: calc(14px * var(--font-scale-factor, 1));" data-i18n="android.f1_title">Phát nhạc nền &amp; Màn hình khoá</strong>
+                                    <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="android.f1_desc">Tiếp tục nghe nhạc khi tắt màn hình hoặc chuyển ứng dụng, điều khiển nhanh trên thanh thông báo.</span>
+                                </div>
+                            </div>
+                            <div class="st-android-feat">
+                                <span class="material-symbols-outlined">folder_open</span>
+                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                    <strong style="font-size: calc(14px * var(--font-scale-factor, 1));" data-i18n="android.f2_title">Mở trực tiếp &amp; Quét thư mục</strong>
+                                    <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="android.f2_desc">Hỗ trợ "Mở bằng" / "Chia sẻ" tệp nhạc, video từ các ứng dụng khác và thêm cả thư mục lớn.</span>
+                                </div>
+                            </div>
+                            <div class="st-android-feat">
+                                <span class="material-symbols-outlined">palette</span>
+                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                    <strong style="font-size: calc(14px * var(--font-scale-factor, 1));" data-i18n="android.f3_title">Đồng bộ màu Material You</strong>
+                                    <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="android.f3_desc">Tự động lấy tông màu chủ đạo từ hình nền hệ thống Android 12+ và tự cập nhật tính năng mới.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-top: 4px;">
+                            <a class="st-android-dl-btn" href="https://github.com/Tuanphong3108/music-player/releases/tag/latest" target="_blank" rel="noopener">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">download</span>
+                                <span data-i18n="android.download_btn">Tải xuống</span>
+                            </a>
+                            <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="android.github_note">Mở trang GitHub Releases chính thức để tải tệp MediaPlayer.apk</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="st-pane st-pane-about" data-pane="about">
                     <div class="cl-header">
@@ -7246,7 +7299,18 @@
             'metaeditor.saved_disk': 'Directly overwrote the original file on disk successfully!',
             'metaeditor.saved_download': 'The browser has no permission to write to the original file, so the MP3 with updated tags was downloaded automatically — use the downloaded file to replace the original if you want to keep it permanently.',
             'metaeditor.saved_success': 'Metadata saved successfully!',
-            'settings.download_android': 'Download Android app'
+            'settings.download_android': 'Download Android app',
+            'android.card_title': 'Media Player for Android',
+            'android.card_sub': 'Official Android App (APK) • Free & Open Source',
+            'android.desc': 'Enjoy the full Media Player experience on your Android phone with a one-handed touch interface, automatic updates synced with the latest web version, and full offline support.',
+            'android.f1_title': 'Background Play & Lock Screen',
+            'android.f1_desc': 'Keep listening with the screen off or while switching apps, with full notification media controls.',
+            'android.f2_title': 'Open With & Folder Scan',
+            'android.f2_desc': 'Supports "Open with" and "Share" from other apps, plus adding entire music/video folders.',
+            'android.f3_title': 'Material You Dynamic Color',
+            'android.f3_desc': 'Automatically adapts to your Android 12+ wallpaper accent color and stays up to date automatically.',
+            'android.download_btn': 'Download',
+            'android.github_note': 'Opens the official GitHub Releases page to download MediaPlayer.apk'
         };
         async function loadLanguage(lang) {
             try {
