@@ -6915,8 +6915,14 @@
                     };
 
                     const triggerDownloadNow = () => {
-                        if (dismissEl) dismissEl.style.display = 'none';
-                        if (btnInner) btnInner.disabled = true;
+                        if (dismissEl) {
+                            dismissEl.style.display = '';
+                            dismissEl.textContent = isEn ? 'Cancel' : 'Hủy';
+                        }
+                        if (btnInner) {
+                            btnInner.disabled = true;
+                            btnInner.textContent = isEn ? 'Update' : 'Cập nhật';
+                        }
                         if (progWrap) progWrap.classList.add('show');
                         if (progFill) progFill.style.width = '0%';
                         if (progText) progText.textContent = isEn ? 'Downloading update... 0%' : 'Đang tải bản cập nhật... 0%';
@@ -6929,6 +6935,15 @@
                             window.open(dlUrl, '_blank', 'noopener');
                         }
                     };
+
+                    if (dismissEl && banner) {
+                        dismissEl.onclick = function (ev) {
+                            ev.preventDefault();
+                            if (AB && AB.cancelUpdateDownload) AB.cancelUpdateDownload();
+                            banner.classList.remove('show');
+                            banner.classList.remove('fullscreen-toast');
+                        };
+                    }
 
                     if (moreUpdateBtn) {
                         moreUpdateBtn.classList.add('has-update');
@@ -6974,9 +6989,29 @@
                             progText.textContent = isEn ? 'Opening installer...' : 'Đang mở trình cài đặt...';
                         }
                     };
+                    window.__onAndroidUpdateInstalled = function () {
+                        if (banner) {
+                            banner.classList.remove('show');
+                            banner.classList.remove('fullscreen-toast');
+                        }
+                    };
                     window.__onAndroidUpdateError = function (errMsg) {
-                        if (btnInner) btnInner.disabled = false;
-                        if (progText) progText.textContent = (isEn ? 'Download failed: ' : 'Lỗi tải: ') + errMsg;
+                        if (banner) {
+                            banner.classList.add('show');
+                            banner.classList.add('fullscreen-toast');
+                        }
+                        if (progWrap) progWrap.classList.add('show');
+                        if (progText) {
+                            progText.textContent = (isEn ? 'Update failed: ' : 'Lỗi cập nhật: ') + errMsg;
+                        }
+                        if (dismissEl) {
+                            dismissEl.style.display = '';
+                            dismissEl.textContent = isEn ? 'Cancel' : 'Hủy';
+                        }
+                        if (btnInner) {
+                            btnInner.disabled = false;
+                            btnInner.textContent = isEn ? 'Retry' : 'Thử lại';
+                        }
                     };
                     if (dismissEl) dismissEl.textContent = isEn ? 'Later' : 'Để sau';
                     if (btnInner) btnInner.textContent = isEn ? 'Update' : 'Cập nhật';
