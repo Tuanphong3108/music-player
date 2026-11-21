@@ -104,6 +104,10 @@
     {
       "content": "Thêm animation thoát cho Cài đặt, Gửi phản hồi và Lyric trên điện thoại: đóng trang thì trượt xuống và mờ dần thay vì biến mất đột ngột",
       "icon": "animation"
+    },
+    {
+      "content": "Lyric khi đang phát video nằm trên đầu khung phát kể cả khi tắt sóng nhạc (PC); trên điện thoại luôn cố định ở trên đầu",
+      "icon": "lyrics"
     }
   ],
   "en": [
@@ -210,6 +214,10 @@
     {
       "content": "Added exit animations for Settings, Feedback and Lyrics on phones: pages now slide down and fade out instead of disappearing abruptly",
       "icon": "animation"
+    },
+    {
+      "content": "While a video plays, the lyric line now stays at the top of the player even with the visualizer off (PC); on phones it is always pinned to the top",
+      "icon": "lyrics"
     }
   ]
 }

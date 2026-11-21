@@ -1259,6 +1259,14 @@
             width: 80% !important;
         }
 
+        /* Đang phát video: lyric luôn nằm trên đầu khung phát (kể cả khi tắt sóng nhạc) để không che hình; bản điện thoại luôn khóa ở trên đầu */
+        html.no-visualizer body.has-video .top-active-lyric {
+            top: 32px !important; left: 50% !important; transform: translateX(-50%) !important; width: 90% !important;
+        }
+        html.m-ui.no-visualizer body .top-active-lyric {
+            top: 10px !important; left: 50% !important; transform: translateX(-50%) !important; width: 94% !important;
+        }
+
         /* ===== Dropdown: Material Web (md-outlined-select / md-menu) khớp màu chủ đạo + sáng/tối ===== */
         .m3-select, #output-device-menu {
             --md-ref-typeface-plain: var(--app-font);
