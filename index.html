@@ -1488,6 +1488,15 @@
         #android-update-banner.fullscreen-toast #android-update-sub { white-space: normal; }
         #android-update-banner.fullscreen-toast #android-update-desc { display: block; font-size: calc(13px * var(--font-scale-factor, 1)); line-height: 1.55; opacity: .88; }
         #android-update-banner #android-update-desc { display: none; }
+        #android-update-desc { text-align: left; overflow-y: auto; overscroll-behavior: contain; }
+        #android-update-banner.fullscreen-toast #android-update-desc { max-height: min(52vh, 420px); padding: 4px 4px 4px 2px; }
+        #android-update-desc p { margin: 0 0 8px; }
+        #android-update-desc h3, #android-update-desc h4, #android-update-desc h5, #android-update-desc h6 { margin: 14px 0 6px; font-size: calc(15px * var(--font-scale-factor, 1)); font-weight: 800; line-height: 1.3; }
+        #android-update-desc ul { margin: 4px 0 8px; padding-left: 20px; }
+        #android-update-desc li { margin: 4px 0; }
+        #android-update-desc strong { font-weight: 800; }
+        #android-update-desc code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent); }
+        #android-update-desc a { color: var(--md-sys-color-primary); }
         /* Banner thường (không phải toàn màn hình): xếp dọc - hàng trên là biểu tượng + tiêu đề/phiên bản, hàng dưới là nút */
         #android-update-banner:not(.fullscreen-toast) { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 14px; padding: 18px 18px 14px 18px; border-radius: 28px; max-width: 560px; margin: 0 auto; }
         #android-update-banner:not(.fullscreen-toast) > div:first-child { gap: 16px; align-items: center; }
@@ -7912,6 +7921,38 @@
             window.ANDROID_APP_VERSION = curVerName;
             window.ANDROID_APP_VERSION_CODE = curVerCode;
 
+            // Render markdown gọn cho ghi chú phát hành: tiêu đề, in đậm/nghiêng, code, danh sách (lồng nhau), liên kết, đoạn văn
+            function escHtml(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+            function renderReleaseMarkdown(md) {
+                const inline = (t) => escHtml(t)
+                    .replace(/`([^`]+)`/g, '<code>$1</code>')
+                    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                    .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
+                    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+                const lines = String(md || '').replace(/\r\n?/g, '\n').split('\n');
+                let out = '', stack = [], para = [];
+                const flushPara = () => { if (para.length) { out += '<p>' + para.map(inline).join('<br>') + '</p>'; para = []; } };
+                // Mỗi cấp danh sách: <ul><li>…</li></ul>
+                const closeLists = (depth) => { while (stack.length > depth) { out += '</li></ul>'; stack.pop(); } };
+                for (const raw of lines) {
+                    const line = raw.replace(/\s+$/, '');
+                    if (!line.trim()) { flushPara(); closeLists(0); continue; }
+                    let m;
+                    if ((m = line.match(/^(#{1,6})\s+(.*)$/))) { flushPara(); closeLists(0); out += '<h' + Math.min(m[1].length + 2, 6) + '>' + inline(m[2]) + '</h' + Math.min(m[1].length + 2, 6) + '>'; continue; }
+                    if ((m = line.match(/^(\s*)[-*+]\s+(.*)$/))) {
+                        flushPara();
+                        const depth = Math.floor(m[1].replace(/\t/g, '  ').length / 2) + 1;
+                        if (depth > stack.length) { while (stack.length < depth) { out += '<ul><li>'; stack.push(1); } }
+                        else { closeLists(depth); out += '</li><li>'; }
+                        out += inline(m[2]);
+                        continue;
+                    }
+                    if (stack.length && /^\s+\S/.test(line)) { out += '<br>' + inline(line.trim()); continue; }   // dòng nối tiếp của mục danh sách
+                    closeLists(0); para.push(line.trim());
+                }
+                flushPara(); closeLists(0);
+                return out;
+            }
             const banner = document.getElementById('android-update-banner');
             const iconEl = document.getElementById('android-update-icon');
             const titleEl = document.getElementById('android-update-title');
@@ -7970,9 +8011,9 @@
                         ? `Version ${fromVer} → ${toVer}`
                         : `Phiên bản ${fromVer} → ${toVer}`;
                     if (descEl) {
-                        descEl.textContent = (isEn
-                            ? `Upgrade from ${fromVer} to ${toVer}. `
-                            : `Nâng cấp từ phiên bản ${fromVer} lên ${toVer}. `) + releaseNotes;
+                        descEl.innerHTML = '<p>' + escHtml(isEn
+                            ? `Upgrade from ${fromVer} to ${toVer}.`
+                            : `Nâng cấp từ phiên bản ${fromVer} lên ${toVer}.`) + '</p>' + renderReleaseMarkdown(releaseNotes);
                     }
                     if (dismissEl) dismissEl.textContent = isEn ? 'Cancel' : 'Hủy';
                     if (btnInner) { btnInner.textContent = isEn ? 'Update' : 'Cập nhật'; btnInner.disabled = false; }
