@@ -7215,41 +7215,16 @@
                         else { updBanner.classList.remove('show', 'fullscreen-toast'); }
                         return true;
                     }
-                    if (document.body.classList.contains('m-more-open')) {
-                        document.body.classList.remove('m-more-open');
-                        const lyricBtn = document.getElementById('lyric-btn');
-                        if (lyricBtn) lyricBtn.style.pointerEvents = '';
-                        return true;
-                    }
-                    if (document.body.classList.contains('m-playlist-open')) {
-                        document.body.classList.remove('m-playlist-open');
-                        return true;
-                    }
-                    if (document.body.classList.contains('lyrics-open')) {
-                        if (typeof window.__mLyricBackClose === 'function') {
-                            window.__mLyricBackClose();
-                            return true;
-                        }
-                        if (typeof closeLyrics === 'function') closeLyrics();
-                        else if (typeof toggleLyrics === 'function') toggleLyrics();
-                        const lo = document.getElementById('lyric-overlay') || (typeof lyricOverlay !== 'undefined' ? lyricOverlay : null);
-                        const lb = document.getElementById('lyric-btn') || (typeof lyricBtn !== 'undefined' ? lyricBtn : null);
-                        if (typeof isLyricVisible !== 'undefined') isLyricVisible = false;
-                        document.body.classList.remove('lyrics-open', 'm-lyric-ui');
-                        if (lo) {
-                            lo.classList.remove('visible');
-                            lo.style.opacity = '0';
-                            lo.style.visibility = 'hidden';
-                            lo.style.display = 'none';
-                            lo.style.pointerEvents = 'none';
-                        }
-                        if (lb) lb.classList.remove('active');
-                        return true;
-                    }
-                    const openModal = Array.from(document.querySelectorAll('.cl-overlay.open, .cl-overlay[style*="display: flex"], .cl-overlay[style*="display: block"], dialog[open]')).find(el => {
-                        const st = getComputedStyle(el);
-                        return st.display !== 'none' && st.visibility !== 'hidden' && parseFloat(st.opacity || '1') > 0.05;
-                    });
+                    const getZ = (el) => {
+                        const z = parseFloat(getComputedStyle(el).zIndex);
+                        return Number.isFinite(z) ? z : 0;
+                    };
+                    const openModal = Array.from(document.querySelectorAll('.cl-overlay.open, .cl-overlay[style*="display: flex"], .cl-overlay[style*="display: block"], dialog[open]'))
+                        .filter(el => {
+                            const st = getComputedStyle(el);
+                            return st.display !== 'none' && st.visibility !== 'hidden' && parseFloat(st.opacity || '1') > 0.05;
+                        })
+                        .sort((a, b) => getZ(b) - getZ(a))[0];
                     if (openModal) {
                         if (openModal.id === 'settings-overlay') {
                             const stDlg = document.getElementById('settings-dialog');
@@ -7280,6 +7255,17 @@
                         }
                         return true;
                     }
+                    if (document.body.classList.contains('m-more-open')) {
+                        document.body.classList.remove('m-more-open');
+                        const lyricBtn = document.getElementById('lyric-btn');
+                        if (lyricBtn) lyricBtn.style.pointerEvents = '';
+                        return true;
+                    }
+                    if (document.body.classList.contains('m-playlist-open')) {
+                        document.body.classList.remove('m-playlist-open');
+                        return true;
+                    }
+                    if (document.body.classList.contains('lyrics-open')) {
                     return false;
                 } catch (e) { return false; }
             };
