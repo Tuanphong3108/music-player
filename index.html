@@ -7209,18 +7209,18 @@
                     if (document.body.classList.contains('lyrics-open')) {
                         if (typeof closeLyrics === 'function') closeLyrics();
                         else if (typeof toggleLyrics === 'function') toggleLyrics();
-                        else {
-                            isLyricVisible = false;
-                            document.body.classList.remove('lyrics-open', 'm-lyric-ui');
-                            const lo = document.getElementById('lyric-overlay') || (typeof lyricOverlay !== 'undefined' ? lyricOverlay : null);
-                            if (lo) {
-                                lo.classList.remove('visible');
-                                lo.style.opacity = '0';
-                                lo.style.pointerEvents = 'none';
-                            }
-                            const lb = document.getElementById('lyric-btn') || (typeof lyricBtn !== 'undefined' ? lyricBtn : null);
-                            if (lb) lb.classList.remove('active');
+                        const lo = document.getElementById('lyric-overlay') || (typeof lyricOverlay !== 'undefined' ? lyricOverlay : null);
+                        const lb = document.getElementById('lyric-btn') || (typeof lyricBtn !== 'undefined' ? lyricBtn : null);
+                        if (typeof isLyricVisible !== 'undefined') isLyricVisible = false;
+                        document.body.classList.remove('lyrics-open', 'm-lyric-ui');
+                        if (lo) {
+                            lo.classList.remove('visible');
+                            lo.style.opacity = '0';
+                            lo.style.visibility = 'hidden';
+                            lo.style.display = 'none';
+                            lo.style.pointerEvents = 'none';
                         }
+                        if (lb) lb.classList.remove('active');
                         return true;
                     }
                     const openModal = Array.from(document.querySelectorAll('.cl-overlay.open, .cl-overlay[style*="display: flex"], .cl-overlay[style*="display: block"], dialog[open]')).find(el => {
