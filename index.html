@@ -9205,8 +9205,9 @@
         let clUnseen = [];        // các bản mới chưa xem
         let clNewForPage = [];    // các bản mới cần chấm đỏ bên trong trang What's New
         function clLoadSeen() { try { const o = JSON.parse(localStorage.getItem(CL_SEEN_KEY) || 'null'); return o && Array.isArray(o.ids) ? o : null; } catch (e) { return null; } }
-        function clSaveSeen(ids) { try { localStorage.setItem(CL_SEEN_KEY, JSON.stringify({ ids: ids, latest: ids[0] || null, count: ids.length, savedAt: Date.now() })); } catch (e) {} }
-        let clAllIds = [];
+        function clSaveSeen(ids, hashes) { try { localStorage.setItem(CL_SEEN_KEY, JSON.stringify({ ids: ids, hashes: hashes || {}, latest: ids[0] || null, count: ids.length, savedAt: Date.now() })); } catch (e) {} }
+        let clAllIds = [], clAllHashes = {};
+        function clHash(t) { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + ':' + t.length; }
         function clApplyDots() {
             document.body.classList.toggle('cl-unseen', clUnseen.length > 0);
             try { if (clIframe && clIframe.contentWindow && clPage === 'about') clIframe.contentWindow.postMessage({ changelogDot: clUnseen.length > 0 }, '*'); } catch (e) {}
@@ -9218,17 +9219,28 @@
                 const j = await r.json();
                 const ids = (Array.isArray(j) ? j : (j.versions || [])).map(String);
                 if (!ids.length) return;
-                clAllIds = ids;
+                // Băm nội dung từng bản để phát hiện cả trường hợp bản cũ được sửa nội dung
+                const hashes = {};
+                await Promise.all(ids.map(async id => {
+                    try {
+                        const rr = await fetch('changelog-asset/' + id + '.json?cb=' + Date.now(), { cache: 'no-store' });
+                        if (rr.ok) hashes[id] = clHash(await rr.text());
+                    } catch (e) {}
+                }));
+                clAllIds = ids; clAllHashes = hashes;
                 const seen = clLoadSeen();
-                if (!seen) { clSaveSeen(ids); return; }                 // lần đầu: ghi nhận bản hiện tại làm mốc
-                clUnseen = ids.filter(id => seen.ids.indexOf(id) < 0);
+                if (!seen) { clSaveSeen(ids, hashes); return; }         // lần đầu: ghi nhận bản hiện tại làm mốc
+                const old = seen.hashes || {};
+                const hasOld = Object.keys(old).length > 0;
+                clUnseen = ids.filter(id => seen.ids.indexOf(id) < 0 || (hasOld && hashes[id] && old[id] && old[id] !== hashes[id]));
+                if (!hasOld && !clUnseen.length) clSaveSeen(ids, hashes);   // bản lưu cũ chưa có mã băm: bổ sung, không báo
                 clApplyDots();
             } catch (e) { /* offline: bỏ qua */ }
         }
         function clMarkSeen() {
             clNewForPage = clUnseen.slice();
             clUnseen = [];
-            if (clAllIds.length) clSaveSeen(clAllIds);
+            if (clAllIds.length) clSaveSeen(clAllIds, clAllHashes);
             clApplyDots();
         }
         clCheckNew();
