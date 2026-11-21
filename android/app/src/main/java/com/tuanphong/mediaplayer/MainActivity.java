@@ -531,7 +531,7 @@ public class MainActivity extends Activity {
                         try {
                             Intent installIntent = new Intent(Intent.ACTION_VIEW);
                             installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-                            installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.ACTIVITY_NEW_TASK);
+                            installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(installIntent);
                         } catch (Throwable ex) {
                             callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(String.valueOf(ex)) + ")");
