@@ -344,6 +344,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (instance == this) instance = null;
+        try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {}
         super.onDestroy();
     }
 
@@ -391,7 +392,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
-        public void setState(boolean playing, String title, String artist, long posMs, long durMs) {
+        public void setState(boolean playing, String title, String artist, long posMs, long durMs, float speed) {
             Intent i = new Intent(MainActivity.this, MediaService.class);
             i.setAction(MediaService.ACTION_UPDATE);
             i.putExtra("playing", playing);
@@ -399,7 +400,13 @@ public class MainActivity extends Activity {
             i.putExtra("artist", artist);
             i.putExtra("pos", posMs);
             i.putExtra("dur", durMs);
+            i.putExtra("speed", speed);
             startSvc(i);
+        }
+
+        @JavascriptInterface
+        public void setState(boolean playing, String title, String artist, long posMs, long durMs) {
+            setState(playing, title, artist, posMs, durMs, playing ? 1f : 0f);
         }
 
         /** Màu accent hệ thống (Material You, Android 12+); trả "" nếu không có. */
