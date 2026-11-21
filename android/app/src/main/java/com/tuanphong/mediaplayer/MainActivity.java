@@ -272,35 +272,92 @@ public class MainActivity extends Activity {
             box.setClickable(true);
             box.setFocusable(true);
 
-            final int sizePx = (int) (56 * d);
-            final float strokePx = 5.5f * d;
+            final int sizePx = (int) (64 * d);
             final int accentHex = (themeColor != 0 ? themeColor : 0xFFD0BCFF);
             double lum = (0.299 * ((accentHex >> 16) & 255) + 0.587 * ((accentHex >> 8) & 255) + 0.114 * (accentHex & 255)) / 255.0;
-            final int ringColor = lum > 0.65 ? 0xFF4F378B : 0xFFD0BCFF;
-            final int trackColor = (ringColor & 0x00FFFFFF) | 0x26000000;
+            final int shapeColor = lum > 0.65 ? 0xFF4F378B : 0xFFD0BCFF;
+
+            // Chuỗi hình dạng đặc trưng của Material 3 Expressive Loading Indicator (biến đổi mượt giữa các đa giác bo góc / sao)
+            final int shapeCount = 7;
+            final int[] shapeLobes = new int[]{0, 4, 6, 8, 12, 5, 7};
+            final float[] shapeInnerRatio = new float[]{1.0f, 0.78f, 0.84f, 0.88f, 0.92f, 0.62f, 0.76f};
+            final float[] shapeCornerRound = new float[]{1.0f, 0.52f, 0.45f, 0.40f, 0.35f, 0.48f, 0.42f};
 
             android.view.View spinner = new android.view.View(this) {
-                float sweepAngle = 72f;
-                float startOffset = 0f;
+                float morphProgress = 0f;
+                float spinAngle = 0f;
+
+                private android.graphics.Path buildMorphPath(float cx, float cy, float baseR, float progress) {
+                    int total = shapeCount;
+                    float scaled = progress * total;
+                    int idxA = ((int) Math.floor(scaled)) % total;
+                    if (idxA < 0) idxA += total;
+                    int idxB = (idxA + 1) % total;
+                    float frac = scaled - (float) Math.floor(scaled);
+                    // Spring/Expressive ease cho bước chuyển hình dạng
+                    float t = frac * frac * (3f - 2f * frac);
+
+                    int lobesA = shapeLobes[idxA];
+                    int lobesB = shapeLobes[idxB];
+                    float innerA = shapeInnerRatio[idxA];
+                    float innerB = shapeInnerRatio[idxB];
+                    float roundA = shapeCornerRound[idxA];
+                    float roundB = shapeCornerRound[idxB];
+
+                    android.graphics.Path path = new android.graphics.Path();
+                    int samples = 96;
+                    for (int i = 0; i <= samples; i++) {
+                        double theta = (i * 2.0 * Math.PI) / samples;
+                        float rA = radiusForShape(baseR, lobesA, innerA, roundA, theta);
+                        float rB = radiusForShape(baseR, lobesB, innerB, roundB, theta);
+                        float r = rA + (rB - rA) * t;
+                        float x = cx + (float) (Math.cos(theta) * r);
+                        float y = cy + (float) (Math.sin(theta) * r);
+                        if (i == 0) path.moveTo(x, y);
+                        else path.lineTo(x, y);
+                    }
+                    path.close();
+                    return path;
+                }
+
+                private float radiusForShape(float baseR, int lobes, float innerRatio, float roundness, double theta) {
+                    if (lobes <= 0) {
+                        // Hình tròn chuẩn M3 Expressive
+                        return baseR;
+                    }
+                    if (lobes == 4 && innerRatio > 0.72f) {
+                        // Squircle / rounded square expressive: góc bo tròn mềm mại, cạnh hơi phồng
+                        double c = Math.cos(theta);
+                        double s = Math.sin(theta);
+                        double p = 2.8;
+                        double denom = Math.pow(Math.pow(Math.abs(c), p) + Math.pow(Math.abs(s), p), 1.0 / p);
+                        float sq = (float) (1.0 / Math.max(denom, 0.0001));
+                        return baseR * (0.86f + 0.16f * sq * (0.7f + 0.3f * roundness));
+                    }
+                    // Đa giác / cánh sao Expressive bo góc mượt
+                    double wave = Math.cos(lobes * theta);
+                    float normalized = (float) ((wave + 1.0) * 0.5);
+                    float smoothWave = (float) Math.pow(normalized, 0.65 + (1.0 - roundness) * 0.7);
+                    float minFactor = innerRatio;
+                    float maxFactor = 1.03f;
+                    return baseR * (minFactor + (maxFactor - minFactor) * smoothWave);
+                }
 
                 @Override
                 protected void onDraw(android.graphics.Canvas canvas) {
                     super.onDraw(canvas);
-                    float pad = strokePx / 2f + 2f * d;
-                    android.graphics.RectF rect = new android.graphics.RectF(pad, pad, getWidth() - pad, getHeight() - pad);
+                    float cx = getWidth() * 0.5f;
+                    float cy = getHeight() * 0.5f;
+                    float baseR = Math.min(cx, cy) * 0.84f;
 
-                    android.graphics.Paint trackPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-                    trackPaint.setStyle(android.graphics.Paint.Style.STROKE);
-                    trackPaint.setStrokeWidth(strokePx);
-                    trackPaint.setColor(trackColor);
-                    canvas.drawArc(rect, 0f, 360f, false, trackPaint);
-
-                    android.graphics.Paint arcPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-                    arcPaint.setStyle(android.graphics.Paint.Style.STROKE);
-                    arcPaint.setStrokeWidth(strokePx);
-                    arcPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
-                    arcPaint.setColor(ringColor);
-                    canvas.drawArc(rect, startOffset, sweepAngle, false, arcPaint);
+                    canvas.save();
+                    canvas.rotate(spinAngle, cx, cy);
+                    android.graphics.Path morphPath = buildMorphPath(cx, cy, baseR, morphProgress);
+                    android.graphics.Paint fillPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+                    fillPaint.setStyle(android.graphics.Paint.Style.FILL);
+                    fillPaint.setColor(shapeColor);
+                    canvas.drawPath(morphPath, fillPaint);
+                    canvas.restore();
                 }
             };
 
@@ -311,33 +368,33 @@ public class MainActivity extends Activity {
             loadingOverlay = box;
             root.addView(loadingOverlay, new FrameLayout.LayoutParams(-1, -1));
 
-            // Hoạt ảnh Expressive: co giãn nhịp thở cung tròn + xoay mượt liên tục
+            // Biến đổi hình dạng liên tục theo nhịp Material 3 Expressive + xoay nhẹ
             md3ArcAnimator = android.animation.ValueAnimator.ofFloat(0f, 1f);
-            md3ArcAnimator.setDuration(1200);
+            md3ArcAnimator.setDuration(4200);
             md3ArcAnimator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
-            md3ArcAnimator.setRepeatMode(android.animation.ValueAnimator.REVERSE);
-            md3ArcAnimator.setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f));
+            md3ArcAnimator.setRepeatMode(android.animation.ValueAnimator.RESTART);
+            md3ArcAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
             md3ArcAnimator.addUpdateListener(anim -> {
-                float t = (float) anim.getAnimatedValue();
+                float p = (float) anim.getAnimatedValue();
                 try {
-                    java.lang.reflect.Field fSweep = spinner.getClass().getDeclaredField("sweepAngle");
-                    fSweep.setAccessible(true);
-                    fSweep.setFloat(spinner, 54f + t * 226f);
+                    java.lang.reflect.Field fMorph = spinner.getClass().getDeclaredField("morphProgress");
+                    fMorph.setAccessible(true);
+                    fMorph.setFloat(spinner, p);
                     spinner.invalidate();
                 } catch (Throwable ignored) {}
             });
             md3ArcAnimator.start();
 
             md3RotAnimator = android.animation.ValueAnimator.ofFloat(0f, 360f);
-            md3RotAnimator.setDuration(1400);
+            md3RotAnimator.setDuration(3600);
             md3RotAnimator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
             md3RotAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
             md3RotAnimator.addUpdateListener(anim -> {
                 float deg = (float) anim.getAnimatedValue();
                 try {
-                    java.lang.reflect.Field fStart = spinner.getClass().getDeclaredField("startOffset");
-                    fStart.setAccessible(true);
-                    fStart.setFloat(spinner, deg);
+                    java.lang.reflect.Field fRot = spinner.getClass().getDeclaredField("spinAngle");
+                    fRot.setAccessible(true);
+                    fRot.setFloat(spinner, deg);
                     spinner.invalidate();
                 } catch (Throwable ignored) {}
             });
