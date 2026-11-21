@@ -1685,12 +1685,14 @@
         html.m-ui #prev-btn:active, html.m-ui #next-btn:active { border-radius: 24px; transform: scale(.97); }
 
         /* ===== Chưa có bài nào: ẩn khung phát, chỉ còn các nút trên cùng + nút Thêm ở giữa ===== */
-        #m-empty-add { display: none; }
+        #m-empty { display: none; }
         html.m-ui body.no-track .visual-stage, html.m-ui body.no-track .player-shell { display: none !important; }
-        html.m-ui body.no-track #m-empty-add { display: grid; place-items: center; position: fixed; z-index: 50; left: calc(var(--vw) / 2 - 56px); top: calc(var(--vh) / 2 - 56px);
-            width: 112px; height: 112px; border: none; border-radius: 36px; cursor: pointer; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+        html.m-ui body.no-track #m-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; position: fixed; z-index: 50; left: 0; right: 0; top: 50%; transform: translateY(-50%); padding: 0 32px; pointer-events: none; }
+        #m-empty-add { pointer-events: auto; display: grid; place-items: center; width: 112px; height: 112px; margin-bottom: 14px; border: none; border-radius: 36px; cursor: pointer; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
             box-shadow: 0 8px 24px rgba(0,0,0,.28); animation: mEmptyPop .45s cubic-bezier(.34, 1.56, .64, 1) both; transition: border-radius .3s cubic-bezier(.34, 1.56, .64, 1), transform .15s; }
-        html.m-ui body.no-track #m-empty-add:active { border-radius: 56px; transform: scale(.94); }
+        .m-empty-t { font-family: var(--app-font); font-weight: 700; font-size: calc(20px * var(--font-scale-factor, 1)); color: var(--md-sys-color-on-surface); }
+        .m-empty-d { font-family: var(--app-font); font-size: calc(14px * var(--font-scale-factor, 1)); max-width: 280px; line-height: 1.4; color: var(--md-sys-color-on-surface-variant, var(--md-sys-color-on-surface)); opacity: .8; }
+        #m-empty-add:active { border-radius: 56px; transform: scale(.94); }
         #m-empty-add .material-symbols-outlined { font-size: 52px; }
         @keyframes mEmptyPop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
 
@@ -1983,7 +1985,9 @@
 
     <!-- Modal About / What's New / More apps (dùng chung 1 dialog, điều hướng qua postMessage) -->
     <!-- Modal Settings (Full Screen Scale with Adaptive Color selection) -->
-    <button id="m-empty-add" title="Thêm nhạc / video" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined">add</span></button>
+    <div id="m-empty"><button id="m-empty-add" title="Thêm nhạc / video" data-i18n-title="topbar.addmusic"><span class="material-symbols-outlined">add</span></button>
+        <div class="m-empty-t" data-i18n="mobile.empty_title">Chưa có gì để phát</div>
+        <div class="m-empty-d" data-i18n="mobile.empty_desc">Thêm nhạc hoặc video từ thiết bị để bắt đầu nghe.</div></div>
     <div id="st-sheet"><div class="st-sheet-box"><div class="st-sheet-grip"></div><div class="st-sheet-title"></div><div class="st-sheet-list" style="display:flex;flex-direction:column;gap:2px;"></div></div></div>
     <div id="settings-overlay" class="cl-overlay" style="align-items: stretch; justify-content: stretch;">
         <div id="settings-dialog" class="cl-dialog" style="width: var(--vw); max-width: var(--vw); height: var(--vh); max-height: var(--vh); border-radius: 0;">

@@ -414,3 +414,5 @@ settings.desc_mixer=Equalizer, preamp, cân bằng trái/phải
 settings.desc_performance=Hiệu ứng và hiệu năng
 settings.desc_android=Tải ứng dụng Android
 settings.desc_about=Thông tin về Media Player
+mobile.empty_title=Chưa có gì để phát
+mobile.empty_desc=Thêm nhạc hoặc video từ thiết bị để bắt đầu nghe.
