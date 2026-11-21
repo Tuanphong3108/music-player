@@ -78,7 +78,7 @@
       "icon": "animation"
     },
     {
-      "content": "Thanh tua kiểu Material 3 Expressive: đoạn đã phát là sóng (wavelength 40dp, biên độ 3dp), tạm dừng thì phẳng dần thành đường thẳng; nút ⋮ trong Lyric View đổi thành nút tìm kiếm; bản Android bỏ chữ \"video\" ở nút Thêm",
+      "content": "Thanh tua kiểu Material 3 Expressive (PC, điện thoại và Lyric View): đoạn đã phát là sóng (wavelength 40dp, biên độ 3dp), tạm dừng thì phẳng dần thành đường thẳng; nút ⋮ trong Lyric View đổi thành nút tìm kiếm; bản Android bỏ chữ \"video\" ở nút Thêm",
       "icon": "waves"
     },
     {
@@ -164,7 +164,7 @@
       "icon": "animation"
     },
     {
-      "content": "Material 3 Expressive seek bar: the played part is a wave (40dp wavelength, 3dp amplitude) that flattens into a straight line on pause; the ⋮ button in Lyric View is now a search button; Android build drops the word \"video\" from the Add button",
+      "content": "Material 3 Expressive seek bar (PC, phone and Lyric View): the played part is a wave (40dp wavelength, 3dp amplitude) that flattens into a straight line on pause; the ⋮ button in Lyric View is now a search button; Android build drops the word \"video\" from the Add button",
       "icon": "waves"
     },
     {
