@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'media-player-';
 const LEGACY_PREFIX = 'audio-player-';   // tên cũ trước khi đổi sang Media Player, để dọn cache cũ
-const CACHE_VERSION = 'v2026_11_21_tablet_landscape_1';
+const CACHE_VERSION = 'v2026_11_21_fast_nav_1';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
@@ -85,7 +85,7 @@ self.addEventListener('fetch', event => {
   const isSameOrigin = requestUrl.origin === scopeUrl.origin;
 
   if (request.mode === 'navigate' && isSameOrigin) {
-    event.respondWith(networkFirstNavigation(request));
+    event.respondWith(staleWhileRevalidateNavigation(request));
     return;
   }
 
@@ -99,28 +99,33 @@ self.addEventListener('fetch', event => {
   }
 });
 
-async function networkFirstNavigation(request) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const shellCache = await caches.open(SHELL_CACHE);
+async function staleWhileRevalidateNavigation(request) {
+  const shellCache = await caches.open(SHELL_CACHE);
+  const cachedPage = await caches.match(request);
+  const networkPromise = fetch(request).then(async (response) => {
+    if (response && response.ok) {
       await shellCache.put(request, response.clone());
     }
     return response;
-  } catch {
-    const cachedPage = await caches.match(request);
-    if (cachedPage) return cachedPage;
+  }).catch(() => null);
 
-    const indexUrl = new URL('./index.html', self.registration.scope);
-    const cachedIndex = await caches.match(indexUrl.href);
-    if (cachedIndex) return cachedIndex;
-
-    return new Response('Bạn đang offline và trang này chưa được lưu trên thiết bị.', {
-      status: 503,
-      statusText: 'Offline',
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-    });
+  if (cachedPage) {
+    eventOrBackground(networkPromise);
+    return cachedPage;
   }
+
+  const networkResponse = await networkPromise;
+  if (networkResponse) return networkResponse;
+
+  const indexUrl = new URL('./index.html', self.registration.scope);
+  const cachedIndex = await caches.match(indexUrl.href);
+  if (cachedIndex) return cachedIndex;
+
+  return new Response('Bạn đang offline và trang này chưa được lưu trên thiết bị.', {
+    status: 503,
+    statusText: 'Offline',
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  });
 }
 
 async function staleWhileRevalidateAsset(request) {
