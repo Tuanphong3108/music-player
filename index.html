@@ -5361,6 +5361,7 @@
                         file: file,
                         fileHandle: file.fileHandle || null,
                         nativeId: file.__nativeId || null,
+                        nativeLocation: file.__nativeLocation || '',
                         nativeName: file.__nativeName || file.name,
                         rawName: file.name.replace(/\.[^/.]+$/, "") 
                     };
@@ -7289,6 +7290,7 @@
                         const b = await r.blob();
                         const f = new File([b], name, { type: it.type || b.type || '' });
                         f.__nativeId = it.id || ((it.url || '').match(/\/f\/([^/?#]+)/) || [])[1] || null;
+                        f.__nativeLocation = it.location || it.uri || '';
                         f.__nativeName = name;
                         files.push(f);
                     }
@@ -9998,18 +10000,20 @@
                         console.warn("Lỗi ghi trực tiếp đĩa (thiếu quyền ghi hoặc handle đã cũ), chỉ giữ lưu trữ tạm thời:", fsErr);
                     }
                 }
-                if (!persisted && window.AndroidBridge && typeof window.AndroidBridge.overwriteFileChunk === 'function' && (track.nativeId || track.nativeName)) {
+                if (!persisted && window.AndroidBridge && typeof window.AndroidBridge.overwriteFileChunk === 'function' && (track.nativeId || track.nativeLocation || track.nativeName)) {
                     try {
                         const CH = 768 * 1024;
                         const txId = 'ov_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
                         const total = taggedBlob.size;
                         let okWrite = true;
+                        let needPerm = false;
                         for (let o = 0; o < total || o === 0; o += CH) {
                             const buf = new Uint8Array(await taggedBlob.slice(o, o + CH).arrayBuffer());
                             let bin = '';
                             for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
                             const err = window.AndroidBridge.overwriteFileChunk(
                                 track.nativeId || '',
+                                track.nativeLocation || '',
                                 txId,
                                 btoa(bin),
                                 o + CH >= total,
@@ -10017,10 +10021,14 @@
                             );
                             if (err) {
                                 console.warn("Lỗi ghi đè tệp qua khung app Android:", err);
+                                if (err === 'NEED_FILE_PERMISSION') needPerm = true;
                                 okWrite = false;
                                 break;
                             }
                             if (total === 0) break;
+                        }
+                        if (needPerm) {
+                            showToast(tr2('metadata.android_need_file_perm', 'Vui lòng cấp quyền truy cập tệp để ghi đè vào tệp gốc, sau đó bấm Lưu lại.'), 'folder_open');
                         }
                         if (okWrite) {
                             persisted = true;
@@ -10033,6 +10041,7 @@
 
                 const newFile = new File([taggedBlob], (meta.title || track.name) + ".mp3", { type: 'audio/mpeg' });
                 newFile.__nativeId = track.nativeId || null;
+                newFile.__nativeLocation = track.nativeLocation || '';
                 newFile.__nativeName = track.nativeName || (track.file && track.file.name) || newFile.name;
                 track.file = newFile;
                 track.name = meta.title || track.name;
