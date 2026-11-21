@@ -1398,6 +1398,12 @@
         .st-sheet-opt .material-symbols-outlined { visibility: hidden; }
         .st-sheet-opt.sel .material-symbols-outlined { visibility: visible; }
 
+
+        /* ===== Tối ưu phát video trên điện thoại: bỏ kính mờ/hiệu ứng tốn GPU khi đang có video ===== */
+        html.m-ui body.has-video *, html.m-ui body.has-video *::before, html.m-ui body.has-video *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+        html.m-ui body.has-video .visual-stage { contain: layout paint; }
+        html.m-ui body.has-video #audio-element { transform: translateZ(0); }
+
         /* ===== Khung báo lỗi phát tệp (Playback Error Overlay) ===== */
         .playback-error-overlay {
             position: absolute;
@@ -5793,7 +5799,7 @@
             // Tạm dừng bằng phím media / bấm vào khung / PiP cũng hiện icon (bỏ qua khi hết bài)
             if (document.body.classList.contains('has-video') && !audio.ended && !pauseOverlay.classList.contains('visible')) flashPauseIcon();
         });
-        audio.addEventListener('play', () => { clearTimeout(pauseFlashTimer); if (document.body.classList.contains('has-video')) pauseOverlay.classList.remove('visible'); });
+        audio.addEventListener('play', () => { try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {} clearTimeout(pauseFlashTimer); if (document.body.classList.contains('has-video')) pauseOverlay.classList.remove('visible'); });
 
         playBtn.addEventListener('click', () => {
             if (!audio.src && playlist.length > 0) playTrack(0);
@@ -5993,8 +5999,15 @@
             mx.eq.forEach((b, i) => { b.gain.value = mixer.eq[i] || 0; });
             mx.pan.pan.value = Math.max(-1, Math.min(1, mixer.balance / 100));
         }
+        // Trên điện thoại, video đi qua AudioContext (EQ/analyser) làm lệch tiếng + giật hình. Nếu Mixer đang để mặc định
+        // thì bỏ hẳn chuỗi Web Audio cho video, để thẻ <video> tự phát bằng đường âm thanh gốc của hệ thống.
+        function mixerIsDefault() { return (!mixer.eqOn || mixer.eq.every(g => !g)) && !mixer.mono && !mixer.comp && !mixer.preamp && !mixer.balance; }
         function initVisualizer() {
             if (audioCtx) return;
+            if (document.documentElement.classList.contains('m-ui')) {
+                if (!audio.readyState) return;   // chưa biết là video hay nhạc -> chờ loadedmetadata (xem listener bên dưới)
+                if (audio.videoWidth > 0 && mixerIsDefault()) return;
+            }
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioCtx.createAnalyser();
             const source = audioCtx.createMediaElementSource(audio);
@@ -6002,6 +6015,7 @@
             analyser.fftSize = 256;
             dataArray = new Uint8Array(analyser.frequencyBinCount);
             draw();
+            try { if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {}
 
             // Từ đây trở đi, âm thanh thật sự phát ra qua audioCtx.destination (không còn
             // qua thẻ <audio> gốc nữa) -> phải áp lại thiết bị đã lưu NGAY TRÊN audioCtx,
@@ -6032,10 +6046,14 @@
             // tích tần số + vẽ canvas mỗi khung hình để tiết kiệm CPU cho máy yếu, chứ
             // không chỉ ẩn bằng CSS (ẩn bằng CSS vẫn tốn CPU vẽ ở dưới nếu không chặn ở đây)
             if (!settings.perf.visualizer) return;
+            // Đang xem video (canvas bị ẩn) / tab ẩn / không phát -> khỏi phân tích + vẽ; trên điện thoại chỉ vẽ ~30fps
+            if (document.hidden || document.body.classList.contains('has-video') || audio.paused) return;
+            if (document.documentElement.classList.contains('m-ui') && (vizFrame & 1)) { vizFrame++; return; }
             analyser.getByteFrequencyData(dataArray);
             const ctx = visualizer.getContext('2d');
-            visualizer.width = visualizer.clientWidth;
-            visualizer.height = visualizer.clientHeight;
+            // Gán width/height mỗi khung hình sẽ cấp phát lại canvas -> chỉ đổi khi kích thước thật sự thay đổi
+            if (visualizer.width !== visualizer.clientWidth) visualizer.width = visualizer.clientWidth;
+            if (visualizer.height !== visualizer.clientHeight) visualizer.height = visualizer.clientHeight;
             const barWidth = (visualizer.width / dataArray.length) * 2.5;
             let x = 0; ctx.clearRect(0,0, visualizer.width, visualizer.height);
             // Màu sóng nhạc đồng bộ với Accent Color (đọc lại mỗi ~0,5 giây để theo kịp lúc đổi accent/theme)
@@ -7941,7 +7959,7 @@
                 presetS.disabled = !mixer.eqOn;
                 presetS.value = mixer.preset;
             }
-            function changed() { mixerSave(); mixerApply(); }
+            function changed() { mixerSave(); if (!audioCtx) { try { initVisualizer(); } catch (e) {} } mixerApply(); }
             function detectPreset() {
                 const k = Object.keys(MIXER_PRESETS).find(n => MIXER_PRESETS[n].every((v, i) => v === mixer.eq[i]));
                 mixer.preset = k || 'custom';
@@ -8927,6 +8945,7 @@
         // bật nút; nếu audio báo lỗi (file hỏng/không hỗ trợ) -> giữ nút tắt (xám)
         audio.addEventListener('loadedmetadata', () => {
             document.body.classList.toggle('has-video', audio.videoWidth > 0);
+            if (!audioCtx) { try { initVisualizer(); } catch (e) {} }
             if (typeof pipSyncVideo === 'function') pipSyncVideo(false);
             const track = playlist[currentIndex];
             if (track) track.canOpen = true;

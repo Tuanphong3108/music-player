@@ -60,6 +60,10 @@
     {
       "content": "Cài đặt trên điện thoại làm lại: danh sách danh mục (icon màu + mô tả) → trang chi tiết có tiêu đề lớn, thu gọn lên thanh khi cuộn; dropdown thành nút pill + bottom sheet; thanh kéo kiểu expressive có vạch chấm (cả PC lẫn điện thoại)",
       "icon": "tune"
+    },
+    {
+      "content": "Tối ưu phát video trên điện thoại: bỏ chuỗi Web Audio khi Mixer để mặc định (hết lệch tiếng/giật), tắt kính mờ khi có video, visualizer không còn chạy ngầm khi xem video và không cấp phát lại canvas mỗi khung hình",
+      "icon": "speed"
     }
   ],
   "en": [
@@ -122,6 +126,10 @@
     {
       "content": "Phone Settings rebuilt: category list (coloured icons + descriptions) → detail page with a large title that collapses into the bar on scroll; dropdowns became pills + bottom sheets; expressive dotted-tick sliders (PC and phone)",
       "icon": "tune"
+    },
+    {
+      "content": "Faster video playback on phones: Web Audio chain skipped while the Mixer is at defaults (no more audio drift/stutter), glass blur disabled during video, and the visualizer no longer runs in the background or reallocates its canvas every frame",
+      "icon": "speed"
     }
   ]
 }
