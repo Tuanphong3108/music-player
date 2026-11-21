@@ -49,6 +49,7 @@ public class MainActivity extends Activity {
     private boolean pageResponded = false;
     private boolean hangAlertShown = false;
     private boolean updateInstallPending = false;
+    private long updateInstallLaunchedAt = 0L;
     private boolean waitingUnknownSourcePermission = false;
     private String pendingUpdateUrl = null;
     private volatile boolean updateDownloadCancelled = false;
@@ -827,6 +828,7 @@ public class MainActivity extends Activity {
         } else if (req == 45) {
             pingHandler.removeCallbacks(installerTimeoutRunnable);
             updateInstallPending = false;
+            updateInstallLaunchedAt = 0L;
             if (res == RESULT_OK) {
                 callJs("window.__onAndroidUpdateInstalled&&window.__onAndroidUpdateInstalled()");
             } else if (res == RESULT_CANCELED) {
@@ -940,6 +942,7 @@ public class MainActivity extends Activity {
                 installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
                 installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
                 updateInstallPending = true;
+                updateInstallLaunchedAt = android.os.SystemClock.elapsedRealtime();
                 pingHandler.removeCallbacks(installerTimeoutRunnable);
                 pingHandler.postDelayed(installerTimeoutRunnable, 10000);
                 startActivityForResult(installIntent, 45);
@@ -973,9 +976,10 @@ public class MainActivity extends Activity {
                 }
             }, 250);
         }
-        if (updateInstallPending) {
+        if (updateInstallPending && android.os.SystemClock.elapsedRealtime() - updateInstallLaunchedAt > 1200) {
             pingHandler.removeCallbacks(installerTimeoutRunnable);
             updateInstallPending = false;
+            updateInstallLaunchedAt = 0L;
             callJs("window.__onAndroidUpdateError&&window.__onAndroidUpdateError(" + JSONObject.quote(
                     isEnglishLang() ? "Installer closed without completing update" : "Trình cài đặt đã đóng hoặc gặp lỗi khi cài") + ")");
         }
