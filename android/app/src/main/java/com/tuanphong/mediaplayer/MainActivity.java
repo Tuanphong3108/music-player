@@ -49,6 +49,9 @@ public class MainActivity extends Activity {
     private boolean pageResponded = false;
     private boolean hangAlertShown = false;
     private android.view.View hangOverlay = null;
+    private android.view.View loadingOverlay = null;
+    private android.animation.ValueAnimator md3ArcAnimator = null;
+    private android.animation.ValueAnimator md3RotAnimator = null;
     private final Runnable loadTimeoutRunnable = () -> {
         if (appLeftHome || pageResponded) return;
         showUnresponsiveDialog();
@@ -118,12 +121,21 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public void onPageStarted(WebView v, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(v, url, favicon);
+                if (!pageResponded && !hangAlertShown) showMd3LoadingOverlay();
+            }
+
+            @Override
             public void onPageFinished(WebView v, String url) {
                 if (url.startsWith("https://tuanphong3108.github.io/")) {
                     pageReady = true;
                     flushPending();
                     if (!appLeftHome && !pageResponded) sendHandshakePing();
-                } else pageReady = false;
+                } else {
+                    pageReady = false;
+                    hideMd3LoadingOverlay();
+                }
             }
         });
 
@@ -163,8 +175,102 @@ public class MainActivity extends Activity {
 
         if (b != null) web.restoreState(b);
         else web.loadUrl(isOnline() ? APP_URL : APP_URL); // SW của trang tự phục vụ offline; lỗi thì rơi về offline.html
+        showMd3LoadingOverlay();
         armLoadWatchdog();
         handleIntent(getIntent());
+    }
+
+    private void showMd3LoadingOverlay() {
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed() || root == null || loadingOverlay != null) return;
+            final float d = getResources().getDisplayMetrics().density;
+            android.widget.FrameLayout box = new android.widget.FrameLayout(this);
+            box.setBackgroundColor(themeColor != 0 ? themeColor : 0xFF1C1B1F);
+            box.setClickable(true);
+            box.setFocusable(true);
+
+            final int sizePx = (int) (56 * d);
+            final float strokePx = 5.5f * d;
+            final int accentHex = (themeColor != 0 ? themeColor : 0xFFD0BCFF);
+            double lum = (0.299 * ((accentHex >> 16) & 255) + 0.587 * ((accentHex >> 8) & 255) + 0.114 * (accentHex & 255)) / 255.0;
+            final int ringColor = lum > 0.65 ? 0xFF4F378B : 0xFFD0BCFF;
+            final int trackColor = (ringColor & 0x00FFFFFF) | 0x26000000;
+
+            android.view.View spinner = new android.view.View(this) {
+                float sweepAngle = 72f;
+                float startOffset = 0f;
+
+                @Override
+                protected void onDraw(android.graphics.Canvas canvas) {
+                    super.onDraw(canvas);
+                    float pad = strokePx / 2f + 2f * d;
+                    android.graphics.RectF rect = new android.graphics.RectF(pad, pad, getWidth() - pad, getHeight() - pad);
+
+                    android.graphics.Paint trackPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+                    trackPaint.setStyle(android.graphics.Paint.Style.STROKE);
+                    trackPaint.setStrokeWidth(strokePx);
+                    trackPaint.setColor(trackColor);
+                    canvas.drawArc(rect, 0f, 360f, false, trackPaint);
+
+                    android.graphics.Paint arcPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+                    arcPaint.setStyle(android.graphics.Paint.Style.STROKE);
+                    arcPaint.setStrokeWidth(strokePx);
+                    arcPaint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+                    arcPaint.setColor(ringColor);
+                    canvas.drawArc(rect, startOffset, sweepAngle, false, arcPaint);
+                }
+            };
+
+            android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(sizePx, sizePx);
+            lp.gravity = android.view.Gravity.CENTER;
+            box.addView(spinner, lp);
+
+            loadingOverlay = box;
+            root.addView(loadingOverlay, new FrameLayout.LayoutParams(-1, -1));
+
+            // Hoạt ảnh Expressive: co giãn nhịp thở cung tròn + xoay mượt liên tục
+            md3ArcAnimator = android.animation.ValueAnimator.ofFloat(0f, 1f);
+            md3ArcAnimator.setDuration(1200);
+            md3ArcAnimator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+            md3ArcAnimator.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+            md3ArcAnimator.setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f));
+            md3ArcAnimator.addUpdateListener(anim -> {
+                float t = (float) anim.getAnimatedValue();
+                try {
+                    java.lang.reflect.Field fSweep = spinner.getClass().getDeclaredField("sweepAngle");
+                    fSweep.setAccessible(true);
+                    fSweep.setFloat(spinner, 54f + t * 226f);
+                    spinner.invalidate();
+                } catch (Throwable ignored) {}
+            });
+            md3ArcAnimator.start();
+
+            md3RotAnimator = android.animation.ValueAnimator.ofFloat(0f, 360f);
+            md3RotAnimator.setDuration(1400);
+            md3RotAnimator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+            md3RotAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+            md3RotAnimator.addUpdateListener(anim -> {
+                float deg = (float) anim.getAnimatedValue();
+                try {
+                    java.lang.reflect.Field fStart = spinner.getClass().getDeclaredField("startOffset");
+                    fStart.setAccessible(true);
+                    fStart.setFloat(spinner, deg);
+                    spinner.invalidate();
+                } catch (Throwable ignored) {}
+            });
+            md3RotAnimator.start();
+        });
+    }
+
+    private void hideMd3LoadingOverlay() {
+        runOnUiThread(() -> {
+            if (md3ArcAnimator != null) { md3ArcAnimator.cancel(); md3ArcAnimator = null; }
+            if (md3RotAnimator != null) { md3RotAnimator.cancel(); md3RotAnimator = null; }
+            if (loadingOverlay != null && root != null) {
+                root.removeView(loadingOverlay);
+                loadingOverlay = null;
+            }
+        });
     }
 
     private void armLoadWatchdog() {
@@ -194,6 +300,7 @@ public class MainActivity extends Activity {
     private void showUnresponsiveDialog() {
         if (appLeftHome || pageResponded || hangAlertShown) return;
         hangAlertShown = true;
+        hideMd3LoadingOverlay();
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed() || hangOverlay != null) return;
             android.widget.LinearLayout box = new android.widget.LinearLayout(this);
@@ -492,6 +599,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (instance == this) instance = null;
+        hideMd3LoadingOverlay();
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
         try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {}
@@ -564,6 +672,7 @@ public class MainActivity extends Activity {
             pageResponded = true;
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
+            hideMd3LoadingOverlay();
             hideUnresponsiveDialog();
         }
 
