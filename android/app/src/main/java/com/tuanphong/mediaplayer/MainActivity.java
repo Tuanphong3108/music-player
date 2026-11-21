@@ -1360,9 +1360,19 @@ public class MainActivity extends Activity {
         public void setThemeColor(String hex) {
             try {
                 final int c = Color.parseColor(hex);
-                getSharedPreferences("app", MODE_PRIVATE).edit().putInt("theme", 0xFF000000 | c).apply();
+                int fullColor = 0xFF000000 | c;
+                getSharedPreferences("app", MODE_PRIVATE).edit().putInt("theme", fullColor).apply();
+                MediaWidgetProvider.savePlaybackState(
+                        MainActivity.this,
+                        getSharedPreferences(MediaWidgetProvider.PREFS, MODE_PRIVATE).getBoolean("playing", false),
+                        null, null, null, fullColor);
                 runOnUiThread(() -> applyTheme(c));
             } catch (Exception ignored) {}
+        }
+
+        @JavascriptInterface
+        public void setWidgetLyric(String lyricLine) {
+            MediaWidgetProvider.saveLyricLine(MainActivity.this, lyricLine == null ? "" : lyricLine);
         }
 
         @JavascriptInterface
