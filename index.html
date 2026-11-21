@@ -1035,10 +1035,10 @@
                 width: calc(var(--vw) * 0.44 - 32px) !important;
                 z-index: 2505 !important;
             }
-            /* Các màn hình phụ trên máy tính bảng Android ngang (Playlist, Metadata/Thumbnail Editor, Thông tin khác, Phản hồi): mở ở bên trái, giữ vùng ảnh bìa bên phải */
+            /* Các màn hình phụ trên máy tính bảng Android ngang (Playlist, Metadata/Thumbnail Editor, Thông tin khác, Phản hồi): mở ở bên phải, giữ vùng ảnh bìa bên trái */
             html.m-ui body.m-playlist-open .playlist-card {
-                left: 16px !important;
-                right: auto !important;
+                left: auto !important;
+                right: 16px !important;
                 top: 68px !important;
                 bottom: 16px !important;
                 width: calc(var(--vw) * 0.46) !important;
@@ -1047,8 +1047,8 @@
                 box-shadow: 0 12px 36px rgba(0,0,0,.45) !important;
             }
             html.m-ui .cl-overlay.open:not(#settings-overlay) {
-                justify-content: flex-start !important;
-                padding: 68px 0 16px 16px !important;
+                justify-content: flex-end !important;
+                padding: 68px 16px 16px 0 !important;
                 background: transparent !important;
                 backdrop-filter: none !important;
             }
@@ -1060,8 +1060,8 @@
                 margin: 0 !important;
             }
             html.m-ui #metadata-iframe[style*="right: 0"] {
-                left: 16px !important;
-                right: auto !important;
+                left: auto !important;
+                right: 16px !important;
                 top: 68px !important;
                 width: calc(var(--vw) * 0.46) !important;
                 height: calc(var(--vh) - 84px) !important;
@@ -7047,7 +7047,11 @@
                 const langSel = document.getElementById('setting-language');
                 if (langSel) langSel.addEventListener('change', () => setTimeout(applyAndroidAudioLabels, 60));
             }
-            if (isAndroidDevice) { try { updateFsUI(); } catch (e) {} }
+            if (isAndroidDevice) {
+                try { updateFsUI(); } catch (e) {}
+                const plArrow = document.querySelector('#playlist-card .playlist-header .expand-icon');
+                if (plArrow) plArrow.textContent = 'arrow_back';
+            }
             else document.body.classList.remove('m-playlist-open', 'm-more-open');
             const mPlBtn = document.getElementById('m-playlist-btn');
             if (mPlBtn) mPlBtn.addEventListener('click', () => {
