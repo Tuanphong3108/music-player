@@ -1364,8 +1364,22 @@
         }
 </style>
 <script>
-    // App Android (WebView) nạp trang với ?android=true
-    (function () { try { if (new URLSearchParams(location.search).get('android') === 'true') { window.IS_ANDROID_APP = true; document.documentElement.classList.add('is-android-app'); } } catch (e) {} })();
+    // Nhận diện thiết bị Android thật + cờ ?android=true (tránh giả lập PC trên Android qua mặt, đồng thời không bật giao diện Android trên PC)
+    (function () {
+        try {
+            var ua = navigator.userAgent || '';
+            var uad = navigator.userAgentData;
+            var isAndroidDev = /Android/i.test(ua)
+                || !!(uad && uad.platform === 'Android')
+                || (navigator.maxTouchPoints > 0 && /Linux/i.test(navigator.platform || '') && !/CrOS/i.test(ua));
+            window.IS_ANDROID_DEVICE = isAndroidDev;
+            var hasFlag = new URLSearchParams(location.search).get('android') === 'true';
+            if (hasFlag && isAndroidDev) {
+                window.IS_ANDROID_APP = true;
+                document.documentElement.classList.add('is-android-app');
+            }
+        } catch (e) {}
+    })();
 </script>
 </head>
 <body>
@@ -6596,7 +6610,10 @@
         (function () {
             const AB = window.AndroidBridge;
             if (!AB) return;
-            document.documentElement.classList.add('is-android-app');
+            if (window.IS_ANDROID_DEVICE !== false && new URLSearchParams(location.search).get('android') === 'true') {
+                window.IS_ANDROID_APP = true;
+                document.documentElement.classList.add('is-android-app');
+            }
             window.__nativeOpenFiles = async function (list) {
                 try {
                     const files = [];
@@ -7277,7 +7294,7 @@
                 settingTheme.value = cfg.theme;
                 applyTheme(cfg.theme);
             }
-            if (typeof cfg.accent === 'string' && accents[cfg.accent]) {
+            if (typeof cfg.accent === 'string' && (accents[cfg.accent] || (cfg.accent === 'system' && window.IS_ANDROID_APP))) {
                 settings.accent = cfg.accent;
                 gsStore.set('settings_accent', cfg.accent);
                 settingAccent.value = cfg.accent;
@@ -7316,6 +7333,9 @@
                 scale: sc,
                 parentScale: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale')) || 1,
                 accents: JSON.parse(JSON.stringify(accents)),
+                isAndroidDevice: !!window.IS_ANDROID_DEVICE,
+                isAndroidApp: !!window.IS_ANDROID_APP,
+                systemAccent: systemAccentHex || null,
                 font
             }, '*');
         }
@@ -7391,7 +7411,7 @@
         const settingDynamicAccent = document.getElementById('setting-dynamic-accent');
         const settingTheme = document.getElementById('setting-theme');
         const settingAccent = document.getElementById('setting-accent');
-        if (window.IS_ANDROID_APP || (window.AndroidBridge && AndroidBridge.getSystemAccent)) {
+        if (window.IS_ANDROID_APP) {
             settingAccent.insertAdjacentHTML('afterbegin', '<md-select-option value="system"><div slot="headline" data-i18n="settings.accent_system">Hệ thống (System)</div></md-select-option>');
             try { applyTranslations(currentLangDict, settingAccent); } catch (e) {}
         }
