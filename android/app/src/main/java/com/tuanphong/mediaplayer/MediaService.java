@@ -69,6 +69,14 @@ public class MediaService extends Service {
 
     @Override
     public int onStartCommand(Intent i, int flags, int id) {
+        try {
+            return handleCommand(i);
+        } catch (Throwable t) {
+            return START_NOT_STICKY;   // lỗi cập nhật phiên phát không được phép làm sập cả app
+        }
+    }
+
+    private int handleCommand(Intent i) {
         String a = i == null ? null : i.getAction();
         if (a != null && a.startsWith("cmd:")) { cmd(a.substring(4)); return START_NOT_STICKY; }
         if (i != null && ACTION_ART.equals(a)) {
@@ -193,9 +201,14 @@ public class MediaService extends Service {
                 .addAction(android.R.drawable.ic_media_next, "Sau", act("next"));
         if (art != null) b.setLargeIcon(art);
         Notification n = b.build();
-        if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
-        else startForeground(1, n);
-        if (!playing) stopForeground(false);
+        // Android 12+ có thể từ chối startForeground khi app đang ở nền (ForegroundServiceStartNotAllowedException) -> không để làm sập app
+        try {
+            if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+            else startForeground(1, n);
+            if (!playing) stopForeground(false);
+        } catch (Throwable fe) {
+            try { nm.notify(1, n); } catch (Throwable ignored) {}
+        }
     }
 
     @Override
