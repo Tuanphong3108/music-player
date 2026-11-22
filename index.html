@@ -314,6 +314,8 @@
         }
         .btn-m3:hover { background: var(--md-sys-color-secondary-container); transform: scale(1.1); }
         .btn-m3:hover .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
+        /* Bản Android: mọi icon luôn ở dạng đặc (fill) */
+        html.is-android-app .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .btn-m3:active { transform: scale(0.9); }
         .btn-m3.active { color: var(--md-sys-color-primary); background: var(--md-sys-color-secondary-container); }
         .btn-m3.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
@@ -8589,7 +8591,12 @@
                     }
                     .pip-seek { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
                     .pip-time { font-size: calc(11px * var(--font-scale-factor, 1)); opacity: .75; min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
-                    #pip-seek { flex: 1; min-width: 0; height: 4px; cursor: pointer; accent-color: var(--pip-primary, #D0BCFF); }
+                    /* Thanh seek của PiP dùng đúng thanh sóng MD3E của trình phát chính */
+                    .pip-seek-wrap { position: relative; flex: 1; min-width: 0; height: 28px; }
+                    .pip-seek-wrap .seek-wave { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+                    #pip-seek { position: relative; z-index: 1; display: block; width: 100%; height: 28px; margin: 0; padding: 0; cursor: pointer; appearance: none; -webkit-appearance: none; background: transparent; }
+                    #pip-seek::-webkit-slider-runnable-track { background: transparent; height: 28px; }
+                    #pip-seek::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 6px; height: 28px; border-radius: 3px; background: var(--pip-primary, #D0BCFF); border: none; }
                     body.pip-expanded .pip-player-section { padding: 12px 24px; }
                     .pip-controls { 
                         display: flex; justify-content: center; align-items: center; gap: 8px;
@@ -8767,6 +8774,11 @@
                 pipDoc.getElementById('pip-repeat-btn').onclick = () => document.getElementById('repeat-btn').click();
                 // Thanh trượt thời gian: kéo -> tua; lúc đang kéo thì không bị timeupdate ghi đè
                 const pipSeekEl = pipDoc.getElementById('pip-seek');
+                try {
+                    const wrap = pipDoc.createElement('div'); wrap.className = 'pip-seek-wrap';
+                    pipSeekEl.parentNode.insertBefore(wrap, pipSeekEl); wrap.appendChild(pipSeekEl);
+                    if (window.__makeWave) window.__makeWave(pipSeekEl, wrap, null, 'rgba(255,255,255,.22)', 6, { doc: pipDoc, win: customPipWindow, primaryVar: '--pip-primary' });
+                } catch (e) { console.warn('PiP wave seek', e); }
                 pipSeekEl.addEventListener('pointerdown', () => { pipSeeking = true; });
                 pipSeekEl.addEventListener('pointerup', () => { pipSeeking = false; });
                 pipSeekEl.addEventListener('input', () => {
@@ -9809,15 +9821,17 @@
         // Dùng cho thanh tua chính (PC + điện thoại) và thanh tua trong Lyric View (điện thoại)
         (function () {
             const WL = 40, AMP = 3, STROKE = 4, GAP = 4, DOT = 4, THUMB = 6;
-            function makeWave(slider, host, before, trackColor, thumbW) {
-                const cv = document.createElement('canvas'); cv.className = 'seek-wave';
+            function makeWave(slider, host, before, trackColor, thumbW, opts) {
+                opts = opts || {};
+                const doc = opts.doc || document, win = opts.win || window, primaryVar = opts.primaryVar || '--md-sys-color-primary';
+                const cv = doc.createElement('canvas'); cv.className = 'seek-wave';
                 host.insertBefore(cv, before || slider);
                 const ctx = cv.getContext('2d');
                 let amp = 0, phase = 0, last = 0, raf = 0, colT = 0, colSyncTimer = null, colP = '#d0bcff', colV = 'rgba(255,255,255,.18)';
                 function readColors(now) {
                     colT = now || performance.now();
-                    const cs = getComputedStyle(document.documentElement);
-                    colP = cs.getPropertyValue('--md-sys-color-primary').trim() || colP;
+                    const cs = win.getComputedStyle(doc.documentElement);
+                    colP = cs.getPropertyValue(primaryVar).trim() || colP;
                     colV = trackColor ? trackColor : (cs.getPropertyValue('--md-sys-color-surface-variant').trim() || colV);
                 }
                 function colors(now) {
@@ -9833,7 +9847,7 @@
                 }
                 function draw(now) {
                     const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
-                    const dpr = window.devicePixelRatio || 1;
+                    const dpr = win.devicePixelRatio || 1;
                     if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
                     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
                     colors(now);
@@ -9861,7 +9875,7 @@
                 }
                 function frame(now) {
                     raf = 0;
-                    if (document.hidden || !cv.offsetParent) return;
+                    if (doc.hidden || !cv.offsetParent) return;
                     const dt = Math.min(64, now - (last || now)); last = now;
                     const reduce = document.documentElement.classList.contains('reduce-motion');
                     // Theo Material 3 Expressive (WavyProgressIndicatorDefaults.indicatorAmplitude): biên độ = 0 khi tiến trình ≤ 10% hoặc ≥ 95%
@@ -9874,18 +9888,19 @@
                     if (Math.abs(target - amp) < 0.004) amp = target;
                     if (amp > 0) phase += (dt / 1000) * Math.PI * 2;          // 1 wavelength / giây (waveSpeed mặc định MD3E); sóng chạy ngược (từ phải sang trái)
                     draw(now);
-                    if (amp > 0 || target) raf = requestAnimationFrame(frame); else last = 0;
+                    if (amp > 0 || target) raf = win.requestAnimationFrame(frame); else last = 0;
                 }
-                const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+                const kick = () => { if (!raf) raf = win.requestAnimationFrame(frame); };
                 ['play', 'pause', 'seeked', 'timeupdate', 'loadedmetadata', 'durationchange', 'ended'].forEach(e => audio.addEventListener(e, kick));
                 slider.addEventListener('input', kick);
-                window.addEventListener('resize', kick);
-                document.addEventListener('visibilitychange', kick);
-                new MutationObserver(() => { kick(); scheduleColorSync(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
-                new MutationObserver(kick).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-                window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', scheduleColorSync);
+                win.addEventListener('resize', kick);
+                doc.addEventListener('visibilitychange', kick);
+                new win.MutationObserver(() => { kick(); scheduleColorSync(); }).observe(doc.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
+                new win.MutationObserver(kick).observe(doc.body, { attributes: true, attributeFilter: ['class'] });
+                win.matchMedia('(prefers-color-scheme: light)').addEventListener('change', scheduleColorSync);
                 kick();
             }
+            window.__makeWave = makeWave;
             makeWave(document.getElementById('seek-slider'), document.querySelector('.seek-container'), null, null, 6);
             const ls = document.getElementById('m-lyric-seek');
             if (ls) makeWave(ls, ls.parentElement, null, 'rgba(255,255,255,.22)', 8);

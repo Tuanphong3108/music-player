@@ -156,6 +156,10 @@
     {
       "content": "Sóng trên thanh seek chạy ngược chiều và theo đúng Material 3 Expressive: thẳng ở ≤10% và ≥95% tiến trình, sóng ở giữa, chuyển mượt giữa thẳng và sóng",
       "icon": "waves"
+    },
+    {
+      "content": "Bản Android: mọi biểu tượng luôn ở dạng đặc (fill); bản PC: thanh seek của trình phát thu nhỏ (PiP) dùng thanh sóng MD3E giống trình phát chính",
+      "icon": "waves"
     }
   ],
   "en": [
@@ -313,6 +317,10 @@
     },
     {
       "content": "Seek-bar wave now travels the opposite way and follows Material 3 Expressive: flat at ≤10% and ≥95% progress, wavy in between, with smooth transitions",
+      "icon": "waves"
+    },
+    {
+      "content": "Android: all icons stay filled; PC: the mini player (PiP) seek bar now uses the same MD3E wavy bar as the main player",
       "icon": "waves"
     }
   ]
