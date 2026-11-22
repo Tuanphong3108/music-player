@@ -492,6 +492,7 @@
                         if (!raw) return;
                         const info = JSON.parse(raw);
                         if (!info || !info.code) return;
+                        if (info.code === 'BG_TASK_REMOVED' || info.code === 'BG_SYS_USER_STOPPED') return;
 
                         // Khôi phục lại accent color gốc (bỏ màu động còn sót nếu có)
                         try {
