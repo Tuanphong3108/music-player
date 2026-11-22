@@ -6505,7 +6505,7 @@
         function initVisualizer() {
             if (audioCtx) return;
             if (document.documentElement.classList.contains('m-ui')) {
-                if (!audio.readyState) return;   // chưa biết là video hay nhạc -> chờ loadedmetadata (xem listener bên dưới)
+                if (!window.IS_ANDROID_APP && !audio.readyState) return;   // bản Android không có video nên dựng đồ thị âm thanh ngay, khỏi chờ metadata   // chưa biết là video hay nhạc -> chờ loadedmetadata (xem listener bên dưới)
                 if (audio.videoWidth > 0 && mixerIsDefault()) return;
             }
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -6529,6 +6529,14 @@
             }
         }
 
+        // Bản Android: dựng sẵn AudioContext/đồ thị âm thanh khi app rảnh (trước lần phát đầu) để lúc bắt đầu phát không phải khởi tạo
+        // giữa chừng làm nhạc khựng 1-2 giây; và đánh thức context ngay ở lần chạm đầu tiên của người dùng.
+        if (window.IS_ANDROID_APP) {
+            const warm = () => { try { if (!audioCtx && !(!settings.perf.visualizer && mixerIsDefault())) initVisualizer(); } catch (e) {} };
+            (window.requestIdleCallback ? (fn) => requestIdleCallback(fn, { timeout: 3000 }) : (fn) => setTimeout(fn, 1500))(() => setTimeout(warm, 600));
+            const wake = () => { try { warm(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {} };
+            window.addEventListener('pointerdown', wake, { once: true, capture: true, passive: true });
+        }
         let vizRGB = null, vizFrame = 0;
         function readAccentRGB() {
             const c = document.createElement('canvas').getContext('2d');

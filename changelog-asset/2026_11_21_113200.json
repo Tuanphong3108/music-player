@@ -136,6 +136,10 @@
     {
       "content": "Tối ưu cho máy cấu hình yếu: máy RAM ≤ 4GB mặc định tắt kính mờ, lớp phủ không còn blur toàn màn hình, nền album nhẹ hơn, playlist chỉ vẽ các dòng đang nhìn thấy và hoãn các tác vụ nền lúc khởi động",
       "icon": "speed"
+    },
+    {
+      "content": "Sửa nhạc bị khựng 1-2 giây đầu ở lần phát đầu tiên sau khi mở app (Android): dựng sẵn bộ xử lý âm thanh trước khi phát và sao chép sẵn tệp nhạc ở nền",
+      "icon": "music_note"
     }
   ],
   "en": [
@@ -274,6 +278,10 @@
     {
       "content": "Optimized for low-end devices: phones with ≤ 4GB RAM default to glass off, overlays no longer blur the whole screen, lighter album backdrop, playlist only renders visible rows and background tasks are deferred at startup",
       "icon": "speed"
+    },
+    {
+      "content": "Fixed stutter in the first 1-2 seconds of the first playback after launching the app (Android): the audio engine is prepared in advance and the track file is pre-copied in the background",
+      "icon": "music_note"
     }
   ]
 }

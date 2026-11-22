@@ -997,7 +997,21 @@ public class MainActivity extends Activity {
         }
     }
 
+    private final java.util.concurrent.ExecutorService prefetchExec = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "media-prefetch");
+        t.setPriority(Thread.MIN_PRIORITY);
+        return t;
+    });
+
+    /** Sao chép sẵn tệp nhạc đầu tiên vào cache nền, để lúc phát không phải chờ sao chép nên không bị khựng ở đầu bài. */
+    private void prefetchFirst(List<Uri> uris) {
+        if (uris == null || uris.isEmpty()) return;
+        final Uri first = uris.get(0);
+        prefetchExec.execute(() -> { try { ensureLocalSeekableFile(first); } catch (Throwable ignored) {} });
+    }
+
     private void queueUris(List<Uri> uris) {
+        prefetchFirst(uris);
         for (Uri u : uris) {
             try {
                 if (isDisallowedVideoUri(u)) continue;
