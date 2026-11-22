@@ -242,11 +242,63 @@ public class MainActivity extends Activity {
             public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) {
                 if (filePathCb != null) filePathCb.onReceiveValue(null);
                 filePathCb = cb;
+                String[] accept = (p != null) ? p.getAcceptTypes() : null;
+                boolean wantsImage = false;
+                boolean wantsPlaylist = false;
+                boolean wantsFont = false;
+                if (accept != null) {
+                    for (String a : accept) {
+                        if (a == null) continue;
+                        String low = a.toLowerCase();
+                        if (low.contains("image/") || low.endsWith(".png") || low.endsWith(".jpg") || low.endsWith(".jpeg") || low.endsWith(".webp")) {
+                            wantsImage = true;
+                        } else if (low.contains("mpegurl") || low.endsWith(".m3u") || low.endsWith(".m3u8")) {
+                            wantsPlaylist = true;
+                        } else if (low.contains("font/") || low.endsWith(".ttf") || low.endsWith(".otf") || low.endsWith(".woff") || low.endsWith(".woff2")) {
+                            wantsFont = true;
+                        }
+                    }
+                }
+                boolean allowMultiple = (p != null && p.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                if (wantsImage) {
+                    try {
+                        Intent imgIntent;
+                        if (Build.VERSION.SDK_INT >= 33) {
+                            imgIntent = new Intent(android.provider.MediaStore.ACTION_PICK_IMAGES);
+                            imgIntent.setType("image/*");
+                            if (allowMultiple) {
+                                imgIntent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX,
+                                        android.provider.MediaStore.getPickImagesMaxLimit());
+                            }
+                        } else {
+                            imgIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                            imgIntent.setType("image/*");
+                            if (allowMultiple) imgIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                        }
+                        startActivityForResult(imgIntent, 42);
+                        return true;
+                    } catch (Throwable ignored) {
+                        try {
+                            Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                            fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                            fallback.setType("image/*");
+                            fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, allowMultiple);
+                            startActivityForResult(Intent.createChooser(fallback, null), 42);
+                            return true;
+                        } catch (Exception e) {
+                            filePathCb = null; cb.onReceiveValue(null); return false;
+                        }
+                    }
+                }
                 Intent i = new Intent(Intent.ACTION_GET_CONTENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType("audio/*");
-                i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "text/*", "application/x-subrip"});
-                i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, p.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                if (wantsPlaylist || wantsFont) {
+                    i.setType("*/*");
+                } else {
+                    i.setType("audio/*");
+                    i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*", "text/*", "application/x-subrip"});
+                }
+                i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, allowMultiple);
                 try { startActivityForResult(Intent.createChooser(i, null), 42); }
                 catch (Exception e) { filePathCb = null; cb.onReceiveValue(null); return false; }
                 return true;
