@@ -282,11 +282,6 @@
             rows.push(moreInfoRowHTML('music_note', (track.file && track.file.type) || `${fileStr} ${track.ext}`, formatFileSizeVi(track.file ? track.file.size : null)));
             if (isMobileUi && rawFilePath) {
                 rows.push(moreInfoRowHTML('folder', currentLangDict['moreinfo.file_path'] || 'File Path', escHtml(rawFilePath)));
-                const hasNativeOpen = !!(window.AndroidBridge && typeof window.AndroidBridge.openFileInSystemFiles === 'function');
-                if (hasNativeOpen) {
-                    const openLabel = escHtml(currentLangDict['moreinfo.open_in_files'] || 'Open in Files');
-                    rows.push(`<div style="padding-top:4px;"><button type="button" id="m-open-in-files-btn" class="btn-m3" style="width:100%;height:42px;border-radius:999px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;"><span class="material-symbols-rounded" style="font-size:19px;">folder_open</span><span>${openLabel}</span></button></div>`);
-                }
             }
             if (tech && (tech.rate || tech.kbps)) {
                 const parts = [];
