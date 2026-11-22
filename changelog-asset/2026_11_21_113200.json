@@ -140,6 +140,10 @@
     {
       "content": "Sửa nhạc bị khựng 1-2 giây đầu ở lần phát đầu tiên sau khi mở app (Android): dựng sẵn bộ xử lý âm thanh trước khi phát và sao chép sẵn tệp nhạc ở nền",
       "icon": "music_note"
+    },
+    {
+      "content": "Nút điều khiển phát trên điện thoại giãn ra như viên thuốc khi bấm: Previous giãn sang phải, Play/Pause giãn hai bên, Next giãn sang trái, rồi co về như cũ",
+      "icon": "play_circle"
     }
   ],
   "en": [
@@ -282,6 +286,10 @@
     {
       "content": "Fixed stutter in the first 1-2 seconds of the first playback after launching the app (Android): the audio engine is prepared in advance and the track file is pre-copied in the background",
       "icon": "music_note"
+    },
+    {
+      "content": "Mobile playback buttons stretch like a pill when pressed: Previous stretches right, Play/Pause both sides, Next left, then spring back",
+      "icon": "play_circle"
     }
   ]
 }

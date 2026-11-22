@@ -915,7 +915,7 @@
         html.m-ui .controls-group .btn-m3 { height: 72px; width: 100%; border-radius: 36px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
         html.m-ui .controls-group .btn-m3:hover { transform: none; }
         html.m-ui #prev-btn { grid-area: prev; } html.m-ui #next-btn { grid-area: next; }
-        html.m-ui #play-btn { grid-area: play; width: 100% !important; height: 80px !important; border-radius: 28px !important; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        html.m-ui #play-btn { grid-area: play; width: 100%; justify-self: center; height: 80px !important; border-radius: 28px !important; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
         html.m-ui #shuffle-btn, html.m-ui #repeat-btn, html.m-ui .controls-group > div { height: 56px; }
         html.m-ui #shuffle-btn { grid-area: shuf; border-radius: 28px 10px 10px 28px !important; background: var(--md-sys-color-surface-variant) !important; }
         html.m-ui #repeat-btn { grid-area: rep; border-radius: 10px !important; background: var(--md-sys-color-surface-variant) !important; }
@@ -1739,7 +1739,9 @@
             background: var(--md-sys-color-tertiary-container, var(--md-sys-color-primary-container)) !important; color: var(--md-sys-color-on-tertiary-container, inherit) !important; }
         html.m-ui #play-btn { border-radius: 24px !important; }
         html.m-ui body.is-playing #play-btn { border-radius: 40px !important; }
-        html.m-ui #prev-btn:active, html.m-ui #next-btn:active { border-radius: 24px; transform: scale(.97); }
+        html.m-ui #prev-btn:active, html.m-ui #next-btn:active { border-radius: 24px; transform: scale(.97) !important; }
+        /* Hiệu ứng viên thuốc giãn ra: Previous giãn sang phải, Play/Pause giãn 2 bên, Next giãn sang trái (icon luôn nằm giữa nút vì nút là flex căn giữa) */
+        html.m-ui #prev-btn { justify-self: start; } html.m-ui #next-btn { justify-self: end; }
 
         /* ===== Chưa có bài nào: ẩn khung phát, chỉ còn các nút trên cùng + nút Thêm ở giữa ===== */
         #m-empty { display: none; }
@@ -6312,6 +6314,31 @@
             updatePlaylistUI();
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
         });
+
+        // Giao diện điện thoại: nút giãn ra như viên thuốc khi bấm rồi co về (Previous -> phải, Play/Pause -> 2 bên, Next -> trái)
+        (function () {
+            const stretch = (id, extra) => {
+                const b = document.getElementById(id);
+                if (!b) return;
+                b.addEventListener('click', () => {
+                    const root = document.documentElement;
+                    if (!root.classList.contains('m-ui') || root.classList.contains('reduce-motion') || !b.animate) return;
+                    if (b.__stretchAnim) { try { b.__stretchAnim.cancel(); } catch (e) {} }
+                    b.style.zIndex = '3';
+                    const a = b.animate([
+                        { width: '100%' },
+                        { width: 'calc(100% + ' + extra + 'px)', offset: 0.4 },
+                        { width: '100%' }
+                    ], { duration: 520, easing: 'cubic-bezier(.34, 1.56, .64, 1)' });
+                    b.__stretchAnim = a;
+                    const done = () => { if (b.__stretchAnim === a) { b.style.zIndex = ''; b.__stretchAnim = null; } };
+                    a.onfinish = done; a.oncancel = done;
+                });
+            };
+            stretch('prev-btn', 44);
+            stretch('play-btn', 56);
+            stretch('next-btn', 44);
+        })();
 
         document.getElementById('next-btn').addEventListener('click', () => {
             if (isEditorOpen()) return;   // đang chỉnh sửa: khoá chuyển bài
