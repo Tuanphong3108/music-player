@@ -68,6 +68,10 @@
     {
       "content": "Màn hình bắt đầu (Android): bước cấp quyền nhạc giờ cấp luôn quyền truy cập toàn bộ tệp để Metadata Editor hoạt động; chưa cấp đủ thì chưa sang bước tiếp theo",
       "icon": "folder_managed"
+    },
+    {
+      "content": "Chọn thiết bị đầu ra (Android): hiện bảng xoay vòng, xin quyền \"Thiết bị ở gần\" rồi liệt kê cả tai nghe Bluetooth; thiếu quyền thì có nút mở trang cấp quyền",
+      "icon": "bluetooth_audio"
     }
   ],
   "en": [
@@ -138,6 +142,10 @@
     {
       "content": "Getting Started (Android): the music permission step now also requests all-files access so the Metadata Editor works; you can't continue until both are granted",
       "icon": "folder_managed"
+    },
+    {
+      "content": "Output device picker (Android): shows a loading sheet, asks for the \"Nearby devices\" permission, then lists Bluetooth headphones too; if denied there is a button to open permission settings",
+      "icon": "bluetooth_audio"
     }
   ]
 }

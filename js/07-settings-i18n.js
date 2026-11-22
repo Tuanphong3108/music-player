@@ -890,6 +890,32 @@
                 requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('show')));
             }
             window.__openSheetItems = openSheetItems;
+            // Bottom sheet ở trạng thái đang tải (vòng tròn xoay) / thông báo kèm nút
+            function openSheetLoading(title) {
+                sheetTitle.textContent = title || '';
+                sheetList.innerHTML = '<div style="display:flex;justify-content:center;padding:28px 0 24px;"><md-circular-progress indeterminate style="--md-circular-progress-size:44px;"></md-circular-progress></div>';
+                sheet.classList.add('open');
+                requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('show')));
+            }
+            function openSheetMessage(title, text, btnLabel, onBtn) {
+                sheetTitle.textContent = title || '';
+                sheetList.innerHTML = '';
+                const p = document.createElement('div');
+                p.style.cssText = 'padding:4px 8px 14px;opacity:.8;line-height:1.45;font-size:calc(14px * var(--font-scale-factor, 1));';
+                p.textContent = text; sheetList.appendChild(p);
+                if (btnLabel) {
+                    const b = document.createElement('button');
+                    b.className = 'st-sheet-opt sel'; b.style.justifyContent = 'center';
+                    b.textContent = btnLabel;
+                    b.addEventListener('click', () => { try { onBtn(); } catch (e) {} });
+                    sheetList.appendChild(b);
+                }
+                sheet.classList.add('open');
+                requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('show')));
+            }
+            window.__openSheetLoading = openSheetLoading;
+            window.__openSheetMessage = openSheetMessage;
+            window.__closeSheet = closeSheet;
             const optLabel = (o) => (o.querySelector('[slot="headline"]')?.textContent || o.textContent).trim();
             function openSheet(sel, title) {
                 openSheetItems(title, Array.from(sel.querySelectorAll('md-select-option')).map(o => ({
@@ -920,6 +946,57 @@
                 }));
                 setTimeout(() => { try { menu.open = false; } catch (_) {} }, 0);
                 if (items.length) openSheetItems(title, items);
+            }, true);
+            // Chọn thiết bị đầu ra (app Android): sheet xoay vòng -> kiểm tra quyền "Thiết bị ở gần" -> liệt kê thiết bị (kể cả Bluetooth)
+            let outFlowSeq = 0;
+            function runOutputDeviceFlow() {
+                const AB = window.AndroidBridge;
+                const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
+                const title = (document.getElementById('output-device-btn') || {}).title || (isEn ? 'Choose audio output device' : 'Chọn thiết bị phát âm thanh');
+                const seq = ++outFlowSeq;
+                const S = {
+                    permMsg: isEn ? 'To list Bluetooth devices (such as your earbuds), Media Player needs the "Nearby devices" permission.' : 'Để liệt kê thiết bị Bluetooth (như tai nghe của bạn), Media Player cần quyền "Thiết bị ở gần".',
+                    permBtn: isEn ? 'Open permission settings' : 'Mở trang cấp quyền',
+                    speaker: isEn ? 'Speaker' : 'Loa ngoài', wired: isEn ? 'Wired headphones' : 'Tai nghe có dây', usb: 'USB', hdmi: 'HDMI', hearing: isEn ? 'Hearing aid' : 'Máy trợ thính',
+                    bt: 'Bluetooth', active: isEn ? 'Currently playing' : 'Đang phát ở đây', switchTo: isEn ? 'Tap to switch in system output picker' : 'Chạm để chuyển trong bảng chọn đầu ra của hệ thống',
+                    none: isEn ? 'No output devices found' : 'Không tìm thấy thiết bị đầu ra nào'
+                };
+                openSheetLoading(title);
+                const showList = () => {
+                    if (seq !== outFlowSeq) return;
+                    let devs = [];
+                    try { devs = JSON.parse(AB.getOutputDevicesJson() || '[]'); } catch (e) {}
+                    if (!devs.length) { openSheetMessage(title, S.none); return; }
+                    const icons = { speaker: 'speaker', bluetooth: 'headphones', wired: 'headphones', usb: 'usb', hdmi: 'tv', hearing: 'hearing' };
+                    openSheetItems(title, devs.map(d => ({
+                        label: d.kind === 'speaker' ? S.speaker : (d.name || S[d.kind] || S.bt),
+                        sub: d.active ? S.active : (d.kind === 'bluetooth' ? S.switchTo : ''),
+                        icon: icons[d.kind] || 'speaker', selected: !!d.active,
+                        pick: () => { if (!d.active && AB.openSystemOutputSwitcher) AB.openSystemOutputSwitcher(); }
+                    })));
+                };
+                const showNoPerm = () => {
+                    if (seq !== outFlowSeq) return;
+                    openSheetMessage(title, S.permMsg, S.permBtn, () => { if (AB.openAppPermissionSettings) AB.openAppPermissionSettings(); closeSheet(); });
+                };
+                setTimeout(() => {
+                    try {
+                        if (!AB || !AB.hasNearbyPermission) { showList(); return; }
+                        if (AB.hasNearbyPermission()) { showList(); return; }
+                        window.__onNearbyPermResult = (ok) => {
+                            if (seq !== outFlowSeq) return;
+                            if (!sheet.classList.contains('open')) return;
+                            if (ok) { openSheetLoading(title); setTimeout(showList, 250); } else showNoPerm();
+                        };
+                        AB.requestNearbyPermission();   // chưa có quyền -> xin; kết quả về __onNearbyPermResult
+                    } catch (e) { showList(); }
+                }, 350);
+            }
+            document.addEventListener('click', (e) => {
+                const ob = e.target.closest && e.target.closest('#output-device-btn');
+                if (!ob || !isM() || !window.IS_ANDROID_APP || !window.AndroidBridge || !window.AndroidBridge.getOutputDevicesJson) return;
+                e.stopPropagation(); e.preventDefault();
+                runOutputDeviceFlow();
             }, true);
             document.addEventListener('click', (e) => {
                 const b = e.target.closest && e.target.closest('#speed-btn');

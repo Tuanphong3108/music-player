@@ -1241,6 +1241,9 @@ public class MainActivity extends Activity {
         if (requestCode == 101 && hasMediaPermissionInternal() && !hasAllFilesAccessInternal()) {
             openAllFilesAccessSettings();   // đã cho đọc nhạc -> chuyển tiếp sang cấp quyền toàn bộ tệp
         }
+        if (requestCode == 104) {
+            callJs("window.__onNearbyPermResult&&window.__onNearbyPermResult(" + hasNearbyPermissionInternal() + ")");
+        }
         if (requestCode == 101 || requestCode == 102 || requestCode == 103) {
             callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
         }
@@ -1289,6 +1292,61 @@ public class MainActivity extends Activity {
         } else if (Build.VERSION.SDK_INT >= 23) {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 103);
         }
+    }
+
+    // ===== Chọn thiết bị đầu ra (Bluetooth cần quyền "Thiết bị ở gần" = BLUETOOTH_CONNECT trên Android 12+) =====
+    private boolean hasNearbyPermissionInternal() {
+        if (Build.VERSION.SDK_INT >= 31) {
+            return checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
+    }
+
+    private String getOutputDevicesJsonInternal() {
+        JSONArray arr = new JSONArray();
+        try {
+            android.media.AudioManager am = (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
+            android.media.AudioDeviceInfo[] devs = am.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS);
+            java.util.Set<Integer> routed = new java.util.HashSet<>();
+            if (Build.VERSION.SDK_INT >= 33) {
+                try {
+                    android.media.AudioAttributes aa = new android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC).build();
+                    for (android.media.AudioDeviceInfo d : am.getAudioDevicesForAttributes(aa)) routed.add(d.getId());
+                } catch (Throwable ignored) {}
+            }
+            boolean anyBt = false, anyWired = false;
+            List<JSONObject> items = new ArrayList<>();
+            for (android.media.AudioDeviceInfo d : devs) {
+                int t = d.getType();
+                String kind;
+                if (t == android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) kind = "speaker";
+                else if (t == android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || (Build.VERSION.SDK_INT >= 31 && (t == android.media.AudioDeviceInfo.TYPE_BLE_HEADSET || t == android.media.AudioDeviceInfo.TYPE_BLE_SPEAKER || t == android.media.AudioDeviceInfo.TYPE_BLE_BROADCAST))) { kind = "bluetooth"; anyBt = true; }
+                else if (t == android.media.AudioDeviceInfo.TYPE_WIRED_HEADPHONES || t == android.media.AudioDeviceInfo.TYPE_WIRED_HEADSET) { kind = "wired"; anyWired = true; }
+                else if (t == android.media.AudioDeviceInfo.TYPE_USB_DEVICE || t == android.media.AudioDeviceInfo.TYPE_USB_HEADSET || t == android.media.AudioDeviceInfo.TYPE_USB_ACCESSORY) { kind = "usb"; anyWired = true; }
+                else if (t == android.media.AudioDeviceInfo.TYPE_HDMI || t == android.media.AudioDeviceInfo.TYPE_HDMI_ARC) kind = "hdmi";
+                else if (t == android.media.AudioDeviceInfo.TYPE_HEARING_AID) kind = "hearing";
+                else continue;   // bỏ SCO/cuộc gọi/ống nghe
+                JSONObject o = new JSONObject();
+                o.put("id", d.getId());
+                o.put("kind", kind);
+                CharSequence nm = d.getProductName();
+                o.put("name", nm == null ? "" : nm.toString());
+                items.add(o);
+            }
+            for (JSONObject o : items) {
+                boolean active;
+                if (Build.VERSION.SDK_INT >= 33 && !routed.isEmpty()) active = routed.contains(o.getInt("id"));
+                else {
+                    String k = o.getString("kind");
+                    active = anyBt ? k.equals("bluetooth") : anyWired ? (k.equals("wired") || k.equals("usb")) : k.equals("speaker");
+                }
+                o.put("active", active);
+                arr.put(o);
+            }
+        } catch (Throwable ignored) {}
+        return arr.toString();
     }
 
     private boolean hasMediaPermissionInternal() {
@@ -1711,6 +1769,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        try { if (pageReady && hasNearbyPermissionInternal()) callJs("window.__onNearbyPermResult&&window.__onNearbyPermResult(true)"); } catch (Throwable ignored) {}
         try { if (pageReady) callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")"); } catch (Throwable ignored) {}
         if (waitingUnknownSourcePermission) {
             pingHandler.postDelayed(() -> {
@@ -2221,6 +2280,48 @@ public class MainActivity extends Activity {
                     }
                 } else {
                     openAllFilesAccessSettings();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public boolean hasNearbyPermission() { return hasNearbyPermissionInternal(); }
+
+        @JavascriptInterface
+        public void requestNearbyPermission() {
+            runOnUiThread(() -> {
+                if (hasNearbyPermissionInternal()) {
+                    callJs("window.__onNearbyPermResult&&window.__onNearbyPermResult(true)");
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 31) requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 104);
+            });
+        }
+
+        @JavascriptInterface
+        public String getOutputDevicesJson() { return getOutputDevicesJsonInternal(); }
+
+        @JavascriptInterface
+        public void openAppPermissionSettings() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    i.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(i);
+                } catch (Throwable ignored) {}
+            });
+        }
+
+        /** Mở bảng chuyển đầu ra phương tiện của hệ thống (WebView không tự ép định tuyến sang thiết bị cụ thể được). */
+        @JavascriptInterface
+        public void openSystemOutputSwitcher() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent("com.android.settings.panel.action.MEDIA_OUTPUT");
+                    i.putExtra("com.android.settings.panel.extra.PACKAGE_NAME", getPackageName());
+                    startActivity(i);
+                } catch (Throwable ex) {
+                    try { startActivity(new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)); } catch (Throwable ignored) {}
                 }
             });
         }
