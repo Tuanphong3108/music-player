@@ -148,6 +148,10 @@
     {
       "content": "Widget màn hình chính ăn theo màu accent đang chọn trong app, và tự về trạng thái chưa mở bài nào (album art trống) khi app khởi động lại sau khi bị sập",
       "icon": "widgets"
+    },
+    {
+      "content": "Animation giãn nút trên điện thoại mượt hơn (chạy bằng GPU, không còn tính lại bố cục mỗi khung hình); sửa lỗi sóng nhạc báo lỗi trên giao diện điện thoại",
+      "icon": "speed"
     }
   ],
   "en": [
@@ -298,6 +302,10 @@
     {
       "content": "Home screen widgets now follow the accent colour chosen in the app and reset to the no-track state (empty album art) when the app restarts after a crash",
       "icon": "widgets"
+    },
+    {
+      "content": "Smoother button stretch animation on phones (GPU-driven, no per-frame layout); fixed the visualizer throwing errors on the phone UI",
+      "icon": "speed"
     }
   ]
 }
