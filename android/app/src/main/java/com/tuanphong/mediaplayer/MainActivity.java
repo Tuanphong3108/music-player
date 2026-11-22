@@ -1238,13 +1238,16 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 101 || requestCode == 102) {
+        if (requestCode == 101 && hasMediaPermissionInternal() && !hasAllFilesAccessInternal()) {
+            openAllFilesAccessSettings();   // đã cho đọc nhạc -> chuyển tiếp sang cấp quyền toàn bộ tệp
+        }
+        if (requestCode == 101 || requestCode == 102 || requestCode == 103) {
             callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
         }
     }
 
     private String getPermissionsStatusJson() {
-        boolean media = hasMediaPermissionInternal();
+        boolean media = hasFullMediaAccessInternal();
         boolean notif = hasNotificationPermissionInternal();
         boolean battery = isIgnoringBatteryOptimizationsInternal();
         try {
@@ -1255,6 +1258,36 @@ public class MainActivity extends Activity {
             return o.toString();
         } catch (Throwable ignored) {
             return "{\"media\":" + media + ",\"notifications\":" + notif + ",\"battery\":" + battery + "}";
+        }
+    }
+
+    /** Quyền "Quản lý toàn bộ tệp" (Android 11+) - cần để Metadata Editor ghi trực tiếp vào tệp nhạc. */
+    private boolean hasAllFilesAccessInternal() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try { return android.os.Environment.isExternalStorageManager(); } catch (Throwable t) { return false; }
+        }
+        if (Build.VERSION.SDK_INT >= 23) {
+            return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
+    }
+
+    /** Đủ quyền để app dùng: đọc nhạc + truy cập toàn bộ tệp. */
+    private boolean hasFullMediaAccessInternal() {
+        return hasMediaPermissionInternal() && hasAllFilesAccessInternal();
+    }
+
+    private void openAllFilesAccessSettings() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                i.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(i);
+            } catch (Throwable ex) {
+                try { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)); } catch (Throwable ignored) {}
+            }
+        } else if (Build.VERSION.SDK_INT >= 23) {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 103);
         }
     }
 
@@ -1678,6 +1711,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        try { if (pageReady) callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")"); } catch (Throwable ignored) {}
         if (waitingUnknownSourcePermission) {
             pingHandler.postDelayed(() -> {
                 if (!waitingUnknownSourcePermission) return;
@@ -2174,14 +2208,19 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void requestMediaPermission() {
             runOnUiThread(() -> {
-                if (hasMediaPermissionInternal()) {
+                if (hasFullMediaAccessInternal()) {
                     callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
                     return;
                 }
-                if (Build.VERSION.SDK_INT >= 33) {
-                    requestPermissions(new String[]{Manifest.permission.READ_MEDIA_AUDIO}, 101);
-                } else if (Build.VERSION.SDK_INT >= 23) {
-                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
+                if (!hasMediaPermissionInternal()) {
+                    // Bước 1: quyền đọc nhạc; xong sẽ tự chuyển sang bước 2 (toàn bộ tệp) trong onRequestPermissionsResult
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        requestPermissions(new String[]{Manifest.permission.READ_MEDIA_AUDIO}, 101);
+                    } else if (Build.VERSION.SDK_INT >= 23) {
+                        requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
+                    }
+                } else {
+                    openAllFilesAccessSettings();
                 }
             });
         }

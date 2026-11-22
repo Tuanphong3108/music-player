@@ -64,6 +64,10 @@
     {
       "content": "Service Worker dùng stale-while-revalidate cho tài nguyên cùng origin, thông báo khi kích hoạt bản mới; thông tin khác có thêm Chất lượng âm thanh (tần số lấy mẫu, bitrate, định dạng)",
       "icon": "cached"
+    },
+    {
+      "content": "Màn hình bắt đầu (Android): bước cấp quyền nhạc giờ cấp luôn quyền truy cập toàn bộ tệp để Metadata Editor hoạt động; chưa cấp đủ thì chưa sang bước tiếp theo",
+      "icon": "folder_managed"
     }
   ],
   "en": [
@@ -130,6 +134,10 @@
     {
       "content": "Service Worker uses stale-while-revalidate for same-origin assets and announces when a new version activates; More info gains Audio quality (sample rate, bitrate, format)",
       "icon": "cached"
+    },
+    {
+      "content": "Getting Started (Android): the music permission step now also requests all-files access so the Metadata Editor works; you can't continue until both are granted",
+      "icon": "folder_managed"
     }
   ]
 }
