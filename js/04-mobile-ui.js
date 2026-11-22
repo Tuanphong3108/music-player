@@ -198,11 +198,14 @@
             }
 
             let coverHydrateRunning = false;
+            let coverHydratePending = false;
             window.__hydrateMobileLibraryCovers = async function () {
-                if (coverHydrateRunning || !document.documentElement.classList.contains('m-ui')) return;
+                if (!document.documentElement.classList.contains('m-ui')) return;
+                if (coverHydrateRunning) { coverHydratePending = true; return; }
                 const pool = Array.isArray(window.__mobileLibrary) ? window.__mobileLibrary : [];
                 if (!pool.length) return;
                 coverHydrateRunning = true;
+                coverHydratePending = false;
                 try {
                     // Bước 1: Nạp tức thì metadata & ảnh bìa đã lưu trong app (IndexedDB) để mở lên là hiện ngay
                     const cacheMap = await loadAllMetaCache();
