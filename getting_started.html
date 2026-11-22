@@ -120,16 +120,6 @@
   .key-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; border-radius:20px; background:var(--surface-1); font-size:13px; font-weight:700; }
   .key-row .k { display:flex; gap:6px; align-items:center; flex-shrink:0; }
 
-  /* Touch Gestures (Android) */
-  .gesture-list { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
-  .gesture-card { background:var(--surface-1); border-radius:26px; padding:18px; display:flex; align-items:flex-start; gap:14px; border:1px solid color-mix(in srgb, var(--outline) 18%, transparent); transition:transform .25s var(--spring), background .2s; }
-  .gesture-card:active { transform:scale(.98); background:var(--surface-2); }
-  .gesture-badge { width:46px; height:46px; border-radius:16px; background:var(--primary-container); color:var(--on-primary-container); display:grid; place-items:center; flex-shrink:0; font-size:24px; }
-  .gesture-body { min-width:0; flex:1; }
-  .gesture-tag { display:inline-block; font-size:11px; font-weight:800; letter-spacing:.4px; padding:3px 9px; border-radius:99px; background:var(--secondary-container); color:var(--primary); margin-bottom:6px; }
-  .gesture-card h3 { margin:0 0 4px; font-size:15px; font-weight:800; }
-  .gesture-card p { margin:0; font-size:13px; line-height:1.5; color:var(--on-surface-variant); }
-
   /* Settings slide */
   .set-card { background:var(--surface-1); border-radius:28px; padding:20px 22px; display:flex; flex-direction:column; gap:14px; }
   .set-head { display:flex; align-items:center; gap:12px; }
@@ -176,161 +166,372 @@
   .dot.active { width:26px; background:var(--primary); }
 
   /* ==========================================================================
-     ANDROID MOBILE REDESIGN (Material Design 3 Expressive - Handheld Ergonomics)
+     ANDROID EXPRESSIVE ONBOARDING (PixelPlayer-inspired M3E Setup Wizard)
      ========================================================================== */
   html.is-android .pc-only { display:none !important; }
   html.is-android .android-only { display:block !important; }
   html:not(.is-android) .android-only { display:none !important; }
 
-  html.is-android header {
-    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 6px;
-  }
-  html.is-android .brand-badge {
-    width: 40px; height: 40px; border-radius: 14px;
-  }
-  html.is-android .brand-badge img { width: 22px; height: 22px; }
-  html.is-android .brand h1 { font-size: 15px; }
-  html.is-android .btn-text {
-    background: var(--surface-2);
-    color: var(--on-surface);
-    padding: 9px 14px;
-    border-radius: 999px;
-    font-size: 12px;
-  }
-  html.is-android .stepper { padding: 6px 16px 0; gap: 6px; }
-  html.is-android .step-pill { height: 6px; }
-  html.is-android .step-meta { padding: 8px 18px 2px; font-size: 12px; }
+  html.is-android header,
+  html.is-android .stepper,
+  html.is-android .step-meta { display:none !important; }
+
+  html.is-android .app { background: var(--surface); }
 
   html.is-android .slide {
-    padding: 12px 16px 24px;
-    align-items: stretch;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 24px 16px;
+    align-items: center;
+    justify-content: space-between;
   }
   html.is-android .slide-inner {
     margin: 0 auto;
+    width: 100%;
+    max-width: 480px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     gap: 16px;
-    max-width: 540px;
   }
-  html.is-android .slide[data-step="0"] .slide-inner {
-    margin: auto 0;
-    padding-block: 8px;
+
+  /* Android Welcome Hero */
+  .and-welcome-head {
+    width: 100%;
+    text-align: left;
+    padding-top: 8px;
   }
-  html.is-android h2 {
-    font-size: clamp(24px, 6.8vw, 32px);
+  .and-welcome-head .w-sub {
+    font-size: clamp(32px, 8.5vw, 42px);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--on-surface);
+    letter-spacing: -0.5px;
+  }
+  .and-welcome-head .w-brand {
+    font-size: clamp(38px, 10vw, 48px);
+    font-weight: 900;
+    line-height: 1.08;
+    color: var(--primary);
+    letter-spacing: -0.8px;
+    margin-top: 2px;
+  }
+  .and-pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--on-surface);
+    font-size: 13px;
+    font-weight: 700;
+    align-self: center;
+  }
+  .and-hero-card {
+    position: relative;
+    width: 100%;
+    height: 210px;
+    border-radius: 28px;
+    background: var(--surface-1);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .and-hero-card .hero-fig {
+    width: 96px;
+    height: 96px;
+    border-radius: 32px;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 12px 32px color-mix(in srgb, var(--primary) 28%, transparent);
+    z-index: 1;
+  }
+  .and-hero-card .hero-fig img { width: 54px; height: 54px; object-fit: contain; }
+  .and-hero-card svg.wave-svg {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    width: 100%; height: 34px;
+  }
+
+  /* Android Permission / Setup Step Layout */
+  .and-step-head {
+    text-align: center;
+    padding-top: 8px;
+  }
+  .and-step-head h2 {
+    font-size: clamp(28px, 7.5vw, 34px);
+    font-weight: 800;
     line-height: 1.15;
-    letter-spacing: -.4px;
+    letter-spacing: -0.4px;
+    margin: 0 0 12px;
   }
-  html.is-android .lead {
-    font-size: 14px;
-    line-height: 1.55;
+  .and-step-head p {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--on-surface-variant);
   }
-  html.is-android .hero-icon {
-    width: 88px; height: 88px; border-radius: 30px; font-size: 46px;
+
+  /* Expressive Icon Collage (5 geometric M3E shapes) */
+  .and-collage {
+    position: relative;
+    width: 240px;
+    height: 200px;
+    margin: auto;
+    flex-shrink: 0;
   }
-  html.is-android .hero-icon img { width: 48px; height: 48px; }
-  html.is-android .lang-grid {
-    grid-template-columns: 1fr 1fr;
+  .and-collage .c-center {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 108px; height: 108px;
+    transform: translate(-50%, -50%) rotate(-8deg);
+    border-radius: 30px;
+    background: var(--surface-3);
+    color: var(--on-surface);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 10px 28px rgba(0,0,0,.22);
+  }
+  .and-collage .c-center .ms { font-size: 52px; }
+  .and-collage .c-sat {
+    position: absolute;
+    width: 52px; height: 52px;
+    display: grid;
+    place-items: center;
+    background: var(--surface-2);
+    color: var(--primary);
+    border: 1.5px solid color-mix(in srgb, var(--primary) 26%, transparent);
+  }
+  .and-collage .c-sat .ms { font-size: 24px; }
+  .and-collage .s1 { left: 10px; top: 18px; border-radius: 50%; }
+  .and-collage .s2 { right: 12px; top: 14px; border-radius: 16px; transform: rotate(12deg); }
+  .and-collage .s3 { left: 14px; bottom: 16px; border-radius: 18px 8px 18px 8px; transform: rotate(-10deg); }
+  .and-collage .s4 { right: 10px; bottom: 18px; border-radius: 14px; }
+
+  .and-step-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 10px;
+    padding-bottom: 6px;
   }
-  html.is-android .lang-card {
-    padding: 18px 12px;
-    border-radius: 24px;
-    font-size: 15px;
+  .and-action-btn {
+    border: none;
+    height: 54px;
+    padding: 0 30px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--on-primary);
+    font: 800 15px var(--font);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform .2s var(--spring), background .25s, color .25s, opacity .2s;
   }
-  html.is-android .grid.g3,
-  html.is-android .grid.g2,
-  html.is-android .gesture-list,
-  html.is-android .settings-grid {
-    grid-template-columns: 1fr;
+  .and-action-btn:active { transform: scale(.96); }
+  .and-action-btn.granted {
+    background: var(--surface-2);
+    color: var(--on-surface-variant);
+    cursor: default;
+    pointer-events: none;
+  }
+  .and-skip-link {
+    border: none;
+    background: transparent;
+    color: var(--primary);
+    font: 700 14px var(--font);
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .and-skip-link:active { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+
+  /* Android Theme Option Cards (PixelPlayer style) */
+  .and-theme-cards {
+    display: flex;
+    flex-direction: column;
     gap: 10px;
+    width: 100%;
+    margin: auto 0;
   }
-  html.is-android .card {
-    flex-direction: row;
+  .and-theme-card {
+    display: flex;
     align-items: flex-start;
     gap: 14px;
     padding: 16px;
     border-radius: 24px;
+    background: var(--surface-1);
+    border: 2px solid transparent;
+    text-align: left;
+    cursor: pointer;
+    color: var(--on-surface);
+    font-family: var(--font);
+    transition: background .2s, border-color .2s, transform .2s var(--spring);
   }
-  html.is-android .card:hover { transform: none; }
-  html.is-android .card .ico {
-    width: 44px; height: 44px; border-radius: 15px; font-size: 22px; flex-shrink: 0;
+  .and-theme-card:active { transform: scale(.98); }
+  .and-theme-card.sel {
+    background: color-mix(in srgb, var(--primary-container) 75%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary) 50%, transparent);
   }
-  html.is-android .card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-  html.is-android .card h3 { font-size: 15px; }
-  html.is-android .card p { font-size: 13px; line-height: 1.48; }
-  html.is-android .note {
+  .and-theme-card .tc-ico {
+    width: 46px; height: 46px;
+    border-radius: 16px;
+    background: var(--secondary-container);
+    color: var(--on-surface);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .and-theme-card.sel .tc-ico {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .and-theme-card .tc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .and-theme-card .tc-title { font-size: 16px; font-weight: 800; }
+  .and-theme-card .tc-badge {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+  .and-theme-card.sel .tc-badge {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .and-theme-card .tc-desc { font-size: 13px; line-height: 1.4; color: var(--on-surface-variant); }
+  .and-theme-card .tc-radio {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .and-theme-card.sel .tc-radio {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .and-theme-card .tc-radio .ms { font-size: 16px; }
+
+  /* Android Floating Bottom Bar (PixelPlayer SetupBottomBar style) */
+  html.is-android footer { display:none !important; }
+  .and-bottom-bar {
+    display: none;
+  }
+  html.is-android .and-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 10px calc(10px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 14px 12px 24px;
+    border-radius: 34px;
+    background: var(--surface-2);
+    box-shadow: 0 6px 24px rgba(0,0,0,.3);
+    flex-shrink: 0;
+  }
+  .and-bottom-bar .and-step-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--on-surface-variant);
+  }
+  .and-bottom-bar .and-step-label.is-welcome {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--primary);
+  }
+  .and-fab-next {
+    width: 64px;
+    height: 56px;
+    border: none;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: border-radius .5s var(--ease-r), transform .55s var(--spring), background .25s, color .25s, opacity .2s;
+  }
+  .and-fab-next[disabled] {
+    background: var(--surface-3);
+    color: var(--on-surface-variant);
+    opacity: .55;
+    pointer-events: none;
+  }
+  .and-fab-next .ms {
+    font-size: 24px;
+    transition: transform .55s var(--spring);
+  }
+
+  /* Android Excluded Folders Picker Sheet */
+  .and-dir-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--surface);
+    display: none;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .and-dir-modal.open { display: flex; }
+  .and-dir-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 14px 16px;
-    border-radius: 22px;
-    font-size: 13px;
-  }
-  html.is-android .set-card {
-    padding: 16px;
-    border-radius: 24px;
     gap: 12px;
   }
-  html.is-android .seg button {
-    padding: 10px 6px;
-    font-size: 12px;
-    gap: 5px;
-    white-space: nowrap;
+  .and-dir-top h3 { margin: 0; font-size: 20px; font-weight: 800; flex: 1; text-align: center; }
+  .and-dir-sub {
+    padding: 0 20px 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--on-surface-variant);
   }
-  html.is-android .seg button .ms {
-    font-size: 18px;
-  }
-  html.is-android .swatches {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-  }
-  html.is-android .sw {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1;
-    max-width: 52px;
-    justify-self: center;
-    border-radius: 50%;
-  }
-  html.is-android .sw.sw-sys {
-    grid-column: 1 / -1;
-    width: 100%;
-    max-width: none;
-    height: 46px;
-    aspect-ratio: auto;
-    border-radius: 16px;
-    justify-content: center;
-  }
-  html.is-android .scale-row {
+  .and-dir-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 16px 24px;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
   }
-  html.is-android .icon-btn {
-    width: 38px; height: 38px; flex-shrink: 0;
+  .and-dir-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    background: var(--surface-1);
+    cursor: pointer;
   }
-  html.is-android .scale-val {
-    min-width: 56px; padding: 7px 8px; font-size: 13px;
+  .and-dir-item.excluded {
+    opacity: .6;
+    background: color-mix(in srgb, var(--surface-1) 70%, #000);
   }
-  html.is-android footer {
+  .and-dir-item .d-info { flex: 1; min-width: 0; }
+  .and-dir-item .d-name { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .and-dir-item .d-path { font-size: 11.5px; color: var(--on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+  .and-dir-item .d-cnt { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--secondary-container); color: var(--primary); }
+  .and-dir-footer {
     padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-top: 1px solid color-mix(in srgb, var(--outline) 16%, transparent);
-    gap: 10px;
-  }
-  html.is-android footer .dots { display: none; }
-  html.is-android footer .btn {
-    flex: 1;
-    height: 52px;
-    padding: 0 14px;
-    border-radius: 26px;
-    font-size: 13.5px;
-    white-space: nowrap;
-  }
-  html.is-android footer #btn-back {
-    flex: 0 0 auto;
-    padding: 0 18px;
+    display: flex;
+    justify-content: flex-end;
+    background: var(--surface-1);
   }
 
   @media (max-width:720px) {
-    .g3,.g2,.keys,.gesture-list,.settings-grid { grid-template-columns:1fr; }
+    .g3,.g2,.keys,.settings-grid { grid-template-columns:1fr; }
     .dots { display:none; }
     .btn { padding:13px 20px; }
     .hero-icon img { width:46px; height:46px; }
@@ -353,8 +554,9 @@
   <div class="step-meta"><span id="step-count">Bước 1 / 5</span><b id="step-name">Chào mừng</b></div>
 
   <main id="main">
+    <!-- ================= PC SLIDES (GIỮ NGUYÊN 100%) ================= -->
     <!-- 1. Chào mừng + ngôn ngữ -->
-    <section class="slide center" data-step="0"><div class="slide-inner center">
+    <section class="slide pc-only center" data-step="0"><div class="slide-inner center">
       <div class="hero-icon"><img src="music_note.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ms',textContent:'music_note'}))"></div>
       <h2 data-i="s1_title">Chào mừng đến với Media Player</h2>
       <p class="lead" data-i="s1_desc">Trình phát nhạc và video chạy ngay trên máy bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.</p>
@@ -368,39 +570,37 @@
     </div></section>
 
     <!-- 2. Thêm nhạc -->
-    <section class="slide" data-step="1"><div class="slide-inner">
+    <section class="slide pc-only" data-step="1"><div class="slide-inner">
       <div><span class="chip"><span class="ms">add_circle</span><span data-i="s2_chip">Bắt đầu</span></span></div>
       <h2 data-i="s2_title">Thêm nhạc hoặc video vào trình phát</h2>
       <p class="lead" data-i="s2_desc">Nhạc và video được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.</p>
       <div class="grid g3">
         <div class="card"><div class="ico"><span class="ms">add_circle</span></div><div class="card-body"><h3 data-i="s2_c1t">Nút Thêm nhạc / video</h3><p data-i="s2_c1d">Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc/video (mp4, webm, mkv, mov...). Phím tắt: <kbd>Ctrl</kbd> + <kbd>O</kbd>.</p></div></div>
-        <div class="card pc-only"><div class="ico"><span class="ms">drag_pan</span></div><div class="card-body"><h3 data-i="s2_c2t">Kéo &amp; thả</h3><p data-i="s2_c2d">Kéo tệp nhạc hoặc video (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.</p></div></div>
-        <div class="card android-only"><div class="ico"><span class="ms">share</span></div><div class="card-body"><h3 data-i="s2_c2t_and">Mở &amp; Chia sẻ từ ứng dụng khác</h3><p data-i="s2_c2d_and">Chọn "Mở bằng" hoặc "Chia sẻ" tệp nhạc/video từ Trình quản lý tệp, Zalo, Telegram... sang Media Player để phát ngay.</p></div></div>
+        <div class="card"><div class="ico"><span class="ms">drag_pan</span></div><div class="card-body"><h3 data-i="s2_c2t">Kéo &amp; thả</h3><p data-i="s2_c2d">Kéo tệp nhạc hoặc video (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.</p></div></div>
         <div class="card"><div class="ico"><span class="ms">queue_music</span></div><div class="card-body"><h3 data-i="s2_c3t">Danh sách phát</h3><p data-i="s2_c3d">Tìm bài trong danh sách, bật Ngẫu nhiên (Shuffle) và Lặp lại để nghe liên tục.</p></div></div>
       </div>
-      <div class="note pc-only"><span class="ms">offline_bolt</span><span data-i="s2_note">Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc/video trực tiếp từ máy và dùng offline.</span></div>
-      <div class="note android-only"><span class="ms">offline_bolt</span><span data-i="s2_note_and">Bản Android tự động cập nhật theo trang web, dùng offline hoàn toàn sau lần mở đầu có mạng và hỗ trợ phát nhạc nền khi tắt màn hình.</span></div>
+      <div class="note"><span class="ms">offline_bolt</span><span data-i="s2_note">Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc/video trực tiếp từ máy và dùng offline.</span></div>
     </div></section>
 
     <!-- 3. Tính năng -->
-    <section class="slide" data-step="2"><div class="slide-inner">
+    <section class="slide pc-only" data-step="2"><div class="slide-inner">
       <div><span class="chip"><span class="ms">auto_awesome</span><span data-i="s3_chip">Tính năng</span></span></div>
       <h2 data-i="s3_title">Những thứ hay ho đi kèm</h2>
       <div class="grid g3">
         <div class="card"><div class="ico"><span class="ms">lyrics</span></div><div class="card-body"><h3 data-i="s3_c1t">Lời bài hát đồng bộ</h3><p data-i="s3_c1d">Tự nhận tệp .lrc cùng tên hoặc lời nhúng trong bài. Bấm vào một câu để tua tới đó.</p></div></div>
         <div class="card"><div class="ico"><span class="ms">edit_note</span></div><div class="card-body"><h3 data-i="s3_c2t">Sửa thẻ &amp; ảnh bìa</h3><p data-i="s3_c2d">Chỉnh thẻ ID3, ảnh bìa và tìm lời trên lrclib ngay trong ứng dụng.</p></div></div>
-        <div class="card pc-only"><div class="ico"><span class="ms">picture_in_picture_alt</span></div><div class="card-body"><h3 data-i="s3_c3t">Thu nhỏ (PiP)</h3><p data-i="s3_c3d">Giữ trình phát nhỏ nổi trên màn hình (có cả thanh tua và khung video) trong lúc bạn làm việc khác.</p></div></div>
-        <div class="card pc-only"><div class="ico"><span class="ms">fullscreen</span></div><div class="card-body"><h3 data-i="s3_c4t">Toàn màn hình</h3><p data-i="s3_c4d">Ảnh bìa, lời và sóng nhạc (hoặc hình video) trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.</p></div></div>
+        <div class="card"><div class="ico"><span class="ms">picture_in_picture_alt</span></div><div class="card-body"><h3 data-i="s3_c3t">Thu nhỏ (PiP)</h3><p data-i="s3_c3d">Giữ trình phát nhỏ nổi trên màn hình (có cả thanh tua và khung video) trong lúc bạn làm việc khác.</p></div></div>
+        <div class="card"><div class="ico"><span class="ms">fullscreen</span></div><div class="card-body"><h3 data-i="s3_c4t">Toàn màn hình</h3><p data-i="s3_c4d">Ảnh bìa, lời và sóng nhạc (hoặc hình video) trong chế độ Immersive. Phím tắt: <kbd>F11</kbd>.</p></div></div>
         <div class="card"><div class="ico"><span class="ms">timer</span></div><div class="card-body"><h3 data-i="s3_c5t">Hẹn giờ tạm dừng</h3><p data-i="s3_c5d">Tự dừng nhạc sau một khoảng thời gian hoặc sau một số bài nhất định.</p></div></div>
         <div class="card"><div class="ico"><span class="ms">headphones</span></div><div class="card-body"><h3 data-i="s3_c6t">Thiết bị âm thanh</h3><p data-i="s3_c6d">Chọn loa hoặc tai nghe phát nhạc ngay từ thanh trên cùng.</p></div></div>
-        <div class="card pc-only"><div class="ico"><span class="ms">movie</span></div><div class="card-body"><h3 data-i="s3_c7t"></h3><p data-i="s3_c7d"></p></div></div>
+        <div class="card"><div class="ico"><span class="ms">movie</span></div><div class="card-body"><h3 data-i="s3_c7t"></h3><p data-i="s3_c7d"></p></div></div>
         <div class="card"><div class="ico"><span class="ms">equalizer</span></div><div class="card-body"><h3 data-i="s3_c8t"></h3><p data-i="s3_c8d"></p></div></div>
-        <div class="card pc-only"><div class="ico"><span class="ms">subtitles</span></div><div class="card-body"><h3 data-i="s3_c9t"></h3><p data-i="s3_c9d"></p></div></div>
+        <div class="card"><div class="ico"><span class="ms">subtitles</span></div><div class="card-body"><h3 data-i="s3_c9t"></h3><p data-i="s3_c9d"></p></div></div>
         <div class="card"><div class="ico"><span class="ms">phone_android</span></div><div class="card-body"><h3 data-i="s3_c10t"></h3><p data-i="s3_c10d"></p></div></div>
       </div>
     </div></section>
 
-    <!-- 4a. Phím tắt (Chỉ hiện trên PC) -->
+    <!-- 4. Phím tắt (PC) -->
     <section class="slide pc-only" data-step="3"><div class="slide-inner">
       <div><span class="chip"><span class="ms">keyboard</span><span data-i="s4_chip">Phím tắt</span></span></div>
       <h2 data-i="s4_title">Điều khiển không cần chuột</h2>
@@ -417,49 +617,8 @@
       </div>
     </div></section>
 
-    <!-- 4b. Thao tác cảm ứng (Chỉ hiện trên Android) -->
-    <section class="slide android-only" data-step="3"><div class="slide-inner">
-      <div><span class="chip"><span class="ms">touch_app</span><span data-i="s4_and_chip">Thao tác cảm ứng</span></span></div>
-      <h2 data-i="s4_and_title">Điều khiển mượt mà bằng một tay</h2>
-      <p class="lead" data-i="s4_and_desc">Giao diện di động tối ưu cho thao tác chạm, vuốt và điều khiển nhanh trên điện thoại Android.</p>
-      <div class="gesture-list">
-        <div class="gesture-card">
-          <div class="gesture-badge"><span class="ms">swipe</span></div>
-          <div class="gesture-body">
-            <span class="gesture-tag" data-i="g1_tag">VUỐT NGANG</span>
-            <h3 data-i="g1_t">Chuyển nhanh các bước</h3>
-            <p data-i="g1_d">Vuốt sang trái hoặc phải ngay trên màn hình hướng dẫn này để chuyển qua lại giữa các bước mà không cần với tay xuống dưới.</p>
-          </div>
-        </div>
-        <div class="gesture-card">
-          <div class="gesture-badge"><span class="ms">lyrics</span></div>
-          <div class="gesture-body">
-            <span class="gesture-tag" data-i="g2_tag">CHẠM LỜI BÀI HÁT</span>
-            <h3 data-i="g2_t">Tua nhanh tới câu hát</h3>
-            <p data-i="g2_d">Bấm nút Lời bài hát để mở chế độ toàn màn hình, chuyển giữa Synced / Static và chạm trực tiếp vào bất kỳ câu nào để phát từ đoạn đó.</p>
-          </div>
-        </div>
-        <div class="gesture-card">
-          <div class="gesture-badge"><span class="ms">drag_indicator</span></div>
-          <div class="gesture-body">
-            <span class="gesture-tag" data-i="g3_tag">NHẤN GIỮ &amp; KÉO</span>
-            <h3 data-i="g3_t">Sắp xếp lại danh sách phát</h3>
-            <p data-i="g3_d">Mở Playlist ở thanh trên cùng, bật chế độ Sắp xếp rồi chạm giữ biểu tượng tay nắm để kéo thả thứ tự bài hát theo ý thích.</p>
-          </div>
-        </div>
-        <div class="gesture-card">
-          <div class="gesture-badge"><span class="ms">lock_open</span></div>
-          <div class="gesture-body">
-            <span class="gesture-tag" data-i="g4_tag">PHÁT NỀN &amp; MÀN HÌNH KHOÁ</span>
-            <h3 data-i="g4_t">Nghe nhạc khi tắt màn hình</h3>
-            <p data-i="g4_d">Thoát ra màn hình chính hoặc tắt màn hình: nhạc vẫn tiếp tục phát nền với đầy đủ nút điều khiển và ảnh bìa trên thanh thông báo.</p>
-          </div>
-        </div>
-      </div>
-    </div></section>
-
-    <!-- 5. Cài đặt nhanh -->
-    <section class="slide" data-step="4"><div class="slide-inner">
+    <!-- 5. Cài đặt nhanh (PC) -->
+    <section class="slide pc-only" data-step="4"><div class="slide-inner">
       <div><span class="chip"><span class="ms">tune</span><span data-i="s5_chip">Cài đặt nhanh</span></span></div>
       <h2 data-i="s5_title">Chọn phong cách của bạn</h2>
       <p class="lead" data-i="s5_desc">Xem thử ngay trên màn hình này. Mọi thay đổi sẽ được áp dụng vào Media Player khi bạn bấm nút bắt đầu, và có thể đổi lại trong Cài đặt.</p>
@@ -476,7 +635,6 @@
           <div class="set-head"><div class="ico"><span class="ms">palette</span></div><div><h3 data-i="a_title">Màu chủ đạo (Accent Color)</h3><p data-i="a_desc">Màu nhấn của toàn bộ ứng dụng</p></div></div>
           <div class="swatches" id="swatches"></div>
           <div class="sw-name" id="sw-name"></div>
-          <p class="android-only" data-i="a_android" style="display:none;opacity:.75;font-size:13px;margin:2px 0 0"></p>
         </div>
         <div class="set-card wide">
           <div class="set-head"><div class="ico"><span class="ms">zoom_in</span></div><div><h3 data-i="z_title">Kích thước giao diện và chữ</h3><p data-i="z_desc">Từ 50% đến 200% (100% là mặc định)</p></div></div>
@@ -490,7 +648,177 @@
         </div>
       </div>
     </div></section>
+
+    <!-- ================= ANDROID M3E ONBOARDING STEPS ================= -->
+    <!-- Step 0: Welcome -->
+    <section class="slide android-only" data-and-step="0"><div class="slide-inner">
+      <div class="and-welcome-head">
+        <div class="w-sub" data-i="and_w_prefix">Chào mừng đến với</div>
+        <div class="w-brand">Media Player</div>
+      </div>
+      <div class="and-pill-badge"><span>♫</span><span>Material 3 Expressive</span></div>
+      <div class="and-hero-card">
+        <div class="hero-fig"><img src="music_note.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ms',style:'font-size:52px',textContent:'music_note'}))"></div>
+        <svg class="wave-svg" viewBox="0 0 360 34" preserveAspectRatio="none">
+          <path d="M0,18 Q22.5,6 45,18 T90,18 T135,18 T180,18 T225,18 T270,18 T315,18 T360,18" fill="none" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div style="width:100%">
+        <div class="lang-grid" style="margin-bottom:10px;">
+          <button class="lang-card" data-lang="vi" style="padding:12px;"><span class="ms tick" style="font-size:18px;height:18px;">check_circle</span>Tiếng Việt</button>
+          <button class="lang-card" data-lang="en" style="padding:12px;"><span class="ms tick" style="font-size:18px;height:18px;">check_circle</span>English</button>
+        </div>
+        <p class="lead" style="text-align:center;" data-i="and_w_body">Hãy thiết lập nhanh để quét toàn bộ nhạc trên máy và nghe mượt mà hơn.</p>
+      </div>
+    </div></section>
+
+    <!-- Step 1: Media Permission -->
+    <section class="slide android-only" data-and-step="1"><div class="slide-inner">
+      <div class="and-step-head">
+        <h2 data-i="and_media_t">Quyền truy cập nhạc</h2>
+        <p data-i="and_media_d">Media Player cần quyền truy cập tệp âm thanh trên thiết bị để tự động quét và phát toàn bộ thư viện nhạc của bạn.</p>
+      </div>
+      <div class="and-collage">
+        <div class="c-sat s1"><span class="ms">album</span></div>
+        <div class="c-sat s2"><span class="ms">library_music</span></div>
+        <div class="c-sat s3"><span class="ms">queue_music</span></div>
+        <div class="c-sat s4"><span class="ms">playlist_play</span></div>
+        <div class="c-center"><span class="ms">music_note</span></div>
+      </div>
+      <div class="and-step-actions">
+        <button class="and-action-btn" id="and-btn-media"><span class="ms" id="and-ico-media" style="display:none">check</span><span id="and-txt-media" data-i="and_media_btn">Cấp quyền truy cập nhạc</span></button>
+      </div>
+    </div></section>
+
+    <!-- Step 2: Notifications Permission -->
+    <section class="slide android-only" data-and-step="2"><div class="slide-inner">
+      <div class="and-step-head">
+        <h2 data-i="and_notif_t">Thông báo</h2>
+        <p data-i="and_notif_d">Bật thông báo để điều khiển phát nhạc ngay từ màn hình khoá và thanh thông báo hệ thống.</p>
+      </div>
+      <div class="and-collage">
+        <div class="c-sat s1"><span class="ms">skip_previous</span></div>
+        <div class="c-sat s2"><span class="ms">pause</span></div>
+        <div class="c-sat s3"><span class="ms">skip_next</span></div>
+        <div class="c-sat s4"><span class="ms">play_arrow</span></div>
+        <div class="c-center"><span class="ms">notifications_active</span></div>
+      </div>
+      <div class="and-step-actions">
+        <button class="and-action-btn" id="and-btn-notif"><span class="ms" id="and-ico-notif" style="display:none">check</span><span id="and-txt-notif" data-i="and_notif_btn">Bật thông báo</span></button>
+      </div>
+    </div></section>
+
+    <!-- Step 3: Excluded Folders -->
+    <section class="slide android-only" data-and-step="3"><div class="slide-inner">
+      <div class="and-step-head">
+        <h2 data-i="and_dir_t">Thư mục loại trừ</h2>
+        <p data-i="and_dir_d">Mặc định toàn bộ thư mục chứa nhạc đều được quét. Bạn có thể chọn bỏ qua các thư mục không muốn hiển thị (như ghi âm, nhạc chuông...).</p>
+      </div>
+      <div class="and-collage">
+        <div class="c-sat s1"><span class="ms">music_note</span></div>
+        <div class="c-sat s2"><span class="ms">create_new_folder</span></div>
+        <div class="c-sat s3"><span class="ms">folder_open</span></div>
+        <div class="c-sat s4"><span class="ms">audio_file</span></div>
+        <div class="c-center"><span class="ms">folder</span></div>
+      </div>
+      <div class="and-step-actions">
+        <button class="and-skip-link" id="and-btn-dir-skip" data-i="and_skip_now">Bỏ qua lúc này</button>
+        <button class="and-action-btn" id="and-btn-dir-pick"><span id="and-txt-dir" data-i="and_dir_btn">Chọn thư mục bỏ qua</span></button>
+      </div>
+    </div></section>
+
+    <!-- Step 4: App Theme -->
+    <section class="slide android-only" data-and-step="4"><div class="slide-inner">
+      <div class="and-step-head">
+        <h2 data-i="and_theme_t">Giao diện ứng dụng</h2>
+        <p data-i="and_theme_d">Chọn tông màu nền bạn thích trước khi bắt đầu khám phá thư viện nhạc.</p>
+      </div>
+      <div class="and-theme-cards" id="and-theme-cards">
+        <button type="button" class="and-theme-card" data-and-theme="dark">
+          <div class="tc-ico"><span class="ms">dark_mode</span></div>
+          <div class="tc-body">
+            <div class="tc-title" data-i="t_dark">Tối</div>
+            <span class="tc-badge" data-i="and_recommended">Khuyên dùng</span>
+            <div class="tc-desc" data-i="and_theme_dark_d">Giao diện tối Material 3 dịu mắt và tiết kiệm pin.</div>
+          </div>
+          <div class="tc-radio"><span class="ms">check</span></div>
+        </button>
+        <button type="button" class="and-theme-card" data-and-theme="light">
+          <div class="tc-ico"><span class="ms">light_mode</span></div>
+          <div class="tc-body">
+            <div class="tc-title" data-i="t_light">Sáng</div>
+            <div class="tc-desc" data-i="and_theme_light_d">Giao diện sáng tươi tắn, rõ nét ngoài trời.</div>
+          </div>
+          <div class="tc-radio"><span class="ms">check</span></div>
+        </button>
+        <button type="button" class="and-theme-card" data-and-theme="system">
+          <div class="tc-ico"><span class="ms">smartphone</span></div>
+          <div class="tc-body">
+            <div class="tc-title" data-i="t_system">Hệ thống</div>
+            <div class="tc-desc" data-i="and_theme_sys_d">Tự động đồng bộ theo chế độ Sáng/Tối của điện thoại.</div>
+          </div>
+          <div class="tc-radio"><span class="ms">check</span></div>
+        </button>
+      </div>
+    </div></section>
+
+    <!-- Step 5: Battery Optimization -->
+    <section class="slide android-only" data-and-step="5"><div class="slide-inner">
+      <div class="and-step-head">
+        <h2 data-i="and_bat_t">Tối ưu hóa pin</h2>
+        <p data-i="and_bat_d">Một số máy Android tự đóng ứng dụng chạy nền. Hãy tắt tối ưu hóa pin cho Media Player để nhạc không bị ngắt đột ngột.</p>
+      </div>
+      <div class="and-collage">
+        <div class="c-sat s1"><span class="ms">play_arrow</span></div>
+        <div class="c-sat s2"><span class="ms">pause</span></div>
+        <div class="c-sat s3"><span class="ms">all_inclusive</span></div>
+        <div class="c-sat s4"><span class="ms">check_circle</span></div>
+        <div class="c-center"><span class="ms">music_note</span></div>
+      </div>
+      <div class="and-step-actions">
+        <button class="and-skip-link" id="and-btn-bat-skip" data-i="and_skip_now">Bỏ qua lúc này</button>
+        <button class="and-action-btn" id="and-btn-bat"><span class="ms" id="and-ico-bat" style="display:none">check</span><span id="and-txt-bat" data-i="and_bat_btn">Tắt tối ưu hóa pin</span></button>
+      </div>
+    </div></section>
+
+    <!-- Step 6: Finish -->
+    <section class="slide android-only" data-and-step="6"><div class="slide-inner">
+      <div class="and-step-head">
+        <h2 data-i="and_done_t">Mọi thứ đã sẵn sàng!</h2>
+        <p data-i="and_done_d">Nhấn nút bên dưới để quét toàn bộ nhạc trên thiết bị và bắt đầu thưởng thức.</p>
+      </div>
+      <div class="and-collage">
+        <div class="c-sat s1"><span class="ms">favorite</span></div>
+        <div class="c-sat s2"><span class="ms">celebration</span></div>
+        <div class="c-sat s3"><span class="ms">music_note</span></div>
+        <div class="c-sat s4"><span class="ms">auto_awesome</span></div>
+        <div class="c-center"><span class="ms">check_circle</span></div>
+      </div>
+      <div></div>
+    </div></section>
   </main>
+
+  <!-- Android Floating SetupBottomBar -->
+  <div class="and-bottom-bar" id="and-bottom-bar">
+    <span class="and-step-label is-welcome" id="and-step-label">Bắt đầu thôi!</span>
+    <button type="button" class="and-fab-next" id="and-fab-next" aria-label="Next">
+      <span class="ms" id="and-fab-ico">arrow_forward</span>
+    </button>
+  </div>
+
+  <!-- Android Excluded Folders Modal -->
+  <div class="and-dir-modal" id="and-dir-modal">
+    <div class="and-dir-top">
+      <button type="button" class="icon-btn" id="and-dir-close"><span class="ms">close</span></button>
+      <h3 data-i="and_dir_t">Thư mục loại trừ</h3>
+      <button type="button" class="icon-btn" id="and-dir-refresh"><span class="ms">refresh</span></button>
+    </div>
+    <div class="and-dir-sub" data-i="and_dir_modal_sub">Mặc định tất cả thư mục đều được cho phép. Chạm vào thư mục để loại trừ khỏi quá trình quét nhạc.</div>
+    <div class="and-dir-list" id="and-dir-list"></div>
+    <div class="and-dir-footer">
+      <button type="button" class="and-action-btn" id="and-dir-done"><span class="ms">check</span><span data-i="and_done_btn">Xong</span></button>
+    </div>
+  </div>
 
   <footer>
     <button class="btn tonal" id="btn-back"><span class="ms">arrow_back</span><span data-i="back">Quay lại</span></button>
@@ -507,23 +835,24 @@
     isAndroidApp = !!(window.parent && window.parent.IS_ANDROID_APP) || /[?&]android=true/.test(location.search);
   } catch (e) {}
 
-  var TOTAL = 5;
+  function getAB() {
+    try { return (window.parent && window.parent.AndroidBridge) || window.AndroidBridge || null; } catch (e) { return null; }
+  }
+
+  var TOTAL = isAndroid ? 7 : 5;
   var T = {
     vi: {
       hdr_sub:'Hướng dẫn bắt đầu', skip:'Bỏ qua', back:'Quay lại', next:'Tiếp theo', finish:'Bắt đầu nghe nhạc',
       step:'Bước {n} / {t}',
       names:['Chào mừng','Thêm nhạc / video','Tính năng','Phím tắt','Cài đặt nhanh'],
-      names_and:['Chào mừng','Thêm nhạc / video','Tính năng','Thao tác cảm ứng','Cài đặt nhanh'],
       s1_title:'Chào mừng đến với Media Player',
       s1_desc:'Trình phát nhạc và video chạy ngay trên máy bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.',
       s1_pick:'Chọn ngôn ngữ',
       s2_chip:'Bắt đầu', s2_title:'Thêm nhạc hoặc video vào trình phát', s2_desc:'Nhạc và video được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.',
       s2_c1t:'Nút Thêm nhạc / video', s2_c1d:'Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc/video (mp4, webm, mkv, mov...).',
       s2_c2t:'Kéo & thả', s2_c2d:'Kéo tệp nhạc hoặc video (và tệp lời .lrc) thả thẳng vào cửa sổ ứng dụng.',
-      s2_c2t_and:'Mở & Chia sẻ từ ứng dụng khác', s2_c2d_and:'Chọn "Mở bằng" hoặc "Chia sẻ" tệp nhạc/video từ Trình quản lý tệp, Zalo, Telegram... sang Media Player để phát ngay.',
       s2_c3t:'Danh sách phát', s2_c3d:'Tìm bài trong danh sách, bật Ngẫu nhiên (Shuffle) và Lặp lại để nghe liên tục.',
       s2_note:'Cài ứng dụng (nút cài đặt ở thanh trên) để mở tệp nhạc/video trực tiếp từ máy và dùng offline.',
-      s2_note_and:'Bản Android tự động cập nhật theo trang web, dùng offline hoàn toàn sau lần mở đầu có mạng và hỗ trợ phát nhạc nền khi tắt màn hình.',
       s3_chip:'Tính năng', s3_title:'Những thứ hay ho đi kèm',
       s3_c1t:'Lời bài hát đồng bộ', s3_c1d:'Tự nhận tệp .lrc cùng tên hoặc lời nhúng trong bài. Bấm vào một câu để tua tới đó.',
       s3_c2t:'Sửa thẻ & ảnh bìa', s3_c2d:'Chỉnh thẻ ID3, ảnh bìa và tìm lời trên lrclib ngay trong ứng dụng.',
@@ -532,40 +861,61 @@
       s3_c5t:'Hẹn giờ tạm dừng', s3_c5d:'Tự dừng nhạc sau một khoảng thời gian hoặc sau một số bài nhất định.',
       s3_c7t:'Phát video', s3_c7d:'Hỗ trợ mp4, webm, mkv, mov... Hình hiện ngay trong khung chính, Toàn màn hình và PiP.',
       s3_c8t:'Bộ trộn âm thanh', s3_c8d:'Chỉnh Equalizer 5 dải, khuếch đại, cân bằng trái/phải, mono trong Cài đặt.',
-      s3_c10t:'Ứng dụng Android', s3_c10d:'Bản Android (WebView) tự cập nhật theo trang web, dùng được offline, mở/chia sẻ nhạc từ app khác, thêm cả thư mục và phát nền với điều khiển trên màn hình khoá. Giao diện điện thoại: playlist mở bằng nút trên thanh trên, các nút còn lại nằm trong menu ⋮.',
-      a_android:'Lựa chọn "Hệ thống (System)" tự động lấy màu chủ đạo từ hình nền điện thoại (Material You) khi chạy trong app Android.',
+      s3_c10t:'Ứng dụng Android', s3_c10d:'Bản Android (WebView) tự cập nhật theo trang web, dùng được offline, tự quét toàn bộ nhạc trên thiết bị, mở/chia sẻ nhạc từ app khác và phát nền với điều khiển trên màn hình khoá.',
       s3_c9t:'Phụ đề video', s3_c9d:'Bấm nút chỉnh sửa khi đang xem video để thêm lời/phụ đề (.lrc), lưu ngay trong ứng dụng.',
       s3_c6t:'Thiết bị âm thanh', s3_c6d:'Chọn loa hoặc tai nghe phát nhạc ngay từ thanh trên cùng.',
       s4_chip:'Phím tắt', s4_title:'Điều khiển không cần chuột',
       k_play:'Phát / Tạm dừng', k_mute:'Bật / Tắt tiếng', k_seek:'Tua lùi / tiến 5 giây', k_vol:'Tăng / giảm âm lượng', k_track:'Bài trước / bài sau', k_open:'Thêm nhạc / video (menu mở tại con trỏ)', k_settings:'Mở Cài đặt', k_find:'Tìm trong playlist (khi Sắp xếp thì bôi vàng như Ctrl + F)', k_full:'Toàn màn hình',
-      s4_and_chip:'Thao tác cảm ứng', s4_and_title:'Điều khiển mượt mà bằng một tay',
-      s4_and_desc:'Giao diện di động tối ưu cho thao tác chạm, vuốt và điều khiển nhanh trên điện thoại Android.',
-      g1_tag:'VUỐT NGANG', g1_t:'Chuyển nhanh các bước', g1_d:'Vuốt sang trái hoặc phải ngay trên màn hình hướng dẫn này để chuyển qua lại giữa các bước mà không cần với tay xuống dưới.',
-      g2_tag:'CHẠM LỜI BÀI HÁT', g2_t:'Tua nhanh tới câu hát', g2_d:'Bấm nút Lời bài hát để mở chế độ toàn màn hình, chuyển giữa Synced / Static và chạm trực tiếp vào bất kỳ câu nào để phát từ đoạn đó.',
-      g3_tag:'NHẤN GIỮ & KÉO', g3_t:'Sắp xếp lại danh sách phát', g3_d:'Mở Playlist ở thanh trên cùng, bật chế độ Sắp xếp rồi chạm giữ biểu tượng tay nắm để kéo thả thứ tự bài hát theo ý thích.',
-      g4_tag:'PHÁT NỀN & MÀN HÌNH KHOÁ', g4_t:'Nghe nhạc khi tắt màn hình', g4_d:'Thoát ra màn hình chính hoặc tắt màn hình: nhạc vẫn tiếp tục phát nền với đầy đủ nút điều khiển và ảnh bìa trên thanh thông báo.',
       s5_chip:'Cài đặt nhanh', s5_title:'Chọn phong cách của bạn',
       s5_desc:'Xem thử ngay trên màn hình này. Mọi thay đổi sẽ được áp dụng vào Media Player khi bạn bấm nút bắt đầu, và có thể đổi lại trong Cài đặt.',
       t_title:'Chế độ sáng / tối', t_desc:'Chọn tông nền cho giao diện', t_system:'Hệ thống', t_light:'Sáng', t_dark:'Tối',
       a_title:'Màu chủ đạo (Accent Color)', a_desc:'Màu nhấn của toàn bộ ứng dụng',
       z_title:'Kích thước giao diện và chữ', z_desc:'Từ 50% đến 200% (100% là mặc định)',
-      acc:{system:'Hệ thống (System)',purple:'Tím (Purple)',lime:'Chanh (Lime)',cyan:'Lam (Cyan)',white:'Trắng (White)',green:'Lá (Green)',blue:'Dương (Blue)',yellow:'Vàng (Yellow)',orange:'Cam (Orange)',red:'Đỏ (Red)',pink:'Hồng (Pink)'}
+      acc:{system:'Hệ thống (System)',purple:'Tím (Purple)',lime:'Chanh (Lime)',cyan:'Lam (Cyan)',white:'Trắng (White)',green:'Lá (Green)',blue:'Dương (Blue)',yellow:'Vàng (Yellow)',orange:'Cam (Orange)',red:'Đỏ (Red)',pink:'Hồng (Pink)'},
+      /* Android Onboarding Strings */
+      and_w_prefix:'Chào mừng đến với',
+      and_w_body:'Hãy thiết lập nhanh để quét toàn bộ nhạc trên máy và nghe mượt mà hơn.',
+      and_lets_go:'Bắt đầu thôi!',
+      and_step_fmt:'Bước {n} / {t}',
+      and_granted:'Đã cấp quyền',
+      and_skip_now:'Bỏ qua lúc này',
+      and_done_btn:'Xong',
+      and_recommended:'Khuyên dùng',
+      and_media_t:'Quyền truy cập nhạc',
+      and_media_d:'Media Player cần quyền truy cập tệp âm thanh trên thiết bị để tự động quét và phát toàn bộ thư viện nhạc của bạn.',
+      and_media_btn:'Cấp quyền truy cập nhạc',
+      and_notif_t:'Thông báo',
+      and_notif_d:'Bật thông báo để điều khiển phát nhạc ngay từ màn hình khoá và thanh thông báo hệ thống.',
+      and_notif_btn:'Bật thông báo',
+      and_dir_t:'Thư mục loại trừ',
+      and_dir_d:'Mặc định toàn bộ thư mục chứa nhạc đều được quét. Bạn có thể chọn bỏ qua các thư mục không muốn hiển thị (như ghi âm, nhạc chuông...).',
+      and_dir_btn:'Chọn thư mục bỏ qua',
+      and_dir_modal_sub:'Mặc định tất cả thư mục đều được cho phép. Chạm vào thư mục để loại trừ khỏi quá trình quét nhạc.',
+      and_dir_empty:'Không tìm thấy thư mục chứa nhạc nào trên thiết bị.',
+      and_dir_tracks:'{n} bài hát',
+      and_theme_t:'Giao diện ứng dụng',
+      and_theme_d:'Chọn tông màu nền bạn thích trước khi bắt đầu khám phá thư viện nhạc.',
+      and_theme_dark_d:'Giao diện tối Material 3 dịu mắt và tiết kiệm pin.',
+      and_theme_light_d:'Giao diện sáng tươi tắn, rõ nét ngoài trời.',
+      and_theme_sys_d:'Tự động đồng bộ theo chế độ Sáng/Tối của điện thoại.',
+      and_bat_t:'Tối ưu hóa pin',
+      and_bat_d:'Một số máy Android tự đóng ứng dụng chạy nền. Hãy tắt tối ưu hóa pin cho Media Player để nhạc không bị ngắt đột ngột.',
+      and_bat_btn:'Tắt tối ưu hóa pin',
+      and_done_t:'Mọi thứ đã sẵn sàng!',
+      and_done_d:'Nhấn nút bên dưới để quét toàn bộ nhạc trên thiết bị và bắt đầu thưởng thức.'
     },
     en: {
       hdr_sub:'Getting started', skip:'Skip', back:'Back', next:'Next', finish:'Start listening',
       step:'Step {n} of {t}',
       names:['Welcome','Add music / video','Features','Shortcuts','Quick settings'],
-      names_and:['Welcome','Add music / video','Features','Touch gestures','Quick settings'],
       s1_title:'Welcome to Media Player',
       s1_desc:'A music and video player that runs right on your device: synced lyrics, ID3 tag editing, Material 3 design and full offline support.',
       s1_pick:'Choose your language',
       s2_chip:'Get started', s2_title:'Add music or video to the player', s2_desc:'Music and video are read straight from your device and never uploaded to any server.',
       s2_c1t:'Add music / video button', s2_c1d:'Tap the plus button at the top to pick files or a whole music/video folder (mp4, webm, mkv, mov...).',
       s2_c2t:'Drag & drop', s2_c2d:'Drop music or video files (and .lrc lyric files) right onto the app window.',
-      s2_c2t_and:'Open & Share from other apps', s2_c2d_and:'Use "Open with" or "Share" on audio/video files from your File Manager or messaging apps to play directly in Media Player.',
       s2_c3t:'Playlist', s2_c3d:'Search the list, turn on Shuffle and Repeat to keep the music going.',
       s2_note:'Install the app (the install button in the top bar) to open music/video files directly from your computer and use it offline.',
-      s2_note_and:'The Android build updates automatically with the website, works fully offline after the first online launch, and supports background playback.',
       s3_chip:'Features', s3_title:'Handy things included',
       s3_c1t:'Synced lyrics', s3_c1d:'Detects a matching .lrc file or lyrics embedded in the track. Tap a line to jump to it.',
       s3_c2t:'Edit tags & cover art', s3_c2d:'Edit ID3 tags, cover art and search lyrics on lrclib without leaving the app.',
@@ -574,24 +924,48 @@
       s3_c5t:'Sleep timer', s3_c5d:'Pause the music after a set time or after a number of tracks.',
       s3_c7t:'Video playback', s3_c7d:'Supports mp4, webm, mkv, mov... The picture shows in the main stage, Fullscreen and PiP.',
       s3_c8t:'Audio mixer', s3_c8d:'Tune the 5-band equalizer, preamp, left/right balance and mono in Settings.',
-      s3_c10t:'Android app', s3_c10d:'The Android (WebView) build updates itself with the website, works offline, opens/shares music from other apps, adds whole folders and plays in the background with lock-screen controls. Phone UI: the playlist opens from the top bar button and the other buttons live in the ⋮ menu.',
-      a_android:'The "System" option automatically picks up your phone wallpaper accent color (Material You) when running inside the Android app.',
+      s3_c10t:'Android app', s3_c10d:'The Android (WebView) build updates itself with the website, works offline, scans all local audio files automatically, opens/shares music from other apps, and plays in the background with lock-screen controls.',
       s3_c9t:'Video subtitles', s3_c9d:'Press the edit button while watching a video to add lyrics/subtitles (.lrc), saved inside the app.',
       s3_c6t:'Audio output', s3_c6d:'Pick the speaker or headphones from the top bar.',
       s4_chip:'Shortcuts', s4_title:'Control it without a mouse',
       k_play:'Play / Pause', k_mute:'Mute / Unmute', k_seek:'Seek back / forward 5 seconds', k_vol:'Volume up / down', k_track:'Previous / next track', k_open:'Add music / video (menu opens at the pointer)', k_settings:'Open Settings', k_find:'Search the playlist (highlights like browser Ctrl + F in Reorder mode)', k_full:'Fullscreen',
-      s4_and_chip:'Touch gestures', s4_and_title:'Effortless one-handed control',
-      s4_and_desc:'Mobile interface crafted for natural taps, swipes, and quick playback controls on Android.',
-      g1_tag:'SWIPE HORIZONTALLY', g1_t:'Switch steps effortlessly', g1_d:'Swipe left or right anywhere on this guide to move between steps without reaching for the bottom buttons.',
-      g2_tag:'TAP LYRICS', g2_t:'Jump to any line', g2_d:'Tap the Lyrics button for full-screen view, toggle Synced / Static modes, and tap any lyric line to seek straight to it.',
-      g3_tag:'HOLD & DRAG', g3_t:'Reorder your playlist', g3_d:'Open Playlist from the top bar, enable Reorder mode, and hold the drag handle to rearrange tracks.',
-      g4_tag:'BACKGROUND PLAY', g4_t:'Keep listening with screen off', g4_d:'Switch apps or turn off your screen: playback continues smoothly with lock-screen controls and artwork.',
       s5_chip:'Quick settings', s5_title:'Pick your style',
       s5_desc:'Preview it right on this screen. Everything is applied to Media Player when you press the start button, and you can change it later in Settings.',
       t_title:'Light / dark mode', t_desc:'Choose the background tone', t_system:'System', t_light:'Light', t_dark:'Dark',
       a_title:'Accent color', a_desc:'The highlight color across the whole app',
       z_title:'Interface and text size', z_desc:'From 50% to 200% (100% is the default)',
-      acc:{system:'System',purple:'Purple',lime:'Lime',cyan:'Cyan',white:'White',green:'Green',blue:'Blue',yellow:'Yellow',orange:'Orange',red:'Red',pink:'Pink'}
+      acc:{system:'System',purple:'Purple',lime:'Lime',cyan:'Cyan',white:'White',green:'Green',blue:'Blue',yellow:'Yellow',orange:'Orange',red:'Red',pink:'Pink'},
+      /* Android Onboarding Strings */
+      and_w_prefix:'Welcome to',
+      and_w_body:"Let's get everything set up to scan all your music and play smoothly.",
+      and_lets_go:"Let's Go!",
+      and_step_fmt:'Step {n} of {t}',
+      and_granted:'Permission Granted',
+      and_skip_now:'Skip / Not now',
+      and_done_btn:'Done',
+      and_recommended:'Recommended',
+      and_media_t:'Media Permission',
+      and_media_d:'Media Player needs access to your audio files to automatically scan and build your music library.',
+      and_media_btn:'Grant Media Permission',
+      and_notif_t:'Notifications',
+      and_notif_d:'Enable notifications to control your music from the lock screen and notification shade.',
+      and_notif_btn:'Enable Notifications',
+      and_dir_t:'Excluded folders',
+      and_dir_d:'All folders are scanned by default. Pick any locations you want to ignore when building your library.',
+      and_dir_btn:'Choose folders to ignore',
+      and_dir_modal_sub:'Everything is allowed by default. Tap a folder to mark it as excluded from scans.',
+      and_dir_empty:'No audio folders found on this device.',
+      and_dir_tracks:'{n} tracks',
+      and_theme_t:'App Theme',
+      and_theme_d:'Pick the look you want before you start exploring your library.',
+      and_theme_dark_d:'The default Material 3 dark look for Media Player.',
+      and_theme_light_d:'A brighter Material 3 look across the app.',
+      and_theme_sys_d:"Match your phone's current appearance setting.",
+      and_bat_t:'Battery Optimization',
+      and_bat_d:'Some Android devices aggressively kill background apps. Disable battery optimization for Media Player to prevent unexpected playback interruptions.',
+      and_bat_btn:'Disable Battery Optimization',
+      and_done_t:"You're all set!",
+      and_done_d:'Tap the button below to scan all audio files on your device and start listening.'
     }
   };
 
@@ -604,7 +978,8 @@
     scale: 100,
     parentScale: 1,
     accents: null,
-    systemAccent: null
+    systemAccent: null,
+    perms: { media: !isAndroidApp, notifications: !isAndroidApp, battery: !isAndroidApp }
   };
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
@@ -613,31 +988,48 @@
   function loadDraft() { try { return JSON.parse(localStorage.getItem(DRAFT_KEY)) || null; } catch (e) { return null; } }
   function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
 
-  /* ---------- Giao tiếp với app cha ---------- */
   function toParent(msg) { try { (window.parent !== window ? window.parent : window).postMessage(msg, '*'); } catch (e) {} }
 
-  /* ---------- Dịch ---------- */
-  function applyLang() {
-    var d = Object.assign({}, T[st.lang]);
-    if (isAndroid) {
-      if (st.lang === 'en') {
-        d.names_and = ['Welcome','Add music','Features','Touch gestures','Quick settings'];
-        d.s1_desc = 'A local music player running right on your phone: synced lyrics, ID3 tag editing, Material 3 design and full offline support.';
-        d.s2_title = 'Add music to the player';
-        d.s2_desc = 'Music is read straight from your device and never uploaded to any server.';
-        d.s2_c1t = 'Add music button';
-        d.s2_c1d = 'Tap the plus button at the top to pick audio files or a whole music folder (mp3, flac, m4a, ogg, wav...).';
-        d.s2_c2d_and = 'Use "Open with" or "Share" on audio files from your File Manager or messaging apps to play directly in Media Player.';
-      } else {
-        d.names_and = ['Chào mừng','Thêm nhạc','Tính năng','Thao tác cảm ứng','Cài đặt nhanh'];
-        d.s1_desc = 'Trình phát nhạc chạy ngay trên điện thoại của bạn: lời bài hát đồng bộ, chỉnh sửa thẻ ID3, giao diện Material 3 và dùng được cả khi không có mạng.';
-        d.s2_title = 'Thêm nhạc vào trình phát';
-        d.s2_desc = 'Nhạc được đọc trực tiếp từ máy của bạn, không tải lên máy chủ nào cả.';
-        d.s2_c1t = 'Nút Thêm nhạc';
-        d.s2_c1d = 'Bấm nút dấu cộng ở góc trên để chọn tệp hoặc cả thư mục nhạc (mp3, flac, m4a, ogg, wav...).';
-        d.s2_c2d_and = 'Chọn "Mở bằng" hoặc "Chia sẻ" tệp nhạc từ Trình quản lý tệp, Zalo, Telegram... sang Media Player để phát ngay.';
-      }
+  function refreshAndroidPerms() {
+    var ab = getAB();
+    if (ab && typeof ab.getPermissionsStatus === 'function') {
+      try {
+        var info = JSON.parse(ab.getPermissionsStatus() || '{}');
+        st.perms.media = !!info.media;
+        st.perms.notifications = !!info.notifications;
+        st.perms.battery = !!info.battery;
+      } catch (e) {}
     }
+    syncAndroidPermButtons();
+  }
+
+  function syncAndroidPermButtons() {
+    if (!isAndroid) return;
+    var d = T[st.lang];
+    var mBtn = $('#and-btn-media'), mIco = $('#and-ico-media'), mTxt = $('#and-txt-media');
+    if (mBtn && mTxt) {
+      mBtn.classList.toggle('granted', !!st.perms.media);
+      if (mIco) mIco.style.display = st.perms.media ? '' : 'none';
+      mTxt.textContent = st.perms.media ? d.and_granted : d.and_media_btn;
+    }
+    var nBtn = $('#and-btn-notif'), nIco = $('#and-ico-notif'), nTxt = $('#and-txt-notif');
+    if (nBtn && nTxt) {
+      nBtn.classList.toggle('granted', !!st.perms.notifications);
+      if (nIco) nIco.style.display = st.perms.notifications ? '' : 'none';
+      nTxt.textContent = st.perms.notifications ? d.and_granted : d.and_notif_btn;
+    }
+    var bBtn = $('#and-btn-bat'), bIco = $('#and-ico-bat'), bTxt = $('#and-txt-bat'), bSkip = $('#and-btn-bat-skip');
+    if (bBtn && bTxt) {
+      bBtn.classList.toggle('granted', !!st.perms.battery);
+      if (bIco) bIco.style.display = st.perms.battery ? '' : 'none';
+      bTxt.textContent = st.perms.battery ? d.and_granted : d.and_bat_btn;
+      if (bSkip) bSkip.style.display = st.perms.battery ? 'none' : '';
+    }
+    updateStepUI();
+  }
+
+  function applyLang() {
+    var d = T[st.lang];
     document.documentElement.lang = st.lang;
     $$('[data-i]').forEach(function (el) {
       var k = el.getAttribute('data-i'); if (d[k] === undefined) return;
@@ -645,10 +1037,11 @@
     });
     $('#hdr-sub').textContent = d.hdr_sub;
     $$('.lang-card').forEach(function (b) { b.classList.toggle('sel', b.dataset.lang === st.lang); });
-    renderSwatches(); updateStepUI();
+    if (!isAndroid) renderSwatches();
+    syncAndroidPermButtons();
+    updateStepUI();
   }
 
-  /* ---------- Giao diện (palette) ---------- */
   function resolvedMode() {
     if (st.theme === 'light') return 'light';
     if (st.theme === 'dark') return 'dark';
@@ -704,7 +1097,7 @@
   function getSysHex() {
     if (st.systemAccent && /^#[0-9a-f]{6}$/i.test(st.systemAccent)) return st.systemAccent;
     try {
-      var ab = (window.parent && window.parent.AndroidBridge) || window.AndroidBridge;
+      var ab = getAB();
       var h = ab && ab.getSystemAccent && ab.getSystemAccent();
       if (/^#[0-9a-f]{6}$/i.test(h || '')) { st.systemAccent = h; return h; }
     } catch (e) {}
@@ -734,8 +1127,10 @@
     $$('.sw').forEach(function (b) { b.classList.toggle('sel', b.dataset.accent === st.accent); });
     var nm = $('#sw-name'); if (nm) nm.textContent = T[st.lang].acc[st.accent] || st.accent;
     $$('#seg-theme button').forEach(function (b) { b.classList.toggle('sel', b.dataset.theme === st.theme); });
+    $$('.and-theme-card').forEach(function (c) { c.classList.toggle('sel', c.dataset.andTheme === st.theme); });
   }
   function applyScale() {
+    if (isAndroid) return;
     var z = (st.scale / 100) / (st.parentScale || 1);
     document.documentElement.style.setProperty('--z', String(z));
     $('#scale').value = st.scale; $('#scale-val').textContent = st.scale + '%';
@@ -744,21 +1139,6 @@
     var box = $('#swatches'); if (!box || !st.accents) return;
     box.innerHTML = '';
     var mode = resolvedMode();
-    if (isAndroid || isAndroidApp) {
-      var sysBtn = document.createElement('button');
-      sysBtn.className = 'sw sw-sys';
-      sysBtn.dataset.accent = 'system';
-      sysBtn.title = T[st.lang].acc.system || 'System';
-      var sh = getSysHex();
-      if (sh) {
-        var sc = buildPaletteFromHex(sh, mode);
-        sysBtn.style.background = sc.primaryContainer;
-        sysBtn.style.color = sc.onPrimaryContainer;
-      }
-      sysBtn.innerHTML = '<span class="ms">android</span><span>System</span>';
-      sysBtn.addEventListener('click', function () { st.accent = 'system'; applyPalette(); saveDraft(); });
-      box.appendChild(sysBtn);
-    }
     Object.keys(st.accents).forEach(function (k) {
       var b = document.createElement('button');
       b.className = 'sw'; b.dataset.accent = k; b.title = T[st.lang].acc[k] || k;
@@ -771,26 +1151,29 @@
     applyPalette();
   }
 
-  /* ---------- Bước ---------- */
   function visibleSlides() {
     return $$('.slide').filter(function (s) {
-      if (isAndroid && s.classList.contains('pc-only')) return false;
-      if (!isAndroid && s.classList.contains('android-only')) return false;
-      return true;
+      if (isAndroid) return s.classList.contains('android-only');
+      return s.classList.contains('pc-only');
     });
   }
   function buildStepper() {
+    if (isAndroid) return;
     var s = $('#stepper'), d = $('#dots'); s.innerHTML = ''; d.innerHTML = '';
     for (var i = 0; i < TOTAL; i++) {
       var p = document.createElement('div'); p.className = 'step-pill'; (function (n) { p.addEventListener('click', function () { go(n); }); })(i); s.appendChild(p);
       var dot = document.createElement('div'); dot.className = 'dot'; d.appendChild(dot);
     }
   }
+  function isAndroidStepGateOk(stepIdx) {
+    if (!isAndroid || !isAndroidApp) return true;
+    if (stepIdx === 1) return !!st.perms.media;
+    if (stepIdx === 2) return !!st.perms.notifications;
+    return true;
+  }
   function updateStepUI() {
     var d = T[st.lang];
     var slides = visibleSlides();
-    $$('.step-pill').forEach(function (p, i) { p.classList.toggle('active', i === st.step); p.classList.toggle('done', i < st.step); });
-    $$('.dot').forEach(function (p, i) { p.classList.toggle('active', i === st.step); });
     $$('.slide').forEach(function (s) {
       var idx = slides.indexOf(s);
       if (idx === -1) { s.classList.remove('active', 'before'); return; }
@@ -798,25 +1181,62 @@
       s.classList.toggle('before', idx < st.step);
       if (idx === st.step) s.scrollTop = 0;
     });
+
+    if (isAndroid) {
+      var lbl = $('#and-step-label');
+      var fab = $('#and-fab-next');
+      var fabIco = $('#and-fab-ico');
+      if (lbl) {
+        if (st.step === 0) {
+          lbl.textContent = d.and_lets_go;
+          lbl.classList.add('is-welcome');
+        } else {
+          lbl.textContent = d.and_step_fmt.replace('{n}', st.step).replace('{t}', TOTAL - 1);
+          lbl.classList.remove('is-welcome');
+        }
+      }
+      if (fab && fabIco) {
+        var shapes = ['50%', '18px', '28px 10px 28px 10px'];
+        fab.style.borderRadius = shapes[st.step % 3];
+        var deg = st.step * 360;
+        fab.style.transform = 'rotate(' + deg + 'deg)';
+        fabIco.style.transform = 'rotate(' + (-deg) + 'deg)';
+        fabIco.textContent = (st.step === TOTAL - 1) ? 'check' : 'arrow_forward';
+        fab.disabled = !isAndroidStepGateOk(st.step);
+      }
+      return;
+    }
+
+    $$('.step-pill').forEach(function (p, i) { p.classList.toggle('active', i === st.step); p.classList.toggle('done', i < st.step); });
+    $$('.dot').forEach(function (p, i) { p.classList.toggle('active', i === st.step); });
     $('#step-count').textContent = d.step.replace('{n}', st.step + 1).replace('{t}', TOTAL);
-    var stepNames = isAndroid ? d.names_and : d.names;
-    $('#step-name').textContent = stepNames[st.step];
+    $('#step-name').textContent = d.names[st.step];
     $('#btn-back').disabled = st.step === 0;
     var last = st.step === TOTAL - 1;
     $('#next-text').textContent = last ? d.finish : d.next;
     $('#next-ico').textContent = last ? 'play_arrow' : 'arrow_forward';
   }
-  function go(n) { st.step = Math.max(0, Math.min(TOTAL - 1, n)); updateStepUI(); saveDraft(); }
+  function go(n) {
+    var target = Math.max(0, Math.min(TOTAL - 1, n));
+    if (target > st.step && !isAndroidStepGateOk(st.step)) return;
+    st.step = target;
+    updateStepUI();
+    saveDraft();
+  }
 
   function finish() {
     clearDraft();
     var outAccent = st.accent;
     if (outAccent === 'system' && !isAndroidApp) outAccent = 'purple';
-    toParent({ type: 'gs-done', settings: { lang: st.lang, theme: st.theme, accent: outAccent, scale: st.scale } });
+    var ab = getAB();
+    if (ab && typeof ab.setSetupDoneNative === 'function') {
+      try { ab.setSetupDoneNative(true); } catch (e) {}
+    }
+    toParent({ type: 'gs-done', settings: { lang: st.lang, theme: st.theme, accent: outAccent, scale: st.scale, scanLibrary: isAndroidApp } });
     toParent('tutorial done');
   }
 
-  /* ---------- Sự kiện ---------- */
+  /* ---------- PC Events ---------- */
   $('#btn-next').addEventListener('click', function () { if (st.step === TOTAL - 1) finish(); else go(st.step + 1); });
   $('#btn-back').addEventListener('click', function () { go(st.step - 1); });
   $('#btn-skip').addEventListener('click', finish);
@@ -830,34 +1250,140 @@
   $('#scale-plus').addEventListener('click', function () { bump(5); });
   $('#scale-reset').addEventListener('click', function () { st.scale = 100; applyScale(); saveDraft(); });
   window.addEventListener('keydown', function (e) {
+    if (isAndroid) return;
     if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName) && e.target.type !== 'range') return;
     if (e.key === 'ArrowRight' && st.step < TOTAL - 1 && e.target.type !== 'range') go(st.step + 1);
     else if (e.key === 'ArrowLeft' && st.step > 0 && e.target.type !== 'range') go(st.step - 1);
   });
-  if (window.matchMedia) { try { window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function () { if (st.theme === 'system') renderSwatches(); }); } catch (e) {} }
+  if (window.matchMedia) { try { window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function () { if (st.theme === 'system') applyPalette(); }); } catch (e) {} }
 
-  /* ---------- Hỗ trợ vuốt ngang trên màn hình cảm ứng ---------- */
-  (function () {
-    var mainEl = $('#main');
-    var sx = 0, sy = 0, tracking = false;
-    mainEl.addEventListener('touchstart', function (e) {
-      if (!e.touches || e.touches.length !== 1) return;
-      if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'range') { tracking = false; return; }
-      sx = e.touches[0].clientX;
-      sy = e.touches[0].clientY;
-      tracking = true;
-    }, { passive: true });
-    mainEl.addEventListener('touchend', function (e) {
-      if (!tracking || !e.changedTouches || !e.changedTouches.length) return;
-      tracking = false;
-      var dx = e.changedTouches[0].clientX - sx;
-      var dy = e.changedTouches[0].clientY - sy;
-      if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-        if (dx < 0 && st.step < TOTAL - 1) go(st.step + 1);
-        else if (dx > 0 && st.step > 0) go(st.step - 1);
+  /* ---------- Android Events & Native Hooks ---------- */
+  $('#and-fab-next').addEventListener('click', function () {
+    if (st.step === TOTAL - 1) finish();
+    else go(st.step + 1);
+  });
+  $('#and-btn-media').addEventListener('click', function () {
+    var ab = getAB();
+    if (ab && typeof ab.requestMediaPermission === 'function') ab.requestMediaPermission();
+    else { st.perms.media = true; syncAndroidPermButtons(); }
+  });
+  $('#and-btn-notif').addEventListener('click', function () {
+    var ab = getAB();
+    if (ab && typeof ab.requestNotificationPermission === 'function') ab.requestNotificationPermission();
+    else { st.perms.notifications = true; syncAndroidPermButtons(); }
+  });
+  $('#and-btn-bat').addEventListener('click', function () {
+    var ab = getAB();
+    if (ab && typeof ab.requestIgnoreBatteryOptimizations === 'function') ab.requestIgnoreBatteryOptimizations();
+    else { st.perms.battery = true; syncAndroidPermButtons(); }
+  });
+  $('#and-btn-bat-skip').addEventListener('click', function () { go(st.step + 1); });
+  $('#and-btn-dir-skip').addEventListener('click', function () { go(st.step + 1); });
+  $$('.and-theme-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      st.theme = card.dataset.andTheme;
+      applyPalette();
+      saveDraft();
+    });
+  });
+
+  /* Android Excluded Folders Dialog */
+  var dirModal = $('#and-dir-modal');
+  var dirListEl = $('#and-dir-list');
+  var excludedSet = new Set();
+
+  function renderAndroidDirList() {
+    if (!dirListEl) return;
+    var d = T[st.lang];
+    dirListEl.innerHTML = '';
+    var ab = getAB();
+    var dirs = [];
+    if (ab && typeof ab.listAudioDirectoriesJson === 'function') {
+      try { dirs = JSON.parse(ab.listAudioDirectoriesJson() || '[]'); } catch (e) {}
+    }
+    if (!dirs.length) {
+      var empty = document.createElement('div');
+      empty.style.cssText = 'text-align:center;padding:40px 20px;opacity:.65;font-size:14px;';
+      empty.textContent = d.and_dir_empty;
+      dirListEl.appendChild(empty);
+      return;
+    }
+    dirs.forEach(function (item) {
+      var isEx = excludedSet.has(item.path);
+      var row = document.createElement('div');
+      row.className = 'and-dir-item' + (isEx ? ' excluded' : '');
+      row.innerHTML =
+        '<span class="ms" style="font-size:24px;color:' + (isEx ? 'var(--on-surface-variant)' : 'var(--primary)') + '">' + (isEx ? 'folder_off' : 'folder') + '</span>' +
+        '<div class="d-info"><div class="d-name"></div><div class="d-path"></div></div>' +
+        '<span class="d-cnt"></span>' +
+        '<span class="ms" style="font-size:22px;color:' + (isEx ? 'var(--on-surface-variant)' : 'var(--primary)') + '">' + (isEx ? 'check_box_outline_blank' : 'check_box') + '</span>';
+      row.querySelector('.d-name').textContent = item.name;
+      row.querySelector('.d-path').textContent = item.path;
+      row.querySelector('.d-cnt').textContent = d.and_dir_tracks.replace('{n}', item.count);
+      row.addEventListener('click', function () {
+        if (excludedSet.has(item.path)) excludedSet.delete(item.path);
+        else excludedSet.add(item.path);
+        renderAndroidDirList();
+      });
+      dirListEl.appendChild(row);
+    });
+  }
+
+  function openAndroidDirModal() {
+    var ab = getAB();
+    excludedSet.clear();
+    if (ab && typeof ab.getExcludedDirectoriesJson === 'function') {
+      try {
+        var saved = JSON.parse(ab.getExcludedDirectoriesJson() || '[]');
+        saved.forEach(function (p) { excludedSet.add(p); });
+      } catch (e) {}
+    }
+    renderAndroidDirList();
+    if (dirModal) dirModal.classList.add('open');
+  }
+
+  function closeAndroidDirModal(save) {
+    if (save) {
+      var ab = getAB();
+      if (ab && typeof ab.setExcludedDirectoriesJson === 'function') {
+        try { ab.setExcludedDirectoriesJson(JSON.stringify(Array.from(excludedSet))); } catch (e) {}
       }
-    }, { passive: true });
-  })();
+    }
+    if (dirModal) dirModal.classList.remove('open');
+  }
+
+  $('#and-btn-dir-pick').addEventListener('click', openAndroidDirModal);
+  $('#and-dir-close').addEventListener('click', function () { closeAndroidDirModal(false); });
+  $('#and-dir-refresh').addEventListener('click', renderAndroidDirList);
+  $('#and-dir-done').addEventListener('click', function () { closeAndroidDirModal(true); });
+
+  window.__gsAndroidBack = function () {
+    if (!isAndroid) return false;
+    if (dirModal && dirModal.classList.contains('open')) {
+      closeAndroidDirModal(false);
+      return true;
+    }
+    if (st.step > 0) {
+      go(st.step - 1);
+      return true;
+    }
+    return false;
+  };
+
+  window.__gsOnPermissionsUpdated = function (info) {
+    if (info && typeof info === 'object') {
+      if (typeof info.media === 'boolean') st.perms.media = info.media;
+      if (typeof info.notifications === 'boolean') st.perms.notifications = info.notifications;
+      if (typeof info.battery === 'boolean') st.perms.battery = info.battery;
+      syncAndroidPermButtons();
+    } else {
+      refreshAndroidPerms();
+    }
+  };
+  window.__gsOnBatteryOptResult = function (ignored) {
+    st.perms.battery = !!ignored;
+    syncAndroidPermButtons();
+  };
 
   /* ---------- Phông chữ do app cha gửi sang ---------- */
   function applyAppFont(f) {
@@ -887,6 +1413,7 @@
         document.documentElement.classList.add('is-android');
       }
       if (typeof d.isAndroidApp === 'boolean') isAndroidApp = d.isAndroidApp;
+      TOTAL = isAndroid ? 7 : 5;
       if (d.systemAccent) st.systemAccent = d.systemAccent;
       st.accents = d.accents || st.accents;
       st.parentScale = d.parentScale || 1;
@@ -895,12 +1422,14 @@
       st.theme = (draft && draft.theme) || d.theme || 'dark';
       st.accent = (draft && draft.accent) || d.accent || (isAndroidApp ? 'system' : 'purple');
       st.scale = (draft && draft.scale) || d.scale || 100;
-      st.step = draft && typeof draft.step === 'number' ? draft.step : 0;
-      applyLang(); applyScale(); renderSwatches();
+      st.step = draft && typeof draft.step === 'number' ? Math.min(draft.step, TOTAL - 1) : 0;
+      refreshAndroidPerms();
+      applyLang(); applyScale();
+      if (!isAndroid) renderSwatches(); else applyPalette();
     }
   });
 
-  buildStepper(); applyLang(); applyScale();
+  buildStepper(); refreshAndroidPerms(); applyLang(); applyScale();
   var tries = 0;
   (function ping() { if (inited || tries++ > 20) return; toParent({ type: 'gs-ready' }); setTimeout(ping, 400); })();
 
