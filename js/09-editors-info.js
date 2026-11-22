@@ -638,6 +638,13 @@
                 track.composer = meta.composer || ''; // Trống -> để trắng thật sự, không giữ lại giá trị cũ
                 track.lyrics = meta.lyric ? parseLRC(meta.lyric) : null;
                 track.lyricsRaw = meta.lyric || "";
+                track._metaLoading = false;
+                track._metaLoaded = true;
+                track._bgCoverChecked = true;
+                track._metaFromCache = true;
+                if (typeof window.__saveTrackMetaToCache === 'function') {
+                    try { window.__saveTrackMetaToCache(track); } catch (e) {}
+                }
 
                 URL.revokeObjectURL(track.url);
                 track.url = URL.createObjectURL(newFile);
