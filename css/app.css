@@ -1771,6 +1771,23 @@
             opacity: 0; transition: opacity .18s ease;
         }
         html.m-ui .m-lib-art img.loaded, html.m-ui .m-mini-art img.loaded { opacity: 1; }
+        @keyframes mArtSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        html.m-ui .m-lib-item.is-scanning .m-lib-art {
+            border-radius: 50%;
+            animation: mArtSpin 1.3s linear infinite;
+        }
+        html.m-ui .m-lib-item.is-scanning .m-lib-art::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 2.5px solid transparent;
+            border-top-color: var(--md-sys-color-primary);
+            pointer-events: none;
+        }
         html.m-ui .m-lib-tabs {
             display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 2px 0 4px;
             overflow-x: auto; scrollbar-width: none;
