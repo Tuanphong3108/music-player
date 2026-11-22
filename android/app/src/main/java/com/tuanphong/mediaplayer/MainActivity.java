@@ -76,6 +76,7 @@ public class MainActivity extends Activity {
         if (appLeftHome || pageResponded) return;
         onWatchdogTimeout();
     };
+    private static final long AUTO_RELOAD_TIMEOUT_MS = 25000L;
 
     /** Sau khi bị hệ thống đóng băng/giải phóng bộ nhớ, trang thường không tự sống lại: tự tải lại tối đa 2 lần rồi mới báo lỗi. */
     private void onWatchdogTimeout() {
@@ -120,7 +121,7 @@ public class MainActivity extends Activity {
         } catch (Throwable ignored) {}
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
-        pingHandler.postDelayed(loadTimeoutRunnable, 10000);
+        pingHandler.postDelayed(loadTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
     }
     private final Runnable installerTimeoutRunnable = () -> {
         if (!updateInstallPending) return;
@@ -228,7 +229,7 @@ public class MainActivity extends Activity {
                 if (url.startsWith("https://tuanphong3108.github.io/")) {
                     pageReady = true;
                     flushPending();
-                    scheduleBlankCheck(10000);
+                    scheduleBlankCheck(AUTO_RELOAD_TIMEOUT_MS);
                     if (!appLeftHome && !pageResponded) sendHandshakePing();
                 } else {
                     pageReady = false;
@@ -579,7 +580,7 @@ public class MainActivity extends Activity {
         hideUnresponsiveDialog();
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
-        pingHandler.postDelayed(loadTimeoutRunnable, 10000);
+        pingHandler.postDelayed(loadTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
     }
 
     private void cancelWatchdogOnLeave() {
@@ -1705,19 +1706,19 @@ public class MainActivity extends Activity {
         }
         appLeftHome = false;
         try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Throwable ignored) {}
-        scheduleBlankCheck(10000);
+        scheduleBlankCheck(AUTO_RELOAD_TIMEOUT_MS);
         if (pageResponded && pageReady && !hangAlertShown) {
             // Trang từng chạy bình thường: kiểm tra lại sau khi quay về từ nền (có thể đã bị đóng băng)
             pageResponded = false;
             autoRecoveries = 0;
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
-            pingHandler.postDelayed(pingTimeoutRunnable, 10000);
+            pingHandler.postDelayed(pingTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
             callJs("window.__androidPing&&window.__androidPing()");
         } else if (!pageResponded && !hangAlertShown) {
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
-            pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, 10000);
+            pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
             if (pageReady) sendHandshakePing();
         }
         callJs("window.__systemAccentChanged&&__systemAccentChanged()");
