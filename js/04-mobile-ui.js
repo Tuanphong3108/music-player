@@ -1081,6 +1081,15 @@
                     const q = removeVietnameseTones((plcSongSearch && plcSongSearch.value) || '').toLowerCase().trim();
                     const pool = getLibPool().slice();
                     sortMobileLib0Z(pool);
+                    // Đẩy bài đã chọn lên đầu danh sách chọn, giữ phần còn lại đúng thứ tự 0–Z gốc
+                    pool.sort((a, b) => {
+                        const ka = trackKeyOf(a);
+                        const kb = trackKeyOf(b);
+                        const pa = ka ? (plc.pickedKeys.has(ka) ? 1 : 0) : 0;
+                        const pb = kb ? (plc.pickedKeys.has(kb) ? 1 : 0) : 0;
+                        if (pa !== pb) return pb - pa;
+                        return String((a && a.name) || '').localeCompare(String((b && b.name) || ''), undefined, { numeric: true, sensitivity: 'base' });
+                    });
                     pool.forEach(tr => {
                         if (!tr) return;
                         if (q) {
@@ -1099,6 +1108,7 @@
                         row.querySelector('.m-lib-artist').textContent = tr.artist || '';
                         row.addEventListener('click', () => {
                             if (plc.pickedKeys.has(key)) plc.pickedKeys.delete(key); else plc.pickedKeys.add(key);
+                            syncCreatorUI();
                             renderSongPicker();
                         });
                         box.appendChild(row);
