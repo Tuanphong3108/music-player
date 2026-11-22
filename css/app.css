@@ -1773,9 +1773,11 @@
         html.m-ui .m-lib-art img.loaded, html.m-ui .m-mini-art img.loaded { opacity: 1; }
         html.m-ui .m-lib-tabs {
             display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 2px 0 4px;
+            overflow-x: auto; scrollbar-width: none;
         }
+        html.m-ui .m-lib-tabs::-webkit-scrollbar { display: none; }
         html.m-ui .m-lib-tab {
-            height: 36px; padding: 0 18px; border: none; border-radius: 999px; cursor: pointer;
+            height: 36px; padding: 0 16px; border: none; border-radius: 999px; cursor: pointer; flex: 0 0 auto; white-space: nowrap;
             background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));
             color: var(--md-sys-color-on-surface-variant);
             font-family: var(--app-font); font-size: calc(13px * var(--font-scale-factor, 1)); font-weight: 700;
@@ -2142,3 +2144,14 @@
             margin-top: 10px; font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
             font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .6; letter-spacing: .3px; user-select: text;
         }
+
+
+/* ===== Nút Yêu thích (trái tim) cạnh nút Lyric ===== */
+#like-btn.liked { color: #ff5a7a; }
+#like-btn:not(.liked) .material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important; }
+#like-btn.liked .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important; }
+#like-btn:disabled { opacity: .4; }
+html.m-ui #like-btn { grid-area: lyric; justify-self: end; margin-right: 64px; width: 48px; height: 48px; border-radius: 50%; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); z-index: 1; }
+html.m-ui #like-btn.liked { color: #ff5a7a; }
+html.m-ui body.fullscreen-active #like-btn { display: none; }
+@media (max-height: 700px) { html.m-ui #like-btn { width: 40px; height: 40px; margin-right: 54px; } }

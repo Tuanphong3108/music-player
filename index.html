@@ -908,7 +908,6 @@
         </div>
     </div>
     <input type="file" id="plc-image-input" class="hidden" accept="image/*">
-    <input type="file" id="m-pl-import-input" class="hidden" accept=".m3u,.m3u8,audio/x-mpegurl">
 
     <!-- Modal: Thư mục loại trừ (Mobile Music Management) -->
     <div id="lib-excluded-modal" class="cl-overlay" style="z-index: 4200;">
@@ -1324,6 +1323,8 @@
                 <div class="m-lib-tabs" id="m-lib-tabs">
                     <button type="button" class="m-lib-tab active" data-mlib="songs" data-i18n="pl.tab_songs">Bài hát</button>
                     <button type="button" class="m-lib-tab" data-mlib="playlists" data-i18n="pl.tab_playlists">Danh sách phát</button>
+                    <button type="button" class="m-lib-tab" data-mlib="artists" data-i18n="pl.tab_artists">Nghệ sĩ</button>
+                    <button type="button" class="m-lib-tab" data-mlib="liked" data-i18n="pl.tab_liked">Yêu thích</button>
                 </div>
 
                 <div class="m-lib-pane active" id="m-pane-songs">
@@ -1349,12 +1350,22 @@
                             <span class="material-symbols-rounded">playlist_add</span>
                             <span data-i18n="pl.new_btn">Tạo mới</span>
                         </button>
-                        <button type="button" class="m-lib-shuffle-btn" id="m-pl-import-btn" style="background:color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface)); color:var(--md-sys-color-on-surface);">
-                            <span class="material-symbols-rounded">upload_file</span>
-                            <span data-i18n="pl.import_btn">Nhập (.m3u)</span>
-                        </button>
                     </div>
                     <div class="m-lib-list" id="m-pl-list"></div>
+                </div>
+
+                <div class="m-lib-pane" id="m-pane-artists">
+                    <div class="m-lib-list" id="m-artist-list"></div>
+                </div>
+
+                <div class="m-lib-pane" id="m-pane-liked">
+                    <div class="m-lib-actions">
+                        <button type="button" class="m-lib-shuffle-btn" id="m-liked-shuffle">
+                            <span class="material-symbols-rounded">shuffle</span>
+                            <span data-i18n="playlist.tab_shuffle">Shuffle</span>
+                        </button>
+                    </div>
+                    <div class="m-lib-list" id="m-liked-list"></div>
                 </div>
 
                 <div class="m-lib-pane" id="m-pane-pl-detail">
@@ -1493,6 +1504,9 @@
                 <button class="btn-m3" id="repeat-btn" title="Lặp lại" data-i18n-title="player.repeat">
                     <span class="material-symbols-rounded" style="font-size: 20px;">repeat</span>
                     <div class="repeat-badge">1</div>
+                </button>
+                <button class="btn-m3" id="like-btn" title="Yêu thích" data-i18n-title="player.like">
+                    <span class="material-symbols-rounded" style="font-size: 20px;">favorite</span>
                 </button>
                 <button class="btn-m3" id="lyric-btn" title="Bật/Tắt Lời bài hát" data-i18n-title="player.lyrics">
                     <span class="material-symbols-rounded" style="font-size: 20px;">lyrics</span>
@@ -2312,6 +2326,7 @@
     <script src="js/08-seek-wave-pwa.js"></script>
     <script src="js/09-editors-info.js"></script>
     <script src="js/10-fullscreen-hotkeys.js"></script>
+    <script src="js/11-liked.js"></script>
 
     <!--
       Script ĐỘC LẬP, tách hẳn khỏi script chính phía trên: dù script chính có ném lỗi

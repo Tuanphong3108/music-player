@@ -339,6 +339,12 @@
                 const plDetailList = document.getElementById('m-pl-detail-list');
                 const plDetailTitle = document.getElementById('m-pl-detail-title');
                 const creatorModal = document.getElementById('m-pl-creator-modal');
+                const paneArtists = document.getElementById('m-pane-artists');
+                const paneLiked = document.getElementById('m-pane-liked');
+                const artistListEl = document.getElementById('m-artist-list');
+                const likedListEl = document.getElementById('m-liked-list');
+                const virtualPls = {};   // danh sách ảo (Nghệ sĩ...) mở trong khung chi tiết danh sách phát
+                let detailReturnTab = 'playlists';
                 let activeTab = 'songs';
                 let openedPlId = null;
 
@@ -411,6 +417,7 @@
 
                 function resolvePlaylistTracks(pl) {
                     if (!pl) return [];
+                    if (pl.mode === 'virtual') return pl.getTracks();
                     const pool = getLibPool();
                     if (pl.mode === 'smart') {
                         const st = loadStats();
@@ -437,9 +444,84 @@
                     tabBtns.forEach(b => b.classList.toggle('active', b.dataset.mlib === tab));
                     paneSongs?.classList.toggle('active', tab === 'songs');
                     panePls?.classList.toggle('active', tab === 'playlists');
+                    paneArtists?.classList.toggle('active', tab === 'artists');
+                    paneLiked?.classList.toggle('active', tab === 'liked');
                     paneDetail?.classList.remove('active');
+                    document.getElementById('m-lib-tabs')?.style.removeProperty('display');
                     if (tab === 'playlists') renderMobilePlaylists();
+                    if (tab === 'artists') renderMobileArtists();
+                    if (tab === 'liked') renderMobileLiked();
                 }
+
+                function rowArtHtml(tr) {
+                    return '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr && tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>';
+                }
+                function emptyHtml(icon, text) {
+                    return '<div class="m-pl-empty"><span class="material-symbols-rounded">' + icon + '</span><p>' + text + '</p></div>';
+                }
+
+                // --- Tab Nghệ sĩ: gom bài theo ca sĩ, chạm để mở danh sách bài của ca sĩ đó ---
+                function renderMobileArtists() {
+                    if (!artistListEl) return;
+                    const groups = new Map();
+                    getLibPool().forEach(t => {
+                        if (!t) return;
+                        const name = String(t.artist || '').trim() || 'UNKNOWN ARTIST';
+                        const k = name.toLowerCase();
+                        if (!groups.has(k)) groups.set(k, { name, tracks: [] });
+                        groups.get(k).tracks.push(t);
+                    });
+                    const arr = Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+                    artistListEl.innerHTML = '';
+                    if (!arr.length) { artistListEl.innerHTML = emptyHtml('artist', tr2('pl.artists_empty', 'Chưa có nghệ sĩ nào.')); return; }
+                    arr.forEach(g => {
+                        const row = document.createElement('div');
+                        row.className = 'm-lib-item';
+                        row.innerHTML = rowArtHtml(g.tracks.find(t => t.cover) || g.tracks[0]) +
+                            '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
+                            '<span class="material-symbols-rounded" style="opacity:.5;">chevron_right</span>';
+                        row.querySelector('.m-lib-title').textContent = g.name;
+                        row.querySelector('.m-lib-artist').textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', g.tracks.length);
+                        row.addEventListener('click', () => {
+                            const id = 'virt_artist_' + g.name.toLowerCase();
+                            virtualPls[id] = { id, name: g.name, mode: 'virtual', returnTab: 'artists',
+                                getTracks: () => getLibPool().filter(t => t && (String(t.artist || '').trim() || 'UNKNOWN ARTIST').toLowerCase() === g.name.toLowerCase()) };
+                            openPlaylistDetail(id);
+                        });
+                        artistListEl.appendChild(row);
+                    });
+                }
+
+                // --- Tab Yêu thích: các bài đã bấm trái tim ---
+                function renderMobileLiked() {
+                    if (!likedListEl) return;
+                    const liked = getLibPool().filter(t => t && window.__isLiked && window.__isLiked(t));
+                    likedListEl.innerHTML = '';
+                    if (!liked.length) { likedListEl.innerHTML = emptyHtml('favorite', tr2('pl.liked_empty', 'Chưa có bài hát yêu thích nào.')); return; }
+                    const activeTr = playlist[currentIndex] || null;
+                    const activeKey = activeTr ? trackKeyOf(activeTr) : '';
+                    liked.forEach(tr => {
+                        const row = document.createElement('div');
+                        row.className = 'm-lib-item' + (activeKey && trackKeyOf(tr) === activeKey ? ' active' : '');
+                        row.innerHTML = rowArtHtml(tr) +
+                            '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
+                            '<button type="button" class="m-lib-more" aria-label="Unlike"><span class="material-symbols-rounded" style="font-size:20px;color:#ff5a7a;">favorite</span></button>';
+                        row.querySelector('.m-lib-title').textContent = tr.name || '';
+                        row.querySelector('.m-lib-artist').textContent = tr.artist || '';
+                        row.addEventListener('click', () => replaceQueueAndPlay(liked, tr));
+                        row.querySelector('.m-lib-more').addEventListener('click', (ev) => { ev.stopPropagation(); window.__toggleLiked(tr); });
+                        likedListEl.appendChild(row);
+                    });
+                }
+                document.getElementById('m-liked-shuffle')?.addEventListener('click', () => {
+                    const liked = getLibPool().filter(t => t && window.__isLiked && window.__isLiked(t));
+                    if (!liked.length) return;
+                    if (!isShuffle) document.getElementById('shuffle-btn').click();
+                    replaceQueueAndPlay(liked, liked[Math.floor(Math.random() * liked.length)]);
+                });
+                document.addEventListener('mp-liked-changed', () => {
+                    if (activeTab === 'liked' && !openedPlId) renderMobileLiked();
+                });
                 tabBtns.forEach(b => b.addEventListener('click', () => setMobileLibTab(b.dataset.mlib)));
 
                 function renderMobilePlaylists() {
@@ -490,12 +572,15 @@
                 };
 
                 function openPlaylistDetail(plId, keepModes) {
-                    const pl = loadPls().find(x => x.id === plId);
+                    const pl = loadPls().find(x => x.id === plId) || virtualPls[plId];
                     if (!pl || !plDetailList) return;
                     openedPlId = plId;
+                    detailReturnTab = pl.mode === 'virtual' ? (pl.returnTab || 'artists') : 'playlists';
                     if (!keepModes) { pldRemoveMode = false; pldReorderMode = false; }
                     paneSongs?.classList.remove('active');
                     panePls?.classList.remove('active');
+                    paneArtists?.classList.remove('active');
+                    paneLiked?.classList.remove('active');
                     paneDetail?.classList.add('active');
                     document.getElementById('m-lib-tabs')?.style.setProperty('display', 'none');
                     if (plDetailTitle) plDetailTitle.textContent = pl.name;
@@ -510,7 +595,8 @@
                     if (reordTxt) reordTxt.textContent = isEn ? 'Reorder' : 'Sắp xếp';
 
                     const chipsRow = document.getElementById('m-pl-detail-chips');
-                    if (chipsRow) chipsRow.style.display = pl.mode === 'smart' ? 'none' : 'flex';
+                    if (chipsRow) chipsRow.style.display = (pl.mode === 'smart' || pl.mode === 'virtual') ? 'none' : 'flex';
+                    ['m-pl-detail-sort', 'm-pl-detail-more'].forEach(i => { const e = document.getElementById(i); if (e) e.style.display = pl.mode === 'virtual' ? 'none' : ''; });
                     document.getElementById('m-pl-detail-remove')?.classList.toggle('active', pldRemoveMode);
                     document.getElementById('m-pl-detail-reorder')?.classList.toggle('active', pldReorderMode);
 
@@ -651,7 +737,7 @@
                 }
                 document.getElementById('m-pl-detail-back')?.addEventListener('click', () => {
                     document.getElementById('m-lib-tabs')?.style.removeProperty('display');
-                    setMobileLibTab('playlists');
+                    setMobileLibTab(detailReturnTab);
                 });
 
                 // --- Creator Modal State ---
@@ -877,36 +963,8 @@
                         : tr2('pl.created_toast', 'Đã tạo danh sách phát "{name}"!').replace('{name}', name), 'playlist_add_check', 3000);
                 });
 
-                // Import .m3u
-                document.getElementById('m-pl-import-btn')?.addEventListener('click', () => document.getElementById('m-pl-import-input')?.click());
-                document.getElementById('m-pl-import-input')?.addEventListener('change', (e) => {
-                    const f = e.target.files && e.target.files[0]; if (!f) return;
-                    const rd = new FileReader();
-                    rd.onload = () => {
-                        const lines = String(rd.result || '').split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith('#'));
-                        const matchedKeys = [];
-                        lines.forEach(line => {
-                            const base = line.split(/[\\/]/).pop().replace(/\.[^/.]+$/, '').toLowerCase();
-                            const found = playlist.find(t => (t.rawName || '').toLowerCase() === base || (t.name || '').toLowerCase() === base);
-                            if (found) matchedKeys.push(trackKeyOf(found));
-                        });
-                        if (!matchedKeys.length) {
-                            showToast(tr2('pl.import_empty', 'Không tìm thấy bài hát khớp với tệp .m3u này trong thư viện.'), 'info', 3500);
-                            return;
-                        }
-                        const plName = f.name.replace(/\.[^/.]+$/, '');
-                        const pls = loadPls();
-                        pls.unshift({ id: 'pl_' + Date.now(), name: plName, mode: 'manual', coverType: 'default', trackKeys: Array.from(new Set(matchedKeys)) });
-                        savePls(pls);
-                        renderMobilePlaylists();
-                        showToast(tr2('pl.imported_toast', 'Đã nhập danh sách phát "{name}" ({n} bài)!').replace('{name}', plName).replace('{n}', matchedKeys.length), 'playlist_add_check', 3000);
-                    };
-                    rd.readAsText(f);
-                    e.target.value = '';
-                });
-
                 window.__closeMobilePlDetailIfOpen = function () {
-                    if (openedPlId) { setMobileLibTab('playlists'); return true; }
+                    if (openedPlId) { setMobileLibTab(detailReturnTab); return true; }
                     return false;
                 };
             })();

@@ -1383,6 +1383,7 @@
             }
             if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
             if (typeof window.__syncPldActive === 'function') window.__syncPldActive();
+            if (typeof window.__syncLikeBtn === 'function') window.__syncLikeBtn();
             if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
         }
 
