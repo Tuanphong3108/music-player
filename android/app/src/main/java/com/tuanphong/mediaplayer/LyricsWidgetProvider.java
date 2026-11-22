@@ -33,6 +33,27 @@ public class LyricsWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    static String stripLyricCredit(String text) {
+        if (text == null || text.isEmpty()) return "";
+        String[] lines = text.split("\\r?\\n");
+        StringBuilder sb = new StringBuilder();
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty()) continue;
+            if (trimmed.matches("(?i)^Lyric by\\b.*") || trimmed.matches("(?i)^Lyric powered by LRCLIB\\b.*")) {
+                continue;
+            }
+            trimmed = trimmed.replaceAll("(?i)\\s*Lyric by\\s+[^•\\n]+(?:\\s*•\\s*Lyric powered by LRCLIB)?$", "");
+            trimmed = trimmed.replaceAll("(?i)\\s*Lyric powered by LRCLIB$", "");
+            trimmed = trimmed.trim();
+            if (!trimmed.isEmpty()) {
+                if (sb.length() > 0) sb.append('\n');
+                sb.append(trimmed);
+            }
+        }
+        return sb.toString();
+    }
+
     static void saveLyricsData(Context context, String syncedLine, String staticBlock, String trackTitle, boolean hasLyrics) {
         SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String oldSync = sp.getString("synced_line", "");
@@ -40,8 +61,8 @@ public class LyricsWidgetProvider extends AppWidgetProvider {
         String oldTitle = sp.getString("track_title", "");
         boolean oldHas = sp.getBoolean("has_lyrics", false);
 
-        String nextSync = syncedLine == null ? "" : syncedLine;
-        String nextStatic = staticBlock == null ? "" : staticBlock;
+        String nextSync = stripLyricCredit(syncedLine);
+        String nextStatic = stripLyricCredit(staticBlock);
         String nextTitle = trackTitle == null ? "" : trackTitle;
 
         if (nextSync.equals(oldSync) && nextStatic.equals(oldStatic)
