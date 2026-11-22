@@ -100,6 +100,29 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    /** Khôi phục màu widget & theme gốc về mặc định / hệ thống (xóa màu động từ bài hát cũ). */
+    static void resetWidgetColors(Context context) {
+        try {
+            context.getSharedPreferences("app", Context.MODE_PRIVATE).edit()
+                    .remove("widget_bg")
+                    .remove("widget_accent")
+                    .remove("theme")
+                    .commit();
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                    .remove("theme")
+                    .commit();
+            context.getSharedPreferences(QueueWidgetProvider.PREFS, Context.MODE_PRIVATE).edit()
+                    .remove("theme")
+                    .commit();
+            context.getSharedPreferences(LyricsWidgetProvider.PREFS, Context.MODE_PRIVATE).edit()
+                    .remove("theme")
+                    .commit();
+            updateAllWidgets(context);
+            QueueWidgetProvider.updateAllWidgets(context);
+            LyricsWidgetProvider.updateAllWidgets(context);
+        } catch (Throwable ignored) {}
+    }
+
     /** Đưa tất cả widget về trạng thái "chưa mở bài nào" (dùng khi app khởi động lại sau khi bị sập/đóng). */
     static void resetToIdle(Context context) {
         try {
@@ -107,7 +130,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
                     .putBoolean("playing", false)
                     .remove("title").remove("artist").remove("lyric")
                     .putLong("pos_ms", 0L).putLong("dur_ms", 0L)
-                    .apply();
+                    .commit();
             File artFile = new File(context.getCacheDir(), "widget_art.png");
             if (artFile.exists()) artFile.delete();
             QueueWidgetProvider.clearQueue(context);
@@ -136,7 +159,12 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         if (!sp.getBoolean("playing", false)) return;
         long age = System.currentTimeMillis() - sp.getLong("last_report_ms", 0L);
         boolean appAlive = MainActivity.instance != null;
-        if (age > 120000L || (!appAlive && age > 45000L)) resetToIdle(context);   // app đã sập/bị đóng nhưng widget vẫn báo đang phát
+        if (age > 120000L || (!appAlive && age > 45000L)) {
+            MainActivity.recordCrashSyncIfEmpty(context, "BG_STALE_WATCHDOG",
+                    "App stopped responding or was killed in background while playing (stale " + (age / 1000L) + "s)");
+            resetToIdle(context);
+            resetWidgetColors(context);
+        }
         else scheduleStaleCheck(context);
     }
 
