@@ -8400,22 +8400,61 @@
             const mPlShuffle = document.getElementById('m-pl-shuffle');
             const mPlRepeat = document.getElementById('m-pl-repeat');
             const mPlSleep = document.getElementById('m-pl-sleep');
-            const mPlReorder = document.getElementById('m-pl-reorder');
+            const mPlMoreBtn = document.getElementById('m-pl-more-btn');
+            const mPlMorePopup = document.getElementById('m-pl-more-popup');
             let mLibQuery = '';
+
+            // Thư viện gốc trên Mobile (luôn giữ đủ bài, sắp xếp 0–Z, không bị xoá khi chỉnh hàng đợi tạm)
+            window.__mobileLibrary = window.__mobileLibrary || [];
+            const mLibTrackId = (t) => (t && (t.nativeLocation || t.rawName || t.name || '')).toLowerCase();
+            const sortMobileLib0Z = (arr) => arr.sort((a, b) =>
+                String((a && a.name) || '').localeCompare(String((b && b.name) || ''), undefined, { numeric: true, sensitivity: 'base' })
+            );
+
+            function syncMobileLibraryFromPlaylist() {
+                if (!document.documentElement.classList.contains('m-ui')) return;
+                const seen = new Set(window.__mobileLibrary.map(mLibTrackId));
+                playlist.forEach(tr => {
+                    if (!tr) return;
+                    const id = mLibTrackId(tr);
+                    if (id && !seen.has(id)) {
+                        seen.add(id);
+                        window.__mobileLibrary.push(tr);
+                    }
+                });
+                sortMobileLib0Z(window.__mobileLibrary);
+            }
+            window.__syncMobileLibraryFromPlaylist = syncMobileLibraryFromPlaylist;
+
+            function replaceQueueAndPlay(tracks, startTrack) {
+                if (!Array.isArray(tracks) || !tracks.length) return;
+                playlist.length = 0;
+                tracks.forEach(t => { if (t) playlist.push(t); });
+                const startIdx = Math.max(0, startTrack ? playlist.indexOf(startTrack) : 0);
+                currentIndex = -1;
+                if (shuffleInitialized) generateShuffleOrder();
+                playTrack(startIdx);
+                document.body.classList.add('m-mini-visible');
+            }
 
             function renderMobileLibrary() {
                 if (!document.documentElement.classList.contains('m-ui') || !mLibList) return;
+                if (!window.__mobileLibrary.length && playlist.length) syncMobileLibraryFromPlaylist();
+                sortMobileLib0Z(window.__mobileLibrary);
                 mLibList.innerHTML = '';
                 const q = mLibQuery;
-                for (let idx = 0; idx < playlist.length; idx++) {
-                    const tr = playlist[idx];
+                const activeTrack = playlist[currentIndex] || null;
+                const activeId = activeTrack ? mLibTrackId(activeTrack) : '';
+                for (let idx = 0; idx < window.__mobileLibrary.length; idx++) {
+                    const tr = window.__mobileLibrary[idx];
                     if (!tr) continue;
                     if (q) {
                         const hay = removeVietnameseTones((tr.name || '') + ' ' + (tr.artist || '')).toLowerCase();
                         if (!hay.includes(q)) continue;
                     }
+                    const isAct = !!(activeId && mLibTrackId(tr) === activeId);
                     const row = document.createElement('div');
-                    row.className = 'm-lib-item' + (idx === currentIndex ? ' active' : '');
+                    row.className = 'm-lib-item' + (isAct ? ' active' : '');
                     row.innerHTML =
                         '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>' +
                         '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
@@ -8423,13 +8462,20 @@
                     row.querySelector('.m-lib-title').textContent = tr.name || '';
                     row.querySelector('.m-lib-artist').textContent = tr.artist || '';
                     row.addEventListener('click', () => {
-                        playTrack(idx);
-                        document.body.classList.add('m-mini-visible');
+                        // Chọn bài từ màn hình chính -> tự reset hàng đợi tạm về toàn bộ thư viện 0–Z
+                        replaceQueueAndPlay(window.__mobileLibrary, tr);
                     });
                     const mb = row.querySelector('.m-lib-more');
                     mb.addEventListener('click', (ev) => {
                         ev.stopPropagation();
-                        targetMenuIndex = idx;
+                        // Bài từ màn hình chính không cho loại bỏ khỏi thư viện (chỉ loại bỏ được trong Playlist/Queue)
+                        const qIdx = playlist.indexOf(tr);
+                        targetMenuIndex = qIdx >= 0 ? qIdx : -1;
+                        if (cmDelete) cmDelete.style.display = 'none';
+                        if (qIdx < 0) {
+                            // Đảm bảo nạp lẻ .lrc vẫn trỏ đúng bài nếu bài chưa có trong queue
+                            window.__lrcFallbackTrack = tr;
+                        }
                         contextMenu.style.display = 'flex';
                         const r = mb.getBoundingClientRect();
                         window.__placeMenu(contextMenu, r.right, r.bottom + 4);
@@ -8473,12 +8519,11 @@
             }
             if (mLibShuffle) {
                 mLibShuffle.addEventListener('click', () => {
-                    if (!playlist.length) return;
+                    const srcLib = window.__mobileLibrary.length ? window.__mobileLibrary : playlist;
+                    if (!srcLib.length) return;
+                    const pickTrack = srcLib[Math.floor(Math.random() * srcLib.length)];
                     if (!isShuffle) document.getElementById('shuffle-btn').click();
-                    else generateShuffleOrder();
-                    const pick = shuffleOrder.length ? shuffleOrder[0] : Math.floor(Math.random() * playlist.length);
-                    playTrack(pick);
-                    document.body.classList.add('m-mini-visible');
+                    replaceQueueAndPlay(srcLib, pickTrack);
                 });
             }
             if (mLibRescan) {
@@ -8560,7 +8605,55 @@
             if (mPlShuffle) mPlShuffle.addEventListener('click', () => { document.getElementById('shuffle-btn').click(); syncMobileMiniPlayer(); });
             if (mPlRepeat) mPlRepeat.addEventListener('click', () => { document.getElementById('repeat-btn').click(); syncMobileMiniPlayer(); });
             if (mPlSleep) mPlSleep.addEventListener('click', () => { document.getElementById('sleep-btn').click(); });
-            if (mPlReorder) mPlReorder.addEventListener('click', () => { document.getElementById('reorder-btn').click(); });
+
+            // Popup 3 chấm của Playlist Sheet (Locate current song / Clear queue / Save as playlist)
+            const syncPlMoreLabels = () => {
+                const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
+                const loc = document.getElementById('m-pl-opt-locate-txt');
+                const clr = document.getElementById('m-pl-opt-clear-txt');
+                const sav = document.getElementById('m-pl-opt-save-txt');
+                if (loc) loc.textContent = isEn ? 'Locate current song' : 'Định vị bài đang phát';
+                if (clr) clr.textContent = isEn ? 'Clear queue' : 'Xóa hàng đợi';
+                if (sav) sav.textContent = isEn ? 'Save as playlist' : 'Lưu thành danh sách phát';
+            };
+            if (mPlMoreBtn && mPlMorePopup) {
+                mPlMoreBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    syncPlMoreLabels();
+                    mPlMorePopup.classList.toggle('open');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#m-pl-more-popup') && !e.target.closest('#m-pl-more-btn')) {
+                        mPlMorePopup.classList.remove('open');
+                    }
+                });
+            }
+            document.getElementById('m-pl-opt-locate')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mPlMorePopup?.classList.remove('open');
+                locateCurrentTrack(true);
+            });
+            document.getElementById('m-pl-opt-clear')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mPlMorePopup?.classList.remove('open');
+                try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch (err) {}
+                playlist.length = 0;
+                currentIndex = -1;
+                if (shuffleInitialized) generateShuffleOrder();
+                playBtn.querySelector('span').innerText = 'play_arrow';
+                document.body.classList.remove('m-playlist-open', 'm-player-expanded', 'm-mini-visible');
+                updatePlaylistUI();
+                updateFsUI();
+                syncMobileMiniPlayer();
+            });
+            document.getElementById('m-pl-opt-save')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mPlMorePopup?.classList.remove('open');
+                if (!playlist.length) return;
+                if (typeof window.__openCreatePlaylistFromTracks === 'function') {
+                    window.__openCreatePlaylistFromTracks(playlist);
+                }
+            });
 
             // --- MOBILE PLAYLISTS TAB + NEW PLAYLIST / SMART PLAYLIST CREATOR ---
             (function initMobilePlaylistsTab() {
@@ -8640,26 +8733,30 @@
                     return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;"><span class="material-symbols-rounded" style="font-size:${Math.round(S * 0.5)}px;opacity:.75;">grid_view</span></div>`;
                 }
 
-                function resolvePlaylistIndices(pl) {
+                function getLibPool() {
+                    return (window.__mobileLibrary && window.__mobileLibrary.length) ? window.__mobileLibrary : playlist;
+                }
+
+                function resolvePlaylistTracks(pl) {
                     if (!pl) return [];
+                    const pool = getLibPool();
                     if (pl.mode === 'smart') {
                         const st = loadStats();
-                        const allIdx = playlist.map((_, i) => i);
+                        const all = pool.slice();
                         if (pl.smartRule === 'top') {
-                            return allIdx.sort((a, b) => ((st[trackKeyOf(playlist[b])]?.count || 0) - (st[trackKeyOf(playlist[a])]?.count || 0))).slice(0, 30);
+                            return all.sort((a, b) => ((st[trackKeyOf(b)]?.count || 0) - (st[trackKeyOf(a)]?.count || 0))).slice(0, 30);
                         }
                         if (pl.smartRule === 'recent') {
-                            return allIdx.filter(i => st[trackKeyOf(playlist[i])]?.last).sort((a, b) => (st[trackKeyOf(playlist[b])].last - st[trackKeyOf(playlist[a])].last)).slice(0, 30);
+                            return all.filter(t => st[trackKeyOf(t)]?.last).sort((a, b) => (st[trackKeyOf(b)].last - st[trackKeyOf(a)].last)).slice(0, 30);
                         }
                         if (pl.smartRule === 'forgotten') {
-                            return allIdx.sort((a, b) => ((st[trackKeyOf(playlist[a])]?.last || 0) - (st[trackKeyOf(playlist[b])]?.last || 0))).slice(0, 30);
+                            return all.sort((a, b) => ((st[trackKeyOf(a)]?.last || 0) - (st[trackKeyOf(b)]?.last || 0))).slice(0, 30);
                         }
-                        return allIdx.slice(0, 30);
+                        return all.slice(0, 30);
                     }
-                    const keys = new Set((pl.trackKeys || []).map(k => String(k).toLowerCase()));
-                    const out = [];
-                    playlist.forEach((t, i) => { if (keys.has(trackKeyOf(t))) out.push(i); });
-                    return out;
+                    const byKey = new Map();
+                    pool.forEach(t => { if (t) byKey.set(trackKeyOf(t), t); });
+                    return (pl.trackKeys || []).map(k => byKey.get(String(k).toLowerCase())).filter(Boolean);
                 }
 
                 function setMobileLibTab(tab) {
@@ -8687,7 +8784,7 @@
                         return;
                     }
                     pls.forEach(pl => {
-                        const indices = resolvePlaylistIndices(pl);
+                        const plTracks = resolvePlaylistTracks(pl);
                         const card = document.createElement('div');
                         card.className = 'm-pl-card';
                         card.innerHTML =
@@ -8695,7 +8792,7 @@
                             '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
                             '<button type="button" class="m-lib-more" aria-label="Delete"><span class="material-symbols-rounded" style="font-size:20px;">delete</span></button>';
                         card.querySelector('.m-lib-title').textContent = pl.name;
-                        card.querySelector('.m-lib-artist').textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', indices.length) + (pl.mode === 'smart' ? ' • Smart' : '');
+                        card.querySelector('.m-lib-artist').textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', plTracks.length) + (pl.mode === 'smart' ? ' • Smart' : '');
                         card.addEventListener('click', () => openPlaylistDetail(pl.id));
                         card.querySelector('.m-lib-more').addEventListener('click', async (ev) => {
                             ev.stopPropagation();
@@ -8737,23 +8834,18 @@
                     document.getElementById('m-pl-detail-remove')?.classList.toggle('active', pldRemoveMode);
                     document.getElementById('m-pl-detail-reorder')?.classList.toggle('active', pldReorderMode);
 
-                    let indices = resolvePlaylistIndices(pl);
-                    if (pl.mode === 'manual' && Array.isArray(pl.trackKeys)) {
-                        // Giữ đúng thứ tự trackKeys đã sắp xếp trong playlist
-                        const byKey = new Map();
-                        playlist.forEach((t, i) => byKey.set(trackKeyOf(t), i));
-                        indices = pl.trackKeys.map(k => byKey.get(String(k).toLowerCase())).filter(i => i !== undefined);
-                    }
+                    const plTracks = resolvePlaylistTracks(pl);
                     const subEl = document.getElementById('m-pl-detail-sub');
-                    if (subEl) subEl.textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', indices.length);
+                    if (subEl) subEl.textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', plTracks.length);
 
+                    const activeTr = playlist[currentIndex] || null;
+                    const activeKey = activeTr ? trackKeyOf(activeTr) : '';
                     plDetailList.innerHTML = '';
-                    indices.forEach((idx, pos) => {
-                        const tr = playlist[idx];
+                    plTracks.forEach((tr, pos) => {
                         if (!tr) return;
                         const row = document.createElement('div');
-                        row.className = 'm-lib-item' + (idx === currentIndex ? ' active' : '');
                         const key = trackKeyOf(tr);
+                        row.className = 'm-lib-item' + (activeKey && key === activeKey ? ' active' : '');
                         let leftHtml = pldReorderMode ? '<span class="material-symbols-rounded" style="opacity:.6;font-size:20px;">drag_indicator</span>' : '';
                         let rightHtml = '';
                         if (pldReorderMode) {
@@ -8773,8 +8865,8 @@
                         row.querySelector('.m-lib-artist').textContent = tr.artist || '';
                         row.addEventListener('click', () => {
                             if (pldRemoveMode || pldReorderMode) return;
-                            playTrack(idx);
-                            document.body.classList.add('m-mini-visible');
+                            // Phát từ danh sách phát đã tạo -> hàng đợi tạm chỉ chứa các bài trong danh sách phát này
+                            replaceQueueAndPlay(plTracks, tr);
                         });
                         row.querySelector('.pld-del')?.addEventListener('click', (ev) => {
                             ev.stopPropagation();
@@ -8803,14 +8895,13 @@
                         plDetailList.appendChild(row);
                     });
                     document.getElementById('m-pl-detail-play').onclick = () => {
-                        if (indices.length) { playTrack(indices[0]); document.body.classList.add('m-mini-visible'); }
+                        if (plTracks.length) replaceQueueAndPlay(plTracks, plTracks[0]);
                     };
                     document.getElementById('m-pl-detail-shuffle').onclick = () => {
-                        if (!indices.length) return;
+                        if (!plTracks.length) return;
                         if (!isShuffle) document.getElementById('shuffle-btn').click();
-                        const pick = indices[Math.floor(Math.random() * indices.length)];
-                        playTrack(pick);
-                        document.body.classList.add('m-mini-visible');
+                        const pick = plTracks[Math.floor(Math.random() * plTracks.length)];
+                        replaceQueueAndPlay(plTracks, pick);
                     };
                     document.getElementById('m-pl-detail-sort').onclick = () => {
                         if (pl.mode !== 'manual') return;
@@ -8819,11 +8910,11 @@
                         if (!cur || !Array.isArray(cur.trackKeys)) return;
                         pldSortAsc = !pldSortAsc;
                         const nameByKey = new Map();
-                        playlist.forEach(t => nameByKey.set(trackKeyOf(t), (t.name || '').toLowerCase()));
+                        getLibPool().forEach(t => nameByKey.set(trackKeyOf(t), (t.name || '').toLowerCase()));
                         cur.trackKeys.sort((a, b) => {
                             const na = nameByKey.get(String(a).toLowerCase()) || '';
                             const nb = nameByKey.get(String(b).toLowerCase()) || '';
-                            return pldSortAsc ? na.localeCompare(nb) : nb.localeCompare(na);
+                            return pldSortAsc ? na.localeCompare(nb, undefined, { numeric: true }) : nb.localeCompare(na, undefined, { numeric: true });
                         });
                         savePls(pls);
                         openPlaylistDetail(plId, true);
@@ -8972,11 +9063,20 @@
                     if (priBtn) priBtn.style.opacity = nameOk ? '1' : '.45';
                 }
 
+                const plcSongSearch = document.getElementById('plc-song-search');
                 function renderSongPicker() {
                     const box = document.getElementById('plc-song-pick-list');
                     if (!box) return;
                     box.innerHTML = '';
-                    playlist.forEach(tr => {
+                    const q = removeVietnameseTones((plcSongSearch && plcSongSearch.value) || '').toLowerCase().trim();
+                    const pool = getLibPool().slice();
+                    sortMobileLib0Z(pool);
+                    pool.forEach(tr => {
+                        if (!tr) return;
+                        if (q) {
+                            const hay = removeVietnameseTones((tr.name || '') + ' ' + (tr.artist || '')).toLowerCase();
+                            if (!hay.includes(q)) return;
+                        }
                         const key = trackKeyOf(tr);
                         const picked = plc.pickedKeys.has(key);
                         const row = document.createElement('div');
@@ -8994,10 +9094,21 @@
                         box.appendChild(row);
                     });
                 }
+                plcSongSearch?.addEventListener('input', renderSongPicker);
+
+                window.__openCreatePlaylistFromTracks = function (tracks) {
+                    const keys = new Set((tracks || []).map(t => trackKeyOf(t)).filter(Boolean));
+                    plc = { step: 0, mode: 'manual', smartRule: 'top', coverType: 'default', coverImage: '', iconBg: '#93c5fd', iconName: 'music_note', iconShape: 'circle', starSides: 5, starCurve: 0.15, starRot: 0, starScale: 1, pickedKeys: keys };
+                    const ni = document.getElementById('plc-name-input'); if (ni) ni.value = '';
+                    if (plcSongSearch) plcSongSearch.value = '';
+                    syncCreatorUI();
+                    creatorModal?.classList.add('open');
+                };
 
                 document.getElementById('m-pl-new-btn')?.addEventListener('click', () => {
                     plc = { step: 0, mode: 'manual', smartRule: 'top', coverType: 'default', coverImage: '', iconBg: '#93c5fd', iconName: 'music_note', iconShape: 'circle', starSides: 5, starCurve: 0.15, starRot: 0, starScale: 1, pickedKeys: new Set() };
                     const ni = document.getElementById('plc-name-input'); if (ni) ni.value = '';
+                    if (plcSongSearch) plcSongSearch.value = '';
                     syncCreatorUI();
                     creatorModal?.classList.add('open');
                 });
@@ -9194,6 +9305,9 @@
             };
             window.__clearLibraryTracksBeforeScan = function () {
                 try {
+                    if (Array.isArray(window.__mobileLibrary)) {
+                        window.__mobileLibrary = window.__mobileLibrary.filter(tr => tr && !(tr.file && tr.file.__fromLibrary));
+                    }
                     for (let i = playlist.length - 1; i >= 0; i--) {
                         const tr = playlist[i];
                         if (tr && tr.file && tr.file.__fromLibrary && i !== currentIndex) {
@@ -10102,7 +10216,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1615_photo_picker_plc_scroll', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1635_mobile_queue_0z', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
