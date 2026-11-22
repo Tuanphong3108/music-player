@@ -482,6 +482,176 @@
                 syncNativeLang();
                 if (AB && AB.pongReady) AB.pongReady();
             } catch (e) {}
+
+            // --- HIỂN THỊ THÔNG BÁO MÃ LỖI KHI APP VỪA TỰ HỦY / BỊ ĐÓNG ĐỘT NGỘT Ở NỀN (CHỈ ANDROID) ---
+            (function checkLastAndroidCrash() {
+                if (!AB || typeof AB.consumeLastCrashInfo !== 'function') return;
+                setTimeout(() => {
+                    try {
+                        const raw = AB.consumeLastCrashInfo();
+                        if (!raw) return;
+                        const info = JSON.parse(raw);
+                        if (!info || !info.code) return;
+
+                        // Khôi phục lại accent color gốc (bỏ màu động còn sót nếu có)
+                        try {
+                            if (typeof setDynamicAccent === 'function') setDynamicAccent(null);
+                            else if (typeof applyAccentColor === 'function') applyAccentColor();
+                        } catch (e) {}
+
+                        const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
+                        const code = String(info.code || 'UNKNOWN');
+                        const reason = String(info.reason || '').trim();
+                        const ts = Number(info.ts) || 0;
+                        const timeText = ts ? new Date(ts).toLocaleString(isEn ? 'en-US' : 'vi-VN') : '';
+
+                        const EXPLAIN = {
+                            BG_WEBVIEW_RENDER_CRASH: [
+                                'Tiến trình hiển thị (WebView) gặp lỗi và bị sập khi ứng dụng đang chạy ở nền. Ứng dụng đã tự dọn widget, khôi phục màu chủ đạo và tải lại sạch sẽ.',
+                                'The WebView rendering process crashed while running in the background. Widgets and accent colors were reset and the app reloaded cleanly.'
+                            ],
+                            BG_WEBVIEW_RENDER_OOM: [
+                                'Hệ thống Android đã thu hồi tiến trình WebView do thiếu RAM khi ứng dụng ở nền. Ứng dụng đã tự dọn sạch và khởi động lại từ đầu.',
+                                'Android reclaimed the WebView process due to low memory while in the background. The app cleaned up and reloaded fresh.'
+                            ],
+                            FG_WEBVIEW_RENDER_CRASH: [
+                                'Tiến trình hiển thị (WebView) vừa bị sập đột ngột. Ứng dụng đã tự khôi phục giao diện và đặt lại widget.',
+                                'The WebView rendering process crashed unexpectedly. The app restored the interface and reset widgets.'
+                            ],
+                            FG_WEBVIEW_RENDER_OOM: [
+                                'Thiết bị cạn RAM khiến hệ thống đóng tiến trình hiển thị (WebView). Ứng dụng đã tự tải lại.',
+                                'The device ran low on memory and closed the WebView renderer. The app reloaded automatically.'
+                            ],
+                            BG_LOW_MEMORY_KILL: [
+                                'Hệ thống báo thiếu RAM nghiêm trọng (TRIM_MEMORY_COMPLETE) khi ứng dụng đang chạy ở nền nên ứng dụng đã chủ động tự dọn widget, khôi phục màu và thoát sạch.',
+                                'The system reported critical low memory (TRIM_MEMORY_COMPLETE) in the background, so the app safely reset widgets, restored accent color, and exited.'
+                            ],
+                            BG_TASK_REMOVED: [
+                                'Tác vụ ứng dụng đã bị đóng hoặc gạt khỏi đa nhiệm trong khi đang chạy ở nền. Toàn bộ widget và màu chủ đạo đã được đặt lại.',
+                                'The app task was closed or removed from recents while running in the background. Widgets and accent color were reset.'
+                            ],
+                            APP_UNCAUGHT_EXCEPTION: [
+                                'Ứng dụng gặp ngoại lệ không xử lý được ở tầng Android native và phải khởi động lại.',
+                                'The app encountered an unhandled native Android exception and had to restart.'
+                            ],
+                            BG_STALE_WATCHDOG: [
+                                'Ứng dụng ngừng phản hồi hoặc bị hệ thống dừng đột ngột khi đang phát nhạc ở nền.',
+                                'The app stopped responding or was unexpectedly terminated by the system while playing in the background.'
+                            ],
+                            BG_SYS_LOW_MEMORY: [
+                                'Hệ thống Android (Low Memory Killer) đã đóng tiến trình ứng dụng ở nền để giải phóng RAM.',
+                                'Android Low Memory Killer terminated the app process in the background to free up RAM.'
+                            ],
+                            BG_SYS_FREEZER: [
+                                'Hệ thống đã đóng băng và dừng ứng dụng khi chạy nền để tiết kiệm pin. Bạn nên tắt tối ưu hóa pin cho Media Player trong Cài đặt.',
+                                'The system froze and stopped the app in the background to save battery. Consider disabling battery optimization for Media Player in Settings.'
+                            ],
+                            BG_SYS_ANR: [
+                                'Ứng dụng bị hệ thống dừng do không phản hồi (ANR).',
+                                'The system stopped the app because it became unresponsive (ANR).'
+                            ],
+                            BG_SYS_CRASH: [
+                                'Tiến trình ứng dụng vừa gặp sự cố sập hệ thống (Crash).',
+                                'The app process previously terminated due to a crash.'
+                            ],
+                            BG_SYS_EXCESSIVE_RESOURCE: [
+                                'Hệ thống đã dừng ứng dụng ở nền do sử dụng nhiều tài nguyên (CPU/Pin).',
+                                'The system stopped the app in the background due to excessive resource usage.'
+                            ],
+                            BG_SYS_USER_STOPPED: [
+                                'Ứng dụng đã bị buộc dừng từ hệ thống trước đó.',
+                                'The app was previously force-stopped by the system.'
+                            ],
+                            BG_SYS_SIGNALED: [
+                                'Tiến trình ứng dụng bị hệ thống ngắt đột ngột (SIGKILL).',
+                                'The app process was abruptly terminated by the system (SIGKILL).'
+                            ]
+                        };
+                        const pair = EXPLAIN[code] || [
+                            'Ứng dụng vừa bị đóng đột ngột ở nền và đã tự động dọn dẹp widget, khôi phục màu chủ đạo để khởi động lại sạch sẽ.',
+                            'The app was unexpectedly closed in the background and automatically reset widgets and accent colors for a clean restart.'
+                        ];
+                        const descText = isEn ? pair[1] : pair[0];
+
+                        const ov = document.createElement('div');
+                        ov.id = 'android-crash-overlay';
+                        ov.className = 'cl-overlay open';
+                        ov.style.cssText = 'z-index: 9600; padding: 16px;';
+
+                        const box = document.createElement('div');
+                        box.className = 'cl-dialog';
+                        box.style.cssText = 'max-width: 420px; width: 100%; height: auto; max-height: 85vh; border-radius: 28px; overflow: hidden; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); display: flex; flex-direction: column;';
+
+                        const body = document.createElement('div');
+                        body.style.cssText = 'padding: 24px 22px 18px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;';
+
+                        const head = document.createElement('div');
+                        head.style.cssText = 'display: flex; align-items: center; gap: 14px;';
+                        head.innerHTML = '<div style="width:48px;height:48px;border-radius:16px;background:color-mix(in srgb, var(--md-sys-color-error, #F2B8B5) 22%, transparent);color:var(--md-sys-color-error, #F2B8B5);display:grid;place-items:center;flex-shrink:0;"><span class="material-symbols-rounded" style="font-size:26px;">warning</span></div>';
+                        const hTx = document.createElement('div');
+                        hTx.style.cssText = 'display:flex;flex-direction:column;gap:2px;min-width:0;';
+                        const hTitle = document.createElement('h3');
+                        hTitle.style.cssText = 'margin:0;font-size:18px;font-weight:800;line-height:1.25;';
+                        hTitle.textContent = isEn ? 'App recovered from an unexpected stop' : 'Ứng dụng vừa bị đóng đột ngột';
+                        const hSub = document.createElement('div');
+                        hSub.style.cssText = 'font-size:12px;opacity:.68;';
+                        hSub.textContent = timeText || (isEn ? 'Previous session' : 'Phiên chạy trước');
+                        hTx.appendChild(hTitle);
+                        hTx.appendChild(hSub);
+                        head.appendChild(hTx);
+
+                        const pDesc = document.createElement('p');
+                        pDesc.style.cssText = 'margin:0;font-size:14px;line-height:1.5;opacity:.9;';
+                        pDesc.textContent = descText;
+
+                        const detailCard = document.createElement('div');
+                        detailCard.style.cssText = 'padding:12px 14px;border-radius:16px;background:color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));font-family:monospace;font-size:12px;line-height:1.5;word-break:break-word;display:flex;flex-direction:column;gap:4px;';
+                        const codeLine = document.createElement('div');
+                        codeLine.style.fontWeight = '700';
+                        codeLine.textContent = (isEn ? 'Error code: ' : 'Mã lỗi: ') + code;
+                        detailCard.appendChild(codeLine);
+                        if (reason) {
+                            const rLine = document.createElement('div');
+                            rLine.style.opacity = '0.82';
+                            rLine.textContent = (isEn ? 'Details: ' : 'Chi tiết: ') + reason;
+                            detailCard.appendChild(rLine);
+                        }
+
+                        const foot = document.createElement('div');
+                        foot.style.cssText = 'display:flex;justify-content:flex-end;gap:10px;padding:12px 20px 18px;';
+
+                        const copyBtn = document.createElement('button');
+                        copyBtn.type = 'button';
+                        copyBtn.className = 'btn-m3';
+                        copyBtn.style.cssText = 'width:auto;height:42px;padding:0 16px;border-radius:999px;background:var(--md-sys-color-surface-variant);color:var(--md-sys-color-on-surface);font-weight:700;display:inline-flex;align-items:center;gap:6px;';
+                        copyBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;">content_copy</span><span>' + (isEn ? 'Copy' : 'Sao chép') + '</span>';
+                        copyBtn.addEventListener('click', () => {
+                            const payload = `Code: ${code}${timeText ? '\nTime: ' + timeText : ''}${reason ? '\nDetails: ' + reason : ''}`;
+                            try { navigator.clipboard.writeText(payload); } catch (e) {}
+                            if (typeof showToast === 'function') showToast(isEn ? 'Copied error code' : 'Đã sao chép mã lỗi', 'content_copy', 2200);
+                        });
+
+                        const okBtn = document.createElement('button');
+                        okBtn.type = 'button';
+                        okBtn.className = 'btn-m3';
+                        okBtn.style.cssText = 'width:auto;height:42px;padding:0 22px;border-radius:999px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-weight:700;';
+                        okBtn.textContent = isEn ? 'Got it' : 'Đã hiểu';
+                        const closeOv = () => { ov.classList.remove('open'); setTimeout(() => ov.remove(), 220); };
+                        okBtn.addEventListener('click', closeOv);
+                        ov.addEventListener('click', (ev) => { if (ev.target === ov) closeOv(); });
+
+                        foot.appendChild(copyBtn);
+                        foot.appendChild(okBtn);
+                        body.appendChild(head);
+                        body.appendChild(pDesc);
+                        body.appendChild(detailCard);
+                        box.appendChild(body);
+                        box.appendChild(foot);
+                        ov.appendChild(box);
+                        document.body.appendChild(ov);
+                    } catch (e) {}
+                }, 700);
+            })();
             window.__onAndroidLeaveApp = function () {
                 try {
                     const tr = playlist[currentIndex];
