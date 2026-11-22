@@ -143,6 +143,7 @@ public class MainActivity extends Activity {
         applyTheme(themeColor);
 
         if (Build.VERSION.SDK_INT >= 33 &&
+                getSharedPreferences("app", MODE_PRIVATE).getBoolean("gs_done", false) &&
                 checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
         }
@@ -1104,6 +1105,198 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 101 || requestCode == 102) {
+            callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
+        }
+    }
+
+    private String getPermissionsStatusJson() {
+        boolean media = hasMediaPermissionInternal();
+        boolean notif = hasNotificationPermissionInternal();
+        boolean battery = isIgnoringBatteryOptimizationsInternal();
+        try {
+            JSONObject o = new JSONObject();
+            o.put("media", media);
+            o.put("notifications", notif);
+            o.put("battery", battery);
+            return o.toString();
+        } catch (Throwable ignored) {
+            return "{\"media\":" + media + ",\"notifications\":" + notif + ",\"battery\":" + battery + "}";
+        }
+    }
+
+    private boolean hasMediaPermissionInternal() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            return checkSelfPermission(Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        }
+        if (Build.VERSION.SDK_INT >= 23) {
+            return checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
+    }
+
+    private boolean hasNotificationPermissionInternal() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            return checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
+    }
+
+    private java.util.Set<String> getExcludedDirsSet() {
+        java.util.Set<String> raw = getSharedPreferences("app", MODE_PRIVATE).getStringSet("excluded_dirs", null);
+        java.util.Set<String> out = new java.util.HashSet<>();
+        if (raw != null) {
+            for (String p : raw) {
+                if (p != null && !p.trim().isEmpty()) {
+                    String norm = p.trim();
+                    while (norm.length() > 1 && norm.endsWith("/")) norm = norm.substring(0, norm.length() - 1);
+                    out.add(norm);
+                }
+            }
+        }
+        return out;
+    }
+
+    private boolean isPathExcluded(String parentDir, java.util.Set<String> excluded) {
+        if (excluded.isEmpty() || parentDir == null || parentDir.isEmpty()) return false;
+        String norm = parentDir;
+        while (norm.length() > 1 && norm.endsWith("/")) norm = norm.substring(0, norm.length() - 1);
+        for (String ex : excluded) {
+            if (norm.equalsIgnoreCase(ex) || norm.toLowerCase().startsWith(ex.toLowerCase() + "/")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void scanAllDeviceAudioInternal(final boolean clearExisting) {
+        if (!hasMediaPermissionInternal()) {
+            callJs("window.__onAndroidLibraryScanDone&&window.__onAndroidLibraryScanDone(0, true)");
+            return;
+        }
+        new Thread(() -> {
+            List<JSONObject> scanned = new ArrayList<>();
+            java.util.Set<String> excluded = getExcludedDirsSet();
+            java.util.Map<String, String> lrcByStem = new java.util.HashMap<>();
+            try {
+                // Quét cả tệp .lrc qua MediaStore.Files nếu có quyền để tự ghép lời bài hát
+                android.net.Uri filesUri = android.provider.MediaStore.Files.getContentUri("external");
+                try (Cursor fc = getContentResolver().query(filesUri,
+                        new String[]{android.provider.MediaStore.MediaColumns._ID, android.provider.MediaStore.MediaColumns.DATA},
+                        "LOWER(" + android.provider.MediaStore.MediaColumns.DATA + ") LIKE '%.lrc'",
+                        null, null)) {
+                    if (fc != null) {
+                        int idCol = fc.getColumnIndex(android.provider.MediaStore.MediaColumns._ID);
+                        int dataCol = fc.getColumnIndex(android.provider.MediaStore.MediaColumns.DATA);
+                        while (fc.moveToNext()) {
+                            String lrcPath = dataCol >= 0 ? fc.getString(dataCol) : null;
+                            if (lrcPath == null || lrcPath.isEmpty()) continue;
+                            File lf = new File(lrcPath);
+                            String parent = lf.getParent();
+                            if (isPathExcluded(parent, excluded)) continue;
+                            String name = lf.getName();
+                            int dot = name.lastIndexOf('.');
+                            String stem = (dot > 0 ? name.substring(0, dot) : name).toLowerCase();
+                            String key = (parent == null ? "" : parent.toLowerCase()) + "/" + stem;
+                            long fid = idCol >= 0 ? fc.getLong(idCol) : -1L;
+                            if (fid >= 0) {
+                                lrcByStem.put(key, android.content.ContentUris.withAppendedId(filesUri, fid).toString());
+                            }
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {}
+
+            try {
+                android.net.Uri audioUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                String[] proj = new String[]{
+                        android.provider.MediaStore.Audio.Media._ID,
+                        android.provider.MediaStore.Audio.Media.DISPLAY_NAME,
+                        android.provider.MediaStore.Audio.Media.DATA,
+                        android.provider.MediaStore.Audio.Media.MIME_TYPE,
+                        android.provider.MediaStore.Audio.Media.SIZE,
+                        android.provider.MediaStore.Audio.Media.DATE_MODIFIED,
+                        android.provider.MediaStore.Audio.Media.DURATION
+                };
+                String sel = "(" + android.provider.MediaStore.Audio.Media.DURATION + " >= 3000 OR LOWER(COALESCE(" + android.provider.MediaStore.Audio.Media.MIME_TYPE + ", '')) LIKE 'audio/%')"
+                        + " AND " + android.provider.MediaStore.Audio.Media.DATA + " IS NOT NULL";
+                try (Cursor c = getContentResolver().query(audioUri, proj, sel, null,
+                        android.provider.MediaStore.Audio.Media.DATE_ADDED + " DESC")) {
+                    if (c != null) {
+                        int idCol = c.getColumnIndexOrThrow(android.provider.MediaStore.Audio.Media._ID);
+                        int nameCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DISPLAY_NAME);
+                        int dataCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DATA);
+                        int mimeCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.MIME_TYPE);
+                        int sizeCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.SIZE);
+                        int modCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DATE_MODIFIED);
+                        while (c.moveToNext()) {
+                            long audioId = c.getLong(idCol);
+                            String path = dataCol >= 0 ? c.getString(dataCol) : null;
+                            if (path == null || path.isEmpty()) continue;
+                            File f = new File(path);
+                            String parent = f.getParent();
+                            if (parent != null && parent.contains("/.")) continue;
+                            if (isPathExcluded(parent, excluded)) continue;
+
+                            String dispName = (nameCol >= 0 ? c.getString(nameCol) : null);
+                            if (dispName == null || dispName.isEmpty()) dispName = f.getName();
+                            String ln = dispName.toLowerCase();
+                            if (ln.endsWith(".mp4") || ln.endsWith(".m4v") || ln.endsWith(".webm")
+                                    || ln.endsWith(".mkv") || ln.endsWith(".mov") || ln.endsWith(".ogv")
+                                    || ln.endsWith(".3gp") || ln.endsWith(".avi")) continue;
+
+                            Uri itemUri = android.content.ContentUris.withAppendedId(audioUri, audioId);
+                            String id = String.valueOf(nextId++);
+                            served.put(id, itemUri);
+                            servedLocations.put(id, path);
+
+                            JSONObject o = new JSONObject();
+                            o.put("id", id);
+                            o.put("location", path);
+                            o.put("uri", itemUri.toString());
+                            o.put("url", "https://" + ASSET_HOST + "/f/" + id);
+                            o.put("name", dispName);
+                            String mime = mimeCol >= 0 ? c.getString(mimeCol) : "";
+                            o.put("type", mime == null ? "audio/*" : mime);
+                            o.put("size", sizeCol >= 0 ? c.getLong(sizeCol) : f.length());
+                            o.put("modified", modCol >= 0 ? c.getLong(modCol) * 1000L : f.lastModified());
+                            o.put("fromLibrary", true);
+
+                            // Ghép file .lrc cùng tên trong cùng thư mục nếu có
+                            int dot = dispName.lastIndexOf('.');
+                            String stem = (dot > 0 ? dispName.substring(0, dot) : dispName).toLowerCase();
+                            String lrcKey = (parent == null ? "" : parent.toLowerCase()) + "/" + stem;
+                            String lrcUriStr = lrcByStem.get(lrcKey);
+                            if (lrcUriStr != null) {
+                                String lrcId = String.valueOf(nextId++);
+                                served.put(lrcId, Uri.parse(lrcUriStr));
+                                o.put("lrcUrl", "https://" + ASSET_HOST + "/f/" + lrcId);
+                            }
+                            scanned.add(o);
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+
+            final List<JSONObject> finalList = scanned;
+            runOnUiThread(() -> {
+                if (finalList.isEmpty()) {
+                    callJs("window.__onAndroidLibraryScanDone&&window.__onAndroidLibraryScanDone(0, false)");
+                    return;
+                }
+                if (clearExisting) {
+                    callJs("window.__clearLibraryTracksBeforeScan&&window.__clearLibraryTracksBeforeScan()");
+                }
+                pending.addAll(finalList);
+                flushPending();
+                callJs("window.__onAndroidLibraryScanDone&&window.__onAndroidLibraryScanDone(" + finalList.size() + ", false)");
+            });
+        }).start();
+    }
+
+    @Override
     protected void onActivityResult(int req, int res, Intent data) {
         if (req == 43 || req == 44) {
             if (res != RESULT_OK || data == null) { callJs("window.addBtnCancel&&addBtnCancel()"); }
@@ -1809,6 +2002,112 @@ public class MainActivity extends Activity {
         public void startUpdateDownload(String url) {
             if (url == null || url.trim().isEmpty()) return;
             startUpdateDownloadInternal(url.trim());
+        }
+
+        @JavascriptInterface
+        public String getPermissionsStatus() {
+            return getPermissionsStatusJson();
+        }
+
+        @JavascriptInterface
+        public void requestMediaPermission() {
+            runOnUiThread(() -> {
+                if (hasMediaPermissionInternal()) {
+                    callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 33) {
+                    requestPermissions(new String[]{Manifest.permission.READ_MEDIA_AUDIO}, 101);
+                } else if (Build.VERSION.SDK_INT >= 23) {
+                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void requestNotificationPermission() {
+            runOnUiThread(() -> {
+                if (hasNotificationPermissionInternal()) {
+                    callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 33) {
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 102);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void setSetupDoneNative(boolean done) {
+            getSharedPreferences("app", MODE_PRIVATE).edit().putBoolean("gs_done", done).apply();
+        }
+
+        @JavascriptInterface
+        public void scanAllDeviceAudio(boolean clearExisting) {
+            scanAllDeviceAudioInternal(clearExisting);
+        }
+
+        @JavascriptInterface
+        public String listAudioDirectoriesJson() {
+            JSONArray arr = new JSONArray();
+            java.util.Set<String> excluded = getExcludedDirsSet();
+            java.util.Map<String, Integer> countMap = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            try {
+                android.net.Uri audioUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                String[] proj = new String[]{
+                        android.provider.MediaStore.Audio.Media.DATA,
+                        android.provider.MediaStore.Audio.Media.DURATION,
+                        android.provider.MediaStore.Audio.Media.MIME_TYPE
+                };
+                String sel = "(" + android.provider.MediaStore.Audio.Media.DURATION + " >= 3000 OR LOWER(COALESCE(" + android.provider.MediaStore.Audio.Media.MIME_TYPE + ", '')) LIKE 'audio/%')"
+                        + " AND " + android.provider.MediaStore.Audio.Media.DATA + " IS NOT NULL";
+                try (Cursor c = getContentResolver().query(audioUri, proj, sel, null, null)) {
+                    if (c != null) {
+                        int dataCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DATA);
+                        while (c.moveToNext()) {
+                            String path = dataCol >= 0 ? c.getString(dataCol) : null;
+                            if (path == null || path.isEmpty()) continue;
+                            File f = new File(path);
+                            String parent = f.getParent();
+                            if (parent == null || parent.isEmpty() || parent.contains("/.")) continue;
+                            countMap.put(parent, (countMap.get(parent) == null ? 0 : countMap.get(parent)) + 1);
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+            for (java.util.Map.Entry<String, Integer> entry : countMap.entrySet()) {
+                try {
+                    String dirPath = entry.getKey();
+                    File dirFile = new File(dirPath);
+                    JSONObject o = new JSONObject();
+                    o.put("path", dirPath);
+                    o.put("name", dirFile.getName().isEmpty() ? dirPath : dirFile.getName());
+                    o.put("count", entry.getValue());
+                    o.put("excluded", isPathExcluded(dirPath, excluded));
+                    arr.put(o);
+                } catch (Throwable ignored) {}
+            }
+            return arr.toString();
+        }
+
+        @JavascriptInterface
+        public String getExcludedDirectoriesJson() {
+            JSONArray arr = new JSONArray();
+            for (String p : getExcludedDirsSet()) arr.put(p);
+            return arr.toString();
+        }
+
+        @JavascriptInterface
+        public void setExcludedDirectoriesJson(String jsonArr) {
+            try {
+                JSONArray arr = new JSONArray(jsonArr == null ? "[]" : jsonArr);
+                java.util.Set<String> set = new java.util.HashSet<>();
+                for (int i = 0; i < arr.length(); i++) {
+                    String p = arr.optString(i, "").trim();
+                    if (!p.isEmpty()) set.add(p);
+                }
+                getSharedPreferences("app", MODE_PRIVATE).edit().putStringSet("excluded_dirs", set).apply();
+            } catch (Throwable ignored) {}
         }
     }
 
