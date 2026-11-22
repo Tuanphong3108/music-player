@@ -8637,14 +8637,18 @@
             document.getElementById('m-pl-opt-clear')?.addEventListener('click', (e) => {
                 e.stopPropagation();
                 mPlMorePopup?.classList.remove('open');
-                try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch (err) {}
-                playlist.length = 0;
-                currentIndex = -1;
+                // Chỉ dọn hàng đợi tạm (playlist): giữ nguyên bài đang phát, không đụng màn hình chính & playlist đã tạo
+                if (currentIndex >= 0 && playlist[currentIndex]) {
+                    const curTrack = playlist[currentIndex];
+                    playlist.length = 0;
+                    playlist.push(curTrack);
+                    currentIndex = 0;
+                } else {
+                    playlist.length = 0;
+                    currentIndex = -1;
+                }
                 if (shuffleInitialized) generateShuffleOrder();
-                playBtn.querySelector('span').innerText = 'play_arrow';
-                document.body.classList.remove('m-playlist-open', 'm-player-expanded', 'm-mini-visible');
                 updatePlaylistUI();
-                updateFsUI();
                 syncMobileMiniPlayer();
             });
             document.getElementById('m-pl-opt-save')?.addEventListener('click', (e) => {
@@ -10217,7 +10221,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1640_fix_cors_audio_accent', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1650_clear_queue_keep_playing', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
