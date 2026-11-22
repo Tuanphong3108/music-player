@@ -1943,7 +1943,22 @@
         }
         html.m-ui .m-mini-btn:active { transform: scale(.9); }
         html.m-ui .m-mini-btn.m-mini-play {
+            position: relative;
             width: 42px; height: 42px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+        }
+        html.m-ui .m-mini-btn.m-mini-play.is-loading::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2.5px solid transparent;
+            border-top-color: var(--md-sys-color-on-primary-container);
+            border-right-color: var(--md-sys-color-primary);
+            animation: mArtSpin 0.95s linear infinite;
+            pointer-events: none;
+        }
+        html.m-ui .m-mini-btn.m-mini-play.is-loading .material-symbols-rounded {
+            animation: mArtSpin 1.4s linear infinite;
         }
 
         /* Khi nở to thành Full Player trên Mobile: bỏ chữ "Media Player" và hiện nút mũi tên xuống để thu nhỏ */
