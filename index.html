@@ -1914,9 +1914,23 @@
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         /* New Playlist Creator Modal (Mobile) */
+        #m-pl-creator-modal .cl-dialog {
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        #plc-step-config {
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+        #plc-step-config > *,
+        #plc-icon-options > *,
+        #plc-star-params > *,
+        #plc-smart-rules-wrap > * {
+            flex-shrink: 0;
+        }
         .plc-preview-wrap {
             width: 148px; height: 148px; margin: 4px auto 0; display: grid; place-items: center;
-            position: relative; cursor: pointer;
+            position: relative; cursor: pointer; flex-shrink: 0;
         }
         .plc-preview-box {
             width: 136px; height: 136px; border-radius: 28px; overflow: hidden; position: relative;
@@ -10040,7 +10054,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1605_fix_lyric_pl_detail', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1615_photo_picker_plc_scroll', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
