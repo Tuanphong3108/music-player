@@ -180,15 +180,16 @@ public class MediaService extends Service {
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
+        // Người dùng vuốt lên đóng app khỏi đa nhiệm: đánh dấu thoát chủ động, dọn widget/màu sạch sẽ và KHÔNG ghi mã lỗi
         clearSession();
-        boolean cleanExit = false;
         try {
-            cleanExit = getSharedPreferences("crash_report", MODE_PRIVATE).getBoolean("clean_exit", false);
+            getSharedPreferences("crash_report", MODE_PRIVATE).edit()
+                    .putBoolean("clean_exit", true)
+                    .remove("code").remove("reason").remove("ts")
+                    .commit();
         } catch (Throwable ignored) {}
-        if (!cleanExit) {
-            MainActivity.triggerBackgroundSelfDestruct(this, "BG_TASK_REMOVED",
-                    "App task was closed or removed while running in background");
-        }
+        try { MediaWidgetProvider.resetToIdle(this); } catch (Throwable ignored) {}
+        try { MediaWidgetProvider.resetWidgetColors(this); } catch (Throwable ignored) {}
         stopSelf();
         super.onTaskRemoved(rootIntent);
     }
