@@ -66,6 +66,54 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    /** Màu widget đồng bộ với accent đang chọn trong app (do trang gửi sang qua setWidgetColors). */
+    static void saveWidgetColors(Context context, int bg, int accent) {
+        context.getSharedPreferences("app", Context.MODE_PRIVATE).edit()
+                .putInt("widget_bg", 0xFF000000 | bg).putInt("widget_accent", 0xFF000000 | accent).apply();
+        updateAllWidgets(context);
+        QueueWidgetProvider.updateAllWidgets(context);
+        LyricsWidgetProvider.updateAllWidgets(context);
+    }
+
+    static int widgetBg(Context context, int fallback) {
+        return context.getSharedPreferences("app", Context.MODE_PRIVATE).getInt("widget_bg", fallback);
+    }
+
+    static int widgetAccent(Context context, int fallback) {
+        return context.getSharedPreferences("app", Context.MODE_PRIVATE).getInt("widget_accent", fallback);
+    }
+
+    static boolean hasWidgetColors(Context context) {
+        return context.getSharedPreferences("app", Context.MODE_PRIVATE).contains("widget_accent");
+    }
+
+    /** Tô màu nút phát theo accent (API 31+) và chọn màu icon dễ đọc trên nền accent. */
+    static void tintPlayButton(Context context, RemoteViews views, int viewId) {
+        if (!hasWidgetColors(context)) return;
+        int accent = widgetAccent(context, 0xFFD0BCFF);
+        double lum = (0.299 * ((accent >> 16) & 255) + 0.587 * ((accent >> 8) & 255) + 0.114 * (accent & 255)) / 255.0;
+        views.setInt(viewId, "setColorFilter", lum > 0.55 ? 0xFF1C1B1F : 0xFFFFFFFF);
+        if (Build.VERSION.SDK_INT >= 31) {
+            try { views.setColorStateList(viewId, "setBackgroundTintList", android.content.res.ColorStateList.valueOf(accent)); } catch (Throwable ignored) {}
+        }
+    }
+
+    /** Đưa tất cả widget về trạng thái "chưa mở bài nào" (dùng khi app khởi động lại sau khi bị sập/đóng). */
+    static void resetToIdle(Context context) {
+        try {
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                    .putBoolean("playing", false)
+                    .remove("title").remove("artist").remove("lyric")
+                    .putLong("pos_ms", 0L).putLong("dur_ms", 0L)
+                    .apply();
+            File artFile = new File(context.getCacheDir(), "widget_art.png");
+            if (artFile.exists()) artFile.delete();
+            QueueWidgetProvider.clearQueue(context);
+            LyricsWidgetProvider.clearLyrics(context);
+            updateAllWidgets(context);
+        } catch (Throwable ignored) {}
+    }
+
     static void savePlaybackState(Context context, boolean playing, String title, String artist, String lyric, int themeColor) {
         SharedPreferences.Editor ed = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
         ed.putBoolean("playing", playing);
@@ -157,7 +205,8 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         String title = sp.getString("title", "");
         String artist = sp.getString("artist", "");
         String lyric = sp.getString("lyric", "");
-        int theme = sp.getInt("theme", 0xFF1E1B24);
+        int theme = widgetBg(context, sp.getInt("theme", 0xFF1E1B24));
+        boolean idle = title.isEmpty();
 
         String lang = context.getSharedPreferences("app", Context.MODE_PRIVATE).getString("lang", "vi");
         boolean isEn = "en".equalsIgnoreCase(lang);
@@ -179,13 +228,14 @@ public class MediaWidgetProvider extends AppWidgetProvider {
 
         views.setImageViewResource(R.id.widget_play,
                 playing ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+        tintPlayButton(context, views, R.id.widget_play);
 
         int bgColor = 0xFF000000 | (theme & 0x00FFFFFF);
         double lum = (0.299 * ((bgColor >> 16) & 255) + 0.587 * ((bgColor >> 8) & 255) + 0.114 * (bgColor & 255)) / 255.0;
         boolean lightBg = lum > 0.62;
         int primaryText = lightBg ? 0xFF1C1B1F : 0xFFF5EFF7;
         int secondaryText = lightBg ? 0xFF49454F : 0xFFCAC4D0;
-        int accentText = lightBg ? 0xFF6750A4 : 0xFFD0BCFF;
+        int accentText = widgetAccent(context, lightBg ? 0xFF6750A4 : 0xFFD0BCFF);
 
         views.setInt(R.id.widget_root, "setBackgroundColor", bgColor);
         views.setTextColor(R.id.widget_title, primaryText);
@@ -205,6 +255,12 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             views.setInt(R.id.widget_shuffle, "setBackgroundResource",
                     shuffle ? R.drawable.widget_ctrl_active_bg : R.drawable.widget_ctrl_btn_bg);
             views.setInt(R.id.widget_shuffle, "setColorFilter", shuffle ? accentText : primaryText);
+            if (hasWidgetColors(context) && Build.VERSION.SDK_INT >= 31) {
+                try {
+                    views.setColorStateList(R.id.widget_shuffle, "setBackgroundTintList", shuffle ? android.content.res.ColorStateList.valueOf(accentText) : null);
+                    views.setColorStateList(R.id.widget_repeat, "setBackgroundTintList", repeatMode > 0 ? android.content.res.ColorStateList.valueOf(accentText) : null);
+                } catch (Throwable ignored) {}
+            }
 
             views.setImageViewResource(R.id.widget_repeat,
                     repeatMode == 2 ? R.drawable.ic_widget_repeat_one : R.drawable.ic_widget_repeat);
@@ -221,6 +277,8 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             } else {
                 views.setImageViewResource(R.id.widget_art, R.drawable.ic_launcher);
             }
+        } else if (idle) {
+            views.setImageViewBitmap(R.id.widget_art, null);   // chưa mở bài nào: album art trống
         } else {
             views.setImageViewResource(R.id.widget_art, R.drawable.ic_launcher);
         }

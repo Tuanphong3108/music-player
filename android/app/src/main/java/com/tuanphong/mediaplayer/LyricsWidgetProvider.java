@@ -115,7 +115,7 @@ public class LyricsWidgetProvider extends AppWidgetProvider {
         String syncedLine = sp.getString("synced_line", "");
         String staticBlock = sp.getString("static_block", "");
         String trackTitle = sp.getString("track_title", "");
-        int theme = sp.getInt("theme", mainSp.getInt("theme", 0xFF1E1B24));
+        int theme = MediaWidgetProvider.widgetBg(context, sp.getInt("theme", mainSp.getInt("theme", 0xFF1E1B24)));
 
         String lang = context.getSharedPreferences("app", Context.MODE_PRIVATE).getString("lang", "vi");
         boolean isEn = "en".equalsIgnoreCase(lang);
@@ -143,7 +143,7 @@ public class LyricsWidgetProvider extends AppWidgetProvider {
         boolean lightBg = lum > 0.62;
         int primaryText = lightBg ? 0xFF1C1B1F : 0xFFF5EFF7;
         int secondaryText = lightBg ? 0xFF49454F : 0xFFCAC4D0;
-        int accentText = lightBg ? 0xFF6750A4 : 0xFFD0BCFF;
+        int accentText = MediaWidgetProvider.widgetAccent(context, lightBg ? 0xFF6750A4 : 0xFFD0BCFF);
 
         views.setInt(R.id.lyrics_widget_root, "setBackgroundColor", bgColor);
         views.setTextColor(R.id.lyrics_widget_track, secondaryText);

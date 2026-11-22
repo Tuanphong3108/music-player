@@ -144,6 +144,10 @@
     {
       "content": "Nút điều khiển phát trên điện thoại giãn ra như viên thuốc khi bấm (Previous giãn sang phải, Play/Pause giãn hai bên, Next giãn sang trái) và đẩy các nút bên cạnh xẹp lại chút, rồi tất cả co về như cũ",
       "icon": "play_circle"
+    },
+    {
+      "content": "Widget màn hình chính ăn theo màu accent đang chọn trong app, và tự về trạng thái chưa mở bài nào (album art trống) khi app khởi động lại sau khi bị sập",
+      "icon": "widgets"
     }
   ],
   "en": [
@@ -290,6 +294,10 @@
     {
       "content": "Mobile playback buttons stretch like a pill when pressed (Previous right, Play/Pause both sides, Next left) while squeezing their neighbours slightly, then everything springs back",
       "icon": "play_circle"
+    },
+    {
+      "content": "Home screen widgets now follow the accent colour chosen in the app and reset to the no-track state (empty album art) when the app restarts after a crash",
+      "icon": "widgets"
     }
   ]
 }

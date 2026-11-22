@@ -79,7 +79,7 @@ public class QueueWidgetProvider extends AppWidgetProvider {
 
         boolean playing = mainSp.getBoolean("playing", false);
         String nowTitle = mainSp.getString("title", "");
-        int theme = queueSp.getInt("theme", mainSp.getInt("theme", 0xFF1E1B24));
+        int theme = MediaWidgetProvider.widgetBg(context, queueSp.getInt("theme", mainSp.getInt("theme", 0xFF1E1B24)));
         String queueJson = queueSp.getString("queue_json", "");
 
         String lang = context.getSharedPreferences("app", Context.MODE_PRIVATE).getString("lang", "vi");
@@ -95,13 +95,14 @@ public class QueueWidgetProvider extends AppWidgetProvider {
 
         views.setImageViewResource(R.id.queue_widget_play,
                 playing ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+        MediaWidgetProvider.tintPlayButton(context, views, R.id.queue_widget_play);
 
         int bgColor = 0xFF000000 | (theme & 0x00FFFFFF);
         double lum = (0.299 * ((bgColor >> 16) & 255) + 0.587 * ((bgColor >> 8) & 255) + 0.114 * (bgColor & 255)) / 255.0;
         boolean lightBg = lum > 0.62;
         int primaryText = lightBg ? 0xFF1C1B1F : 0xFFF5EFF7;
         int secondaryText = lightBg ? 0xFF49454F : 0xFFCAC4D0;
-        int accentText = lightBg ? 0xFF6750A4 : 0xFFD0BCFF;
+        int accentText = MediaWidgetProvider.widgetAccent(context, lightBg ? 0xFF6750A4 : 0xFFD0BCFF);
 
         views.setInt(R.id.queue_widget_root, "setBackgroundColor", bgColor);
         views.setTextColor(R.id.queue_widget_now_title, primaryText);
@@ -113,6 +114,8 @@ public class QueueWidgetProvider extends AppWidgetProvider {
             Bitmap bmp = BitmapFactory.decodeFile(artFile.getAbsolutePath());
             if (bmp != null) views.setImageViewBitmap(R.id.queue_widget_art, bmp);
             else views.setImageViewResource(R.id.queue_widget_art, R.drawable.ic_launcher);
+        } else if (nowTitle.isEmpty()) {
+            views.setImageViewBitmap(R.id.queue_widget_art, null);   // chưa mở bài nào: album art trống
         } else {
             views.setImageViewResource(R.id.queue_widget_art, R.drawable.ic_launcher);
         }

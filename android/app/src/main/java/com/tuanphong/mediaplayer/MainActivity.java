@@ -109,6 +109,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        // Activity mới = WebView mới = chưa phát gì (kể cả khi app vừa sập rồi mở lại): đưa các widget về trạng thái chưa mở bài nào
+        MediaWidgetProvider.resetToIdle(this);
         setupPredictiveBack();
         instance = this;
         root = new FrameLayout(this);
@@ -1498,6 +1500,13 @@ public class MainActivity extends Activity {
                 }
             } catch (Throwable ignored) {}
             return "";
+        }
+
+        @JavascriptInterface
+        public void setWidgetColors(String bgHex, String accentHex) {
+            try {
+                MediaWidgetProvider.saveWidgetColors(MainActivity.this, Color.parseColor(bgHex), Color.parseColor(accentHex));
+            } catch (Exception ignored) {}
         }
 
         @JavascriptInterface

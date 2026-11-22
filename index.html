@@ -8033,6 +8033,27 @@
             };
             if (themeMeta) { new MutationObserver(sendTheme).observe(themeMeta, { attributes: true, attributeFilter: ['content'] }); sendTheme(); }
 
+            // Widget màn hình chính ăn theo màu accent đang chọn trong app (nền = primary-container, nhấn = primary)
+            let widgetColorTimer = null, lastWidgetColors = '';
+            const sendWidgetColors = () => {
+                try {
+                    if (!AB.setWidgetColors) return;
+                    const cs = getComputedStyle(document.documentElement);
+                    const cv = document.createElement('canvas').getContext('2d');
+                    const norm = (v, d) => { cv.fillStyle = '#000'; cv.fillStyle = (v || '').trim() || d; return cv.fillStyle; };
+                    const bg = norm(cs.getPropertyValue('--md-sys-color-primary-container'), '#4F378B');
+                    const ac = norm(cs.getPropertyValue('--md-sys-color-primary'), '#D0BCFF');
+                    if (bg[0] !== '#' || ac[0] !== '#') return;
+                    const key = bg + ac;
+                    if (key === lastWidgetColors) return;
+                    lastWidgetColors = key;
+                    AB.setWidgetColors(bg, ac);
+                } catch (e) {}
+            };
+            const queueWidgetColors = () => { clearTimeout(widgetColorTimer); widgetColorTimer = setTimeout(sendWidgetColors, 400); };
+            new MutationObserver(queueWidgetColors).observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class', 'data-theme'] });
+            setTimeout(sendWidgetColors, 1500);
+
             // Công tắc "Tắt tối ưu hóa pin" (chỉ hiện trên Android app)
             (function () {
                 const row = document.getElementById('setting-battery-opt-row');
