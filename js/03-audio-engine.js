@@ -127,6 +127,7 @@
         }
 
         audio.addEventListener('timeupdate', () => {
+            if (audio.currentTime > 0.5) window.__lastPos = audio.currentTime;
             // Chạy nền (màn hình tắt / app ẩn): chỉ giữ đồng bộ lyric (cho widget/thông báo), bỏ việc vẽ thanh seek & chữ thời gian
             if (document.hidden && !customPipWindow) { syncLyrics(); return; }
             seekSlider.value = (audio.currentTime / audio.duration) * 100 || 0;

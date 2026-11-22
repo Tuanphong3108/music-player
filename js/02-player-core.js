@@ -1501,6 +1501,10 @@
                 lastLibraryBlobTrack = track;
 
                 audio.src = blobUrl;
+                if (track._resumeAt > 0) {
+                    const at = track._resumeAt; track._resumeAt = 0;
+                    audio.addEventListener('loadedmetadata', () => { if (seq === libraryPlaySeq) { try { audio.currentTime = at; } catch (e) {} } }, { once: true });
+                }
                 audio.play().catch(() => {});
 
                 // Nạp thêm thẻ nhúng (USLT lyrics, genre, composer, cover) & tệp .lrc cùng thư mục ở nền (không chặn phát nhạc)
@@ -1532,6 +1536,7 @@
             currentIndex = index;
             const track = playlist[index];
             const mySeq = ++libraryPlaySeq;
+            window.__lastPos = 0;
             // Dừng ngay bài đang phát trước khi nạp bài mới
             if (prevIdx !== index || !audio.paused) {
                 // Đang chuyển bài: báo cho Android biết là "đang nạp" (không phải tạm dừng) để dịch vụ nền không bị tụt khỏi trạng thái foreground
@@ -1546,8 +1551,22 @@
             if (isDirectLibStream) {
                 const onStreamErr = () => {
                     audio.removeEventListener('error', onStreamErr);
-                    if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track || track._blobFallbackTried) return;
+                    if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track) return;
+                    const at = window.__lastPos || 0;   // vị trí đang nghe trước khi lỗi (để tiếp tục đúng chỗ, không phát lại từ đầu)
+                    const seekBack = () => { if (at > 0 && mySeq === libraryPlaySeq) { try { audio.currentTime = at; } catch (e) {} } };
+                    if (!track._streamRetried) {
+                        // Lỗi mạng (code 2) sau khi tạm dừng/để nền lâu: nối lại luồng cũ và tua về đúng vị trí trước, chưa cần tải nguyên tệp
+                        track._streamRetried = true;
+                        audio.addEventListener('error', onStreamErr, { once: true });
+                        audio.addEventListener('playing', () => { track._streamRetried = false; }, { once: true });
+                        audio.src = track.nativeStreamUrl;
+                        audio.addEventListener('loadedmetadata', seekBack, { once: true });
+                        audio.play().catch(() => {});
+                        return;
+                    }
+                    if (track._blobFallbackTried) return;
                     track._blobFallbackTried = true;
+                    track._resumeAt = at;
                     hydrateAndPlayLibraryTrack(track, index, mySeq);
                 };
                 audio.addEventListener('error', onStreamErr, { once: true });
