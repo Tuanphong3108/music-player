@@ -181,6 +181,14 @@ public class MediaService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         clearSession();
+        boolean cleanExit = false;
+        try {
+            cleanExit = getSharedPreferences("crash_report", MODE_PRIVATE).getBoolean("clean_exit", false);
+        } catch (Throwable ignored) {}
+        if (!cleanExit) {
+            MainActivity.triggerBackgroundSelfDestruct(this, "BG_TASK_REMOVED",
+                    "App task was closed or removed while running in background");
+        }
         stopSelf();
         super.onTaskRemoved(rootIntent);
     }
