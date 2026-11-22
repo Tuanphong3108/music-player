@@ -126,9 +126,131 @@ public class MainActivity extends Activity {
                 isEnglishLang() ? "Installer timed out after 10s" : "Trình cài đặt không phản hồi sau 10 giây") + ")");
     };
 
+    private static final String CRASH_PREFS = "crash_report";
+    private static volatile boolean selfDestructing = false;
+
+    static void recordCrashSync(Context ctx, String code, String reason) {
+        if (ctx == null) return;
+        try {
+            ctx.getSharedPreferences(CRASH_PREFS, MODE_PRIVATE).edit()
+                    .putString("code", code == null ? "BG_UNKNOWN_KILL" : code)
+                    .putString("reason", reason == null ? "" : reason)
+                    .putLong("ts", System.currentTimeMillis())
+                    .putBoolean("clean_exit", false)
+                    .commit();
+        } catch (Throwable ignored) {}
+    }
+
+    static void recordCrashSyncIfEmpty(Context ctx, String code, String reason) {
+        if (ctx == null) return;
+        try {
+            String existing = ctx.getSharedPreferences(CRASH_PREFS, MODE_PRIVATE).getString("code", "");
+            if (existing == null || existing.isEmpty()) {
+                recordCrashSync(ctx, code, reason);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    void destroyWebViewForSelfDestruct() {
+        final WebView w = web;
+        web = null;
+        pageReady = false;
+        pageResponded = false;
+        if (w == null) return;
+        Runnable tearDown = () -> {
+            try { w.stopLoading(); } catch (Throwable ignored) {}
+            try { w.onPause(); } catch (Throwable ignored) {}
+            try { w.pauseTimers(); } catch (Throwable ignored) {}
+            try { w.loadUrl("about:blank"); } catch (Throwable ignored) {}
+            try { if (root != null) root.removeView(w); } catch (Throwable ignored) {}
+            try { w.removeAllViews(); } catch (Throwable ignored) {}
+            try { w.destroy(); } catch (Throwable ignored) {}
+        };
+        try {
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) tearDown.run();
+            else runOnUiThread(tearDown);
+        } catch (Throwable ignored) {}
+    }
+
+    /** Combo "tự hủy thần chưởng" khi phát hiện app bị đóng/kill ở nền:
+     * 1) Ghi mã lỗi đồng bộ xuống đĩa  2) Reset toàn bộ widget  3) Khôi phục accent color
+     * 4) Đánh sập WebView để lần mở sau load lại sạch  5) Tắt dịch vụ & đóng hẳn tiến trình ở nền. */
+    static void triggerBackgroundSelfDestruct(Context ctx, String code, String reason) {
+        if (ctx == null || selfDestructing) return;
+        selfDestructing = true;
+        try { recordCrashSync(ctx, code, reason); } catch (Throwable ignored) {}
+        try { MediaWidgetProvider.resetToIdle(ctx); } catch (Throwable ignored) {}
+        try { MediaWidgetProvider.resetWidgetColors(ctx); } catch (Throwable ignored) {}
+        try { ctx.stopService(new Intent(ctx, MediaService.class)); } catch (Throwable ignored) {}
+        final MainActivity act = instance;
+        if (act != null) {
+            try { act.destroyWebViewForSelfDestruct(); } catch (Throwable ignored) {}
+            try {
+                if (Build.VERSION.SDK_INT >= 21) act.finishAndRemoveTask();
+                else act.finishAffinity();
+            } catch (Throwable ignored) {}
+        }
+        try { android.os.Process.killProcess(android.os.Process.myPid()); } catch (Throwable ignored) {}
+    }
+
+    /** Kiểm tra lịch sử thoát tiến trình trên Android 11+ (API 30+) để bắt cả trường hợp hệ thống kill cứng bằng SIGKILL/LMK/Freezer ở nền. */
+    private void checkHistoricalExitInfo() {
+        if (Build.VERSION.SDK_INT < 30) return;
+        try {
+            android.content.SharedPreferences sp = getSharedPreferences(CRASH_PREFS, MODE_PRIVATE);
+            boolean wasClean = sp.getBoolean("clean_exit", false);
+            sp.edit().putBoolean("clean_exit", false).apply();
+            String alreadyRecorded = sp.getString("code", "");
+            long lastHandledTs = sp.getLong("last_exit_info_ts", 0L);
+
+            android.app.ActivityManager am = (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            if (am == null) return;
+            List<android.app.ApplicationExitInfo> reasons = am.getHistoricalProcessExitReasons(getPackageName(), 0, 1);
+            if (reasons == null || reasons.isEmpty()) return;
+            android.app.ApplicationExitInfo info = reasons.get(0);
+            long exitTs = info.getTimestamp();
+            if (exitTs <= lastHandledTs) return;
+            sp.edit().putLong("last_exit_info_ts", exitTs).apply();
+
+            int r = info.getReason();
+            if (wasClean && r == android.app.ApplicationExitInfo.REASON_EXIT_SELF) return;
+            if (r == android.app.ApplicationExitInfo.REASON_EXIT_SELF) return;
+            if (alreadyRecorded != null && !alreadyRecorded.isEmpty()) return;
+
+            String code;
+            switch (r) {
+                case android.app.ApplicationExitInfo.REASON_LOW_MEMORY:
+                    code = "BG_SYS_LOW_MEMORY"; break;
+                case android.app.ApplicationExitInfo.REASON_CRASH:
+                case android.app.ApplicationExitInfo.REASON_CRASH_NATIVE:
+                    code = "BG_SYS_CRASH"; break;
+                case android.app.ApplicationExitInfo.REASON_ANR:
+                    code = "BG_SYS_ANR"; break;
+                case android.app.ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE:
+                    code = "BG_SYS_EXCESSIVE_RESOURCE"; break;
+                case android.app.ApplicationExitInfo.REASON_USER_REQUESTED:
+                case android.app.ApplicationExitInfo.REASON_USER_STOPPED:
+                    code = "BG_SYS_USER_STOPPED"; break;
+                case android.app.ApplicationExitInfo.REASON_SIGNALED:
+                    code = "BG_SYS_SIGNALED"; break;
+                case android.app.ApplicationExitInfo.REASON_FREEZER:
+                    code = "BG_SYS_FREEZER"; break;
+                default:
+                    code = "BG_SYS_EXIT_" + r; break;
+            }
+            String desc = info.getDescription();
+            if (desc == null || desc.trim().isEmpty()) desc = "System terminated process (reason=" + r + ", status=" + info.getStatus() + ")";
+            recordCrashSync(this, code, desc);
+            MediaWidgetProvider.resetToIdle(this);
+            MediaWidgetProvider.resetWidgetColors(this);
+        } catch (Throwable ignored) {}
+    }
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        selfDestructing = false;
+        checkHistoricalExitInfo();
         // Activity mới = WebView mới = chưa phát gì (kể cả khi app vừa sập rồi mở lại): đưa các widget về trạng thái chưa mở bài nào
         MediaWidgetProvider.resetToIdle(this);
         setupPredictiveBack();
@@ -199,12 +321,32 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean onRenderProcessGone(WebView v, android.webkit.RenderProcessGoneDetail detail) {
-                // Tiến trình hiển thị của WebView bị hệ thống thu hồi (thiếu RAM/đóng băng): dựng lại WebView thay vì để app bị kill
+                boolean didCrash = false;
+                int prio = -1;
+                if (Build.VERSION.SDK_INT >= 26 && detail != null) {
+                    try { didCrash = detail.didCrash(); } catch (Throwable ignored) {}
+                    try { prio = detail.rendererPriorityAtExit(); } catch (Throwable ignored) {}
+                }
+                String detailMsg = (didCrash ? "WebView renderer crashed" : "WebView renderer killed by OS (low memory/background)")
+                        + (prio >= 0 ? " (priority=" + prio + ")" : "");
+                if (appLeftHome) {
+                    // Đang chạy ở nền mà WebView bị sập/kill -> BOOM tự hủy toàn bộ để lần mở sau tải sạch và hiện mã lỗi
+                    triggerBackgroundSelfDestruct(MainActivity.this,
+                            didCrash ? "BG_WEBVIEW_RENDER_CRASH" : "BG_WEBVIEW_RENDER_OOM",
+                            detailMsg);
+                    return true;
+                }
+                // Đang mở trên màn hình: ghi mã lỗi, reset widget + khôi phục accent, hủy WebView cũ và dựng lại
+                recordCrashSync(MainActivity.this,
+                        didCrash ? "FG_WEBVIEW_RENDER_CRASH" : "FG_WEBVIEW_RENDER_OOM",
+                        detailMsg);
+                MediaWidgetProvider.resetToIdle(MainActivity.this);
+                MediaWidgetProvider.resetWidgetColors(MainActivity.this);
                 pageReady = false;
                 pageResponded = false;
                 pingHandler.removeCallbacks(loadTimeoutRunnable);
                 pingHandler.removeCallbacks(pingTimeoutRunnable);
-                try { root.removeView(v); v.destroy(); } catch (Throwable ignored) {}
+                destroyWebViewForSelfDestruct();
                 autoRecoveries = 0;
                 if (!isFinishing() && !isDestroyed()) pingHandler.post(() -> { try { recreate(); } catch (Throwable ignored) {} });
                 return true;
@@ -1814,6 +1956,16 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        // Khi app đang ở nền và hệ thống báo sắp bị kill vì cạn RAM (TRIM_MEMORY_COMPLETE): chủ động kích hoạt combo tự hủy sạch sẽ
+        if (appLeftHome && level >= TRIM_MEMORY_COMPLETE) {
+            triggerBackgroundSelfDestruct(this, "BG_LOW_MEMORY_KILL",
+                    "System triggered TRIM_MEMORY_COMPLETE (level=" + level + ") while app was in background");
+        }
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
         cancelWatchdogOnLeave();
@@ -2332,10 +2484,36 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void exitAppCompletely() {
             runOnUiThread(() -> {
+                try {
+                    getSharedPreferences(CRASH_PREFS, MODE_PRIVATE).edit()
+                            .putBoolean("clean_exit", true)
+                            .remove("code").remove("reason").remove("ts")
+                            .commit();
+                } catch (Throwable ignored) {}
+                try { MediaWidgetProvider.resetToIdle(MainActivity.this); } catch (Throwable ignored) {}
                 try { stopService(new Intent(MainActivity.this, MediaService.class)); } catch (Exception ignored) {}
                 finishAffinity();
                 android.os.Process.killProcess(android.os.Process.myPid());
             });
+        }
+
+        @JavascriptInterface
+        public String consumeLastCrashInfo() {
+            try {
+                android.content.SharedPreferences sp = getSharedPreferences(CRASH_PREFS, MODE_PRIVATE);
+                String code = sp.getString("code", "");
+                if (code == null || code.isEmpty()) return "";
+                String reason = sp.getString("reason", "");
+                long ts = sp.getLong("ts", 0L);
+                sp.edit().remove("code").remove("reason").remove("ts").apply();
+                JSONObject o = new JSONObject();
+                o.put("code", code);
+                o.put("reason", reason == null ? "" : reason);
+                o.put("ts", ts);
+                return o.toString();
+            } catch (Throwable ignored) {
+                return "";
+            }
         }
 
         @JavascriptInterface
