@@ -2,326 +2,134 @@
   "date": "2026-11-21",
   "vi": [
     {
-      "content": "Android: truyền phiên bản APK đang cài vào trang web và tự động đối chiếu với GitHub Releases để báo khi có bản mới",
+      "content": "Cập nhật ứng dụng Android: đối chiếu phiên bản với GitHub Releases, tự tải APK ngầm kèm màn hình tiến trình toàn màn hình (xác nhận phiên bản, mô tả, nút Hủy/Cập nhật) rồi mở trình cài đặt; làm lại banner thông báo; ghi chú cập nhật hiển thị chuẩn markdown, có mũi tên xuống khi còn nội dung chưa cuộn tới; và tự kiểm tra bản mới mỗi lần app ping trang (mở app, quay lại từ nền)",
       "icon": "system_update"
     },
     {
-      "content": "Android: tự tải file APK cập nhật ngầm kèm thanh tiến trình mở rộng toàn màn hình (có bước xác nhận phiên bản, mô tả và nút Hủy/Cập nhật), tự mở trình cài đặt qua FileProvider và bổ sung thư mục cache/updates/ trong file_paths.xml",
-      "icon": "download"
-    },
-    {
-      "content": "Android: tự bật chế độ Picture-in-Picture (PiP) khi rời ứng dụng lúc đang phát video và tối ưu bố cục khung video trong chế độ PiP",
-      "icon": "picture_in_picture_alt"
-    },
-    {
-      "content": "Android: kiểm tra phản hồi giữa khung app và trang web với bộ đếm thời gian chờ 10 giây, nút Wait và Restart app, tự dừng kiểm tra khi thoát ra màn hình chính",
+      "content": "Kiểm tra phản hồi & tự khôi phục (Android): bộ đếm 10 giây với nút Chờ / Khởi động lại ứng dụng (dịch theo ngôn ngữ, bo tròn), báo \"đã phản hồi\" ngay đầu trang để hết báo nhầm; nếu app bị Android đóng băng hoặc tiến trình WebView bị thu hồi thì tự đánh thức và tải lại trước khi báo lỗi",
       "icon": "hourglass_top"
     },
     {
-      "content": "Android: thêm màn hình chờ biến đổi hình dạng chuẩn Material 3 Expressive, đồng bộ ngôn ngữ theo lựa chọn trên trang và áp dụng phông Google Sans Flex cho khung app",
+      "content": "Khung app Android: màn hình chờ biến đổi hình dạng chuẩn Material 3 Expressive, phông Google Sans Flex, thanh trạng thái và thanh điều hướng ăn theo màu accent, tuỳ chọn màu chủ đạo \"Hệ thống\" (Material You, mặc định)",
       "icon": "auto_awesome"
     },
     {
-      "content": "Giao diện điện thoại: thêm nút cập nhật vào menu 3 chấm khi có bản mới, sửa lớp hiển thị để dropdown hẹn giờ ngủ không bị nút Lyric che khuất và khôi phục khung video dọc đúng tỉ lệ",
-      "icon": "tune"
-    },
-    {
-      "content": "Service Worker: dùng stale-while-revalidate cho tài nguyên cùng origin, thông báo khi kích hoạt bản SW mới và nâng phiên bản cache",
-      "icon": "cached"
-    },
-    {
-      "content": "Giao diện điện thoại (màn hình hẹp) và app Android dùng WebView: tự cập nhật theo repo, dùng offline, mở/chia sẻ file nhạc & video vào app, phát nền có thông báo",
-      "icon": "android"
-    },
-    {
-      "content": "Giao diện điện thoại kiểu Now Playing: ảnh bìa lớn, nút pill Prev/Play/Next, hàng Shuffle/Repeat/Tốc độ, playlist dạng tờ toàn màn hình, menu ⋮ chứa Cài đặt/Hẹn giờ/Chia sẻ/Phản hồi, Fullscreen gọn lại (PC giữ nguyên)",
+      "content": "Giao diện điện thoại kiểu Now Playing: ảnh bìa lớn, nút pill Prev/Play/Next, hàng Shuffle/Repeat/Tốc độ, playlist dạng tờ toàn màn hình, menu ⋮ chứa Cài đặt/Hẹn giờ/Chia sẻ/Phản hồi, Fullscreen gọn lại; nút cập nhật nằm trong menu 3 chấm; sửa Lyric che dropdown hẹn giờ và khung video dọc (PC giữ nguyên)",
       "icon": "smartphone"
     },
     {
-      "content": "Thông tin khác: thêm Chất lượng âm thanh (tần số lấy mẫu, bitrate, định dạng)",
-      "icon": "graphic_eq"
-    },
-    {
-      "content": "Android: nút Chia sẻ gửi được tệp đang phát qua khung chia sẻ của hệ thống",
-      "icon": "share"
-    },
-    {
-      "content": "Android: nút Thêm nhạc mở trình chọn tệp / thư mục của hệ thống (quét cả thư mục con, kèm .lrc), nhận tệp từ \"Mở bằng\"/\"Chia sẻ\" rộng hơn, điều khiển phát qua MediaSession của hệ thống (màn hình khoá, Cài đặt nhanh, tai nghe) thay cho thông báo điều khiển",
-      "icon": "folder_open"
-    },
-    {
-      "content": "Android: thanh trạng thái và thanh điều hướng của app ăn theo màu accent của trang",
-      "icon": "palette"
-    },
-    {
-      "content": "Trang Cài đặt trên điện thoại: thanh tìm kiếm thu thành nút, thanh trượt/dropdown xuống dòng chiếm đủ chiều ngang; Android thêm tuỳ chọn màu chủ đạo \"Hệ thống\" (Material You, mặc định); cập nhật Getting Started",
-      "icon": "settings"
-    },
-    {
-      "content": "Cài đặt trên điện thoại làm lại: danh sách danh mục (icon màu + mô tả) → trang chi tiết có tiêu đề lớn, thu gọn lên thanh khi cuộn; dropdown thành nút pill + bottom sheet; thanh kéo kiểu expressive có vạch chấm (cả PC lẫn điện thoại)",
+      "content": "Cài đặt trên điện thoại làm lại: danh sách danh mục (icon màu + mô tả) → trang chi tiết có tiêu đề lớn thu gọn khi cuộn, thanh tìm kiếm thu thành nút, dropdown thành nút pill + bottom sheet, thanh kéo kiểu expressive có vạch chấm (cả PC lẫn điện thoại); cập nhật Getting Started",
       "icon": "tune"
     },
     {
-      "content": "Tối ưu phát video trên điện thoại: bỏ chuỗi Web Audio khi Mixer để mặc định (hết lệch tiếng/giật), tắt kính mờ khi có video, visualizer không còn chạy ngầm khi xem video và không cấp phát lại canvas mỗi khung hình",
-      "icon": "speed"
-    },
-    {
-      "content": "App Android: video phát thẳng theo từng đoạn (hỗ trợ HTTP Range) thay vì nạp cả tệp vào RAM — mở video nặng không còn khựng, tua nhanh hơn",
-      "icon": "movie"
-    },
-    {
-      "content": "App Android: báo \"đã phản hồi\" ngay đầu trang nên không còn bị báo nhầm \"Trang không phản hồi\" khi CDN chậm hoặc có lỗi script",
-      "icon": "bug_report"
-    },
-    {
-      "content": "Điện thoại: mọi dropdown/menu (Hẹn giờ, Thiết bị phát, Thêm nhạc, Tốc độ...) thành bottom sheet; thêm animation chuyển trang (Settings, danh sách phát, lyric...); nút Shuffle/Repeat/Tốc độ/Play bo vuông → bo tròn khi kích hoạt; chưa có bài thì chỉ còn các nút trên cùng và nút Thêm ở giữa",
+      "content": "Animation & hiệu ứng trên điện thoại: mọi dropdown/menu thành bottom sheet, chuyển trang và animation thoát (Cài đặt, Gửi phản hồi, Lyric, danh sách phát), nút bo vuông → bo tròn khi kích hoạt, Prev/Play/Next giãn như viên thuốc và đẩy nút bên cạnh xẹp lại (chạy bằng GPU cho mượt), chưa có bài thì chỉ còn các nút trên cùng và nút Thêm ở giữa",
       "icon": "animation"
     },
     {
-      "content": "Thanh tua kiểu Material 3 Expressive (PC, điện thoại và Lyric View): đoạn đã phát là sóng (wavelength 40dp, biên độ 3dp), tạm dừng thì phẳng dần thành đường thẳng; nút ⋮ trong Lyric View đổi thành nút tìm kiếm; bản Android bỏ chữ \"video\" ở nút Thêm",
+      "content": "Thanh tua kiểu Material 3 Expressive (PC, điện thoại, Lyric View và trình phát thu nhỏ PiP): đoạn đã phát là sóng (bước sóng 40dp, biên độ 3dp) chạy ngược chiều, thẳng ở ≤5% và ≥98% tiến trình hoặc khi tạm dừng, chuyển mượt giữa thẳng và sóng",
       "icon": "waves"
     },
     {
-      "content": "MediaSession chính xác từng giây, từng trạng thái: trang và khung app Android gửi đủ playing/paused/buffering/ended/error, vị trí chụp đúng thời điểm, tốc độ phát và vùng đã đệm; thông báo không bị dựng lại mỗi giây",
-      "icon": "play_circle"
-    },
-    {
-      "content": "Hỗ trợ Predictive Back Gesture (Android 13+, bắt buộc từ Android 16): vuốt Back sẽ thu nhỏ và trượt lớp trên cùng (Settings, danh sách phát, Lyric, bottom sheet, hộp thoại) theo ngón tay, thả ra thì quay lại, vuốt ngược để huỷ",
-      "icon": "arrow_back"
-    },
-    {
-      "content": "Predictive Back ở màn hình chính: vuốt Back thì toàn bộ UI mờ dần và lùi ra sau; thả tay thì zoom-out + fade-out rồi hiện hộp thoại thoát; đóng hộp thoại thì UI zoom-in + fade-in về như cũ",
-      "icon": "arrow_back"
-    },
-    {
-      "content": "Thoát có animation: bấm \"Chạy dưới nền\" / \"Thoát hẳn\" thì UI zoom-out + fade-out và cửa sổ mờ dần trước khi thoát, không còn đóng đột ngột",
-      "icon": "logout"
-    },
-    {
-      "content": "Predictive Back giờ cũng áp dụng cho các hộp thoại Material Web (hẹn giờ, xác nhận, phông chữ...): vuốt Back để xem trước và đóng đúng hộp thoại trên cùng",
-      "icon": "arrow_back"
-    },
-    {
-      "content": "Thêm animation thoát cho Cài đặt, Gửi phản hồi và Lyric trên điện thoại: đóng trang thì trượt xuống và mờ dần thay vì biến mất đột ngột",
-      "icon": "animation"
-    },
-    {
-      "content": "Lyric khi đang phát video nằm trên đầu khung phát kể cả khi tắt sóng nhạc (PC); trên điện thoại luôn cố định ở trên đầu",
+      "content": "Lyric View & nút Thêm: nút ⋮ đổi thành nút tìm kiếm; lyric trên đầu khung phát khi đang phát video (PC kể cả khi tắt sóng nhạc, điện thoại luôn cố định ở trên đầu); bản Android bỏ chữ \"video\" ở nút Thêm",
       "icon": "lyrics"
     },
     {
-      "content": "Làm lại banner cập nhật ứng dụng Android: biểu tượng bo góc nổi bật, tiêu đề và phiên bản rõ ràng, nút xếp hàng riêng bên dưới",
-      "icon": "system_update"
+      "content": "Mở tệp, chia sẻ & điều khiển hệ thống (Android): nút Thêm nhạc mở trình chọn tệp/thư mục (quét cả thư mục con, kèm .lrc), nhận tệp từ \"Mở bằng\"/\"Chia sẻ\", nút Chia sẻ gửi tệp đang phát; MediaSession chính xác từng giây, từng trạng thái (playing/paused/buffering/ended/error, vị trí, tốc độ, vùng đã đệm) cho màn hình khoá, Cài đặt nhanh và tai nghe",
+      "icon": "share"
     },
     {
-      "content": "Chuyển toàn bộ biểu tượng giao diện sang Material Symbols Rounded đồng bộ trên toàn bộ ứng dụng và các trang phụ",
-      "icon": "interests"
+      "content": "Predictive Back Gesture (Android 13+, bắt buộc từ Android 16): vuốt Back xem trước hoạt ảnh thu nhỏ/trượt cho lớp trên cùng (Settings, danh sách phát, Lyric, bottom sheet, hộp thoại Material Web); ở màn hình chính, toàn bộ UI mờ dần và lùi ra sau rồi hiện hộp thoại thoát; thoát có animation zoom-out + fade-out",
+      "icon": "arrow_back"
     },
     {
-      "content": "Toàn bộ biểu tượng chuyển sang Material Symbols Rounded; sửa Getting Started mất biểu tượng và ghi chú cập nhật Android hiển thị chuẩn markdown",
-      "icon": "interests"
+      "content": "Video & PiP: tự bật Picture-in-Picture khi rời app lúc đang phát video (Android), phát video theo từng đoạn (HTTP Range) thay vì nạp cả tệp vào RAM, bỏ chuỗi Web Audio khi Mixer mặc định, tắt kính mờ khi có video, visualizer không còn chạy ngầm",
+      "icon": "movie"
     },
     {
-      "content": "Chấm đỏ báo có changelog mới: hiện ở Cài đặt, About, What's New và đúng các bản mới trong danh sách; bấm vào What's New là tắt và ghi nhớ",
-      "icon": "notifications"
-    },
-    {
-      "content": "Ghi chú cập nhật dài hiện mũi tên xuống ở đáy khi còn nội dung chưa cuộn tới",
-      "icon": "keyboard_arrow_down"
-    },
-    {
-      "content": "Mỗi lần app ping trang (mở app, quay lại từ nền) trang tự kiểm tra bản cập nhật Android luôn",
-      "icon": "system_update"
-    },
-    {
-      "content": "Tối ưu cho máy cấu hình yếu: máy RAM ≤ 4GB mặc định tắt kính mờ, lớp phủ không còn blur toàn màn hình, nền album nhẹ hơn, playlist chỉ vẽ các dòng đang nhìn thấy và hoãn các tác vụ nền lúc khởi động",
+      "content": "Hiệu năng & máy cấu hình yếu: máy RAM ≤ 4GB mặc định tắt kính mờ, lớp phủ không còn blur toàn màn hình, nền album nhẹ hơn, playlist chỉ vẽ các dòng đang nhìn thấy, hoãn tác vụ nền lúc khởi động; dựng sẵn bộ xử lý âm thanh và sao chép sẵn tệp đầu tiên nên hết khựng 1-2 giây đầu ở lần phát đầu; sửa lỗi sóng nhạc báo lỗi trên giao diện điện thoại",
       "icon": "speed"
-    },
-    {
-      "content": "Sửa nhạc bị khựng 1-2 giây đầu ở lần phát đầu tiên sau khi mở app (Android): dựng sẵn bộ xử lý âm thanh trước khi phát và sao chép sẵn tệp nhạc ở nền",
-      "icon": "music_note"
-    },
-    {
-      "content": "Nút điều khiển phát trên điện thoại giãn ra như viên thuốc khi bấm (Previous giãn sang phải, Play/Pause giãn hai bên, Next giãn sang trái) và đẩy các nút bên cạnh xẹp lại chút, rồi tất cả co về như cũ",
-      "icon": "play_circle"
     },
     {
       "content": "Widget màn hình chính ăn theo màu accent đang chọn trong app, và tự về trạng thái chưa mở bài nào (album art trống) khi app khởi động lại sau khi bị sập",
       "icon": "widgets"
     },
     {
-      "content": "Animation giãn nút trên điện thoại mượt hơn (chạy bằng GPU, không còn tính lại bố cục mỗi khung hình); sửa lỗi sóng nhạc báo lỗi trên giao diện điện thoại",
-      "icon": "speed"
+      "content": "Biểu tượng: toàn bộ chuyển sang Material Symbols Rounded (cả các trang phụ), sửa Getting Started mất biểu tượng, bản Android luôn dùng biểu tượng dạng đặc (fill)",
+      "icon": "interests"
     },
     {
-      "content": "Sóng trên thanh seek chạy ngược chiều và theo đúng Material 3 Expressive: thẳng ở ≤5% và ≥98% tiến trình, sóng ở giữa, chuyển mượt giữa thẳng và sóng",
-      "icon": "waves"
+      "content": "Chấm đỏ báo có changelog mới: hiện ở Cài đặt, About, What's New và đúng các bản mới/được sửa trong danh sách; bấm vào What's New là tắt và ghi nhớ",
+      "icon": "notifications"
     },
     {
-      "content": "Bản Android: mọi biểu tượng luôn ở dạng đặc (fill); bản PC: thanh seek của trình phát thu nhỏ (PiP) dùng thanh sóng MD3E giống trình phát chính",
-      "icon": "waves"
+      "content": "Service Worker dùng stale-while-revalidate cho tài nguyên cùng origin, thông báo khi kích hoạt bản mới; thông tin khác có thêm Chất lượng âm thanh (tần số lấy mẫu, bitrate, định dạng)",
+      "icon": "cached"
     }
   ],
   "en": [
     {
-      "content": "Android: passes the installed APK version to the web app and checks GitHub Releases to notify when a newer version is available",
+      "content": "Android app updates: compare the version with GitHub Releases, download the APK in the background with a full-screen progress screen (version confirmation, description, Cancel/Update buttons) then open the installer; redesigned banner; release notes render as proper markdown with a down arrow while more content remains; and a new-version check every time the app pings the page (launch, return from background)",
       "icon": "system_update"
     },
     {
-      "content": "Android: downloads APK updates in the background with a full-screen progress toast (with a confirmation step showing version range, notes, and Cancel/Update actions), launches the installer via FileProvider, and adds cache/updates/ to file_paths.xml",
-      "icon": "download"
-    },
-    {
-      "content": "Android: enters Picture-in-Picture (PiP) mode when leaving the app while playing a video and optimizes the video frame layout in PiP",
-      "icon": "picture_in_picture_alt"
-    },
-    {
-      "content": "Android: checks app-to-page responsiveness with a 10s timeout, Wait and Restart app buttons, and cancels checks when leaving to the home screen",
+      "content": "Responsiveness check & self-recovery (Android): 10-second timer with Wait / Restart app buttons (localized, fully rounded), \"responded\" is reported at the top of the page to stop false alarms; if Android freezes the app or reclaims the WebView process, the app wakes it and reloads before showing an error",
       "icon": "hourglass_top"
     },
     {
-      "content": "Android: adds a Material 3 Expressive shape-morphing loading indicator, syncs native UI language with the page setting, and applies Google Sans Flex to the app frame",
+      "content": "Android app shell: Material 3 Expressive shape-morphing splash, Google Sans Flex font, status and navigation bars follow the accent colour, and a \"System\" (Material You) accent option as the default",
       "icon": "auto_awesome"
     },
     {
-      "content": "Mobile UI: adds an update action to the three-dot menu when an update is available, fixes layering so the sleep timer dropdown isn't covered by the Lyric button, and restores vertical video aspect ratio",
-      "icon": "tune"
-    },
-    {
-      "content": "Service Worker: uses stale-while-revalidate for same-origin assets, notifies clients on activation, and bumps cache version",
-      "icon": "cached"
-    },
-    {
-      "content": "Phone layout and an Android WebView app: auto-updates with the repo, works offline, open/share audio & video into the app, background playback with notification",
-      "icon": "android"
-    },
-    {
-      "content": "Now Playing phone UI: large cover art, pill Prev/Play/Next, Shuffle/Repeat/Speed row, full-screen playlist sheet, ⋮ menu for Settings/Sleep/Share/Feedback, tighter Fullscreen (desktop unchanged)",
+      "content": "Now Playing phone UI: large cover art, pill Prev/Play/Next buttons, Shuffle/Repeat/Speed row, full-screen playlist sheet, ⋮ menu with Settings/Timer/Share/Feedback, tidier Fullscreen; update button in the 3-dot menu; fixed Lyric covering the sleep-timer dropdown and the vertical video frame (PC unchanged)",
       "icon": "smartphone"
     },
     {
-      "content": "More info: added Audio quality (sample rate, bitrate, format)",
-      "icon": "graphic_eq"
-    },
-    {
-      "content": "Android: the Share button can send the playing file via the system share sheet",
-      "icon": "share"
-    },
-    {
-      "content": "Android: Add music opens the system file / folder picker (scans subfolders, incl. .lrc), broader \"Open with\"/\"Share\" support, and playback is controlled through the system MediaSession (lock screen, Quick Settings, headset) instead of a controls notification",
-      "icon": "folder_open"
-    },
-    {
-      "content": "Android: the app's status and navigation bars follow the page's accent color",
-      "icon": "palette"
-    },
-    {
-      "content": "Settings on phones: search bar collapses into a button, sliders/dropdowns use the full width; Android adds a \"System\" accent option (Material You, default); Getting Started updated",
-      "icon": "settings"
-    },
-    {
-      "content": "Phone Settings rebuilt: category list (coloured icons + descriptions) → detail page with a large title that collapses into the bar on scroll; dropdowns became pills + bottom sheets; expressive dotted-tick sliders (PC and phone)",
+      "content": "Phone Settings rebuilt: category list (coloured icons + descriptions) → detail page with a large title that collapses on scroll, search bar collapsed into a button, dropdowns as pill buttons + bottom sheets, expressive sliders with dot ticks (PC and phone); Getting Started updated",
       "icon": "tune"
     },
     {
-      "content": "Faster video playback on phones: Web Audio chain skipped while the Mixer is at defaults (no more audio drift/stutter), glass blur disabled during video, and the visualizer no longer runs in the background or reallocates its canvas every frame",
-      "icon": "speed"
-    },
-    {
-      "content": "Android app: video now streams in chunks (HTTP Range) instead of loading the whole file into RAM — large videos open without stalling and seek faster",
-      "icon": "movie"
-    },
-    {
-      "content": "Android app: the page now signals it is alive at the very top of <head>, so a slow CDN or a script error no longer triggers a false \"Page not responding\"",
-      "icon": "bug_report"
-    },
-    {
-      "content": "Phone: every dropdown/menu (Sleep timer, Output device, Add media, Speed...) is now a bottom sheet; page-transition animations (Settings, playlist, lyrics...); Shuffle/Repeat/Speed/Play morph from rounded-square to round when active; with nothing loaded only the top buttons and a centred Add button remain",
+      "content": "Phone animations & effects: every dropdown/menu is a bottom sheet, page transitions and exit animations (Settings, Feedback, Lyrics, playlist), square → round buttons when active, Prev/Play/Next stretch like a pill and squeeze their neighbours (GPU-driven for smoothness), and with nothing playing only the top buttons and a centred Add button remain",
       "icon": "animation"
     },
     {
-      "content": "Material 3 Expressive seek bar (PC, phone and Lyric View): the played part is a wave (40dp wavelength, 3dp amplitude) that flattens into a straight line on pause; the ⋮ button in Lyric View is now a search button; Android build drops the word \"video\" from the Add button",
+      "content": "Material 3 Expressive seek bar (PC, phone, Lyric View and the PiP mini player): the played part is a wave (40dp wavelength, 3dp amplitude) travelling the opposite way, flat at ≤5% and ≥98% progress or when paused, with smooth transitions between flat and wavy",
       "icon": "waves"
     },
     {
-      "content": "Per-second, per-state MediaSession: the page and the Android shell now send playing/paused/buffering/ended/error, a timestamped position, playback speed and buffered range; the notification is no longer rebuilt every second",
-      "icon": "play_circle"
-    },
-    {
-      "content": "Predictive Back Gesture support (Android 13+, mandatory from Android 16): swiping Back shrinks and slides the top layer (Settings, playlist, lyrics, bottom sheets, dialogs) under your finger; release to go back, swipe back to cancel",
-      "icon": "arrow_back"
-    },
-    {
-      "content": "Predictive Back on the main screen: swiping Back blurs the whole UI and pushes it back; releasing zooms/fades it out and shows the exit dialog; closing the dialog zooms/fades the UI back in",
-      "icon": "arrow_back"
-    },
-    {
-      "content": "Animated exit: \"Run in background\" / \"Exit completely\" now zoom/fade the UI out and fade the window before leaving, instead of closing abruptly",
-      "icon": "logout"
-    },
-    {
-      "content": "Predictive Back now also covers Material Web dialogs (sleep timer, confirmations, fonts...): swipe back to preview and close the top-most dialog",
-      "icon": "arrow_back"
-    },
-    {
-      "content": "Added exit animations for Settings, Feedback and Lyrics on phones: pages now slide down and fade out instead of disappearing abruptly",
-      "icon": "animation"
-    },
-    {
-      "content": "While a video plays, the lyric line now stays at the top of the player even with the visualizer off (PC); on phones it is always pinned to the top",
+      "content": "Lyric View & Add button: the ⋮ button becomes a search button; the lyric line sits at the top of the player while a video plays (PC even with the visualizer off, always pinned to the top on phones); the Android build drops the word \"video\" from the Add button",
       "icon": "lyrics"
     },
     {
-      "content": "Redesigned the Android app update banner: prominent rounded icon, clearer title and version, buttons on their own row",
-      "icon": "system_update"
+      "content": "Opening files, sharing & system controls (Android): Add music opens the system file/folder picker (subfolders and .lrc included), accepts files from \"Open with\"/\"Share\", the Share button sends the playing file; per-second MediaSession with every state (playing/paused/buffering/ended/error, position, speed, buffered range) for the lock screen, Quick Settings and headphones",
+      "icon": "share"
     },
     {
-      "content": "Switched all interface icons to Material Symbols Rounded across the entire app and subpages",
-      "icon": "interests"
+      "content": "Predictive Back Gesture (Android 13+, mandatory from Android 16): swiping back previews a shrink/slide animation of the top layer (Settings, playlist, Lyrics, bottom sheets, Material Web dialogs); on the main screen the whole UI fades and recedes, then the exit dialog appears; leaving plays a zoom-out + fade-out animation",
+      "icon": "arrow_back"
     },
     {
-      "content": "All icons switched to Material Symbols Rounded; fixed missing icons in Getting Started and the Android update notes now render as proper markdown",
-      "icon": "interests"
+      "content": "Video & PiP: automatic Picture-in-Picture when leaving the app during video (Android), video streamed in chunks (HTTP Range) instead of loading the whole file into RAM, no Web Audio chain when the Mixer is default, glass disabled with video, visualizer no longer runs in the background",
+      "icon": "movie"
     },
     {
-      "content": "Red dots for new changelogs: shown on Settings, About, What's New and on the new versions in the list; opening What's New clears them and remembers it",
-      "icon": "notifications"
-    },
-    {
-      "content": "Long update notes show a down arrow at the bottom while more content remains below",
-      "icon": "keyboard_arrow_down"
-    },
-    {
-      "content": "Every time the app pings the page (launch, return from background) the page now also checks for Android updates",
-      "icon": "system_update"
-    },
-    {
-      "content": "Optimized for low-end devices: phones with ≤ 4GB RAM default to glass off, overlays no longer blur the whole screen, lighter album backdrop, playlist only renders visible rows and background tasks are deferred at startup",
+      "content": "Performance & low-end devices: phones with ≤ 4GB RAM default to glass off, overlays no longer blur the whole screen, lighter album backdrop, the playlist only renders visible rows, background tasks are deferred at startup; the audio engine is prepared in advance and the first track is pre-copied so the 1-2 s stutter on first playback is gone; fixed the visualizer throwing errors on the phone UI",
       "icon": "speed"
     },
     {
-      "content": "Fixed stutter in the first 1-2 seconds of the first playback after launching the app (Android): the audio engine is prepared in advance and the track file is pre-copied in the background",
-      "icon": "music_note"
-    },
-    {
-      "content": "Mobile playback buttons stretch like a pill when pressed (Previous right, Play/Pause both sides, Next left) while squeezing their neighbours slightly, then everything springs back",
-      "icon": "play_circle"
-    },
-    {
-      "content": "Home screen widgets now follow the accent colour chosen in the app and reset to the no-track state (empty album art) when the app restarts after a crash",
+      "content": "Home screen widgets follow the accent colour chosen in the app and reset to the no-track state (empty album art) when the app restarts after a crash",
       "icon": "widgets"
     },
     {
-      "content": "Smoother button stretch animation on phones (GPU-driven, no per-frame layout); fixed the visualizer throwing errors on the phone UI",
-      "icon": "speed"
+      "content": "Icons: everything switched to Material Symbols Rounded (including the secondary pages), fixed missing icons in Getting Started, and the Android build always uses filled icons",
+      "icon": "interests"
     },
     {
-      "content": "Seek-bar wave now travels the opposite way and follows Material 3 Expressive: flat at ≤5% and ≥98% progress, wavy in between, with smooth transitions",
-      "icon": "waves"
+      "content": "Red dots for new changelogs: shown on Settings, About, What's New and on the new/edited versions in the list; opening What's New clears them and remembers it",
+      "icon": "notifications"
     },
     {
-      "content": "Android: all icons stay filled; PC: the mini player (PiP) seek bar now uses the same MD3E wavy bar as the main player",
-      "icon": "waves"
+      "content": "Service Worker uses stale-while-revalidate for same-origin assets and announces when a new version activates; More info gains Audio quality (sample rate, bitrate, format)",
+      "icon": "cached"
     }
   ]
 }
