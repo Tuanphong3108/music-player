@@ -5848,13 +5848,13 @@
             });
 
             for (const file of audioFiles) {
-                let title = file.name.replace(/\.[^/.]+$/, "");
-                let artist = "UNKNOWN ARTIST";
-                let album = "Unknown Album";
-                let year = "";
+                let title = file.__metaTitle || file.name.replace(/\.[^/.]+$/, "");
+                let artist = file.__metaArtist || "UNKNOWN ARTIST";
+                let album = file.__metaAlbum || "Unknown Album";
+                let year = file.__metaYear || "";
                 let genre = "";
                 let composer = "";
-                let cover = null;
+                let cover = file.__nativeArtUrl || null;
                 let lyricsRaw = "";
                 
                 await new Promise((resolve) => {
@@ -5923,6 +5923,9 @@
                         nativeId: file.__nativeId || null,
                         nativeLocation: file.__nativeLocation || '',
                         nativeName: file.__nativeName || file.name,
+                        nativeStreamUrl: file.__nativeStreamUrl || '',
+                        nativeLrcUrl: file.__nativeLrcUrl || '',
+                        fromLibrary: !!file.__fromLibrary,
                         rawName: file.name.replace(/\.[^/.]+$/, "") 
                     };
                     playlist.push(newTrack);
@@ -6645,13 +6648,120 @@
         }
         document.getElementById('locate-btn').addEventListener('click', (e) => { e.stopPropagation(); locateCurrentTrack(true); });
 
+        let libraryPlaySeq = 0;
+        let lastLibraryBlobTrack = null;
+
+        async function hydrateAndPlayLibraryTrack(track, index, seq) {
+            setPlayBtnLoading(true);
+            try {
+                if (lastLibraryBlobTrack && lastLibraryBlobTrack !== track && lastLibraryBlobTrack._blobLoaded && lastLibraryBlobTrack.url && lastLibraryBlobTrack.url.startsWith('blob:')) {
+                    try { URL.revokeObjectURL(lastLibraryBlobTrack.url); } catch (e) {}
+                    lastLibraryBlobTrack.url = lastLibraryBlobTrack.nativeStreamUrl;
+                    lastLibraryBlobTrack._blobLoaded = false;
+                }
+                const res = await fetch(track.nativeStreamUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const blob = await res.blob();
+                if (seq !== libraryPlaySeq || currentIndex !== index) return;
+                const realFile = new File([blob], track.nativeName || (track.name + '.' + (track.ext || 'mp3').toLowerCase()), {
+                    type: blob.type || (track.file && track.file.type) || 'audio/mpeg',
+                    lastModified: (track.file && track.file.lastModified) || Date.now()
+                });
+                realFile.__nativeId = track.nativeId || null;
+                realFile.__nativeLocation = track.nativeLocation || '';
+                realFile.__nativeName = track.nativeName || realFile.name;
+                realFile.__fromLibrary = true;
+                const blobUrl = URL.createObjectURL(realFile);
+                track.file = realFile;
+                track.url = blobUrl;
+                track._blobLoaded = true;
+                lastLibraryBlobTrack = track;
+
+                audio.src = blobUrl;
+                audio.play().catch(() => {});
+
+                // Nạp thêm thẻ nhúng (USLT lyrics, genre, composer, cover) & tệp .lrc cùng thư mục ở nền (không chặn phát nhạc)
+                if (!track._tagsHydrated) {
+                    track._tagsHydrated = true;
+                    window.jsmediatags.read(realFile, {
+                        onSuccess: function(tag) {
+                            let changed = false;
+                            if (tag.tags.title && (!track.name || track.name === track.rawName)) { track.name = tag.tags.title; changed = true; }
+                            if (tag.tags.artist && track.artist === 'UNKNOWN ARTIST') { track.artist = tag.tags.artist; changed = true; }
+                            if (tag.tags.album && track.album === 'Unknown Album') { track.album = tag.tags.album; changed = true; }
+                            if (tag.tags.year && !track.year) track.year = tag.tags.year;
+                            if (tag.tags.genre && !track.genre) track.genre = tag.tags.genre;
+                            const c = tag.tags.composer || tag.tags.TCOM || tag.tags['©wrt'] || tag.tags.COMPOSER;
+                            if (c && !track.composer) {
+                                let comp = (typeof c === 'object' ? (c.data != null ? c.data : '') : c);
+                                if (Array.isArray(comp)) comp = comp.join(', ');
+                                track.composer = String(comp || '');
+                            }
+                            if (tag.tags.USLT && !track.lyricsRaw) {
+                                const ly = typeof tag.tags.USLT.data === 'object' ? tag.tags.USLT.data.lyrics : tag.tags.USLT.data;
+                                if (ly) {
+                                    track.lyricsRaw = ly;
+                                    track.lyrics = parseLRC(ly);
+                                    changed = true;
+                                }
+                            }
+                            if (tag.tags.picture && !track._hasRealCover) {
+                                const { data, format } = tag.tags.picture;
+                                let bin = '';
+                                for (let i = 0; i < data.length; i++) bin += String.fromCharCode(data[i]);
+                                track.cover = `data:${format};base64,${window.btoa(bin)}`;
+                                track._hasRealCover = true;
+                                changed = true;
+                            }
+                            if (changed && currentIndex === index) {
+                                trackNameEl.innerText = track.name;
+                                trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
+                                if (track.cover) {
+                                    artImg.src = track.cover;
+                                    artImg.classList.remove('hidden');
+                                    artPlaceholder.classList.add('hidden');
+                                    bgPreview.style.backgroundImage = `url(${track.cover})`;
+                                    refreshDynamicAccent(track);
+                                }
+                                renderLyrics();
+                                updatePlaylistUI();
+                                updateMediaSession();
+                                updateFsUI();
+                                if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+                            }
+                        },
+                        onError: function() {}
+                    });
+                    if (track.nativeLrcUrl && !track.lyricsRaw) {
+                        fetch(track.nativeLrcUrl).then(r => r.ok ? r.text() : '').then(txt => {
+                            if (txt && !track.lyricsRaw) {
+                                track.lyricsRaw = txt;
+                                track.lyrics = parseLRC(txt);
+                                if (currentIndex === index) { renderLyrics(); updatePlaylistUI(); }
+                            }
+                        }).catch(() => {});
+                    }
+                }
+            } catch (err) {
+                if (seq === libraryPlaySeq && currentIndex === index) {
+                    setPlayBtnLoading(false);
+                    audio.src = track.nativeStreamUrl;
+                    audio.play().catch(() => {});
+                }
+            }
+        }
+
         function playTrack(index) {
             if (index < 0 || index >= playlist.length) return;
             currentIndex = index;
             const track = playlist[index];
+            const mySeq = ++libraryPlaySeq;
             document.body.classList.toggle('is-video-track', !!track.isVideo);
             document.body.classList.remove('has-video');   // sẽ bật lại khi loadedmetadata báo tệp có hình
-            audio.src = track.url;
+            const needsLazyBlob = !!(track.fromLibrary && track.nativeStreamUrl && !track._blobLoaded);
+            if (!needsLazyBlob) {
+                audio.src = track.url;
+            }
             trackNameEl.innerText = track.name;
             trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
 
@@ -6661,6 +6771,11 @@
             if (typeof updateMoreInfoBtnState === 'function') updateMoreInfoBtnState();
             
             if (track.cover) {
+                artImg.onerror = () => {
+                    artImg.classList.add('hidden');
+                    artPlaceholder.classList.remove('hidden');
+                    bgPreview.style.backgroundImage = 'none';
+                };
                 artImg.src = track.cover;
                 artImg.classList.remove('hidden');
                 artPlaceholder.classList.add('hidden');
@@ -6688,7 +6803,11 @@
             updateMediaSession();
             updateFsUI(); // Cập nhật màn hình toàn cảnh fullscreen
             
-            audio.play().catch(() => {});
+            if (needsLazyBlob) {
+                hydrateAndPlayLibraryTrack(track, index, mySeq);
+            } else {
+                audio.play().catch(() => {});
+            }
             playBtn.querySelector('span').innerText = 'pause';
             pauseOverlay.classList.remove('visible');
             if (document.documentElement.classList.contains('m-ui')) {
@@ -7947,7 +8066,7 @@
                     const row = document.createElement('div');
                     row.className = 'm-lib-item' + (idx === currentIndex ? ' active' : '');
                     row.innerHTML =
-                        '<div class="m-lib-art">' + (tr.cover ? '<img src="' + tr.cover + '" alt="">' : '<span class="material-symbols-rounded">music_note</span>') + '</div>' +
+                        '<div class="m-lib-art">' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'material-symbols-rounded\',textContent:\'music_note\'}))">' : '<span class="material-symbols-rounded">music_note</span>') + '</div>' +
                         '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
                         '<button type="button" class="m-lib-more" aria-label="More"><span class="material-symbols-rounded" style="font-size:20px;">more_vert</span></button>';
                     row.querySelector('.m-lib-title').textContent = tr.name || '';
@@ -7977,7 +8096,7 @@
                     if (mMiniArtist) mMiniArtist.textContent = tr.artist || 'UNKNOWN ARTIST';
                     if (mMiniArt) {
                         mMiniArt.innerHTML = tr.cover
-                            ? '<img src="' + tr.cover + '" alt="">'
+                            ? '<img src="' + tr.cover + '" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'material-symbols-rounded\',textContent:\'music_note\'}))">'
                             : '<span class="material-symbols-rounded">music_note</span>';
                     }
                 }
@@ -8133,11 +8252,18 @@
                             continue;
                         }
                         if (it.fromLibrary && it.url) {
-                            // Tệp quét từ thư viện thiết bị: dùng URL stream trực tiếp để khởi động nhanh và không ngốn RAM trên máy 4GB
+                            // Tệp quét từ thư viện thiết bị: nạp metadata & ảnh bìa tức thì, chỉ tải tệp thành blob khi người dùng bấm phát (hết MEDIA_ERR_NETWORK & không tốn RAM)
                             const size = Number(it.size) || 0;
                             const f = new File([], name, { type: it.type || 'audio/mpeg', lastModified: it.modified || Date.now() });
                             Object.defineProperty(f, 'size', { get: () => size });
                             f.__nativeUrl = it.url;
+                            f.__nativeStreamUrl = it.url;
+                            f.__nativeArtUrl = it.artUrl || null;
+                            f.__nativeLrcUrl = it.lrcUrl || '';
+                            f.__metaTitle = it.title || '';
+                            f.__metaArtist = it.artist || '';
+                            f.__metaAlbum = it.album || '';
+                            f.__metaYear = it.year || '';
                             f.__nativeId = it.id || ((it.url || '').match(/\/f\/([^/?#]+)/) || [])[1] || null;
                             f.__nativeLocation = it.location || it.uri || '';
                             f.__nativeName = name;
@@ -8145,12 +8271,6 @@
                             const part = async (a, b) => (await fetch(it.url, { headers: { Range: 'bytes=' + a + '-' + (Math.min(b, size) - 1) } })).arrayBuffer();
                             f.slice = (a = 0, b = size) => ({ arrayBuffer: () => part(a, b), size: Math.max(0, Math.min(b, size) - a) });
                             f.arrayBuffer = async () => (await fetch(it.url)).arrayBuffer();
-                            if (it.lrcUrl) {
-                                try {
-                                    const lr = await fetch(it.lrcUrl);
-                                    if (lr.ok) f.__nativeLrcText = await lr.text();
-                                } catch (e) {}
-                            }
                             files.push(f);
                             continue;
                         }
@@ -8188,16 +8308,8 @@
             window.__onAndroidLibraryScanDone = function (count, missingPerm) {
                 try {
                     if (missingPerm) return;
-                    if (count > 0 && currentIndex === -1 && playlist.length > 0 && !audio.src) {
-                        // Nạp sẵn thông tin bài đầu tiên ở trạng thái tạm dừng (không tự bật nhạc ngoài ý muốn)
-                        const first = playlist[0];
-                        currentIndex = 0;
-                        audio.src = first.url;
-                        trackNameEl.innerText = first.name;
-                        trackArtistEl.innerText = `${first.artist} | ${first.ext}`;
-                        updatePlaylistUI();
-                        updateFsUI();
-                    }
+                    if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
+                    updatePlaylistUI();
                 } catch (e) {}
             };
             if (window.IS_ANDROID_APP && AB && typeof AB.scanAllDeviceAudio === 'function') {
@@ -9080,7 +9192,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1520_mobile_library_ui', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1535_fix_library_playback', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
