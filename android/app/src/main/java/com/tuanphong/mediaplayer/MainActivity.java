@@ -2655,6 +2655,66 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public boolean openFileInSystemFiles(String filePath, String nativeId) {
+            try {
+                String resolved = (filePath != null && !filePath.trim().isEmpty()) ? filePath.trim() : "";
+                if (resolved.isEmpty() && nativeId != null && !nativeId.isEmpty()) {
+                    String loc = servedLocations.get(nativeId);
+                    if (loc != null && !loc.isEmpty()) resolved = loc;
+                }
+                if (resolved.isEmpty()) return false;
+
+                File target = resolved.startsWith("file://") ? new File(Uri.parse(resolved).getPath()) : new File(resolved);
+                if (target.exists()) {
+                    File parent = target.getParentFile();
+                    Intent dirIntent = new Intent(Intent.ACTION_VIEW);
+                    Uri contentDir = Uri.parse("content://com.android.externalstorage.documents/root/primary");
+                    if (parent != null && parent.getAbsolutePath().startsWith("/storage/emulated/0/")) {
+                        String rel = parent.getAbsolutePath().substring("/storage/emulated/0/".length());
+                        String encodedDocId = Uri.encode("primary:" + rel);
+                        contentDir = Uri.parse("content://com.android.externalstorage.documents/document/" + encodedDocId);
+                    }
+                    dirIntent.setDataAndType(contentDir, DocumentsContract.Document.MIME_TYPE_DIR);
+                    dirIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    if (dirIntent.resolveActivity(getPackageManager()) != null) {
+                        runOnUiThread(() -> {
+                            try { startActivity(dirIntent); } catch (Throwable ignored) {}
+                        });
+                        return true;
+                    }
+
+                    try {
+                        Uri fileUri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", target);
+                        Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+                        viewIntent.setDataAndType(fileUri, "*/*");
+                        viewIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        if (viewIntent.resolveActivity(getPackageManager()) != null) {
+                            runOnUiThread(() -> {
+                                try { startActivity(viewIntent); } catch (Throwable ignored) {}
+                            });
+                            return true;
+                        }
+                    } catch (Throwable ignored) {}
+                }
+
+                if (resolved.startsWith("content://")) {
+                    Uri u = Uri.parse(resolved);
+                    Intent vi = new Intent(Intent.ACTION_VIEW, u);
+                    vi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    if (vi.resolveActivity(getPackageManager()) != null) {
+                        runOnUiThread(() -> {
+                            try { startActivity(vi); } catch (Throwable ignored) {}
+                        });
+                        return true;
+                    }
+                }
+                return false;
+            } catch (Throwable ignored) {
+                return false;
+            }
+        }
+
+        @JavascriptInterface
         public String listAudioDirectoriesJson() {
             JSONArray arr = new JSONArray();
             java.util.Set<String> excluded = getExcludedDirsSet();
