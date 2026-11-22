@@ -598,7 +598,7 @@
             Array.from(files).forEach(file => {
                 if (file.name.toLowerCase().endsWith('.lrc')) lrcFiles.push(file);
                 else if (disallowVideoOnAndroid && isVideoFile(file)) return;
-                else if (file.type.startsWith('audio/') || isVideoFile(file) || file.name.toLowerCase().endsWith('.mp3') || file.name.toLowerCase().endsWith('.m4a')) audioFiles.push(file);
+                else if (file.__fromLibrary || file.type.startsWith('audio/') || isVideoFile(file) || /\.(mp3|m4a|aac|flac|ogg|oga|opus|wav|wma|amr|m4b|alac)$/i.test(file.name)) audioFiles.push(file);
             });
 
             for (const file of audioFiles) {
