@@ -331,6 +331,10 @@
                     }
                 } finally {
                     coverHydrateRunning = false;
+                    if (coverHydratePending) {
+                        coverHydratePending = false;
+                        setTimeout(() => { try { window.__hydrateMobileLibraryCovers(); } catch (e) {} }, 60);
+                    }
                 }
             };
 
