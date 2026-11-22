@@ -9699,12 +9699,23 @@
                 const cv = document.createElement('canvas'); cv.className = 'seek-wave';
                 host.insertBefore(cv, before || slider);
                 const ctx = cv.getContext('2d');
-                let amp = 0, phase = 0, last = 0, raf = 0, colT = 0, colP = '#d0bcff', colV = 'rgba(255,255,255,.18)';
-                function colors(now) {
-                    if (now - colT < 500) return; colT = now;
+                let amp = 0, phase = 0, last = 0, raf = 0, colT = 0, colSyncTimer = null, colP = '#d0bcff', colV = 'rgba(255,255,255,.18)';
+                function readColors(now) {
+                    colT = now || performance.now();
                     const cs = getComputedStyle(document.documentElement);
                     colP = cs.getPropertyValue('--md-sys-color-primary').trim() || colP;
                     colV = trackColor ? trackColor : (cs.getPropertyValue('--md-sys-color-surface-variant').trim() || colV);
+                }
+                function colors(now) {
+                    if (now - colT < 500) return;
+                    readColors(now);
+                }
+                function scheduleColorSync() {
+                    clearTimeout(colSyncTimer);
+                    colSyncTimer = setTimeout(() => {
+                        readColors(performance.now());
+                        draw(performance.now());
+                    }, 500);
                 }
                 function draw(now) {
                     const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
