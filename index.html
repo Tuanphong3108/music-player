@@ -1797,6 +1797,165 @@
         html.m-ui #m-lyric-seek::-webkit-slider-runnable-track { background: transparent; height: 28px; }
 
         /* ===== Khung báo lỗi phát tệp (Playback Error Overlay) ===== */
+        /* ===== MOBILE UI MỚI: Màn hình chính Thư viện + Mini Player Pill + Full Player thu gọn + Playlist Sheet ===== */
+        #m-library-home, #m-mini-player, #m-collapse-player-btn, #m-pl-footer { display: none; }
+
+        /* Mặc định trên Mobile (khi chưa nở Full Player và đã có bài): hiện Màn hình Thư viện, ẩn khung phát lớn */
+        html.m-ui body:not(.m-player-expanded):not(.no-track) .visual-stage,
+        html.m-ui body:not(.m-player-expanded):not(.no-track) .player-shell { display: none !important; }
+        html.m-ui body:not(.m-player-expanded):not(.no-track) #m-library-home {
+            display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 10px; padding: 2px 0 4px;
+        }
+        html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track) #m-lib-list {
+            padding-bottom: 84px;
+        }
+        html.m-ui .m-lib-actions {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
+        html.m-ui .m-lib-shuffle-btn {
+            height: 40px; padding: 0 16px; border: none; border-radius: 999px; cursor: pointer;
+            background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+            font-family: var(--app-font); font-size: calc(13.5px * var(--font-scale-factor, 1)); font-weight: 700;
+            display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+            transition: transform .15s, border-radius .25s;
+        }
+        html.m-ui .m-lib-shuffle-btn:active { transform: scale(.95); border-radius: 14px; }
+        html.m-ui .m-lib-shuffle-btn .material-symbols-rounded { font-size: 19px; }
+        html.m-ui .m-lib-search-wrap {
+            flex: 1; min-width: 0; height: 40px; border-radius: 999px;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));
+            display: flex; align-items: center; gap: 6px; padding: 0 12px;
+        }
+        html.m-ui .m-lib-search-wrap .material-symbols-rounded { font-size: 18px; opacity: .65; }
+        html.m-ui .m-lib-search-wrap input {
+            flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+            color: var(--md-sys-color-on-surface); font-family: var(--app-font);
+            font-size: calc(13.5px * var(--font-scale-factor, 1)); font-weight: 600;
+        }
+        html.m-ui .m-lib-search-wrap input::placeholder { color: var(--md-sys-color-on-surface-variant); opacity: .65; }
+        html.m-ui .m-lib-icon-btn {
+            width: 40px; height: 40px; border: none; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-on-surface); display: grid; place-items: center;
+        }
+        html.m-ui .m-lib-icon-btn:active { transform: scale(.94); }
+        html.m-ui .m-lib-list {
+            flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px;
+        }
+        html.m-ui .m-lib-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 12px;
+            border-radius: 22px; cursor: pointer;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 42%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-on-surface);
+            transition: background .2s, transform .15s, border-radius .25s;
+        }
+        html.m-ui .m-lib-item:active { transform: scale(.985); }
+        html.m-ui .m-lib-item.active {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border-radius: 26px;
+        }
+        html.m-ui .m-lib-art {
+            width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0; overflow: hidden;
+            background: color-mix(in srgb, var(--md-sys-color-primary) 16%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-primary); display: grid; place-items: center;
+        }
+        html.m-ui .m-lib-item.active .m-lib-art {
+            background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 14%, transparent);
+            color: var(--md-sys-color-on-primary-container);
+        }
+        html.m-ui .m-lib-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        html.m-ui .m-lib-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        html.m-ui .m-lib-title { font-size: calc(14.5px * var(--font-scale-factor, 1)); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        html.m-ui .m-lib-artist { font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        html.m-ui .m-lib-more {
+            width: 36px; height: 36px; border: none; border-radius: 50%; background: transparent;
+            color: inherit; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; opacity: .8;
+        }
+
+        /* Mini Player Pill ở đáy màn hình Mobile */
+        html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track):not(.m-playlist-open):not(.lyrics-open):not(.reorder-active) #m-mini-player {
+            display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+            z-index: 2200; align-items: center; gap: 10px; padding: 8px 10px 8px 10px; border-radius: 28px;
+            background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+            box-shadow: 0 8px 28px rgba(0,0,0,.28); cursor: pointer; touch-action: pan-y; user-select: none;
+            transition: transform .25s cubic-bezier(.2,.8,.2,1), opacity .25s ease;
+        }
+        html.m-ui #m-mini-player.swiping { transition: none; }
+        html.m-ui .m-mini-art {
+            width: 44px; height: 44px; border-radius: 16px; flex-shrink: 0; overflow: hidden;
+            background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 12%, transparent);
+            display: grid; place-items: center; color: inherit;
+        }
+        html.m-ui .m-mini-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        html.m-ui .m-mini-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        html.m-ui .m-mini-title { font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        html.m-ui .m-mini-artist { font-size: calc(11.5px * var(--font-scale-factor, 1)); opacity: .78; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        html.m-ui .m-mini-ctrls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+        html.m-ui .m-mini-btn {
+            width: 38px; height: 38px; border: none; border-radius: 50%; cursor: pointer;
+            background: transparent; color: inherit; display: grid; place-items: center;
+        }
+        html.m-ui .m-mini-btn:active { transform: scale(.9); }
+        html.m-ui .m-mini-btn.m-mini-play {
+            width: 42px; height: 42px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+        }
+
+        /* Khi nở to thành Full Player trên Mobile: bỏ chữ "Media Player" và hiện nút mũi tên xuống để thu nhỏ */
+        html.m-ui body.m-player-expanded .m-title { display: none !important; }
+        html.m-ui body.m-player-expanded #m-collapse-player-btn {
+            display: inline-flex !important; order: -3; margin-right: auto;
+        }
+        html.m-ui body.m-player-expanded .m-add { display: none !important; }
+        html.m-ui body:not(.m-player-expanded) #m-collapse-player-btn { display: none !important; }
+        html.m-ui body.m-player-expanded .visual-stage,
+        html.m-ui body.m-player-expanded .player-shell {
+            animation: pgInUp .28s cubic-bezier(.2,0,0,1) both;
+        }
+
+        /* Playlist Sheet trên Mobile (phong cách Next up bo tròn + thanh điều khiển đáy, giữ nguyên nút Back) */
+        html.m-ui body.m-playlist-open .playlist-card {
+            border-radius: 28px !important; border: none !important;
+            background: var(--md-sys-color-surface) !important;
+            box-shadow: 0 0 0 100vmax rgba(0,0,0,.55) !important;
+            overflow: hidden;
+        }
+        html.m-ui body.m-playlist-open .playlist-card .playlist-header {
+            padding: 16px 18px 10px;
+        }
+        html.m-ui body.m-playlist-open .playlist-card .song-item {
+            border-radius: 20px; padding: 10px 12px;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 40%, var(--md-sys-color-surface));
+            margin-bottom: 6px;
+        }
+        html.m-ui body.m-playlist-open .playlist-card .song-item.active {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+        }
+        html.m-ui body.m-playlist-open #m-pl-footer {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 35%, var(--md-sys-color-surface));
+            border-top: 1px solid var(--playlist-border); flex-shrink: 0;
+        }
+        html.m-ui .m-pl-pill-group {
+            display: flex; align-items: center; gap: 6px; padding: 4px; border-radius: 999px;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));
+            flex: 1; justify-content: space-around;
+        }
+        html.m-ui .m-pl-foot-btn {
+            height: 44px; flex: 1; border: none; border-radius: 999px; cursor: pointer;
+            background: transparent; color: var(--md-sys-color-on-surface);
+            display: grid; place-items: center; transition: background .2s, color .2s;
+        }
+        html.m-ui .m-pl-foot-btn.active {
+            background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+        }
+        html.m-ui .m-pl-foot-more {
+            width: 56px; height: 52px; border: none; border-radius: 20px; cursor: pointer; flex-shrink: 0;
+            background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+            display: grid; place-items: center;
+        }
         .playback-error-overlay {
             position: absolute;
             inset: 0;
@@ -2715,6 +2874,7 @@
                 <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">library_music</span>
                 <span>MEDIAPLAYER V2026.11.21-build113200</span>
             </div>
+            <button class="btn-m3 m-only" id="m-collapse-player-btn" title="Thu nhỏ trình phát"><span class="material-symbols-rounded">keyboard_arrow_down</span></button>
             <span class="m-title" data-i18n="mobile.now_playing">Media Player</span>
             <div id="top-actions" style="display: flex; gap: 8px; position: relative;">
                 <div class="install-wrapper" id="install-wrapper">
@@ -2810,6 +2970,31 @@
                 </div>
 
                 <div class="playlist-items" id="playlist-container"></div>
+                <div id="m-pl-footer" class="m-only">
+                    <div class="m-pl-pill-group">
+                        <button type="button" class="m-pl-foot-btn" id="m-pl-shuffle" title="Shuffle"><span class="material-symbols-rounded">shuffle</span></button>
+                        <button type="button" class="m-pl-foot-btn" id="m-pl-repeat" title="Repeat"><span class="material-symbols-rounded">repeat</span></button>
+                        <button type="button" class="m-pl-foot-btn" id="m-pl-sleep" title="Sleep timer"><span class="material-symbols-rounded">timer</span></button>
+                    </div>
+                    <button type="button" class="m-pl-foot-more" id="m-pl-reorder" title="Reorder"><span class="material-symbols-rounded">sort</span></button>
+                </div>
+            </div>
+
+            <div id="m-library-home" class="m-only">
+                <div class="m-lib-actions">
+                    <button type="button" class="m-lib-shuffle-btn" id="m-lib-shuffle">
+                        <span class="material-symbols-rounded">shuffle</span>
+                        <span data-i18n="playlist.tab_shuffle">Shuffle</span>
+                    </button>
+                    <div class="m-lib-search-wrap">
+                        <span class="material-symbols-rounded">search</span>
+                        <input type="text" id="m-lib-search" placeholder="Tìm tên bài, ca sĩ..." data-i18n-placeholder="playlist.search_placeholder">
+                    </div>
+                    <button type="button" class="m-lib-icon-btn" id="m-lib-rescan" title="Quét lại thư viện">
+                        <span class="material-symbols-rounded">refresh</span>
+                    </button>
+                </div>
+                <div class="m-lib-list" id="m-lib-list"></div>
             </div>
 
             <div class="visual-stage">
@@ -2956,6 +3141,21 @@
             <span class="material-symbols-rounded">check</span>
             <span data-i18n="reorder.done">HOÀN TẤT</span>
         </button>
+    </div>
+
+    <div id="m-mini-player" class="m-only" role="region" aria-label="Mini Player">
+        <div class="m-mini-art" id="m-mini-art">
+            <span class="material-symbols-rounded">music_note</span>
+        </div>
+        <div class="m-mini-info">
+            <div class="m-mini-title" id="m-mini-title">Media Player</div>
+            <div class="m-mini-artist" id="m-mini-artist">UNKNOWN ARTIST</div>
+        </div>
+        <div class="m-mini-ctrls">
+            <button type="button" class="m-mini-btn" id="m-mini-prev" aria-label="Previous"><span class="material-symbols-rounded">skip_previous</span></button>
+            <button type="button" class="m-mini-btn m-mini-play" id="m-mini-play" aria-label="Play/Pause"><span class="material-symbols-rounded">play_arrow</span></button>
+            <button type="button" class="m-mini-btn" id="m-mini-next" aria-label="Next"><span class="material-symbols-rounded">skip_next</span></button>
+        </div>
     </div>
 
     <input type="file" id="file-input" class="hidden" accept="audio/*,video/*,.mkv,.lrc" multiple>
@@ -4673,11 +4873,7 @@
         // --- ÁP DỤNG MÀU SẮC CHỦ ĐẠO DỰA TRÊN THIẾT LẬP ---
         function applyAccentColor(themeOverride) {
             const activeTheme = themeOverride || settings.theme;
-            let resolvedMode = activeTheme;
-            
-            if (activeTheme === 'system') {
-                resolvedMode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-            }
+            const resolvedMode = resolveThemeMode(activeTheme);
             
             const colors = getActivePalette(resolvedMode);
             const root = document.documentElement;
@@ -4767,17 +4963,25 @@
         function resolveThemeMode(themeValue) {
             if (themeValue === 'light') return 'light';
             if (themeValue === 'dark') return 'dark';
+            try {
+                if (window.AndroidBridge && typeof window.AndroidBridge.isSystemDarkMode === 'function') {
+                    return window.AndroidBridge.isSystemDarkMode() ? 'dark' : 'light';
+                }
+            } catch (e) {}
             return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         }
+        window.__systemThemeChanged = () => {
+            if (settings.theme === 'system') {
+                applyTheme('system');
+                if (typeof sendThemeToChangelog === 'function') sendThemeToChangelog();
+            }
+        };
 
         function applyTheme(themeValue) {
             const root = document.documentElement;
+            const resolved = resolveThemeMode(themeValue);
             root.classList.remove('theme-light', 'theme-dark');
-            if (themeValue === 'light') {
-                root.classList.add('theme-light');
-            } else if (themeValue === 'dark') {
-                root.classList.add('theme-dark');
-            }
+            root.classList.add(resolved === 'light' ? 'theme-light' : 'theme-dark');
             
             // Đồng bộ màu sắc điểm nhấn (và theme-color header) ngay khi đổi giao diện —
             // truyền thẳng themeValue xuống để các lần ép theme tạm thời (VD: vào Full
@@ -6202,6 +6406,8 @@
             if (typeof renderPipPlaylist === 'function' && customPipWindow) {
                 renderPipPlaylist();
             }
+            if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
+            if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
         }
 
         function locateCurrentTrack(smooth = true) {
@@ -6271,6 +6477,10 @@
             audio.play().catch(() => {});
             playBtn.querySelector('span').innerText = 'pause';
             pauseOverlay.classList.remove('visible');
+            if (document.documentElement.classList.contains('m-ui')) {
+                document.body.classList.add('m-mini-visible');
+                if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+            }
             
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
         }
@@ -7489,6 +7699,185 @@
                 const lyricBtn = document.getElementById('lyric-btn');
                 if (lyricBtn) lyricBtn.style.pointerEvents = '';
             });
+
+            // --- MOBILE HOME LIBRARY + MINI PLAYER PILL + FULL PLAYER COLLAPSE + PLAYLIST FOOTER ---
+            const mLibList = document.getElementById('m-lib-list');
+            const mLibSearch = document.getElementById('m-lib-search');
+            const mLibShuffle = document.getElementById('m-lib-shuffle');
+            const mLibRescan = document.getElementById('m-lib-rescan');
+            const mMiniPlayer = document.getElementById('m-mini-player');
+            const mMiniArt = document.getElementById('m-mini-art');
+            const mMiniTitle = document.getElementById('m-mini-title');
+            const mMiniArtist = document.getElementById('m-mini-artist');
+            const mMiniPrev = document.getElementById('m-mini-prev');
+            const mMiniPlay = document.getElementById('m-mini-play');
+            const mMiniNext = document.getElementById('m-mini-next');
+            const mCollapseBtn = document.getElementById('m-collapse-player-btn');
+            const mPlShuffle = document.getElementById('m-pl-shuffle');
+            const mPlRepeat = document.getElementById('m-pl-repeat');
+            const mPlSleep = document.getElementById('m-pl-sleep');
+            const mPlReorder = document.getElementById('m-pl-reorder');
+            let mLibQuery = '';
+
+            function renderMobileLibrary() {
+                if (!document.documentElement.classList.contains('m-ui') || !mLibList) return;
+                mLibList.innerHTML = '';
+                const q = mLibQuery;
+                for (let idx = 0; idx < playlist.length; idx++) {
+                    const tr = playlist[idx];
+                    if (!tr) continue;
+                    if (q) {
+                        const hay = removeVietnameseTones((tr.name || '') + ' ' + (tr.artist || '')).toLowerCase();
+                        if (!hay.includes(q)) continue;
+                    }
+                    const row = document.createElement('div');
+                    row.className = 'm-lib-item' + (idx === currentIndex ? ' active' : '');
+                    row.innerHTML =
+                        '<div class="m-lib-art">' + (tr.cover ? '<img src="' + tr.cover + '" alt="">' : '<span class="material-symbols-rounded">music_note</span>') + '</div>' +
+                        '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
+                        '<button type="button" class="m-lib-more" aria-label="More"><span class="material-symbols-rounded" style="font-size:20px;">more_vert</span></button>';
+                    row.querySelector('.m-lib-title').textContent = tr.name || '';
+                    row.querySelector('.m-lib-artist').textContent = tr.artist || '';
+                    row.addEventListener('click', () => {
+                        playTrack(idx);
+                        document.body.classList.add('m-mini-visible');
+                    });
+                    const mb = row.querySelector('.m-lib-more');
+                    mb.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        targetMenuIndex = idx;
+                        contextMenu.style.display = 'flex';
+                        const r = mb.getBoundingClientRect();
+                        window.__placeMenu(contextMenu, r.right, r.bottom + 4);
+                    });
+                    mLibList.appendChild(row);
+                }
+            }
+            window.__renderMobileLibrary = renderMobileLibrary;
+
+            function syncMobileMiniPlayer() {
+                if (!document.documentElement.classList.contains('m-ui')) return;
+                const tr = playlist[currentIndex];
+                if (tr) {
+                    if (mMiniTitle) mMiniTitle.textContent = tr.name || 'Media Player';
+                    if (mMiniArtist) mMiniArtist.textContent = tr.artist || 'UNKNOWN ARTIST';
+                    if (mMiniArt) {
+                        mMiniArt.innerHTML = tr.cover
+                            ? '<img src="' + tr.cover + '" alt="">'
+                            : '<span class="material-symbols-rounded">music_note</span>';
+                    }
+                }
+                if (mMiniPlay) {
+                    const sp = mMiniPlay.querySelector('.material-symbols-rounded');
+                    if (sp) sp.textContent = (audio.paused || audio.ended) ? 'play_arrow' : 'pause';
+                }
+                if (mPlShuffle) mPlShuffle.classList.toggle('active', !!isShuffle);
+                if (mPlRepeat) {
+                    mPlRepeat.classList.toggle('active', repeatMode > 0);
+                    const ic = mPlRepeat.querySelector('.material-symbols-rounded');
+                    if (ic) ic.textContent = repeatMode === 2 ? 'repeat_one' : 'repeat';
+                }
+            }
+            window.__syncMobileMiniPlayer = syncMobileMiniPlayer;
+
+            ['play', 'pause', 'ended', 'loadedmetadata'].forEach(ev => audio.addEventListener(ev, syncMobileMiniPlayer));
+
+            if (mLibSearch) {
+                mLibSearch.addEventListener('input', (e) => {
+                    mLibQuery = removeVietnameseTones(e.target.value || '').toLowerCase().trim();
+                    renderMobileLibrary();
+                });
+            }
+            if (mLibShuffle) {
+                mLibShuffle.addEventListener('click', () => {
+                    if (!playlist.length) return;
+                    if (!isShuffle) document.getElementById('shuffle-btn').click();
+                    else generateShuffleOrder();
+                    const pick = shuffleOrder.length ? shuffleOrder[0] : Math.floor(Math.random() * playlist.length);
+                    playTrack(pick);
+                    document.body.classList.add('m-mini-visible');
+                });
+            }
+            if (mLibRescan) {
+                mLibRescan.addEventListener('click', () => {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.scanAllDeviceAudio === 'function') {
+                        window.AndroidBridge.scanAllDeviceAudio(true);
+                    } else {
+                        renderMobileLibrary();
+                    }
+                });
+            }
+            if (mCollapseBtn) {
+                mCollapseBtn.addEventListener('click', () => {
+                    document.body.classList.remove('m-player-expanded');
+                    if (currentIndex >= 0 && playlist[currentIndex]) document.body.classList.add('m-mini-visible');
+                });
+            }
+            if (mMiniPrev) mMiniPrev.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('prev-btn').click(); });
+            if (mMiniPlay) mMiniPlay.addEventListener('click', (e) => { e.stopPropagation(); playBtn.click(); });
+            if (mMiniNext) mMiniNext.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('next-btn').click(); });
+
+            // Chạm Mini Player để nở to Full Player; vuốt ngang để dừng nhạc và ẩn Mini Player
+            if (mMiniPlayer) {
+                let swX = 0, swY = 0, swDx = 0, swDragging = false, swMoved = false;
+                mMiniPlayer.addEventListener('touchstart', (e) => {
+                    if (!e.touches || e.touches.length !== 1 || e.target.closest('.m-mini-btn')) return;
+                    swX = e.touches[0].clientX;
+                    swY = e.touches[0].clientY;
+                    swDx = 0;
+                    swDragging = true;
+                    swMoved = false;
+                }, { passive: true });
+                mMiniPlayer.addEventListener('touchmove', (e) => {
+                    if (!swDragging || !e.touches || e.touches.length !== 1) return;
+                    const dx = e.touches[0].clientX - swX;
+                    const dy = e.touches[0].clientY - swY;
+                    if (!swMoved && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+                        swMoved = true;
+                        mMiniPlayer.classList.add('swiping');
+                    }
+                    if (swMoved) {
+                        swDx = dx;
+                        mMiniPlayer.style.transform = 'translateX(' + dx + 'px)';
+                        mMiniPlayer.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 220));
+                    }
+                }, { passive: true });
+                const endMiniSwipe = () => {
+                    if (!swDragging) return;
+                    swDragging = false;
+                    mMiniPlayer.classList.remove('swiping');
+                    if (swMoved && Math.abs(swDx) >= 80) {
+                        const dir = swDx > 0 ? 1 : -1;
+                        mMiniPlayer.style.transform = 'translateX(' + (dir * 120) + '%)';
+                        mMiniPlayer.style.opacity = '0';
+                        try {
+                            audio.pause();
+                            playBtn.querySelector('span').innerText = 'play_arrow';
+                        } catch (err) {}
+                        setTimeout(() => {
+                            document.body.classList.remove('m-mini-visible');
+                            mMiniPlayer.style.transform = '';
+                            mMiniPlayer.style.opacity = '';
+                            syncMobileMiniPlayer();
+                        }, 240);
+                    } else {
+                        mMiniPlayer.style.transform = '';
+                        mMiniPlayer.style.opacity = '';
+                    }
+                };
+                mMiniPlayer.addEventListener('touchend', endMiniSwipe, { passive: true });
+                mMiniPlayer.addEventListener('touchcancel', endMiniSwipe, { passive: true });
+                mMiniPlayer.addEventListener('click', (e) => {
+                    if (swMoved || e.target.closest('.m-mini-btn')) return;
+                    document.body.classList.add('m-player-expanded');
+                    updateFsUI();
+                });
+            }
+
+            if (mPlShuffle) mPlShuffle.addEventListener('click', () => { document.getElementById('shuffle-btn').click(); syncMobileMiniPlayer(); });
+            if (mPlRepeat) mPlRepeat.addEventListener('click', () => { document.getElementById('repeat-btn').click(); syncMobileMiniPlayer(); });
+            if (mPlSleep) mPlSleep.addEventListener('click', () => { document.getElementById('sleep-btn').click(); });
+            if (mPlReorder) mPlReorder.addEventListener('click', () => { document.getElementById('reorder-btn').click(); });
         })();
 
         // Gọi pongReady sớm nhất có thể ngay khi có AndroidBridge để tránh bị báo "Trang không phản hồi" trên cả điện thoại và máy tính bảng
@@ -7753,6 +8142,11 @@
                             lo.style.pointerEvents = '';
                         }
                         if (lb) lb.classList.remove('active');
+                        return true;
+                    }
+                    if (document.body.classList.contains('m-player-expanded')) {
+                        document.body.classList.remove('m-player-expanded');
+                        if (currentIndex >= 0 && playlist[currentIndex]) document.body.classList.add('m-mini-visible');
                         return true;
                     }
                     return false;
