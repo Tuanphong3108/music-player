@@ -276,8 +276,13 @@
 
             const unknownStr = currentLangDict['moreinfo.unknown'] || 'Không rõ';
             const fileStr = currentLangDict['moreinfo.file_type'] || 'Tệp';
+            const isMobileUi = document.documentElement.classList.contains('m-ui');
+            const rawFilePath = (track.nativeLocation || (track.file && (track.file.webkitRelativePath || track.file.path)) || '').trim();
             const rows = [];
             rows.push(moreInfoRowHTML('music_note', (track.file && track.file.type) || `${fileStr} ${track.ext}`, formatFileSizeVi(track.file ? track.file.size : null)));
+            if (isMobileUi && rawFilePath) {
+                rows.push(moreInfoRowHTML('folder', currentLangDict['moreinfo.file_path'] || 'File Path', escHtml(rawFilePath)));
+            }
             if (tech && (tech.rate || tech.kbps)) {
                 const parts = [];
                 if (tech.rate) parts.push((tech.rate / 1000).toLocaleString(savedLanguage === 'en' ? 'en-US' : 'vi-VN', { maximumFractionDigits: 1 }) + ' kHz');
