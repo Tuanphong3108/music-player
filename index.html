@@ -7541,7 +7541,7 @@
                             f.__fromLibrary = true;
                             const part = async (a, b) => (await fetch(it.url, { headers: { Range: 'bytes=' + a + '-' + (Math.min(b, size) - 1) } })).arrayBuffer();
                             f.slice = (a = 0, b = size) => ({ arrayBuffer: () => part(a, b), size: Math.max(0, Math.min(b, size) - a) });
-                            f.arrayBuffer = () => (await fetch(it.url)).arrayBuffer();
+                            f.arrayBuffer = async () => (await fetch(it.url)).arrayBuffer();
                             if (it.lrcUrl) {
                                 try {
                                     const lr = await fetch(it.lrcUrl);
