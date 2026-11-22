@@ -91,6 +91,10 @@
                     if (missingPerm) return;
                     if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
                     updatePlaylistUI();
+                    // Tự động đọc ảnh bìa / tag nhúng ở nền cho các bài trên Mobile mà danh sách ngoài chưa có ảnh bìa
+                    if (document.documentElement.classList.contains('m-ui') && Array.isArray(window.__mobileLibrary) && typeof window.__hydrateMobileLibraryCovers === 'function') {
+                        window.__hydrateMobileLibraryCovers();
+                    }
                 } catch (e) {}
             };
             if (window.IS_ANDROID_APP && AB && typeof AB.scanAllDeviceAudio === 'function') {
