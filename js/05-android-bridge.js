@@ -675,7 +675,7 @@
                 if (!(playlist[currentIndex] && audio.currentSrc)) return 'none';
                 if (audio.error) return 'error';
                 if (audio.ended) return 'ended';
-                if (audio.paused) return 'paused';
+                if (audio.paused) return (window.__trackSwitchUntil || 0) > Date.now() ? 'buffering' : 'paused';
                 if (audio.seeking || audio.readyState < 3) return 'buffering';
                 return 'playing';
             };
@@ -810,6 +810,15 @@
             }, 1000);
             ['play', 'pause', 'ended', 'loadedmetadata', 'seeked'].forEach(ev => audio.addEventListener(ev, syncWidgetsExtra));
             audio.addEventListener('loadedmetadata', () => { sendArt(); report(); setTimeout(() => { sendArt(); report(); }, 1500); });
+            // Chuyển bài: xóa ngay ảnh bìa cũ trong MediaSession, rồi gửi ảnh mới ngay khi nó tải xong (kể cả ảnh nhúng nạp muộn)
+            audio.addEventListener('loadstart', sendArt);
+            audio.addEventListener('playing', () => { window.__trackSwitchUntil = 0; });
+            audio.addEventListener('pause', () => {
+                const left = (window.__trackSwitchUntil || 0) - Date.now();
+                if (left > 0) setTimeout(report, left + 80);
+            });
+            const artEl = document.getElementById('art-img');
+            if (artEl) artEl.addEventListener('load', () => setTimeout(sendArt, 60));
             // Khung app (thanh trạng thái / điều hướng) ăn theo màu accent: theo dõi theme-color của trang
             const themeMeta = document.getElementById('theme-meta');
             const sendTheme = () => {

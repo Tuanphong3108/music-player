@@ -24,6 +24,8 @@ public class MediaService extends Service {
     private MediaSession session;
     private boolean playing = false;
     private PowerManager.WakeLock wake;
+    private final android.os.Handler fgHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable stopFgRunnable = () -> { if (!playing) { try { stopForeground(false); } catch (Throwable ignored) {} } };
 
     /** Giữ CPU thức khi đang phát để tắt màn hình không làm nhạc giật/ngắt (tự nhả khi dừng, có hạn 30 phút để không rò pin). */
     private void holdWake(boolean on) {
@@ -205,7 +207,9 @@ public class MediaService extends Service {
         try {
             if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
             else startForeground(1, n);
-            if (!playing) stopForeground(false);
+            // Không rời trạng thái foreground ngay khi tạm dừng (chuyển bài / dừng ngắn): rời rồi vào lại từ nền sẽ bị Android 12+ chặn -> sập hoặc bị đóng băng
+            fgHandler.removeCallbacks(stopFgRunnable);
+            if (!playing) fgHandler.postDelayed(stopFgRunnable, 15000);
         } catch (Throwable fe) {
             try { nm.notify(1, n); } catch (Throwable ignored) {}
         }
