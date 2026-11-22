@@ -1537,6 +1537,14 @@
             const track = playlist[index];
             const mySeq = ++libraryPlaySeq;
             window.__lastPos = 0;
+            // Khôi phục sau khi WebView bị tải lại: nạp đúng bài + vị trí cũ, có thể chưa tự phát
+            const restoreOpts = window.__restoreOnce || null;
+            window.__restoreOnce = null;
+            if (restoreOpts && restoreOpts.pos > 0) {
+                const at0 = restoreOpts.pos;
+                track._resumeAt = at0;
+                audio.addEventListener('loadedmetadata', () => { if (mySeq === libraryPlaySeq) { try { audio.currentTime = at0; } catch (e) {} } }, { once: true });
+            }
             // Dừng ngay bài đang phát trước khi nạp bài mới
             if (prevIdx !== index || !audio.paused) {
                 // Đang chuyển bài: báo cho Android biết là "đang nạp" (không phải tạm dừng) để dịch vụ nền không bị tụt khỏi trạng thái foreground
@@ -1658,8 +1666,14 @@
                     else window.__trackSwitchUntil = 0;
                 });
             };
-            startPlay(0);
-            playBtn.querySelector('span').innerText = 'pause';
+            if (restoreOpts && !restoreOpts.play) {
+                try { audio.pause(); } catch (e) {}
+                window.__trackSwitchUntil = 0;
+                playBtn.querySelector('span').innerText = 'play_arrow';
+            } else {
+                startPlay(0);
+                playBtn.querySelector('span').innerText = 'pause';
+            }
             pauseOverlay.classList.remove('visible');
             if (document.documentElement.classList.contains('m-ui')) {
                 document.body.classList.add('m-mini-visible');

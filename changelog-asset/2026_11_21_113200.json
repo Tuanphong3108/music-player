@@ -80,6 +80,10 @@
     {
       "content": "Widget mới: Vuông tối giản 2×2, Tự co giãn 4×2 và Đầy đủ điều khiển 4×2 (có trộn bài, lặp lại); quay lại app tự phục hồi trang thay vì báo \"Trang không phản hồi\"",
       "icon": "widgets"
+    },
+    {
+      "content": "App nhớ màn hình đang mở (tab, playlist, trình phát, lời bài hát) cùng bài và vị trí đang nghe; khi trang bị tải lại sẽ quay về đúng chỗ cũ",
+      "icon": "restore"
     }
   ],
   "en": [
@@ -162,6 +166,10 @@
     {
       "content": "New widgets: Minimal square 2×2, Responsive 4×2 and Full controls 4×2 (shuffle, repeat); returning to the app now self-recovers the page instead of showing \"Page not responding\"",
       "icon": "widgets"
+    },
+    {
+      "content": "The app now remembers the open screen (tab, playlist, player, lyrics) plus the current track and position, and returns to exactly that place when the page reloads",
+      "icon": "restore"
     }
   ]
 }

@@ -1221,6 +1221,13 @@
                         : tr2('pl.created_toast', 'Đã tạo danh sách phát "{name}"!').replace('{name}', name), 'playlist_add_check', 3000);
                 });
 
+                window.__getMobileNav = function () { return { tab: activeTab, plId: openedPlId }; };
+                window.__setMobileNav = function (tab, plId) {
+                    try {
+                        setMobileLibTab(tab || 'songs');
+                        if (plId) openPlaylistDetail(plId);
+                    } catch (e) {}
+                };
                 window.__closeMobilePlDetailIfOpen = function () {
                     if (openedPlId) { setMobileLibTab(detailReturnTab); return true; }
                     return false;
