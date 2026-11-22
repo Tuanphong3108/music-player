@@ -2027,6 +2027,7 @@
         }
 
         /* Khi nở to thành Full Player trên Mobile: bỏ chữ "Media Player" và hiện nút mũi tên xuống để thu nhỏ */
+        html.m-ui body:not(.m-player-expanded) #m-playlist-btn { display: none !important; }
         html.m-ui body.m-player-expanded .m-title { display: none !important; }
         html.m-ui body.m-player-expanded #m-collapse-player-btn {
             display: inline-flex !important; order: -3; margin-right: auto;
@@ -2117,6 +2118,23 @@
             background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
             display: grid; place-items: center;
         }
+        #m-pl-more-popup { display: none; }
+        html.m-ui #m-pl-more-popup.open {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            position: absolute; left: 16px; right: 16px; bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+            z-index: 3200; pointer-events: auto;
+            animation: pgInUp .22s cubic-bezier(.2,0,0,1) both;
+        }
+        html.m-ui .m-pl-more-pill {
+            height: 44px; padding: 0 20px; border: none; border-radius: 999px; cursor: pointer;
+            font-family: var(--app-font); font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,.22); transition: transform .15s;
+        }
+        html.m-ui .m-pl-more-pill:active { transform: scale(.96); }
+        html.m-ui .m-pl-more-pill.locate { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+        html.m-ui .m-pl-more-pill.clear { background: color-mix(in srgb, var(--md-sys-color-error, #F2B8B5) 26%, var(--md-sys-color-surface)); color: var(--md-sys-color-on-surface); }
+        html.m-ui .m-pl-more-pill.save { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 
         /* Tab "Quản lý nhạc" (Music Management): CHỈ HIỂN THỊ TRÊN MOBILE (html.m-ui), ẩn hoàn toàn trên PC UI */
         html:not(.m-ui) .st-tab[data-tab="library"],
@@ -3013,7 +3031,13 @@
                 </div>
             </div>
             <div id="plc-step-songs" style="display:none; flex:1; flex-direction:column; min-height:0; background:var(--md-sys-color-surface);">
-                <div style="padding: 10px 16px; font-size:13px; font-weight:700; opacity:.75;" data-i18n="pl.select_songs">Chọn bài hát</div>
+                <div style="padding: 10px 16px 6px; font-size:13px; font-weight:700; opacity:.75;" data-i18n="pl.select_songs">Chọn bài hát</div>
+                <div style="padding: 0 16px 10px; flex-shrink:0;">
+                    <div class="m-lib-search-wrap" style="width:100%;">
+                        <span class="material-symbols-rounded">search</span>
+                        <input type="text" id="plc-song-search" placeholder="Tìm tên bài, ca sĩ..." data-i18n-placeholder="playlist.search_placeholder">
+                    </div>
+                </div>
                 <div id="plc-song-pick-list" style="flex:1; overflow-y:auto; padding: 0 16px 16px; display:flex; flex-direction:column; gap:8px;"></div>
             </div>
             <div style="padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--md-sys-color-surface); border-top: 1px solid var(--playlist-border); display:flex; justify-content:space-between; align-items:center; gap:10px;">
@@ -3426,13 +3450,18 @@
                 </div>
 
                 <div class="playlist-items" id="playlist-container"></div>
+                <div id="m-pl-more-popup" class="m-only">
+                    <button type="button" class="m-pl-more-pill locate" id="m-pl-opt-locate"><span class="material-symbols-rounded" style="font-size:19px;">my_location</span><span id="m-pl-opt-locate-txt">Định vị bài đang phát</span></button>
+                    <button type="button" class="m-pl-more-pill clear" id="m-pl-opt-clear"><span class="material-symbols-rounded" style="font-size:19px;">clear_all</span><span id="m-pl-opt-clear-txt">Xóa hàng đợi</span></button>
+                    <button type="button" class="m-pl-more-pill save" id="m-pl-opt-save"><span class="material-symbols-rounded" style="font-size:19px;">playlist_add</span><span id="m-pl-opt-save-txt">Lưu thành danh sách phát</span></button>
+                </div>
                 <div id="m-pl-footer" class="m-only">
                     <div class="m-pl-pill-group">
                         <button type="button" class="m-pl-foot-btn" id="m-pl-shuffle" title="Shuffle"><span class="material-symbols-rounded">shuffle</span></button>
                         <button type="button" class="m-pl-foot-btn" id="m-pl-repeat" title="Repeat"><span class="material-symbols-rounded">repeat</span></button>
                         <button type="button" class="m-pl-foot-btn" id="m-pl-sleep" title="Sleep timer"><span class="material-symbols-rounded">timer</span></button>
                     </div>
-                    <button type="button" class="m-pl-foot-more" id="m-pl-reorder" title="Reorder"><span class="material-symbols-rounded">sort</span></button>
+                    <button type="button" class="m-pl-foot-more" id="m-pl-more-btn" title="More"><span class="material-symbols-rounded">more_horiz</span></button>
                 </div>
             </div>
 
@@ -5978,7 +6007,8 @@
                 // (không tự động dọn cho tới khi tải lại trang) -> càng xoá/thêm nhạc nhiều
                 // trong 1 phiên càng ngốn RAM, khiến cả trang ì đi kể cả lúc mở Metadata Editor
                 const removedTrack = playlist[targetMenuIndex];
-                if (removedTrack && removedTrack.url) URL.revokeObjectURL(removedTrack.url);
+                const keepInMobileLib = Array.isArray(window.__mobileLibrary) && window.__mobileLibrary.includes(removedTrack);
+                if (removedTrack && removedTrack.url && removedTrack.url.startsWith('blob:') && !keepInMobileLib) URL.revokeObjectURL(removedTrack.url);
 
                 playlist.splice(targetMenuIndex, 1);
 
@@ -6248,6 +6278,9 @@
                 }
             }
 
+            if (document.documentElement.classList.contains('m-ui') && typeof window.__syncMobileLibraryFromPlaylist === 'function') {
+                window.__syncMobileLibraryFromPlaylist();
+            }
             updatePlaylistUI();
             if (lastAutoPlayIndex !== -1 && !(opts && opts.noPlay)) { playTrack(lastAutoPlayIndex); requestAnimationFrame(() => locateCurrentTrack(true)); }
             if (playlist.length > 0) dropZone.style.display = 'none';
@@ -6859,6 +6892,7 @@
                                 return;
                             }
                             targetMenuIndex = index;
+                            if (cmDelete) cmDelete.style.display = '';
                             contextMenu.style.display = 'flex';
                             const r = moreBtn.getBoundingClientRect();
                             window.__placeMenu(contextMenu, r.right, r.bottom + 4);
@@ -7050,12 +7084,29 @@
             }
             document.body.classList.toggle('is-video-track', !!track.isVideo);
             document.body.classList.remove('has-video');   // sẽ bật lại khi loadedmetadata báo tệp có hình
-            const needsLazyBlob = !!(track.fromLibrary && track.nativeStreamUrl && !track._blobLoaded);
-            if (!needsLazyBlob) {
-                audio.src = track.url;
-            } else {
-                audio.removeAttribute('src');
-                try { audio.load(); } catch (e) {}
+            // Phát stream trực tiếp ngay lập tức để không bị khựng/load lâu; chỉ fallback sang blob nếu stream báo lỗi
+            const isDirectLibStream = !!(track.fromLibrary && track.nativeStreamUrl && !track._blobLoaded);
+            audio.src = isDirectLibStream ? track.nativeStreamUrl : track.url;
+            if (isDirectLibStream) {
+                const onStreamErr = () => {
+                    audio.removeEventListener('error', onStreamErr);
+                    if (mySeq !== libraryPlaySeq || currentIndex !== index || track._blobFallbackTried) return;
+                    track._blobFallbackTried = true;
+                    hydrateAndPlayLibraryTrack(track, index, mySeq);
+                };
+                audio.addEventListener('error', onStreamErr, { once: true });
+                if (track.nativeLrcUrl && !track.lyricsRaw && !track._lrcTried) {
+                    track._lrcTried = true;
+                    setTimeout(() => {
+                        fetch(track.nativeLrcUrl).then(r => r.ok ? r.text() : '').then(txt => {
+                            if (txt && !track.lyricsRaw) {
+                                track.lyricsRaw = txt;
+                                track.lyrics = parseLRC(txt);
+                                if (currentIndex === index) { renderLyrics(); updatePlaylistUI(); }
+                            }
+                        }).catch(() => {});
+                    }, 200);
+                }
             }
             trackNameEl.innerText = track.name;
             trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
@@ -7076,6 +7127,7 @@
                 };
                 artImg.onerror = () => {
                     artImg.classList.add('hidden');
+                    artPlaceholder.classList.add('hidden');
                     artPlaceholder.classList.remove('hidden');
                     bgPreview.style.backgroundImage = 'none';
                 };
@@ -7105,11 +7157,7 @@
             updateMediaSession();
             updateFsUI(); // Cập nhật màn hình toàn cảnh fullscreen
             
-            if (needsLazyBlob) {
-                hydrateAndPlayLibraryTrack(track, index, mySeq);
-            } else {
-                audio.play().catch(() => {});
-            }
+            audio.play().catch(() => {});
             playBtn.querySelector('span').innerText = 'pause';
             pauseOverlay.classList.remove('visible');
             if (document.documentElement.classList.contains('m-ui')) {
