@@ -1393,13 +1393,68 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    private boolean isAudioFileName(String ln) {
+        if (ln == null) return false;
+        return ln.endsWith(".mp3") || ln.endsWith(".m4a") || ln.endsWith(".aac")
+                || ln.endsWith(".flac") || ln.endsWith(".ogg") || ln.endsWith(".oga")
+                || ln.endsWith(".opus") || ln.endsWith(".wav") || ln.endsWith(".wma")
+                || ln.endsWith(".amr") || ln.endsWith(".3ga") || ln.endsWith(".m4b")
+                || ln.endsWith(".alac") || ln.endsWith(".aiff") || ln.endsWith(".aif");
+    }
+
+    private String guessAudioMime(String ln) {
+        if (ln == null) return "audio/mpeg";
+        if (ln.endsWith(".flac")) return "audio/flac";
+        if (ln.endsWith(".m4a") || ln.endsWith(".aac") || ln.endsWith(".m4b")) return "audio/mp4";
+        if (ln.endsWith(".ogg") || ln.endsWith(".oga")) return "audio/ogg";
+        if (ln.endsWith(".opus")) return "audio/opus";
+        if (ln.endsWith(".wav")) return "audio/wav";
+        return "audio/mpeg";
+    }
+
+    private void walkStorageForAudio(File dir, int depth, java.util.Set<String> excluded,
+                                     boolean autoScanLrc, java.util.Map<String, String> lrcByStem,
+                                     List<File> outAudio) {
+        if (dir == null || depth > 8 || !dir.isDirectory() || !dir.canRead()) return;
+        String dirPath = dir.getAbsolutePath();
+        if (dirPath.contains("/.")) return;
+        String lowPath = dirPath.toLowerCase();
+        if (lowPath.endsWith("/android/data") || lowPath.endsWith("/android/obb")
+                || lowPath.contains("/android/data/") || lowPath.contains("/android/obb/")) return;
+        if (isPathExcluded(dirPath, excluded)) return;
+        File[] children = dir.listFiles();
+        if (children == null) return;
+        for (File ch : children) {
+            if (ch == null) continue;
+            String nm = ch.getName();
+            if (nm == null || nm.startsWith(".")) continue;
+            if (ch.isDirectory()) {
+                if (new File(ch, ".nomedia").exists()) continue;
+                walkStorageForAudio(ch, depth + 1, excluded, autoScanLrc, lrcByStem, outAudio);
+            } else if (ch.isFile() && ch.length() > 0) {
+                String ln = nm.toLowerCase();
+                if (autoScanLrc && ln.endsWith(".lrc")) {
+                    int dot = nm.lastIndexOf('.');
+                    String stem = (dot > 0 ? nm.substring(0, dot) : nm).toLowerCase();
+                    String key = dirPath.toLowerCase() + "/" + stem;
+                    if (!lrcByStem.containsKey(key)) {
+                        lrcByStem.put(key, Uri.fromFile(ch).toString());
+                    }
+                } else if (isAudioFileName(ln)) {
+                    outAudio.add(ch);
+                }
+            }
+        }
+    }
+
     private void scanAllDeviceAudioInternal(final boolean clearExisting) {
-        if (!hasMediaPermissionInternal()) {
+        if (!hasMediaPermissionInternal() && !hasAllFilesAccessInternal()) {
             callJs("window.__onAndroidLibraryScanDone&&window.__onAndroidLibraryScanDone(0, true)");
             return;
         }
         new Thread(() -> {
             List<JSONObject> scanned = new ArrayList<>();
+            java.util.Set<String> seenPaths = new java.util.HashSet<>();
             java.util.Set<String> excluded = getExcludedDirsSet();
             android.content.SharedPreferences appSp = getSharedPreferences("app", MODE_PRIVATE);
             int minDurSec = Math.max(0, appSp.getInt("min_duration_sec", 0));
@@ -1435,6 +1490,16 @@ public class MainActivity extends Activity {
                 } catch (Throwable ignored) {}
             } catch (Throwable ignored) {}
 
+            // Quét thêm trực tiếp bộ nhớ (khi có quyền hoặc đọc được) để không bao giờ mất bài nếu MediaStore chưa index
+            List<File> fsAudioFiles = new ArrayList<>();
+            try {
+                File extRoot = android.os.Environment.getExternalStorageDirectory();
+                if (extRoot != null && extRoot.exists() && extRoot.canRead()) {
+                    walkStorageForAudio(extRoot, 0, excluded, autoScanLrc, lrcByStem, fsAudioFiles);
+                }
+            } catch (Throwable ignored) {}
+
+            android.media.MediaMetadataRetriever mmr = new android.media.MediaMetadataRetriever();
             try {
                 android.net.Uri audioUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                 String[] proj = new String[]{
@@ -1451,10 +1516,8 @@ public class MainActivity extends Activity {
                         android.provider.MediaStore.Audio.Media.ALBUM_ID,
                         android.provider.MediaStore.Audio.Media.YEAR
                 };
-                String sel = (minDurMs > 0
-                        ? (android.provider.MediaStore.Audio.Media.DURATION + " >= " + minDurMs)
-                        : ("(" + android.provider.MediaStore.Audio.Media.DURATION + " >= 0 OR LOWER(COALESCE(" + android.provider.MediaStore.Audio.Media.MIME_TYPE + ", '')) LIKE 'audio/%')"))
-                        + " AND " + android.provider.MediaStore.Audio.Media.DATA + " IS NOT NULL";
+                // Không lọc cứng DURATION ở SQL để tránh bỏ sót bài MediaStore chưa đọc được thời lượng (DURATION = 0/NULL)
+                String sel = android.provider.MediaStore.Audio.Media.DATA + " IS NOT NULL";
                 try (Cursor c = getContentResolver().query(audioUri, proj, sel, null,
                         android.provider.MediaStore.Audio.Media.DATE_ADDED + " DESC")) {
                     if (c != null) {
@@ -1464,6 +1527,7 @@ public class MainActivity extends Activity {
                         int mimeCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.MIME_TYPE);
                         int sizeCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.SIZE);
                         int modCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DATE_MODIFIED);
+                        int durCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DURATION);
                         int titleCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.TITLE);
                         int artistCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ARTIST);
                         int albumCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ALBUM);
@@ -1474,6 +1538,7 @@ public class MainActivity extends Activity {
                             String path = dataCol >= 0 ? c.getString(dataCol) : null;
                             if (path == null || path.isEmpty()) continue;
                             File f = new File(path);
+                            if (!f.exists() || f.length() <= 0) continue;
                             String parent = f.getParent();
                             if (parent != null && parent.contains("/.")) continue;
                             if (isPathExcluded(parent, excluded)) continue;
@@ -1486,18 +1551,46 @@ public class MainActivity extends Activity {
                                     || ln.endsWith(".3gp") || ln.endsWith(".avi")) continue;
 
                             Uri itemUri = android.content.ContentUris.withAppendedId(audioUri, audioId);
-                            String id = String.valueOf(nextId.getAndIncrement());
-                            served.put(id, itemUri);
-                            servedLocations.put(id, path);
-                            long albumId = albumIdCol >= 0 ? c.getLong(albumIdCol) : -1L;
-                            if (albumId > 0) servedAlbumIds.put(id, albumId);
-
+                            long durMs = durCol >= 0 ? c.getLong(durCol) : 0L;
                             String mTitle = titleCol >= 0 ? c.getString(titleCol) : "";
                             String mArtist = artistCol >= 0 ? c.getString(artistCol) : "";
                             String mAlbum = albumCol >= 0 ? c.getString(albumCol) : "";
                             int mYear = yearCol >= 0 ? c.getInt(yearCol) : 0;
                             if (mArtist == null || "<unknown>".equalsIgnoreCase(mArtist.trim())) mArtist = "";
                             if (mAlbum == null || "<unknown>".equalsIgnoreCase(mAlbum.trim())) mAlbum = "";
+
+                            // Nếu MediaStore chưa index nghệ sĩ / thời lượng -> đọc thẳng từ file bằng MediaMetadataRetriever
+                            if (mArtist.trim().isEmpty() || (minDurMs > 0 && durMs <= 0)) {
+                                try {
+                                    if (f.canRead()) mmr.setDataSource(path);
+                                    else mmr.setDataSource(this, itemUri);
+                                    if (mTitle == null || mTitle.trim().isEmpty()) {
+                                        String rt = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE);
+                                        if (rt != null && !rt.trim().isEmpty()) mTitle = rt.trim();
+                                    }
+                                    if (mArtist.trim().isEmpty()) {
+                                        String ra = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                                        if (ra == null || ra.trim().isEmpty()) ra = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
+                                        if (ra != null && !ra.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(ra.trim())) mArtist = ra.trim();
+                                    }
+                                    if (mAlbum.trim().isEmpty()) {
+                                        String ral = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM);
+                                        if (ral != null && !ral.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(ral.trim())) mAlbum = ral.trim();
+                                    }
+                                    if (durMs <= 0) {
+                                        String rd = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+                                        if (rd != null) try { durMs = Long.parseLong(rd.trim()); } catch (Throwable ignored2) {}
+                                    }
+                                } catch (Throwable ignored2) {}
+                            }
+                            if (minDurMs > 0 && durMs > 0 && durMs < minDurMs) continue;
+
+                            seenPaths.add(path.toLowerCase());
+                            String id = String.valueOf(nextId.getAndIncrement());
+                            served.put(id, itemUri);
+                            servedLocations.put(id, path);
+                            long albumId = albumIdCol >= 0 ? c.getLong(albumIdCol) : -1L;
+                            if (albumId > 0) servedAlbumIds.put(id, albumId);
 
                             JSONObject o = new JSONObject();
                             o.put("id", id);
@@ -1511,7 +1604,7 @@ public class MainActivity extends Activity {
                             if (!mAlbum.trim().isEmpty()) o.put("album", mAlbum.trim());
                             if (mYear > 0) o.put("year", String.valueOf(mYear));
                             String mime = mimeCol >= 0 ? c.getString(mimeCol) : "";
-                            o.put("type", mime == null ? "audio/*" : mime);
+                            o.put("type", (mime == null || mime.isEmpty()) ? guessAudioMime(ln) : mime);
                             o.put("size", sizeCol >= 0 ? c.getLong(sizeCol) : f.length());
                             o.put("modified", modCol >= 0 ? c.getLong(modCol) * 1000L : f.lastModified());
                             o.put("fromLibrary", true);
@@ -1531,6 +1624,68 @@ public class MainActivity extends Activity {
                     }
                 }
             } catch (Throwable ignored) {}
+
+            // Bổ sung các file nhạc trên bộ nhớ bị MediaStore bỏ sót
+            for (File f : fsAudioFiles) {
+                try {
+                    String path = f.getAbsolutePath();
+                    if (seenPaths.contains(path.toLowerCase())) continue;
+                    String dispName = f.getName();
+                    String ln = dispName.toLowerCase();
+                    String parent = f.getParent();
+                    String mTitle = "", mArtist = "", mAlbum = "", mYearStr = "";
+                    long durMs = 0L;
+                    try {
+                        mmr.setDataSource(path);
+                        String rt = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE);
+                        if (rt != null && !rt.trim().isEmpty()) mTitle = rt.trim();
+                        String ra = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                        if (ra == null || ra.trim().isEmpty()) ra = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
+                        if (ra != null && !ra.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(ra.trim())) mArtist = ra.trim();
+                        String ral = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM);
+                        if (ral != null && !ral.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(ral.trim())) mAlbum = ral.trim();
+                        String ry = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR);
+                        if (ry != null && !ry.trim().isEmpty()) mYearStr = ry.trim();
+                        String rd = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+                        if (rd != null) try { durMs = Long.parseLong(rd.trim()); } catch (Throwable ignored2) {}
+                    } catch (Throwable ignored2) {}
+                    if (minDurMs > 0 && durMs > 0 && durMs < minDurMs) continue;
+
+                    seenPaths.add(path.toLowerCase());
+                    Uri itemUri = Uri.fromFile(f);
+                    String id = String.valueOf(nextId.getAndIncrement());
+                    served.put(id, itemUri);
+                    servedLocations.put(id, path);
+
+                    JSONObject o = new JSONObject();
+                    o.put("id", id);
+                    o.put("location", path);
+                    o.put("uri", itemUri.toString());
+                    o.put("url", "https://" + ASSET_HOST + "/f/" + id);
+                    o.put("artUrl", "https://" + ASSET_HOST + "/art/" + id);
+                    o.put("name", dispName);
+                    if (!mTitle.isEmpty()) o.put("title", mTitle);
+                    if (!mArtist.isEmpty()) o.put("artist", mArtist);
+                    if (!mAlbum.isEmpty()) o.put("album", mAlbum);
+                    if (!mYearStr.isEmpty()) o.put("year", mYearStr);
+                    o.put("type", guessAudioMime(ln));
+                    o.put("size", f.length());
+                    o.put("modified", f.lastModified());
+                    o.put("fromLibrary", true);
+
+                    int dot = dispName.lastIndexOf('.');
+                    String stem = (dot > 0 ? dispName.substring(0, dot) : dispName).toLowerCase();
+                    String lrcKey = (parent == null ? "" : parent.toLowerCase()) + "/" + stem;
+                    String lrcUriStr = lrcByStem.get(lrcKey);
+                    if (lrcUriStr != null) {
+                        String lrcId = String.valueOf(nextId.getAndIncrement());
+                        served.put(lrcId, Uri.parse(lrcUriStr));
+                        o.put("lrcUrl", "https://" + ASSET_HOST + "/f/" + lrcId);
+                    }
+                    scanned.add(o);
+                } catch (Throwable ignored) {}
+            }
+            try { mmr.release(); } catch (Throwable ignored) {}
 
             final List<JSONObject> finalList = scanned;
             runOnUiThread(() -> {
