@@ -105,6 +105,56 @@
                 document.body.classList.add('m-mini-visible');
             }
 
+            let coverHydrateRunning = false;
+            window.__hydrateMobileLibraryCovers = async function () {
+                if (coverHydrateRunning || !document.documentElement.classList.contains('m-ui')) return;
+                const pool = Array.isArray(window.__mobileLibrary) ? window.__mobileLibrary : [];
+                if (!pool.length) return;
+                coverHydrateRunning = true;
+                try {
+                    for (let i = 0; i < pool.length; i++) {
+                        const tr = pool[i];
+                        if (!tr || !tr.nativeStreamUrl || tr._bgCoverChecked) continue;
+                        tr._bgCoverChecked = true;
+                        try {
+                            const r = await fetch(tr.nativeStreamUrl, { headers: { Range: 'bytes=0-2097151' } });
+                            if (!r || !r.ok) continue;
+                            const bl = await r.blob();
+                            const f = new File([bl], tr.nativeName || (tr.name + '.' + (tr.ext || 'mp3').toLowerCase()), { type: bl.type || 'audio/mpeg' });
+                            await new Promise((res) => {
+                                window.jsmediatags.read(f, {
+                                    onSuccess: function (tag) {
+                                        let changed = false;
+                                        if (tag.tags.artist && tr.artist === 'UNKNOWN ARTIST') { tr.artist = tag.tags.artist; changed = true; }
+                                        if (tag.tags.album && tr.album === 'Unknown Album') { tr.album = tag.tags.album; changed = true; }
+                                        if (tag.tags.picture) {
+                                            const { data, format } = tag.tags.picture;
+                                            let bin = '';
+                                            for (let k = 0; k < data.length; k++) bin += String.fromCharCode(data[k]);
+                                            const picUrl = `data:${format};base64,${window.btoa(bin)}`;
+                                            if (tr.cover !== picUrl) {
+                                                tr.cover = picUrl;
+                                                tr._hasRealCover = true;
+                                                changed = true;
+                                            }
+                                        }
+                                        if (changed) {
+                                            renderMobileLibrary();
+                                            if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+                                        }
+                                        res();
+                                    },
+                                    onError: function () { res(); }
+                                });
+                            });
+                            await new Promise(r2 => setTimeout(r2, 40));
+                        } catch (e) {}
+                    }
+                } finally {
+                    coverHydrateRunning = false;
+                }
+            };
+
             function renderMobileLibrary() {
                 if (!document.documentElement.classList.contains('m-ui') || !mLibList) return;
                 if (!window.__mobileLibrary.length && playlist.length) syncMobileLibraryFromPlaylist();
