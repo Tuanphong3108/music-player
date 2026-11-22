@@ -3537,7 +3537,7 @@
                 </div>
                 <div id="bg-preview" class="bg-thumb-preview"></div>
                 <!-- Thẻ phát chính. Dùng <video> để phát được cả nhạc lẫn video; chỉ hiện hình khi tệp có hình -->
-                <video id="audio-element" playsinline></video>
+                <video id="audio-element" playsinline crossorigin="anonymous"></video>
                 <canvas id="visualizer"></canvas>
 
                 <!-- Khung hiển thị khi tệp âm thanh / video bị lỗi -->
@@ -3603,7 +3603,7 @@
             
             <div class="track-info">
                 <div class="mini-art" id="player-mini-art">
-                    <img src="" id="art-img" class="hidden" alt="art">
+                    <img src="" id="art-img" class="hidden" alt="art" crossorigin="anonymous">
                     <span id="art-placeholder" class="material-symbols-rounded placeholder-icon" style="font-variation-settings:'FILL' 1">music_note</span>
                 </div>
                 <div class="track-text">
@@ -5434,6 +5434,7 @@
         function extractDominantColor(src) {
             return new Promise((resolve) => {
                 const img = new Image();
+                img.crossOrigin = 'anonymous';
                 img.onload = () => {
                     try {
                         const S = 48;
@@ -10216,7 +10217,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1635_mobile_queue_0z', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1640_fix_cors_audio_accent', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
