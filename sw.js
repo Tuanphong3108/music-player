@@ -1,12 +1,23 @@
 const CACHE_PREFIX = 'media-player-';
 const LEGACY_PREFIX = 'audio-player-';   // tên cũ trước khi đổi sang Media Player, để dọn cache cũ
-const CACHE_VERSION = 'v2026_11_22_pld_active';
+const CACHE_VERSION = 'v2026_11_22_split_files';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
 const APP_SHELL = [
   './',
   './index.html',
+  './css/app.css',
+  './js/01-theme-fonts.js',
+  './js/02-player-core.js',
+  './js/03-audio-engine.js',
+  './js/04-mobile-ui.js',
+  './js/05-android-bridge.js',
+  './js/06-pip.js',
+  './js/07-settings-i18n.js',
+  './js/08-seek-wave-pwa.js',
+  './js/09-editors-info.js',
+  './js/10-fullscreen-hotkeys.js',
   './index_md1.html',
   './index_indev.html',
   './changelog.html',
