@@ -2019,9 +2019,45 @@
         }
         html.m-ui body.m-player-expanded .m-add { display: none !important; }
         html.m-ui body:not(.m-player-expanded) #m-collapse-player-btn { display: none !important; }
-        html.m-ui body.m-player-expanded .visual-stage,
-        html.m-ui body.m-player-expanded .player-shell {
-            animation: pgInUp .28s cubic-bezier(.2,0,0,1) both;
+        html.m-ui body.m-player-expanded:not(.lyrics-open) #fs-cover-wrap,
+        html.m-ui body.m-player-expanded:not(.lyrics-open) .player-shell {
+            animation: pgInUp .28s cubic-bezier(.2,0,0,1) backwards;
+        }
+        html.m-ui body.lyrics-open .visual-stage {
+            animation: none !important;
+            transform: none !important;
+            overflow: visible !important;
+        }
+        /* Giao diện bên trong Playlist (Playlist Detail - Only Mobile) */
+        html.m-ui .m-pld-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
+        html.m-ui .m-pld-head { padding: 4px 4px 2px; flex-shrink: 0; }
+        html.m-ui .m-pld-title { margin: 0; font-size: calc(26px * var(--font-scale-factor, 1)); font-weight: 800; line-height: 1.18; word-break: break-word; }
+        html.m-ui .m-pld-sub { font-size: calc(13px * var(--font-scale-factor, 1)); opacity: .68; margin-top: 2px; font-weight: 600; }
+        html.m-ui .m-pld-primary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }
+        html.m-ui .m-pld-big-btn {
+            height: 46px; border: none; border-radius: 999px; cursor: pointer;
+            font-family: var(--app-font); font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s;
+        }
+        html.m-ui .m-pld-big-btn:active { transform: scale(.96); }
+        html.m-ui .m-pld-big-btn.primary { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+        html.m-ui .m-pld-big-btn.tonal { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        html.m-ui .m-pld-chips-row { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        html.m-ui .m-pld-chip {
+            height: 36px; padding: 0 14px; border: none; border-radius: 999px; cursor: pointer;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-on-surface); font-family: var(--app-font);
+            font-size: calc(12.5px * var(--font-scale-factor, 1)); font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: 1;
+            transition: background .2s, color .2s, transform .15s;
+        }
+        html.m-ui .m-pld-chip.add { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); flex: 0 0 auto; }
+        html.m-ui .m-pld-chip.active { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+        html.m-ui .m-pld-chip:active { transform: scale(.95); }
+        html.m-ui .m-pld-row-act {
+            width: 34px; height: 34px; border: none; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 70%, transparent);
+            color: var(--md-sys-color-on-surface); display: grid; place-items: center;
         }
 
         /* Playlist Sheet trên Mobile (phong cách Next up bo tròn + thanh điều khiển đáy, giữ nguyên nút Back) */
@@ -3424,10 +3460,25 @@
                 </div>
 
                 <div class="m-lib-pane" id="m-pane-pl-detail">
-                    <div class="m-pl-detail-bar">
+                    <div class="m-pld-top">
                         <button type="button" class="m-lib-icon-btn" id="m-pl-detail-back"><span class="material-symbols-rounded">arrow_back</span></button>
-                        <div class="m-pl-detail-title" id="m-pl-detail-title">Playlist</div>
-                        <button type="button" class="m-lib-shuffle-btn" id="m-pl-detail-play"><span class="material-symbols-rounded">play_arrow</span></button>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" class="m-lib-icon-btn" id="m-pl-detail-sort" title="Sort"><span class="material-symbols-rounded" style="font-size:20px;">sort</span></button>
+                            <button type="button" class="m-lib-icon-btn" id="m-pl-detail-more" title="Options"><span class="material-symbols-rounded" style="font-size:20px;">more_vert</span></button>
+                        </div>
+                    </div>
+                    <div class="m-pld-head">
+                        <h3 class="m-pld-title" id="m-pl-detail-title">Playlist</h3>
+                        <div class="m-pld-sub" id="m-pl-detail-sub">0 bài hát</div>
+                    </div>
+                    <div class="m-pld-primary-row">
+                        <button type="button" class="m-pld-big-btn primary" id="m-pl-detail-play"><span class="material-symbols-rounded" style="font-size:20px;">play_arrow</span><span id="m-pl-detail-play-txt">Play it</span></button>
+                        <button type="button" class="m-pld-big-btn tonal" id="m-pl-detail-shuffle"><span class="material-symbols-rounded" style="font-size:20px;">shuffle</span><span data-i18n="playlist.tab_shuffle">Shuffle</span></button>
+                    </div>
+                    <div class="m-pld-chips-row" id="m-pl-detail-chips">
+                        <button type="button" class="m-pld-chip add" id="m-pl-detail-add"><span class="material-symbols-rounded" style="font-size:17px;">add</span><span id="m-pl-detail-add-txt">Add</span></button>
+                        <button type="button" class="m-pld-chip" id="m-pl-detail-remove"><span class="material-symbols-rounded" style="font-size:17px;">remove_circle_outline</span><span id="m-pl-detail-rem-txt">Remove</span></button>
+                        <button type="button" class="m-pld-chip" id="m-pl-detail-reorder"><span class="material-symbols-rounded" style="font-size:17px;">swap_vert</span><span id="m-pl-detail-reord-txt">Reorder</span></button>
                     </div>
                     <div class="m-lib-list" id="m-pl-detail-list"></div>
                 </div>
@@ -6975,14 +7026,22 @@
 
         function playTrack(index) {
             if (index < 0 || index >= playlist.length) return;
+            const prevIdx = currentIndex;
             currentIndex = index;
             const track = playlist[index];
             const mySeq = ++libraryPlaySeq;
+            // Dừng ngay bài đang phát trước khi nạp bài mới
+            if (prevIdx !== index || !audio.paused) {
+                try { audio.pause(); } catch (e) {}
+            }
             document.body.classList.toggle('is-video-track', !!track.isVideo);
             document.body.classList.remove('has-video');   // sẽ bật lại khi loadedmetadata báo tệp có hình
             const needsLazyBlob = !!(track.fromLibrary && track.nativeStreamUrl && !track._blobLoaded);
             if (!needsLazyBlob) {
                 audio.src = track.url;
+            } else {
+                audio.removeAttribute('src');
+                try { audio.load(); } catch (e) {}
             }
             trackNameEl.innerText = track.name;
             trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
@@ -8587,34 +8646,179 @@
                     });
                 }
 
-                function openPlaylistDetail(plId) {
+                let pldRemoveMode = false;
+                let pldReorderMode = false;
+                let pldSortAsc = true;
+
+                function openPlaylistDetail(plId, keepModes) {
                     const pl = loadPls().find(x => x.id === plId);
                     if (!pl || !plDetailList) return;
                     openedPlId = plId;
+                    if (!keepModes) { pldRemoveMode = false; pldReorderMode = false; }
                     paneSongs?.classList.remove('active');
                     panePls?.classList.remove('active');
                     paneDetail?.classList.add('active');
+                    document.getElementById('m-lib-tabs')?.style.setProperty('display', 'none');
                     if (plDetailTitle) plDetailTitle.textContent = pl.name;
-                    const indices = resolvePlaylistIndices(pl);
+                    const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
+                    const playTxt = document.getElementById('m-pl-detail-play-txt');
+                    const addTxt = document.getElementById('m-pl-detail-add-txt');
+                    const remTxt = document.getElementById('m-pl-detail-rem-txt');
+                    const reordTxt = document.getElementById('m-pl-detail-reord-txt');
+                    if (playTxt) playTxt.textContent = isEn ? 'Play it' : 'Phát ngay';
+                    if (addTxt) addTxt.textContent = isEn ? 'Add' : 'Thêm';
+                    if (remTxt) remTxt.textContent = isEn ? 'Remove' : 'Xóa bài';
+                    if (reordTxt) reordTxt.textContent = isEn ? 'Reorder' : 'Sắp xếp';
+
+                    const chipsRow = document.getElementById('m-pl-detail-chips');
+                    if (chipsRow) chipsRow.style.display = pl.mode === 'smart' ? 'none' : 'flex';
+                    document.getElementById('m-pl-detail-remove')?.classList.toggle('active', pldRemoveMode);
+                    document.getElementById('m-pl-detail-reorder')?.classList.toggle('active', pldReorderMode);
+
+                    let indices = resolvePlaylistIndices(pl);
+                    if (pl.mode === 'manual' && Array.isArray(pl.trackKeys)) {
+                        // Giữ đúng thứ tự trackKeys đã sắp xếp trong playlist
+                        const byKey = new Map();
+                        playlist.forEach((t, i) => byKey.set(trackKeyOf(t), i));
+                        indices = pl.trackKeys.map(k => byKey.get(String(k).toLowerCase())).filter(i => i !== undefined);
+                    }
+                    const subEl = document.getElementById('m-pl-detail-sub');
+                    if (subEl) subEl.textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', indices.length);
+
                     plDetailList.innerHTML = '';
-                    indices.forEach(idx => {
+                    indices.forEach((idx, pos) => {
                         const tr = playlist[idx];
                         if (!tr) return;
                         const row = document.createElement('div');
                         row.className = 'm-lib-item' + (idx === currentIndex ? ' active' : '');
+                        const key = trackKeyOf(tr);
+                        let leftHtml = pldReorderMode ? '<span class="material-symbols-rounded" style="opacity:.6;font-size:20px;">drag_indicator</span>' : '';
+                        let rightHtml = '';
+                        if (pldReorderMode) {
+                            rightHtml =
+                                '<button type="button" class="m-pld-row-act pld-up" title="Up"><span class="material-symbols-rounded" style="font-size:18px;">arrow_upward</span></button>' +
+                                '<button type="button" class="m-pld-row-act pld-dn" title="Down"><span class="material-symbols-rounded" style="font-size:18px;">arrow_downward</span></button>';
+                        }
+                        if (pldRemoveMode) {
+                            rightHtml += '<button type="button" class="m-pld-row-act pld-del" title="Remove"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>';
+                        }
                         row.innerHTML =
+                            leftHtml +
                             '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>' +
-                            '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>';
+                            '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
+                            rightHtml;
                         row.querySelector('.m-lib-title').textContent = tr.name || '';
                         row.querySelector('.m-lib-artist').textContent = tr.artist || '';
-                        row.addEventListener('click', () => { playTrack(idx); document.body.classList.add('m-mini-visible'); });
+                        row.addEventListener('click', () => {
+                            if (pldRemoveMode || pldReorderMode) return;
+                            playTrack(idx);
+                            document.body.classList.add('m-mini-visible');
+                        });
+                        row.querySelector('.pld-del')?.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            const pls = loadPls();
+                            const cur = pls.find(x => x.id === plId);
+                            if (cur && Array.isArray(cur.trackKeys)) {
+                                cur.trackKeys = cur.trackKeys.filter(k => String(k).toLowerCase() !== key);
+                                savePls(pls);
+                                openPlaylistDetail(plId, true);
+                            }
+                        });
+                        const moveItem = (dir) => {
+                            const pls = loadPls();
+                            const cur = pls.find(x => x.id === plId);
+                            if (!cur || !Array.isArray(cur.trackKeys)) return;
+                            const ni = pos + dir;
+                            if (ni < 0 || ni >= cur.trackKeys.length) return;
+                            const tmp = cur.trackKeys[pos];
+                            cur.trackKeys[pos] = cur.trackKeys[ni];
+                            cur.trackKeys[ni] = tmp;
+                            savePls(pls);
+                            openPlaylistDetail(plId, true);
+                        };
+                        row.querySelector('.pld-up')?.addEventListener('click', (ev) => { ev.stopPropagation(); moveItem(-1); });
+                        row.querySelector('.pld-dn')?.addEventListener('click', (ev) => { ev.stopPropagation(); moveItem(1); });
                         plDetailList.appendChild(row);
                     });
                     document.getElementById('m-pl-detail-play').onclick = () => {
                         if (indices.length) { playTrack(indices[0]); document.body.classList.add('m-mini-visible'); }
                     };
+                    document.getElementById('m-pl-detail-shuffle').onclick = () => {
+                        if (!indices.length) return;
+                        if (!isShuffle) document.getElementById('shuffle-btn').click();
+                        const pick = indices[Math.floor(Math.random() * indices.length)];
+                        playTrack(pick);
+                        document.body.classList.add('m-mini-visible');
+                    };
+                    document.getElementById('m-pl-detail-sort').onclick = () => {
+                        if (pl.mode !== 'manual') return;
+                        const pls = loadPls();
+                        const cur = pls.find(x => x.id === plId);
+                        if (!cur || !Array.isArray(cur.trackKeys)) return;
+                        pldSortAsc = !pldSortAsc;
+                        const nameByKey = new Map();
+                        playlist.forEach(t => nameByKey.set(trackKeyOf(t), (t.name || '').toLowerCase()));
+                        cur.trackKeys.sort((a, b) => {
+                            const na = nameByKey.get(String(a).toLowerCase()) || '';
+                            const nb = nameByKey.get(String(b).toLowerCase()) || '';
+                            return pldSortAsc ? na.localeCompare(nb) : nb.localeCompare(na);
+                        });
+                        savePls(pls);
+                        openPlaylistDetail(plId, true);
+                    };
+                    document.getElementById('m-pl-detail-remove').onclick = () => { pldRemoveMode = !pldRemoveMode; openPlaylistDetail(plId, true); };
+                    document.getElementById('m-pl-detail-reorder').onclick = () => { pldReorderMode = !pldReorderMode; openPlaylistDetail(plId, true); };
+                    document.getElementById('m-pl-detail-add').onclick = () => {
+                        plc = {
+                            editId: pl.id, step: 1, mode: 'manual', smartRule: pl.smartRule || 'top',
+                            coverType: pl.coverType || 'default', coverImage: pl.coverImage || '',
+                            iconBg: pl.iconBg || '#93c5fd', iconName: pl.iconName || 'music_note',
+                            iconShape: pl.iconShape || 'circle', starSides: pl.starSides || 5,
+                            starCurve: pl.starCurve || 0.15, starRot: pl.starRot || 0, starScale: pl.starScale || 1,
+                            pickedKeys: new Set((pl.trackKeys || []).map(k => String(k).toLowerCase()))
+                        };
+                        const ni = document.getElementById('plc-name-input'); if (ni) ni.value = pl.name;
+                        renderSongPicker();
+                        syncCreatorUI();
+                        creatorModal?.classList.add('open');
+                    };
+                    document.getElementById('m-pl-detail-more').onclick = () => {
+                        if (typeof window.__openSheetItems !== 'function') return;
+                        window.__openSheetItems((isEn ? 'Playlist options' : 'Tùy chọn danh sách phát') + ' • ' + pl.name, [
+                            {
+                                label: isEn ? 'Edit playlist' : 'Chỉnh sửa danh sách phát',
+                                icon: 'edit',
+                                pick: () => {
+                                    plc = {
+                                        editId: pl.id, step: 0, mode: pl.mode || 'manual', smartRule: pl.smartRule || 'top',
+                                        coverType: pl.coverType || 'default', coverImage: pl.coverImage || '',
+                                        iconBg: pl.iconBg || '#93c5fd', iconName: pl.iconName || 'music_note',
+                                        iconShape: pl.iconShape || 'circle', starSides: pl.starSides || 5,
+                                        starCurve: pl.starCurve || 0.15, starRot: pl.starRot || 0, starScale: pl.starScale || 1,
+                                        pickedKeys: new Set((pl.trackKeys || []).map(k => String(k).toLowerCase()))
+                                    };
+                                    const ni = document.getElementById('plc-name-input'); if (ni) ni.value = pl.name;
+                                    syncCreatorUI();
+                                    creatorModal?.classList.add('open');
+                                }
+                            },
+                            {
+                                label: isEn ? 'Delete playlist' : 'Xóa danh sách phát',
+                                icon: 'delete',
+                                pick: async () => {
+                                    const ok = await confirmDialog(tr2('pl.delete_confirm', 'Bạn có chắc muốn xóa danh sách phát "{name}"?').replace('{name}', pl.name), tr2('misc.confirm', 'Xác nhận'));
+                                    if (!ok) return;
+                                    savePls(loadPls().filter(x => x.id !== pl.id));
+                                    setMobileLibTab('playlists');
+                                }
+                            }
+                        ]);
+                    };
                 }
-                document.getElementById('m-pl-detail-back')?.addEventListener('click', () => setMobileLibTab('playlists'));
+                document.getElementById('m-pl-detail-back')?.addEventListener('click', () => {
+                    document.getElementById('m-lib-tabs')?.style.removeProperty('display');
+                    setMobileLibTab('playlists');
+                });
 
                 // --- Creator Modal State ---
                 const BG_COLORS = ['#47628a','#93c5fd','#525b6e','#dbeafe','#525670','#c4b5fd','#b91c1c','#fecaca','#e2e8f0','#111827'];
@@ -8788,8 +8992,8 @@
                         return;
                     }
                     const pls = loadPls();
-                    pls.unshift({
-                        id: 'pl_' + Date.now(),
+                    const payload = {
+                        id: plc.editId || ('pl_' + Date.now()),
                         name,
                         mode: plc.mode,
                         smartRule: plc.smartRule,
@@ -8803,11 +9007,20 @@
                         starRot: plc.starRot,
                         starScale: plc.starScale,
                         trackKeys: Array.from(plc.pickedKeys)
-                    });
+                    };
+                    if (plc.editId) {
+                        const idx = pls.findIndex(x => x.id === plc.editId);
+                        if (idx >= 0) pls[idx] = payload; else pls.unshift(payload);
+                    } else {
+                        pls.unshift(payload);
+                    }
                     savePls(pls);
                     creatorModal?.classList.remove('open');
-                    renderMobilePlaylists();
-                    showToast(tr2('pl.created_toast', 'Đã tạo danh sách phát "{name}"!').replace('{name}', name), 'playlist_add_check', 3000);
+                    if (plc.editId && openedPlId === plc.editId) openPlaylistDetail(plc.editId, false);
+                    else renderMobilePlaylists();
+                    showToast(plc.editId
+                        ? (tr2('font.edit_save', 'Lưu') + ': ' + name)
+                        : tr2('pl.created_toast', 'Đã tạo danh sách phát "{name}"!').replace('{name}', name), 'playlist_add_check', 3000);
                 });
 
                 // Import .m3u
@@ -9827,7 +10040,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1550_playlists_tab_art', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1605_fix_lyric_pl_detail', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
