@@ -6,7 +6,7 @@
       "icon": "system_update"
     },
     {
-      "content": "Kiểm tra phản hồi & tự khôi phục (Android): bộ đếm 10 giây với nút Chờ / Khởi động lại ứng dụng (dịch theo ngôn ngữ, bo tròn), báo \"đã phản hồi\" ngay đầu trang để hết báo nhầm; nếu app bị Android đóng băng hoặc tiến trình WebView bị thu hồi thì tự đánh thức và tải lại trước khi báo lỗi",
+      "content": "Kiểm tra phản hồi & tự khôi phục (Android): bộ đếm 10 giây với nút Chờ / Khởi động lại ứng dụng (dịch theo ngôn ngữ, bo tròn), báo \"đã phản hồi\" ngay đầu trang để hết báo nhầm; nếu app bị Android đóng băng hoặc tiến trình WebView bị thu hồi thì tự đánh thức và tải lại trước khi báo lỗi Nếu vào lại app mà trang trắng xóa thì app tự làm mới.",
       "icon": "hourglass_top"
     },
     {
@@ -50,7 +50,7 @@
       "icon": "speed"
     },
     {
-      "content": "Widget màn hình chính ăn theo màu accent đang chọn trong app, và tự về trạng thái chưa mở bài nào (album art trống) khi app khởi động lại sau khi bị sập",
+      "content": "Widget màn hình chính ăn theo màu accent đang chọn trong app, và tự về trạng thái chưa mở bài nào (album art trống) khi app khởi động lại sau khi bị sập; nếu app sập thì widget được reset ngay, hoặc một báo thức nền đánh thức app để reset khi app bị hệ thống tắt",
       "icon": "widgets"
     },
     {
@@ -72,7 +72,7 @@
       "icon": "system_update"
     },
     {
-      "content": "Responsiveness check & self-recovery (Android): 10-second timer with Wait / Restart app buttons (localized, fully rounded), \"responded\" is reported at the top of the page to stop false alarms; if Android freezes the app or reclaims the WebView process, the app wakes it and reloads before showing an error",
+      "content": "Responsiveness check & self-recovery (Android): 10-second timer with Wait / Restart app buttons (localized, fully rounded), \"responded\" is reported at the top of the page to stop false alarms; if Android freezes the app or reclaims the WebView process, the app wakes it and reloads before showing an error If the page is blank when you return, the app refreshes it automatically.",
       "icon": "hourglass_top"
     },
     {
@@ -116,7 +116,7 @@
       "icon": "speed"
     },
     {
-      "content": "Home screen widgets follow the accent colour chosen in the app and reset to the no-track state (empty album art) when the app restarts after a crash",
+      "content": "Home screen widgets follow the accent colour chosen in the app and reset to the no-track state (empty album art) when the app restarts after a crash; if the app crashes the widgets are reset immediately, or a background alarm wakes the app to reset them when the system killed it",
       "icon": "widgets"
     },
     {

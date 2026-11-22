@@ -86,6 +86,28 @@ public class MainActivity extends Activity {
         }
     }
 
+    private final Runnable blankCheckRunnable = this::checkPageBlank;
+
+    /** Trang trắng xóa (WebView mất nội dung sau khi bị đóng băng/thu hồi RAM nhưng app vẫn sống): tự làm mới. */
+    private void scheduleBlankCheck(long delayMs) {
+        pingHandler.removeCallbacks(blankCheckRunnable);
+        pingHandler.postDelayed(blankCheckRunnable, delayMs);
+    }
+
+    private void checkPageBlank() {
+        if (web == null || isFinishing() || isDestroyed() || appLeftHome) return;
+        String url = web.getUrl();
+        if (url == null || !url.startsWith("https://tuanphong3108.github.io/")) return;
+        final WebView w = web;
+        try {
+            w.evaluateJavascript("(function(){var a=document.querySelector('.app-container');return !!(document.body&&a&&a.getBoundingClientRect().height>0)})()", value -> {
+                boolean ok = "true".equals(value);
+                if (ok) return;
+                if (autoRecoveries < 3) { autoRecoveries++; recoverPage(); }
+            });
+        } catch (Throwable ignored) {}
+    }
+
     private void recoverPage() {
         try {
             pageReady = false;
@@ -199,6 +221,7 @@ public class MainActivity extends Activity {
                 if (url.startsWith("https://tuanphong3108.github.io/")) {
                     pageReady = true;
                     flushPending();
+                    scheduleBlankCheck(6000);
                     if (!appLeftHome && !pageResponded) sendHandshakePing();
                 } else {
                     pageReady = false;
@@ -1328,6 +1351,7 @@ public class MainActivity extends Activity {
         }
         appLeftHome = false;
         try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Throwable ignored) {}
+        scheduleBlankCheck(1500);
         if (pageResponded && pageReady && !hangAlertShown) {
             // Trang từng chạy bình thường: kiểm tra lại sau khi quay về từ nền (có thể đã bị đóng băng)
             pageResponded = false;
@@ -1357,6 +1381,7 @@ public class MainActivity extends Activity {
         pingHandler.removeCallbacks(installerTimeoutRunnable);
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
+        pingHandler.removeCallbacks(blankCheckRunnable);
         try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {}
         super.onDestroy();
     }

@@ -1,5 +1,6 @@
 package com.tuanphong.mediaplayer;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -50,6 +51,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         super.onReceive(context, intent);
         if (intent == null) return;
         String action = intent.getAction();
+        if (ACTION_STALE.equals(action)) { checkStale(context); return; }
         if (ACTION_CMD.equals(action)) {
             String cmd = intent.getStringExtra(EXTRA_CMD);
             if (cmd == null || cmd.isEmpty()) return;
@@ -114,9 +116,34 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         } catch (Throwable ignored) {}
     }
 
+    static final String ACTION_STALE = "com.tuanphong.mediaplayer.WIDGET_STALE_CHECK";
+
+    /** Đặt báo thức (đánh thức tiến trình app ở nền) để kiểm tra xem app còn báo trạng thái phát không; nếu app đã sập thì reset widget. */
+    static void scheduleStaleCheck(Context context) {
+        try {
+            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) return;
+            Intent i = new Intent(context, MediaWidgetProvider.class).setAction(ACTION_STALE);
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+            PendingIntent pi = PendingIntent.getBroadcast(context, 77, i, flags);
+            long at = System.currentTimeMillis() + 30000L;
+            if (Build.VERSION.SDK_INT >= 23) am.setAndAllowWhileIdle(AlarmManager.RTC, at, pi); else am.set(AlarmManager.RTC, at, pi);
+        } catch (Throwable ignored) {}
+    }
+
+    static void checkStale(Context context) {
+        SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (!sp.getBoolean("playing", false)) return;
+        long age = System.currentTimeMillis() - sp.getLong("last_report_ms", 0L);
+        boolean appAlive = MainActivity.instance != null;
+        if (age > 120000L || (!appAlive && age > 45000L)) resetToIdle(context);   // app đã sập/bị đóng nhưng widget vẫn báo đang phát
+        else scheduleStaleCheck(context);
+    }
+
     static void savePlaybackState(Context context, boolean playing, String title, String artist, String lyric, int themeColor) {
         SharedPreferences.Editor ed = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
         ed.putBoolean("playing", playing);
+        ed.putLong("last_report_ms", System.currentTimeMillis());
         if (title != null) ed.putString("title", title);
         if (artist != null) ed.putString("artist", artist);
         if (lyric != null) ed.putString("lyric", lyric);
@@ -124,6 +151,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         ed.apply();
         updateAllWidgets(context);
         QueueWidgetProvider.updateAllWidgets(context);
+        if (playing) scheduleStaleCheck(context);
     }
 
     static void saveProgress(Context context, long posMs, long durMs) {
@@ -131,7 +159,8 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         long oldPos = sp.getLong("pos_ms", 0L);
         long oldDur = sp.getLong("dur_ms", 0L);
         if (Math.abs(posMs - oldPos) < 400 && durMs == oldDur) return;
-        sp.edit().putLong("pos_ms", Math.max(0L, posMs)).putLong("dur_ms", Math.max(0L, durMs)).apply();
+        sp.edit().putLong("pos_ms", Math.max(0L, posMs)).putLong("dur_ms", Math.max(0L, durMs))
+                .putLong("last_report_ms", System.currentTimeMillis()).apply();
         updateAllWidgets(context);
     }
 
@@ -141,6 +170,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
                 .putInt("repeat_mode", repeatMode)
                 .putLong("pos_ms", Math.max(0L, posMs))
                 .putLong("dur_ms", Math.max(0L, durMs))
+                .putLong("last_report_ms", System.currentTimeMillis())
                 .apply();
         updateAllWidgets(context);
     }
