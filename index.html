@@ -1956,6 +1956,48 @@
             background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
             display: grid; place-items: center;
         }
+
+        /* Tab "Quản lý nhạc" (Music Management): CHỈ HIỂN THỊ TRÊN MOBILE (html.m-ui), ẩn hoàn toàn trên PC UI */
+        html:not(.m-ui) .st-tab[data-tab="library"],
+        html:not(.m-ui) .st-pane[data-pane="library"] { display: none !important; }
+        html.m-ui .st-pane[data-pane="library"] .lib-sec-hdr {
+            background: transparent !important; padding: 14px 6px 6px !important; border-radius: 0 !important;
+            font-size: calc(13px * var(--font-scale-factor, 1)); font-weight: 700;
+            color: var(--md-sys-color-primary); letter-spacing: .2px;
+        }
+        html.m-ui .lib-nav-row {
+            display: flex; align-items: center; gap: 14px; cursor: pointer; user-select: none;
+            transition: transform .15s, opacity .15s;
+        }
+        html.m-ui .lib-nav-row:active { transform: scale(.985); opacity: .88; }
+        html.m-ui .lib-nav-row .material-symbols-rounded { color: var(--md-sys-color-on-surface-variant); flex-shrink: 0; }
+        html.m-ui .lib-btn-stack { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 10px; }
+        html.m-ui .lib-btn-tonal {
+            width: 100%; height: 46px; border: none; border-radius: 999px; cursor: pointer;
+            background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+            font-family: var(--app-font); font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        html.m-ui .lib-btn-tonal:active { transform: scale(.98); }
+        html.m-ui .lib-btn-danger-outline {
+            width: 100%; height: 46px; border: 1.5px solid color-mix(in srgb, var(--md-sys-color-error, #F2B8B5) 65%, transparent);
+            border-radius: 999px; cursor: pointer; background: transparent;
+            color: var(--md-sys-color-error, #F2B8B5);
+            font-family: var(--app-font); font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        html.m-ui .lib-btn-danger-outline:active { transform: scale(.98); background: color-mix(in srgb, var(--md-sys-color-error, #F2B8B5) 12%, transparent); }
+        .lib-sub-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px;
+            background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface); cursor: pointer;
+        }
+        .lib-sub-item.excluded { opacity: .55; }
+        .lib-info-card {
+            padding: 16px; border-radius: 20px;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-on-surface); font-size: calc(13px * var(--font-scale-factor, 1)); line-height: 1.5;
+            display: flex; flex-direction: column; gap: 6px;
+        }
         .playback-error-overlay {
             position: absolute;
             inset: 0;
@@ -2261,6 +2303,7 @@
             <div class="st-body">
                 <nav class="st-sidebar">
                     <button class="st-tab active" data-tab="general"><span class="material-symbols-rounded">tune</span><span data-i18n="settings.cat_general">Chung</span></button>
+                    <button class="st-tab" data-tab="library"><span class="material-symbols-rounded">library_music</span><span data-i18n="settings.cat_library">Quản lý nhạc</span></button>
                     <button class="st-tab" data-tab="appearance"><span class="material-symbols-rounded">palette</span><span data-i18n="settings.cat_appearance">Giao diện</span></button>
                     <button class="st-tab" data-tab="lyrics"><span class="material-symbols-rounded">lyrics</span><span data-i18n="settings.cat_lyrics">Lyric</span></button>
                     <button class="st-tab" data-tab="mixer"><span class="material-symbols-rounded">equalizer</span><span data-i18n="settings.cat_mixer">Bộ trộn âm thanh</span></button>
@@ -2561,6 +2604,104 @@
                     </md-switch>
                 </div>
                 </div>
+                <div class="st-pane" data-pane="library">
+                    <h3 class="st-pane-title" data-i18n="settings.cat_library">Quản lý nhạc</h3>
+
+                    <div class="lib-sec-hdr" data-i18n="lib.sec_structure">Cấu trúc thư viện</div>
+                    <div class="lib-nav-row" id="lib-open-excluded">
+                        <span class="material-symbols-rounded">folder_off</span>
+                        <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.excluded_dirs">Thư mục loại trừ</span>
+                            <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="lib.excluded_dirs_desc">Các thư mục ở đây sẽ bị bỏ qua khi quét thư viện nhạc.</span>
+                        </div>
+                        <span class="material-symbols-rounded">chevron_right</span>
+                    </div>
+                    <div class="lib-nav-row" id="lib-open-artists">
+                        <span class="material-symbols-rounded">person</span>
+                        <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.artists">Nghệ sĩ</span>
+                            <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="lib.artists_desc">Tùy chọn phân tách nhiều nghệ sĩ và tổ chức thư viện.</span>
+                        </div>
+                        <span class="material-symbols-rounded">chevron_right</span>
+                    </div>
+
+                    <div class="lib-sec-hdr" data-i18n="lib.sec_filtering">Bộ lọc</div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.min_duration">Thời lượng bài hát tối thiểu</span>
+                            <span id="lib-min-dur-val" style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700; color: var(--md-sys-color-primary);">0s</span>
+                        </div>
+                        <md-slider id="lib-min-dur" min="0" max="120" step="5" value="0" labeled style="width:100%; --md-slider-active-track-color: var(--md-sys-color-primary); --md-slider-handle-color: var(--md-sys-color-primary); --md-slider-label-container-color: var(--md-sys-color-primary); --md-slider-label-label-text-color: var(--md-sys-color-on-primary); --md-slider-inactive-track-color: var(--md-sys-color-surface-variant);"></md-slider>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.min_tracks_album">Số bài tối thiểu mỗi album</span>
+                            <span id="lib-min-tracks-val" style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700; color: var(--md-sys-color-primary);">1</span>
+                        </div>
+                        <md-slider id="lib-min-tracks" min="1" max="10" step="1" value="1" labeled style="width:100%; --md-slider-active-track-color: var(--md-sys-color-primary); --md-slider-handle-color: var(--md-sys-color-primary); --md-slider-label-container-color: var(--md-sys-color-primary); --md-slider-label-label-text-color: var(--md-sys-color-on-primary); --md-slider-inactive-track-color: var(--md-sys-color-surface-variant);"></md-slider>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.art_cache_limit">Giới hạn bộ nhớ đệm ảnh bìa</span>
+                            <span id="lib-art-cache-val" style="font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700; color: var(--md-sys-color-primary);">200 MB</span>
+                        </div>
+                        <md-slider id="lib-art-cache" min="50" max="1000" step="50" value="200" labeled style="width:100%; --md-slider-active-track-color: var(--md-sys-color-primary); --md-slider-handle-color: var(--md-sys-color-primary); --md-slider-label-container-color: var(--md-sys-color-primary); --md-slider-label-label-text-color: var(--md-sys-color-on-primary); --md-slider-inactive-track-color: var(--md-sys-color-surface-variant);"></md-slider>
+                    </div>
+
+                    <div class="lib-sec-hdr" data-i18n="lib.sec_sync">Đồng bộ và Quét</div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span class="material-symbols-rounded" style="color:var(--md-sys-color-on-surface-variant);">sync</span>
+                            <div style="display:flex; flex-direction:column; gap:3px; flex:1;">
+                                <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.refresh_lib">Làm mới thư viện</span>
+                                <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="lib.refresh_lib_desc">Quét toàn bộ thư viện để tìm tệp mới hoặc đã chỉnh sửa.</span>
+                            </div>
+                        </div>
+                        <div class="lib-btn-stack">
+                            <button type="button" class="lib-btn-tonal" id="lib-full-rescan-btn">
+                                <span class="material-symbols-rounded" style="font-size:19px;">refresh</span>
+                                <span data-i18n="lib.full_rescan">Quét lại toàn bộ</span>
+                            </button>
+                            <button type="button" class="lib-btn-danger-outline" id="lib-rebuild-db-btn">
+                                <span class="material-symbols-rounded" style="font-size:19px;">delete_sweep</span>
+                                <span data-i18n="lib.rebuild_db">Tạo lại cơ sở dữ liệu</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+                        <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0;">
+                            <span class="material-symbols-rounded" style="color:var(--md-sys-color-on-surface-variant);">description</span>
+                            <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0;">
+                                <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.auto_scan_lrc">Tự động quét tệp .lrc</span>
+                                <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="lib.auto_scan_lrc_desc">Tự động tìm và gắn tệp .lrc cùng thư mục khi đồng bộ thư viện.</span>
+                            </div>
+                        </div>
+                        <md-switch icons id="lib-auto-scan-lrc" selected>
+                            <span class="material-symbols-rounded" slot="on-icon">check</span>
+                            <span class="material-symbols-rounded" slot="off-icon">close</span>
+                        </md-switch>
+                    </div>
+
+                    <div class="lib-sec-hdr" data-i18n="lib.sec_lyrics">Quản lý lời bài hát</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+                        <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:0;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.lyrics_priority">Ưu tiên nguồn lời bài hát</span>
+                            <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="lib.lyrics_priority_desc">Chọn nguồn ưu tiên thử trước khi tải lời bài hát.</span>
+                        </div>
+                        <md-outlined-select id="lib-lyrics-priority" class="m3-select">
+                            <md-select-option value="embedded"><div slot="headline" data-i18n="lib.prio_embedded">Lời nhúng trước (Embedded First)</div></md-select-option>
+                            <md-select-option value="online"><div slot="headline" data-i18n="lib.prio_online">Trực tuyến trước (Online First)</div></md-select-option>
+                            <md-select-option value="local"><div slot="headline" data-i18n="lib.prio_local">Tệp .lrc trước (Local .lrc First)</div></md-select-option>
+                        </md-outlined-select>
+                    </div>
+                    <div class="lib-nav-row" id="lib-reset-lyrics-btn">
+                        <span class="material-symbols-rounded">playlist_remove</span>
+                        <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="lib.reset_lyrics">Đặt lại lời bài hát đã nạp</span>
+                            <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="lib.reset_lyrics_desc">Xóa toàn bộ lời bài hát đã nạp thủ công khỏi bộ nhớ tạm.</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="st-pane" data-pane="android">
                     <h3 class="st-pane-title" data-i18n="settings.download_android">Tải bản Android</h3>
                     <div class="st-android-card">
@@ -2646,6 +2787,79 @@
     <!-- Full Web Getting Started Overlay Iframe (getting_started.html) -->
     <div id="getting-started-overlay" style="display: none; position: fixed; inset: 0; width: var(--vw); height: var(--vh); z-index: 99999; background: #0f0d13;">
         <iframe id="getting-started-iframe" style="width: var(--vw); height: var(--vh); border: none; display: block;" src="about:blank"></iframe>
+    </div>
+
+    <!-- Modal: Thư mục loại trừ (Mobile Music Management) -->
+    <div id="lib-excluded-modal" class="cl-overlay" style="z-index: 4200;">
+        <div class="cl-dialog" style="max-width: 480px; height: min(86vh, 680px); border-radius: 28px;">
+            <div class="cl-header" style="padding: 16px 20px;">
+                <h2 style="font-size: calc(18px * var(--font-scale-factor, 1)); font-weight: 700; font-family: var(--app-font);" data-i18n="lib.excluded_dirs">Thư mục loại trừ</h2>
+                <button class="btn-m3" id="lib-excluded-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div id="lib-excluded-list" style="flex:1; overflow-y:auto; padding:16px; background:var(--md-sys-color-surface); display:flex; flex-direction:column; gap:8px;"></div>
+            <div style="padding:12px 16px; background:var(--md-sys-color-surface); border-top:1px solid var(--playlist-border); display:flex; justify-content:flex-end; gap:8px;">
+                <button class="btn-m3" id="lib-excluded-save" style="width:auto; height:44px; padding:0 22px; border-radius:999px; background:var(--md-sys-color-primary); color:var(--md-sys-color-on-primary); font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                    <span class="material-symbols-rounded" style="font-size:18px;">check</span>
+                    <span data-i18n="font.manage_done">Xong</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Tùy chọn Nghệ sĩ (Mobile Music Management) -->
+    <div id="lib-artists-modal" class="cl-overlay" style="z-index: 4200;">
+        <div class="cl-dialog" style="max-width: 480px; height: min(88vh, 720px); border-radius: 28px;">
+            <div class="cl-header" style="padding: 16px 20px;">
+                <h2 style="font-size: calc(18px * var(--font-scale-factor, 1)); font-weight: 700; font-family: var(--app-font);" data-i18n="lib.artists">Nghệ sĩ</h2>
+                <button class="btn-m3" id="lib-artists-close" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded">close</span></button>
+            </div>
+            <div style="flex:1; overflow-y:auto; padding:16px 18px 24px; background:var(--md-sys-color-surface); display:flex; flex-direction:column; gap:12px;">
+                <div style="font-size:calc(13px * var(--font-scale-factor, 1)); font-weight:700; color:var(--md-sys-color-primary);" data-i18n="lib.artists_parsing">Phân tách nhiều nghệ sĩ</div>
+                <div class="lib-info-card">
+                    <span style="font-weight:700;" data-i18n="lib.char_delims">Ký tự phân tách</span>
+                    <input type="text" id="lib-char-delims" value="/, ;, +, &" style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--playlist-border); background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font-family:var(--app-font); font-size:14px;">
+                </div>
+                <div class="lib-info-card">
+                    <span style="font-weight:700;" data-i18n="lib.word_delims">Từ phân tách</span>
+                    <input type="text" id="lib-word-delims" value="featuring, feat., feat, ft., ft, vs., x" style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--playlist-border); background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font-family:var(--app-font); font-size:14px;">
+                </div>
+                <div class="lib-info-card" style="flex-direction:row; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="display:flex; flex-direction:column; gap:2px; flex:1;">
+                        <span style="font-weight:700;" data-i18n="lib.extract_title">Trích nghệ sĩ từ tên bài hát</span>
+                        <span style="font-size:calc(12px * var(--font-scale-factor, 1)); opacity:.7;" data-i18n="lib.extract_title_desc">Nhận diện feat., ft., with trong tiêu đề bài hát</span>
+                    </div>
+                    <md-switch icons id="lib-extract-title" selected>
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+                <div style="font-size:calc(13px * var(--font-scale-factor, 1)); font-weight:700; color:var(--md-sys-color-primary); margin-top:4px;" data-i18n="lib.lib_org">Tổ chức thư viện</div>
+                <div class="lib-info-card" style="flex-direction:row; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="display:flex; flex-direction:column; gap:2px; flex:1;">
+                        <span style="font-weight:700;" data-i18n="lib.group_album_artist">Gom theo Album Artist</span>
+                        <span style="font-size:calc(12px * var(--font-scale-factor, 1)); opacity:.7;" data-i18n="lib.group_album_artist_desc">Hiển thị album hợp tác dưới tên nghệ sĩ chính</span>
+                    </div>
+                    <md-switch icons id="lib-group-album-artist">
+                        <span class="material-symbols-rounded" slot="on-icon">check</span>
+                        <span class="material-symbols-rounded" slot="off-icon">close</span>
+                    </md-switch>
+                </div>
+                <div class="lib-info-card">
+                    <div style="display:flex; align-items:center; gap:8px; font-weight:700;"><span class="material-symbols-rounded" style="font-size:18px; color:var(--md-sys-color-primary);">info</span><span data-i18n="lib.about_parsing">Về phân tách nhiều nghệ sĩ</span></div>
+                    <span style="opacity:.8;" data-i18n="lib.about_parsing_desc">Media Player tách thẻ nghệ sĩ bằng ký tự phân tách (/, ;, +, &) và từ phân tách (feat., ft., vs., x). Có thể dùng dấu gạch chéo ngược (\) để bỏ qua ký tự phân tách.</span>
+                </div>
+                <div class="lib-info-card">
+                    <div style="display:flex; align-items:center; gap:8px; font-weight:700;"><span class="material-symbols-rounded" style="font-size:18px; color:var(--md-sys-color-primary);">lightbulb</span><span data-i18n="lib.examples">Ví dụ</span></div>
+                    <div style="opacity:.8; display:flex; flex-direction:column; gap:4px; font-size:12.5px;">
+                        <span>• "Artist1/Artist2" → Artist1, Artist2</span>
+                        <span>• "Drake feat. Rihanna" → Drake, Rihanna</span>
+                        <span>• "Marshmello x Bastille" → Marshmello, Bastille</span>
+                        <span>• "Song (ft. B)" by A → A, B</span>
+                        <span>• "AC\/DC" → AC/DC (escaped)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal: Gửi phản hồi -->
@@ -10100,6 +10314,10 @@
             stSearchBox.classList.toggle('has-text', stSearchInput.value.length > 0);
             let total = 0;
             document.querySelectorAll('.st-pane:not(.st-pane-about)').forEach(pane => {
+                if (pane.dataset.pane === 'library' && !document.documentElement.classList.contains('m-ui')) {
+                    pane.classList.add('no-match');
+                    return;
+                }
                 const paneTitle = stNorm(pane.querySelector('.st-pane-title')?.textContent);
                 let shown = 0;
                 Array.from(pane.children).forEach(row => {
@@ -10146,6 +10364,7 @@
             });
             const META = {
                 general: ['#5b8def', 'settings.desc_general', 'Ngôn ngữ, màn hình luôn sáng, đặt lại'],
+                library: ['#4c8bf5', 'settings.desc_library', 'Thư mục loại trừ, nghệ sĩ, bộ lọc và quét thư viện'],
                 appearance: ['#e0709a', 'settings.desc_appearance', 'Màu chủ đạo, kích thước giao diện và chữ'],
                 lyrics: ['#e8a33d', 'settings.desc_lyrics', 'Cách hiển thị lời bài hát'],
                 mixer: ['#3fae86', 'settings.desc_mixer', 'Equalizer, preamp, cân bằng trái/phải'],
@@ -10281,6 +10500,165 @@
             window.addEventListener('lang-applied', refreshPills);
             setInterval(() => { if (dlg.classList.contains('st-m-detail')) refreshPills(); }, 1000);
             refreshPills();
+
+            // --- TAB "QUẢN LÝ NHẠC" (ONLY MOBILE) ---
+            (function initMobileMusicManagement() {
+                const LIB_KEY = 'settings_mobile_library_v1';
+                const defLib = {
+                    minDur: 0, minTracks: 1, artCache: 200, autoScanLrc: true,
+                    lyricsPriority: 'embedded', charDelims: '/, ;, +, &',
+                    wordDelims: 'featuring, feat., feat, ft., ft, vs., x',
+                    extractTitle: true, groupAlbumArtist: false
+                };
+                let libCfg = Object.assign({}, defLib);
+                try { Object.assign(libCfg, JSON.parse(localStorage.getItem(LIB_KEY) || '{}')); } catch (e) {}
+                const saveLibCfg = () => {
+                    try { localStorage.setItem(LIB_KEY, JSON.stringify(libCfg)); } catch (e) {}
+                    try {
+                        if (window.AndroidBridge && typeof window.AndroidBridge.setLibraryScanPrefs === 'function') {
+                            window.AndroidBridge.setLibraryScanPrefs(Number(libCfg.minDur) || 0, !!libCfg.autoScanLrc);
+                        }
+                    } catch (e) {}
+                };
+                saveLibCfg();
+
+                const minDurSl = document.getElementById('lib-min-dur'), minDurVal = document.getElementById('lib-min-dur-val');
+                const minTrSl = document.getElementById('lib-min-tracks'), minTrVal = document.getElementById('lib-min-tracks-val');
+                const cacheSl = document.getElementById('lib-art-cache'), cacheVal = document.getElementById('lib-art-cache-val');
+                const autoLrcSw = document.getElementById('lib-auto-scan-lrc');
+                const prioSel = document.getElementById('lib-lyrics-priority');
+                const charIn = document.getElementById('lib-char-delims'), wordIn = document.getElementById('lib-word-delims');
+                const extSw = document.getElementById('lib-extract-title'), grpSw = document.getElementById('lib-group-album-artist');
+
+                if (minDurSl && minDurVal) {
+                    minDurSl.value = libCfg.minDur; minDurVal.textContent = libCfg.minDur + 's';
+                    minDurSl.addEventListener('input', () => { libCfg.minDur = +minDurSl.value; minDurVal.textContent = libCfg.minDur + 's'; saveLibCfg(); });
+                }
+                if (minTrSl && minTrVal) {
+                    minTrSl.value = libCfg.minTracks; minTrVal.textContent = String(libCfg.minTracks);
+                    minTrSl.addEventListener('input', () => { libCfg.minTracks = +minTrSl.value; minTrVal.textContent = String(libCfg.minTracks); saveLibCfg(); });
+                }
+                if (cacheSl && cacheVal) {
+                    cacheSl.value = libCfg.artCache; cacheVal.textContent = libCfg.artCache + ' MB';
+                    cacheSl.addEventListener('input', () => { libCfg.artCache = +cacheSl.value; cacheVal.textContent = libCfg.artCache + ' MB'; saveLibCfg(); });
+                }
+                if (autoLrcSw) {
+                    autoLrcSw.selected = !!libCfg.autoScanLrc;
+                    autoLrcSw.addEventListener('change', () => { libCfg.autoScanLrc = !!autoLrcSw.selected; saveLibCfg(); });
+                }
+                if (prioSel) {
+                    prioSel.value = libCfg.lyricsPriority || 'embedded';
+                    prioSel.addEventListener('change', () => { libCfg.lyricsPriority = prioSel.value; saveLibCfg(); refreshPills(); });
+                }
+                if (charIn) { charIn.value = libCfg.charDelims; charIn.addEventListener('input', () => { libCfg.charDelims = charIn.value; saveLibCfg(); }); }
+                if (wordIn) { wordIn.value = libCfg.wordDelims; wordIn.addEventListener('input', () => { libCfg.wordDelims = wordIn.value; saveLibCfg(); }); }
+                if (extSw) { extSw.selected = !!libCfg.extractTitle; extSw.addEventListener('change', () => { libCfg.extractTitle = !!extSw.selected; saveLibCfg(); }); }
+                if (grpSw) { grpSw.selected = !!libCfg.groupAlbumArtist; grpSw.addEventListener('change', () => { libCfg.groupAlbumArtist = !!grpSw.selected; saveLibCfg(); }); }
+
+                // Modal Thư mục loại trừ
+                const exModal = document.getElementById('lib-excluded-modal');
+                const exList = document.getElementById('lib-excluded-list');
+                const exSet = new Set();
+                function renderExcludedModal() {
+                    if (!exList) return;
+                    exList.innerHTML = '';
+                    let dirs = [];
+                    try {
+                        if (window.AndroidBridge && typeof window.AndroidBridge.listAudioDirectoriesJson === 'function') {
+                            dirs = JSON.parse(window.AndroidBridge.listAudioDirectoriesJson() || '[]');
+                        }
+                    } catch (e) {}
+                    if (!dirs.length) {
+                        const em = document.createElement('div');
+                        em.style.cssText = 'text-align:center; padding:32px 16px; opacity:.65; font-size:14px;';
+                        em.textContent = tr('lib.excluded_dirs_empty', 'Không tìm thấy thư mục chứa nhạc nào trên thiết bị.');
+                        exList.appendChild(em);
+                        return;
+                    }
+                    dirs.forEach(item => {
+                        const isEx = exSet.has(item.path);
+                        const row = document.createElement('div');
+                        row.className = 'lib-sub-item' + (isEx ? ' excluded' : '');
+                        row.innerHTML =
+                            '<span class="material-symbols-rounded" style="color:' + (isEx ? 'inherit' : 'var(--md-sys-color-primary)') + '">' + (isEx ? 'folder_off' : 'folder') + '</span>' +
+                            '<div style="flex:1; min-width:0;"><div style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div><div style="font-size:11.5px; opacity:.65; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div></div>' +
+                            '<span style="font-size:12px; font-weight:700; opacity:.8;">' + item.count + '</span>' +
+                            '<span class="material-symbols-rounded" style="color:' + (isEx ? 'inherit' : 'var(--md-sys-color-primary)') + '">' + (isEx ? 'check_box_outline_blank' : 'check_box') + '</span>';
+                        row.querySelector('div > div:first-child').textContent = item.name;
+                        row.querySelector('div > div:last-child').textContent = item.path;
+                        row.addEventListener('click', () => {
+                            if (exSet.has(item.path)) exSet.delete(item.path); else exSet.add(item.path);
+                            renderExcludedModal();
+                        });
+                        exList.appendChild(row);
+                    });
+                }
+                document.getElementById('lib-open-excluded')?.addEventListener('click', () => {
+                    exSet.clear();
+                    try {
+                        if (window.AndroidBridge && typeof window.AndroidBridge.getExcludedDirectoriesJson === 'function') {
+                            JSON.parse(window.AndroidBridge.getExcludedDirectoriesJson() || '[]').forEach(p => exSet.add(p));
+                        }
+                    } catch (e) {}
+                    renderExcludedModal();
+                    exModal?.classList.add('open');
+                });
+                document.getElementById('lib-excluded-close')?.addEventListener('click', () => exModal?.classList.remove('open'));
+                document.getElementById('lib-excluded-save')?.addEventListener('click', () => {
+                    try {
+                        if (window.AndroidBridge && typeof window.AndroidBridge.setExcludedDirectoriesJson === 'function') {
+                            window.AndroidBridge.setExcludedDirectoriesJson(JSON.stringify(Array.from(exSet)));
+                        }
+                        if (window.AndroidBridge && typeof window.AndroidBridge.scanAllDeviceAudio === 'function') {
+                            window.AndroidBridge.scanAllDeviceAudio(true);
+                        }
+                    } catch (e) {}
+                    exModal?.classList.remove('open');
+                    showToast(tr('lib.rescan_started', 'Đang quét lại toàn bộ thư viện nhạc...'), 'refresh', 3000);
+                });
+
+                // Modal Nghệ sĩ
+                const artModal = document.getElementById('lib-artists-modal');
+                document.getElementById('lib-open-artists')?.addEventListener('click', () => artModal?.classList.add('open'));
+                document.getElementById('lib-artists-close')?.addEventListener('click', () => artModal?.classList.remove('open'));
+
+                // Full Rescan & Rebuild Database
+                document.getElementById('lib-full-rescan-btn')?.addEventListener('click', () => {
+                    saveLibCfg();
+                    if (window.AndroidBridge && typeof window.AndroidBridge.scanAllDeviceAudio === 'function') {
+                        window.AndroidBridge.scanAllDeviceAudio(true);
+                    }
+                    showToast(tr('lib.rescan_started', 'Đang quét lại toàn bộ thư viện nhạc...'), 'refresh', 3000);
+                });
+                document.getElementById('lib-rebuild-db-btn')?.addEventListener('click', async () => {
+                    const ok = await confirmDialog(
+                        tr('lib.rebuild_confirm_body', 'Thao tác này sẽ dựng lại toàn bộ thư viện nhạc từ đầu. Các lời bài hát đã nạp thủ công và dữ liệu tạm sẽ bị xóa. Hành động này không thể hoàn tác.'),
+                        tr('lib.rebuild_ok', 'Tạo lại'),
+                        tr('lib.rebuild_confirm_title', 'Tạo lại cơ sở dữ liệu?')
+                    );
+                    if (!ok) return;
+                    try { localStorage.removeItem('settings_subs'); } catch (e) {}
+                    if (window.AndroidBridge && typeof window.AndroidBridge.scanAllDeviceAudio === 'function') {
+                        window.AndroidBridge.scanAllDeviceAudio(true);
+                    }
+                    showToast(tr('lib.rebuilt_done', 'Đã tạo lại cơ sở dữ liệu và quét lại thư viện!'), 'check_circle', 3500);
+                });
+
+                // Reset Imported Lyrics
+                document.getElementById('lib-reset-lyrics-btn')?.addEventListener('click', async () => {
+                    const ok = await confirmDialog(
+                        tr('lib.reset_lyrics_confirm', 'Bạn có chắc muốn xóa toàn bộ lời bài hát đã nạp khỏi danh sách hiện tại?'),
+                        tr('misc.confirm', 'Xác nhận'),
+                        tr('lib.reset_lyrics', 'Đặt lại lời bài hát đã nạp')
+                    );
+                    if (!ok) return;
+                    playlist.forEach(t => { if (t) { t.lyrics = null; t.lyricsRaw = ''; } });
+                    renderLyrics();
+                    updatePlaylistUI();
+                    showToast(tr('lib.lyrics_reset_done', 'Đã đặt lại lời bài hát đã nạp!'), 'check_circle', 3000);
+                });
+                refreshPills();
+            })();
         })();
 
 
