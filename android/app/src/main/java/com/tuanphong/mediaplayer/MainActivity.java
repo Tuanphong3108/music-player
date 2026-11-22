@@ -1366,6 +1366,7 @@ public class MainActivity extends Activity {
         public String shareChunk(String id, String b64, boolean last, String name, String mime) {
             try {
                 if (shareOut == null || !id.equals(shareId)) {
+                    callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('locating')");
                     File dir = new File(getCacheDir(), "share");
                     dir.mkdirs();
                     File[] old = dir.listFiles();
@@ -1373,10 +1374,12 @@ public class MainActivity extends Activity {
                     shareId = id;
                     shareFile = new File(dir, name.replaceAll("[\\\\/:*?\"<>|]", "_"));
                     shareOut = new FileOutputStream(shareFile);
+                    callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('preparing')");
                 }
                 shareOut.write(Base64.decode(b64, Base64.DEFAULT));
                 if (last) {
                     shareOut.close(); shareOut = null;
+                    callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('sharing')");
                     final Uri u = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", shareFile);
                     final String m = (mime == null || mime.isEmpty()) ? "*/*" : mime;
                     runOnUiThread(() -> {
@@ -1388,8 +1391,10 @@ public class MainActivity extends Activity {
                             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             Intent ch = Intent.createChooser(i, null);
                             ch.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('done')");
                             startActivity(ch);
                         } catch (Exception e) {
+                            callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
                             callJs("window.showToast&&showToast(" + JSONObject.quote("Không mở được khung chia sẻ: " + e) + ")");
                         }
                     });
@@ -1398,6 +1403,7 @@ public class MainActivity extends Activity {
             } catch (Throwable e) {
                 try { if (shareOut != null) shareOut.close(); } catch (Exception ignored) {}
                 shareOut = null;
+                callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
                 return String.valueOf(e);
             }
         }
