@@ -1,8 +1,11 @@
 <!-- Ghi nội dung cập nhật cho bản build APK tiếp theo tại đây (hỗ trợ Markdown). Mỗi lần cập nhật Android, nội dung mới sẽ được ghi vào file này trước khi push để GitHub Release hiển thị đúng changelog thật! -->
 ### Có gì mới trong bản cập nhật Android này
-- **Sửa triệt để lỗi nhận diện Chế độ Sáng/Tối khi để Giao diện = Hệ thống**:
-  - Chuyển theme gốc của ứng dụng sang DayNight (`values/styles.xml` Sáng & `values-night/styles.xml` Tối) thay vì khóa cứng theme tối.
-  - Kiểm tra trực tiếp trạng thái Sáng/Tối thực tế qua `UiModeManager` + `Resources.getSystem()` và tự đồng bộ lại mỗi khi quay lại ứng dụng (`onResume`).
-- **Tăng tốc cực mạnh thời gian nạp/import danh sách nhạc**:
-  - Tách quét thư viện thành 2 pha: gửi ngay lập tức toàn bộ bài từ `MediaStore` lên giao diện (không bị chặn bởi `MediaMetadataRetriever` hay duyệt toàn bộ bộ nhớ), sau đó mới quét bổ sung nhanh các thư mục nhạc bị sót ở nền.
-- **Giảm thời gian kiểm tra phản hồi xuống 15 giây & khôi phục màn hình "Trang không phản hồi"**.
+- **Cơ chế "Tự hủy & Ghi nhận sự cố" khi bị đóng ở nền**:
+  - Khi phát hiện ứng dụng bị hệ thống thu hồi tiến trình WebView (`onRenderProcessGone`), ép giải phóng bộ nhớ mức tối đa ở nền (`TRIM_MEMORY_COMPLETE`), bị vuốt/đóng tác vụ nền (`onTaskRemoved`) hoặc gặp lỗi đột ngột (`UncaughtException`), ứng dụng sẽ lập tức:
+    1. Đặt lại toàn bộ Widget về trạng thái chờ (idle).
+    2. Khôi phục màu chủ đạo (Accent Color) mặc định/hệ thống cho Widget và giao diện.
+    3. Hủy hoàn toàn tiến trình WebView cũ để lần mở sau tải mới sạch sẽ từ đầu.
+    4. Lưu lại mã lỗi + nguyên nhân + thời gian rồi thoát hẳn ở nền.
+  - Hỗ trợ kiểm tra lịch sử tiến trình (`ApplicationExitInfo` trên Android 11+) để bắt cả các trường hợp bị hệ thống kill cứng bằng `SIGKILL`/LMK/Freezer ở nền.
+  - Khi mở lại ứng dụng, khung app tự động truyền mã lỗi vào giao diện để hiển thị hộp thoại cho biết lý do ứng dụng vừa bị đóng/sập.
+- **Sửa nhận diện Chế độ Sáng/Tối (DayNight) & Tăng tốc nạp danh sách nhạc 2 pha**.
