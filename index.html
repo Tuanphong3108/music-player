@@ -9762,8 +9762,9 @@
                 slider.addEventListener('input', kick);
                 window.addEventListener('resize', kick);
                 document.addEventListener('visibilitychange', kick);
-                new MutationObserver(kick).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+                new MutationObserver(() => { kick(); scheduleColorSync(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
                 new MutationObserver(kick).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+                window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', scheduleColorSync);
                 kick();
             }
             makeWave(document.getElementById('seek-slider'), document.querySelector('.seek-container'), null, null, 6);
