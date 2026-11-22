@@ -9,7 +9,15 @@ public class App extends Application {
         super.onCreate();
         final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-            try { MediaWidgetProvider.resetToIdle(App.this); } catch (Throwable ignored) {}
+            try {
+                String msg = (e == null) ? "Unknown exception" : (e.getClass().getSimpleName() + (e.getMessage() != null ? ": " + e.getMessage() : ""));
+                MainActivity.recordCrashSync(App.this, "APP_UNCAUGHT_EXCEPTION", msg);
+                MediaWidgetProvider.resetToIdle(App.this);
+                MediaWidgetProvider.resetWidgetColors(App.this);
+                if (MainActivity.instance != null) {
+                    MainActivity.instance.destroyWebViewForSelfDestruct();
+                }
+            } catch (Throwable ignored) {}
             if (prev != null) prev.uncaughtException(t, e);
         });
     }
