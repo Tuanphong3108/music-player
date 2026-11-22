@@ -6970,42 +6970,8 @@
         }
         document.getElementById('locate-btn').addEventListener('click', (e) => { e.stopPropagation(); locateCurrentTrack(true); });
 
-        let libraryPlaySeq = 0;
-        let lastLibraryBlobTrack = null;
-
-        async function hydrateAndPlayLibraryTrack(track, index, seq) {
-            setPlayBtnLoading(true);
-            try {
-                if (lastLibraryBlobTrack && lastLibraryBlobTrack !== track && lastLibraryBlobTrack._blobLoaded && lastLibraryBlobTrack.url && lastLibraryBlobTrack.url.startsWith('blob:')) {
-                    try { URL.revokeObjectURL(lastLibraryBlobTrack.url); } catch (e) {}
-                    lastLibraryBlobTrack.url = lastLibraryBlobTrack.nativeStreamUrl;
-                    lastLibraryBlobTrack._blobLoaded = false;
-                }
-                const res = await fetch(track.nativeStreamUrl);
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const blob = await res.blob();
-                if (seq !== libraryPlaySeq || currentIndex !== index) return;
-                const realFile = new File([blob], track.nativeName || (track.name + '.' + (track.ext || 'mp3').toLowerCase()), {
-                    type: blob.type || (track.file && track.file.type) || 'audio/mpeg',
-                    lastModified: (track.file && track.file.lastModified) || Date.now()
-                });
-                realFile.__nativeId = track.nativeId || null;
-                realFile.__nativeLocation = track.nativeLocation || '';
-                realFile.__nativeName = track.nativeName || realFile.name;
-                realFile.__fromLibrary = true;
-                const blobUrl = URL.createObjectURL(realFile);
-                track.file = realFile;
-                track.url = blobUrl;
-                track._blobLoaded = true;
-                lastLibraryBlobTrack = track;
-
-                audio.src = blobUrl;
-                audio.play().catch(() => {});
-
-                // Nạp thêm thẻ nhúng (USLT lyrics, genre, composer, cover) & tệp .lrc cùng thư mục ở nền (không chặn phát nhạc)
-                if (!track._tagsHydrated) {
-                    track._tagsHydrated = true;
-                    window.jsmediatags.read(realFile, {
+        function hydrateTrackTags(track, index, src, onFail) {
+                    window.jsmediatags.read(src, {
                         onSuccess: function(tag) {
                             let changed = false;
                             if (tag.tags.title && (!track.name || track.name === track.rawName)) { track.name = tag.tags.title; changed = true; }
@@ -7052,8 +7018,46 @@
                                 if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
                             }
                         },
-                        onError: function() {}
+                        onError: function() { if (typeof onFail === 'function') onFail(); }
                     });
+        }
+
+        let libraryPlaySeq = 0;
+        let lastLibraryBlobTrack = null;
+
+        async function hydrateAndPlayLibraryTrack(track, index, seq) {
+            setPlayBtnLoading(true);
+            try {
+                if (lastLibraryBlobTrack && lastLibraryBlobTrack !== track && lastLibraryBlobTrack._blobLoaded && lastLibraryBlobTrack.url && lastLibraryBlobTrack.url.startsWith('blob:')) {
+                    try { URL.revokeObjectURL(lastLibraryBlobTrack.url); } catch (e) {}
+                    lastLibraryBlobTrack.url = lastLibraryBlobTrack.nativeStreamUrl;
+                    lastLibraryBlobTrack._blobLoaded = false;
+                }
+                const res = await fetch(track.nativeStreamUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const blob = await res.blob();
+                if (seq !== libraryPlaySeq || currentIndex !== index) return;
+                const realFile = new File([blob], track.nativeName || (track.name + '.' + (track.ext || 'mp3').toLowerCase()), {
+                    type: blob.type || (track.file && track.file.type) || 'audio/mpeg',
+                    lastModified: (track.file && track.file.lastModified) || Date.now()
+                });
+                realFile.__nativeId = track.nativeId || null;
+                realFile.__nativeLocation = track.nativeLocation || '';
+                realFile.__nativeName = track.nativeName || realFile.name;
+                realFile.__fromLibrary = true;
+                const blobUrl = URL.createObjectURL(realFile);
+                track.file = realFile;
+                track.url = blobUrl;
+                track._blobLoaded = true;
+                lastLibraryBlobTrack = track;
+
+                audio.src = blobUrl;
+                audio.play().catch(() => {});
+
+                // Nạp thêm thẻ nhúng (USLT lyrics, genre, composer, cover) & tệp .lrc cùng thư mục ở nền (không chặn phát nhạc)
+                if (!track._tagsHydrated) {
+                    track._tagsHydrated = true;
+                    hydrateTrackTags(track, index, realFile);
                     if (track.nativeLrcUrl && !track.lyricsRaw) {
                         fetch(track.nativeLrcUrl).then(r => r.ok ? r.text() : '').then(txt => {
                             if (txt && !track.lyricsRaw) {
@@ -7096,6 +7100,23 @@
                     hydrateAndPlayLibraryTrack(track, index, mySeq);
                 };
                 audio.addEventListener('error', onStreamErr, { once: true });
+                if (!track._tagsHydrated) {
+                    track._tagsHydrated = true;
+                    // Stream trực tiếp không đi qua blob -> đọc thẻ nhúng (lyric, cover...) riêng ở nền, sau khi nhạc đã bắt đầu phát
+                    setTimeout(() => {
+                        if (mySeq !== libraryPlaySeq || currentIndex !== index) return;
+                        const viaRange = () => {
+                            fetch(track.nativeStreamUrl, { headers: { Range: 'bytes=0-3145727' } })
+                                .then(r => r.ok ? r.blob() : null)
+                                .then(bl => {
+                                    if (!bl || currentIndex !== index) return;
+                                    const f = new File([bl], track.nativeName || (track.name + '.' + (track.ext || 'mp3').toLowerCase()), { type: bl.type || 'audio/mpeg' });
+                                    hydrateTrackTags(track, index, f);
+                                }).catch(() => {});
+                        };
+                        try { hydrateTrackTags(track, index, track.nativeStreamUrl, viaRange); } catch (e) { viaRange(); }
+                    }, 600);
+                }
                 if (track.nativeLrcUrl && !track.lyricsRaw && !track._lrcTried) {
                     track._lrcTried = true;
                     setTimeout(() => {
