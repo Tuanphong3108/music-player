@@ -68,6 +68,7 @@
                     if (Array.isArray(window.__mobileLibrary)) {
                         window.__mobileLibrary = window.__mobileLibrary.filter(tr => tr && !(tr.file && tr.file.__fromLibrary));
                     }
+                    // Chỉ giữ bài đang phát nếu có; các bài cũ của lần quét trước trên Mobile sẽ được nạp lại tươi từ đợt quét mới (tránh sót bài hoặc trùng bài)
                     for (let i = playlist.length - 1; i >= 0; i--) {
                         const tr = playlist[i];
                         if (tr && tr.file && tr.file.__fromLibrary && i !== currentIndex) {
@@ -89,6 +90,14 @@
             window.__onAndroidLibraryScanDone = function (count, missingPerm) {
                 try {
                     if (missingPerm) return;
+                    // Sau khi quét xong toàn bộ danh sách, đồng bộ lại playlist tạm nếu chưa phát bài riêng lẻ để không bị thiếu bài
+                    if (Array.isArray(window.__mobileLibrary) && window.__mobileLibrary.length > 0 && playlist.length < window.__mobileLibrary.length) {
+                        const curTr = playlist[currentIndex] || null;
+                        playlist.length = 0;
+                        window.__mobileLibrary.forEach(t => playlist.push(t));
+                        currentIndex = curTr ? playlist.indexOf(curTr) : -1;
+                        if (shuffleInitialized) generateShuffleOrder();
+                    }
                     if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
                     updatePlaylistUI();
                     // Tự động đọc ảnh bìa / tag nhúng ở nền cho các bài trên Mobile mà danh sách ngoài chưa có ảnh bìa
