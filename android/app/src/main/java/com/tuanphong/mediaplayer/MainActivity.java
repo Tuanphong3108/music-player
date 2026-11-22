@@ -213,8 +213,13 @@ public class MainActivity extends Activity {
             sp.edit().putLong("last_exit_info_ts", exitTs).apply();
 
             int r = info.getReason();
-            if (wasClean && r == android.app.ApplicationExitInfo.REASON_EXIT_SELF) return;
-            if (r == android.app.ApplicationExitInfo.REASON_EXIT_SELF) return;
+            // Bỏ qua mọi trường hợp người dùng chủ động đóng (bấm Thoát hẳn, vuốt lên khỏi đa nhiệm, hoặc tự buộc dừng)
+            if (wasClean
+                    || r == android.app.ApplicationExitInfo.REASON_EXIT_SELF
+                    || r == android.app.ApplicationExitInfo.REASON_USER_REQUESTED
+                    || r == android.app.ApplicationExitInfo.REASON_USER_STOPPED) {
+                return;
+            }
             if (alreadyRecorded != null && !alreadyRecorded.isEmpty()) return;
 
             String code;
@@ -228,9 +233,6 @@ public class MainActivity extends Activity {
                     code = "BG_SYS_ANR"; break;
                 case android.app.ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE:
                     code = "BG_SYS_EXCESSIVE_RESOURCE"; break;
-                case android.app.ApplicationExitInfo.REASON_USER_REQUESTED:
-                case android.app.ApplicationExitInfo.REASON_USER_STOPPED:
-                    code = "BG_SYS_USER_STOPPED"; break;
                 case android.app.ApplicationExitInfo.REASON_SIGNALED:
                     code = "BG_SYS_SIGNALED"; break;
                 case android.app.ApplicationExitInfo.REASON_FREEZER:
@@ -2491,6 +2493,7 @@ public class MainActivity extends Activity {
                             .commit();
                 } catch (Throwable ignored) {}
                 try { MediaWidgetProvider.resetToIdle(MainActivity.this); } catch (Throwable ignored) {}
+                try { MediaWidgetProvider.resetWidgetColors(MainActivity.this); } catch (Throwable ignored) {}
                 try { stopService(new Intent(MainActivity.this, MediaService.class)); } catch (Exception ignored) {}
                 finishAffinity();
                 android.os.Process.killProcess(android.os.Process.myPid());
