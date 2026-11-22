@@ -152,6 +152,10 @@
     {
       "content": "Animation giãn nút trên điện thoại mượt hơn (chạy bằng GPU, không còn tính lại bố cục mỗi khung hình); sửa lỗi sóng nhạc báo lỗi trên giao diện điện thoại",
       "icon": "speed"
+    },
+    {
+      "content": "Sóng trên thanh seek chạy ngược chiều và theo đúng Material 3 Expressive: thẳng ở ≤10% và ≥95% tiến trình, sóng ở giữa, chuyển mượt giữa thẳng và sóng",
+      "icon": "waves"
     }
   ],
   "en": [
@@ -306,6 +310,10 @@
     {
       "content": "Smoother button stretch animation on phones (GPU-driven, no per-frame layout); fixed the visualizer throwing errors on the phone UI",
       "icon": "speed"
+    },
+    {
+      "content": "Seek-bar wave now travels the opposite way and follows Material 3 Expressive: flat at ≤10% and ≥95% progress, wavy in between, with smooth transitions",
+      "icon": "waves"
     }
   ]
 }

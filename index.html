@@ -9853,10 +9853,10 @@
                         const a = AMP * amp;
                         for (let px = STROKE / 2; px <= xe; px += 1.5) {
                             const edge = Math.min(1, (px - STROKE / 2) / 10);
-                            const y = cy + Math.sin((px / WL) * Math.PI * 2 - phase) * a * edge;
+                            const y = cy + Math.sin((px / WL) * Math.PI * 2 + phase) * a * edge;
                             if (px === STROKE / 2) ctx.moveTo(px, y); else ctx.lineTo(px, y);
                         }
-                        ctx.lineTo(xe, cy + Math.sin((xe / WL) * Math.PI * 2 - phase) * a); ctx.stroke();
+                        ctx.lineTo(xe, cy + Math.sin((xe / WL) * Math.PI * 2 + phase) * a); ctx.stroke();
                     }
                 }
                 function frame(now) {
@@ -9864,10 +9864,15 @@
                     if (document.hidden || !cv.offsetParent) return;
                     const dt = Math.min(64, now - (last || now)); last = now;
                     const reduce = document.documentElement.classList.contains('reduce-motion');
-                    const target = (!audio.paused && !audio.ended && !reduce) ? 1 : 0;
-                    amp += (target - amp) * (1 - Math.exp(-dt / 140));      // tạm dừng: biên độ giảm dần về 0 -> đường thẳng
+                    // Theo Material 3 Expressive (WavyProgressIndicatorDefaults.indicatorAmplitude): biên độ = 0 khi tiến trình ≤ 10% hoặc ≥ 95%
+                    // (đường thẳng), = 1 ở giữa; tạm dừng thì cũng về 0. Biên độ chuyển dần (không nhảy) giữa thẳng <-> sóng.
+                    const mn = +slider.min || 0, mx = +slider.max || 100;
+                    const prog = Math.min(1, Math.max(0, ((+slider.value) - mn) / ((mx - mn) || 1)));
+                    const wavy = prog > 0.1 && prog < 0.95;
+                    const target = (!audio.paused && !audio.ended && !reduce && wavy) ? 1 : 0;
+                    amp += (target - amp) * (1 - Math.exp(-dt / 140));      // giảm/tăng dần về 0 <-> 1
                     if (Math.abs(target - amp) < 0.004) amp = target;
-                    if (amp > 0) phase += (dt / 1000) * Math.PI * 2;          // 1 wavelength / giây (mặc định MD3E)
+                    if (amp > 0) phase += (dt / 1000) * Math.PI * 2;          // 1 wavelength / giây (waveSpeed mặc định MD3E); sóng chạy ngược (từ phải sang trái)
                     draw(now);
                     if (amp > 0 || target) raf = requestAnimationFrame(frame); else last = 0;
                 }
