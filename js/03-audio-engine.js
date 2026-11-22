@@ -127,6 +127,8 @@
         }
 
         audio.addEventListener('timeupdate', () => {
+            // Chạy nền (màn hình tắt / app ẩn): chỉ giữ đồng bộ lyric (cho widget/thông báo), bỏ việc vẽ thanh seek & chữ thời gian
+            if (document.hidden && !customPipWindow) { syncLyrics(); return; }
             seekSlider.value = (audio.currentTime / audio.duration) * 100 || 0;
             updateSliderFill(seekSlider);
             document.getElementById('current-time').innerText = formatTime(audio.currentTime, audio.duration);

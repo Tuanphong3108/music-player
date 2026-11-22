@@ -239,9 +239,14 @@
                     if (appliedAnyCache && typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
 
                     // Bước 2: Kiểm tra ngầm toàn bộ bài (kể cả bài đã có cache) để phát hiện thay đổi tag/ảnh bìa và cập nhật lại cache
+                    // Nhường CPU/mạng cho lúc khởi động & phát nhạc: đợi 3 giây sau khi mở, và tạm dừng khi app chạy nền (màn hình tắt)
+                    await new Promise(r0 => setTimeout(r0, 3000));
                     for (let i = 0; i < pool.length; i++) {
                         const tr = pool[i];
                         if (!tr || !tr.nativeStreamUrl || tr._bgCoverChecked) continue;
+                        if (document.hidden) {
+                            await new Promise(rv => { const on = () => { if (!document.hidden) { document.removeEventListener('visibilitychange', on); rv(); } }; document.addEventListener('visibilitychange', on); });
+                        }
                         tr._bgCoverChecked = true;
                         try {
                             const r = await fetch(tr.nativeStreamUrl, { headers: { Range: 'bytes=0-2097151' } });

@@ -10,6 +10,7 @@ import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.SystemClock;
 
 /**
@@ -22,6 +23,23 @@ public class MediaService extends Service {
     static final String CH = "playback";
     private MediaSession session;
     private boolean playing = false;
+    private PowerManager.WakeLock wake;
+
+    /** Giữ CPU thức khi đang phát để tắt màn hình không làm nhạc giật/ngắt (tự nhả khi dừng, có hạn 30 phút để không rò pin). */
+    private void holdWake(boolean on) {
+        try {
+            if (on) {
+                if (wake == null) {
+                    PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+                    wake = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "mediaplayer:playback");
+                    wake.setReferenceCounted(false);
+                }
+                wake.acquire(30 * 60 * 1000L);
+            } else if (wake != null && wake.isHeld()) {
+                wake.release();
+            }
+        } catch (Throwable ignored) {}
+    }
     private String title = "", artist = "";
     private long pos = 0, dur = 0;
     private float speed = 0f;
@@ -67,6 +85,7 @@ public class MediaService extends Service {
             metaChanged = !t.equals(title) || !ar.equals(artist) || d != dur || !ns.equals(state);
             state = ns;
             playing = "playing".equals(ns) || "buffering".equals(ns);
+            holdWake(playing);
             title = t; artist = ar; dur = d;
             pos = i.getLongExtra("pos", 0);
             buffered = i.getLongExtra("buf", 0);
@@ -80,6 +99,7 @@ public class MediaService extends Service {
 
     private void clearSession() {
         playing = false;
+        holdWake(false);
         MediaWidgetProvider.savePlaybackState(this, false, "", "", "", 0);
         QueueWidgetProvider.clearQueue(this);
         LyricsWidgetProvider.clearLyrics(this);

@@ -72,6 +72,10 @@
     {
       "content": "Chọn thiết bị đầu ra (Android): hiện bảng xoay vòng, xin quyền \"Thiết bị ở gần\" rồi liệt kê cả tai nghe Bluetooth; thiếu quyền thì có nút mở trang cấp quyền",
       "icon": "bluetooth_audio"
+    },
+    {
+      "content": "Tối ưu chạy nền & tốc độ mở app: giữ CPU thức khi phát nhạc lúc tắt màn hình, ngừng vẽ giao diện và quét ảnh bìa khi ở nền, nạp ít thành phần giao diện hơn và hoãn tác vụ nền sau khi mở",
+      "icon": "bolt"
     }
   ],
   "en": [
@@ -146,6 +150,10 @@
     {
       "content": "Output device picker (Android): shows a loading sheet, asks for the \"Nearby devices\" permission, then lists Bluetooth headphones too; if denied there is a button to open permission settings",
       "icon": "bluetooth_audio"
+    },
+    {
+      "content": "Background & startup performance: keeps the CPU awake while playing with the screen off, stops UI drawing and cover scanning in the background, loads fewer UI components and defers background tasks after launch",
+      "icon": "bolt"
     }
   ]
 }
