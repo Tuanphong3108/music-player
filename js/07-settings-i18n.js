@@ -120,9 +120,25 @@
         };
         async function loadLanguage(lang) {
             try {
-                const res = await fetch('./language/' + lang + '.lang');
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                currentLangDict = parseLangFile(await res.text());
+                // Lấy file ngôn ngữ: mạng (tối đa 3 giây) -> nếu offline/chậm thì dùng bản đã lưu trong localStorage -> cuối cùng mới dùng bảng chữ dự phòng
+                const LKEY = 'lang_cache_' + lang;
+                let langText = null;
+                try {
+                    const ac = new AbortController();
+                    const to = setTimeout(() => ac.abort(), 3000);
+                    const res = await fetch('./language/' + lang + '.lang', { signal: ac.signal });
+                    clearTimeout(to);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    langText = await res.text();
+                    try { localStorage.setItem(LKEY, langText); } catch (e) {}
+                } catch (netErr) {
+                    try { langText = localStorage.getItem(LKEY); } catch (e) {}
+                    if (!langText) {
+                        if (lang === 'en') langText = '';   // offline lần đầu: dùng EN_FALLBACK bên dưới thay vì rơi về tiếng Việt
+                        else throw netErr;
+                    }
+                }
+                currentLangDict = parseLangFile(langText);
                 if (window.IS_ANDROID_APP) {
                     // Bản Android không hỗ trợ video -> bỏ chữ "video" ở các chỗ liên quan tới thêm nhạc
                     ['topbar.addmusic', 'topbar.addmusic_file', 'topbar.addmusic_folder', 'contextmenu.add_media', 'player.load_first_prompt', 'mobile.empty_desc'].forEach(k => {

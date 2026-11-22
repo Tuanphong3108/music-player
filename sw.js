@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'media-player-';
 const LEGACY_PREFIX = 'audio-player-';   // tên cũ trước khi đổi sang Media Player, để dọn cache cũ
-const CACHE_VERSION = 'v2026_11_22_output_sheet_bt';
+const CACHE_VERSION = 'v2026_11_22_offline_lang';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
@@ -8,6 +8,8 @@ const APP_SHELL = [
   './',
   './index.html',
   './css/app.css',
+  './language/vi.lang',
+  './language/en.lang',
   './js/01-theme-fonts.js',
   './js/02-player-core.js',
   './js/03-audio-engine.js',
@@ -100,6 +102,12 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // File ngôn ngữ / changelog nạp bằng fetch() có destination rỗng -> trước đây không qua SW nên offline là hỏng (rơi về tiếng Việt)
+  if (isSameOrigin && /\.lang$/i.test(requestUrl.pathname) && requestUrl.href.startsWith(scopeUrl.href)) {
+    event.respondWith(networkFirstWithTimeout(request, 3000));
+    return;
+  }
+
   const isAllowedCdn = !isSameOrigin && CDN_HOSTS.has(requestUrl.hostname);
   if (!CACHEABLE_DESTINATIONS.has(request.destination) || (!isSameOrigin && !isAllowedCdn)) return;
 
@@ -137,6 +145,26 @@ async function staleWhileRevalidateNavigation(request) {
     statusText: 'Offline',
     headers: { 'Content-Type': 'text/plain; charset=utf-8' }
   });
+}
+
+// Ưu tiên bản mới nhất; mạng chậm/offline quá 3 giây thì trả bản đã lưu ngay
+async function networkFirstWithTimeout(request, ms) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const net = fetch(request).then(async (response) => {
+    if (response && response.ok) { try { await cache.put(request, response.clone()); } catch (e) {} }
+    return response;
+  });
+  const cachedLookup = () => caches.match(request);
+  try {
+    return await Promise.race([
+      net,
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
+    ]);
+  } catch (e) {
+    const cached = await cachedLookup();
+    if (cached) { net.catch(() => {}); return cached; }
+    try { return await net; } catch (e2) { return Response.error(); }
+  }
 }
 
 async function staleWhileRevalidateAsset(request) {
