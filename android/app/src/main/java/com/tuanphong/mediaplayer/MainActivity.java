@@ -40,10 +40,11 @@ public class MainActivity extends Activity {
     private View customView;
     private WebChromeClient.CustomViewCallback customCb;
     private ValueCallback<Uri[]> filePathCb;
-    private final Map<String, Uri> served = new HashMap<>();
-    private final Map<String, String> servedLocations = new HashMap<>();
-    private final Map<String, File> cachedMediaFiles = new HashMap<>();
-    private int nextId = 1;
+    private final Map<String, Uri> served = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, String> servedLocations = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, Long> servedAlbumIds = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, File> cachedMediaFiles = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.concurrent.atomic.AtomicInteger nextId = new java.util.concurrent.atomic.AtomicInteger(1);
     private boolean pageReady = false;
     private final List<JSONObject> pending = new ArrayList<>();
     private final android.os.Handler pingHandler = new android.os.Handler(android.os.Looper.getMainLooper());
@@ -170,13 +171,18 @@ public class MainActivity extends Activity {
             public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
                 Uri u = r.getUrl();
                 if (ASSET_HOST.equals(u.getHost()) && u.getPath() != null && u.getPath().startsWith("/f/")) {
-                    Uri src = served.get(u.getPath().substring(3));
+                    String fid = u.getPath().substring(3);
+                    Uri src = served.get(fid);
                     if (src != null) {
                         try {
-                            return serveContent(src, r.getRequestHeaders());
-                        } catch (Exception e) { /* fallthrough */ }
+                            return serveContent(src, servedLocations.get(fid), r.getRequestHeaders());
+                        } catch (Throwable e) { /* fallthrough */ }
                     }
                     return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", new HashMap<>(), null);
+                }
+                if (ASSET_HOST.equals(u.getHost()) && u.getPath() != null && u.getPath().startsWith("/art/")) {
+                    String fid = u.getPath().substring(5);
+                    return serveArtwork(fid);
                 }
                 return null;
             }
@@ -740,13 +746,82 @@ public class MainActivity extends Activity {
     }
 
 
+    /** Trả ảnh bìa của bài hát theo id (loadThumbnail API 29+ -> MediaMetadataRetriever -> albumart). */
+    private WebResourceResponse serveArtwork(String fid) {
+        Map<String, String> h = new HashMap<>();
+        h.put("Access-Control-Allow-Origin", "*");
+        h.put("Cache-Control", "public, max-age=86400");
+        Uri src = served.get(fid);
+        if (src == null) return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, null);
+        byte[] bytes = null;
+        if (Build.VERSION.SDK_INT >= 29) {
+            try {
+                android.graphics.Bitmap bmp = getContentResolver().loadThumbnail(src, new android.util.Size(512, 512), null);
+                if (bmp != null) {
+                    java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                    bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 88, bos);
+                    bytes = bos.toByteArray();
+                    bmp.recycle();
+                }
+            } catch (Throwable ignored) {}
+        }
+        if (bytes == null || bytes.length == 0) {
+            android.media.MediaMetadataRetriever mmr = null;
+            try {
+                mmr = new android.media.MediaMetadataRetriever();
+                String directPath = servedLocations.get(fid);
+                if (directPath != null && new File(directPath).canRead()) {
+                    mmr.setDataSource(directPath);
+                } else {
+                    mmr.setDataSource(this, src);
+                }
+                bytes = mmr.getEmbeddedPicture();
+            } catch (Throwable ignored) {
+            } finally {
+                if (mmr != null) { try { mmr.release(); } catch (Throwable ignored) {} }
+            }
+        }
+        if (bytes == null || bytes.length == 0) {
+            Long albId = servedAlbumIds.get(fid);
+            if (albId != null && albId > 0) {
+                try {
+                    Uri artUri = android.content.ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albId);
+                    try (InputStream in = getContentResolver().openInputStream(artUri)) {
+                        if (in != null) {
+                            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                            byte[] buf = new byte[16384];
+                            int r;
+                            while ((r = in.read(buf)) != -1) bos.write(buf, 0, r);
+                            bytes = bos.toByteArray();
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+        if (bytes != null && bytes.length > 0) {
+            h.put("Content-Length", String.valueOf(bytes.length));
+            return new WebResourceResponse("image/jpeg", null, 200, "OK", h, new java.io.ByteArrayInputStream(bytes));
+        }
+        return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, null);
+    }
+
     /** Lấy hoặc tạo bản sao cục bộ trong cache/media_stream/ để phát Range nhanh, seek chuẩn bằng RandomAccessFile và không bị mất quyền URI khi chạy nền. */
     private File ensureLocalSeekableFile(Uri src) {
-        String key = src.toString();
-        synchronized (cachedMediaFiles) {
-            File existing = cachedMediaFiles.get(key);
-            if (existing != null && existing.exists() && existing.length() > 0) return existing;
+        return ensureLocalSeekableFile(src, null);
+    }
+
+    private File ensureLocalSeekableFile(Uri src, String directPath) {
+        if (directPath != null && !directPath.isEmpty()) {
+            try {
+                File direct = new File(directPath);
+                if (direct.exists() && direct.isFile() && direct.canRead() && direct.length() > 0) {
+                    return direct;
+                }
+            } catch (Throwable ignored) {}
         }
+        String key = src.toString();
+        File existing = cachedMediaFiles.get(key);
+        if (existing != null && existing.exists() && existing.length() > 0) return existing;
         try {
             File dir = new File(getCacheDir(), "media_stream");
             if (!dir.exists()) dir.mkdirs();
@@ -763,10 +838,10 @@ public class MainActivity extends Activity {
             long expectedSize = querySize(src);
             if (outFile.exists() && outFile.length() > 0 && (expectedSize <= 0 || outFile.length() == expectedSize)) {
                 outFile.setLastModified(System.currentTimeMillis());
-                synchronized (cachedMediaFiles) { cachedMediaFiles.put(key, outFile); }
+                cachedMediaFiles.put(key, outFile);
                 return outFile;
             }
-            File tmpFile = new File(dir, hash + "_" + safeName + ".tmp");
+            File tmpFile = new File(dir, hash + "_" + System.nanoTime() + ".tmp");
             try (InputStream in = getContentResolver().openInputStream(src);
                  FileOutputStream out = new FileOutputStream(tmpFile)) {
                 if (in == null) return null;
@@ -775,17 +850,20 @@ public class MainActivity extends Activity {
                 while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
                 out.flush();
             }
-            if (outFile.exists()) outFile.delete();
-            if (tmpFile.renameTo(outFile) && outFile.length() > 0) {
-                synchronized (cachedMediaFiles) { cachedMediaFiles.put(key, outFile); }
-                return outFile;
+            if (tmpFile.exists() && tmpFile.length() > 0) {
+                if (outFile.exists()) outFile.delete();
+                if (tmpFile.renameTo(outFile) && outFile.length() > 0) {
+                    cachedMediaFiles.put(key, outFile);
+                    return outFile;
+                }
+                return tmpFile;
             }
         } catch (Throwable ignored) {}
         return null;
     }
 
     /** Phát nội dung content:// kèm hỗ trợ HTTP Range để video tua/phát theo từng đoạn, không nạp cả tệp vào RAM. */
-    private WebResourceResponse serveContent(Uri src, Map<String, String> reqHeaders) throws Exception {
+    private WebResourceResponse serveContent(Uri src, String directPath, Map<String, String> reqHeaders) throws Exception {
         String mime = getContentResolver().getType(src);
         if (mime == null || "application/octet-stream".equals(mime) || "video/*".equals(mime) || "audio/*".equals(mime)) {
             String name = displayName(src).toLowerCase();
@@ -804,7 +882,7 @@ public class MainActivity extends Activity {
         h.put("Access-Control-Allow-Origin", "*");
         h.put("Accept-Ranges", "bytes");
 
-        final File localFile = ensureLocalSeekableFile(src);
+        final File localFile = ensureLocalSeekableFile(src, directPath);
         long total = (localFile != null && localFile.exists()) ? localFile.length() : -1;
         android.content.res.AssetFileDescriptor afd = null;
         if (total <= 0) {
@@ -1041,7 +1119,7 @@ public class MainActivity extends Activity {
         for (Uri u : uris) {
             try {
                 if (isDisallowedVideoUri(u)) continue;
-                String id = String.valueOf(nextId++);
+                String id = String.valueOf(nextId.getAndIncrement());
                 String loc = resolveUriLocation(u);
                 served.put(id, u);
                 if (loc != null && !loc.isEmpty()) servedLocations.put(id, loc);
@@ -1222,7 +1300,12 @@ public class MainActivity extends Activity {
                         android.provider.MediaStore.Audio.Media.MIME_TYPE,
                         android.provider.MediaStore.Audio.Media.SIZE,
                         android.provider.MediaStore.Audio.Media.DATE_MODIFIED,
-                        android.provider.MediaStore.Audio.Media.DURATION
+                        android.provider.MediaStore.Audio.Media.DURATION,
+                        android.provider.MediaStore.Audio.Media.TITLE,
+                        android.provider.MediaStore.Audio.Media.ARTIST,
+                        android.provider.MediaStore.Audio.Media.ALBUM,
+                        android.provider.MediaStore.Audio.Media.ALBUM_ID,
+                        android.provider.MediaStore.Audio.Media.YEAR
                 };
                 String sel = (minDurMs > 0
                         ? (android.provider.MediaStore.Audio.Media.DURATION + " >= " + minDurMs)
@@ -1237,6 +1320,11 @@ public class MainActivity extends Activity {
                         int mimeCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.MIME_TYPE);
                         int sizeCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.SIZE);
                         int modCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DATE_MODIFIED);
+                        int titleCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.TITLE);
+                        int artistCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ARTIST);
+                        int albumCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ALBUM);
+                        int albumIdCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ALBUM_ID);
+                        int yearCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.YEAR);
                         while (c.moveToNext()) {
                             long audioId = c.getLong(idCol);
                             String path = dataCol >= 0 ? c.getString(dataCol) : null;
@@ -1254,16 +1342,30 @@ public class MainActivity extends Activity {
                                     || ln.endsWith(".3gp") || ln.endsWith(".avi")) continue;
 
                             Uri itemUri = android.content.ContentUris.withAppendedId(audioUri, audioId);
-                            String id = String.valueOf(nextId++);
+                            String id = String.valueOf(nextId.getAndIncrement());
                             served.put(id, itemUri);
                             servedLocations.put(id, path);
+                            long albumId = albumIdCol >= 0 ? c.getLong(albumIdCol) : -1L;
+                            if (albumId > 0) servedAlbumIds.put(id, albumId);
+
+                            String mTitle = titleCol >= 0 ? c.getString(titleCol) : "";
+                            String mArtist = artistCol >= 0 ? c.getString(artistCol) : "";
+                            String mAlbum = albumCol >= 0 ? c.getString(albumCol) : "";
+                            int mYear = yearCol >= 0 ? c.getInt(yearCol) : 0;
+                            if (mArtist == null || "<unknown>".equalsIgnoreCase(mArtist.trim())) mArtist = "";
+                            if (mAlbum == null || "<unknown>".equalsIgnoreCase(mAlbum.trim())) mAlbum = "";
 
                             JSONObject o = new JSONObject();
                             o.put("id", id);
                             o.put("location", path);
                             o.put("uri", itemUri.toString());
                             o.put("url", "https://" + ASSET_HOST + "/f/" + id);
+                            o.put("artUrl", "https://" + ASSET_HOST + "/art/" + id);
                             o.put("name", dispName);
+                            if (mTitle != null && !mTitle.trim().isEmpty()) o.put("title", mTitle.trim());
+                            if (!mArtist.trim().isEmpty()) o.put("artist", mArtist.trim());
+                            if (!mAlbum.trim().isEmpty()) o.put("album", mAlbum.trim());
+                            if (mYear > 0) o.put("year", String.valueOf(mYear));
                             String mime = mimeCol >= 0 ? c.getString(mimeCol) : "";
                             o.put("type", mime == null ? "audio/*" : mime);
                             o.put("size", sizeCol >= 0 ? c.getLong(sizeCol) : f.length());
@@ -1276,7 +1378,7 @@ public class MainActivity extends Activity {
                             String lrcKey = (parent == null ? "" : parent.toLowerCase()) + "/" + stem;
                             String lrcUriStr = lrcByStem.get(lrcKey);
                             if (lrcUriStr != null) {
-                                String lrcId = String.valueOf(nextId++);
+                                String lrcId = String.valueOf(nextId.getAndIncrement());
                                 served.put(lrcId, Uri.parse(lrcUriStr));
                                 o.put("lrcUrl", "https://" + ASSET_HOST + "/f/" + lrcId);
                             }
