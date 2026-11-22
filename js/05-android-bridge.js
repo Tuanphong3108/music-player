@@ -60,7 +60,14 @@
                         f.__nativeName = name;
                         files.push(f);
                     }
-                    if (files.length) await handleFiles(files, isLibraryBatch ? { noPlay: true } : undefined);
+                    if (files.length) {
+                        await handleFiles(files, isLibraryBatch ? { noPlay: true } : undefined);
+                        if (isLibraryBatch && document.documentElement.classList.contains('m-ui')) {
+                            if (typeof window.__syncMobileLibraryFromPlaylist === 'function') window.__syncMobileLibraryFromPlaylist();
+                            if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
+                            if (typeof window.__hydrateMobileLibraryCovers === 'function') window.__hydrateMobileLibraryCovers();
+                        }
+                    }
                 } catch (e) { console.log('native-open failed', e); }
             };
             window.__clearLibraryTracksBeforeScan = function () {
