@@ -62,6 +62,9 @@ topbar.share=Chia sẻ
 share.no_file=Chưa có tệp nào đang phát để chia sẻ
 share.unsupported=Trình duyệt này chưa hỗ trợ chia sẻ tệp
 share.failed=Không chia sẻ được tệp này
+share.locating=Đang xác định vị trí tệp...
+share.preparing=Đang chuẩn bị tệp...
+share.sharing=Đang chia sẻ...
 
 ## --- Reorder ---
 reorder.done_title=Hoàn tất
