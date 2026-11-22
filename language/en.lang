@@ -541,6 +541,7 @@ pl.scale=Scale
 pl.next_step=Next
 pl.create_btn=Create
 pl.select_songs=Select songs
+pl.files_selected={n} file(s) selected
 pl.tracks_count={n} tracks
 pl.delete_confirm=Delete playlist "{name}"?
 pl.created_toast=Created playlist "{name}"!
