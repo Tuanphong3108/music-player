@@ -401,6 +401,8 @@
                 }
                 if (mMiniPlay) {
                     const sp = mMiniPlay.querySelector('.material-symbols-rounded');
+                    const isLoading = !!(tr && (tr._metaLoading || (audio.currentSrc && !audio.ended && (audio.seeking || (!audio.paused && audio.readyState < 3) || (tr.canOpen === false && !audio.paused)))));
+                    mMiniPlay.classList.toggle('is-loading', isLoading);
                     if (sp) sp.textContent = (audio.paused || audio.ended) ? 'play_arrow' : 'pause';
                 }
                 if (mPlShuffle) mPlShuffle.classList.toggle('active', !!isShuffle);
@@ -412,7 +414,7 @@
             }
             window.__syncMobileMiniPlayer = syncMobileMiniPlayer;
 
-            ['play', 'pause', 'ended', 'loadedmetadata'].forEach(ev => audio.addEventListener(ev, syncMobileMiniPlayer));
+            ['play', 'playing', 'pause', 'ended', 'loadedmetadata', 'canplay', 'waiting', 'seeking', 'seeked', 'error', 'loadstart'].forEach(ev => audio.addEventListener(ev, syncMobileMiniPlayer));
 
             if (mLibSearch) {
                 mLibSearch.addEventListener('input', (e) => {
