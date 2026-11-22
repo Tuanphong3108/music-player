@@ -966,11 +966,20 @@
         if ('serviceWorker' in navigator) {
             const hadSwController = !!navigator.serviceWorker.controller;
             let swReloading = false;
+            let swReloadPending = false;
+            const isPlayingNow = () => { try { return !!(audio && !audio.paused && !audio.ended); } catch (e) { return false; } };
             const triggerSwReload = () => {
                 if (!hadSwController || swReloading) return;
+                // Đang phát nhạc thì không tải lại giữa chừng: đợi tới khi tạm dừng/hết bài (bản mới sẽ áp dụng ở lần mở sau nếu không kịp)
+                if (isPlayingNow()) { swReloadPending = true; return; }
                 swReloading = true;
                 location.reload();
             };
+            try {
+                audio.addEventListener('pause', () => {
+                    if (swReloadPending && !isPlayingNow()) setTimeout(() => { if (swReloadPending && !isPlayingNow()) { swReloadPending = false; triggerSwReload(); } }, 1500);
+                });
+            } catch (e) {}
             navigator.serviceWorker.addEventListener('controllerchange', triggerSwReload);
             navigator.serviceWorker.addEventListener('message', (ev) => {
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
