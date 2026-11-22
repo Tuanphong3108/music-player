@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_desc">Điều khiển phát nhạc nhanh, tiến trình phát và lời bài hát trên màn hình chính (kéo giãn để mở rộng)</string>
+    <string name="widget_desc">Widget tự co giãn theo kích thước: ảnh bìa, tên bài, tiến trình và điều khiển cơ bản</string>
+    <string name="widget_square_desc">Trình phát vuông tối giản</string>
+    <string name="widget_full_desc">Đầy đủ nút điều khiển, kèm trộn bài và lặp lại</string>
     <string name="queue_widget_label">Media Player - Hàng đợi</string>
     <string name="queue_widget_desc">Xem nhanh danh sách bài tiếp theo và chạm để phát ngay trên màn hình chính</string>
     <string name="lyrics_widget_label">Media Player - Lời bài hát</string>

@@ -29,6 +29,9 @@ import java.util.Locale;
 import java.util.Map;
 
 public class MediaWidgetProvider extends AppWidgetProvider {
+    /** 3 kiểu widget: tự co giãn 4x2 (mặc định), vuông tối giản 2x2, đầy đủ điều khiển 4x2 (có trộn bài + lặp lại). */
+    static final int V_RESPONSIVE = 0, V_SQUARE = 1, V_FULL = 2;
+    protected int variant() { return V_RESPONSIVE; }
     static final String PREFS = "media_widget_state";
     static final String ACTION_CMD = "com.tuanphong.mediaplayer.WIDGET_CMD";
     static final String EXTRA_CMD = "cmd";
@@ -36,14 +39,14 @@ public class MediaWidgetProvider extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         for (int appWidgetId : appWidgetIds) {
-            updateSingleWidget(context, appWidgetManager, appWidgetId);
+            updateSingleWidget(context, appWidgetManager, appWidgetId, variant());
         }
     }
 
     @Override
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
-        updateSingleWidget(context, appWidgetManager, appWidgetId);
+        updateSingleWidget(context, appWidgetManager, appWidgetId, variant());
     }
 
     @Override
@@ -231,29 +234,40 @@ public class MediaWidgetProvider extends AppWidgetProvider {
     static void updateAllWidgets(Context context) {
         try {
             AppWidgetManager mgr = AppWidgetManager.getInstance(context);
-            ComponentName cn = new ComponentName(context, MediaWidgetProvider.class);
-            int[] ids = mgr.getAppWidgetIds(cn);
-            if (ids == null || ids.length == 0) return;
-            for (int id : ids) {
-                updateSingleWidget(context, mgr, id);
+            Class<?>[] cls = {MediaWidgetProvider.class, MediaWidgetSquareProvider.class, MediaWidgetFullProvider.class};
+            int[] vars = {V_RESPONSIVE, V_SQUARE, V_FULL};
+            for (int k = 0; k < cls.length; k++) {
+                int[] ids = mgr.getAppWidgetIds(new ComponentName(context, cls[k]));
+                if (ids == null) continue;
+                for (int id : ids) updateSingleWidget(context, mgr, id, vars[k]);
             }
         } catch (Throwable ignored) {}
     }
 
-    private static void updateSingleWidget(Context context, AppWidgetManager mgr, int widgetId) {
-        if (Build.VERSION.SDK_INT >= 31) {
-            Map<SizeF, RemoteViews> sizeMap = new HashMap<>();
-            sizeMap.put(new SizeF(180f, 56f), buildViews(context, false));
-            sizeMap.put(new SizeF(180f, 118f), buildViews(context, true));
-            mgr.updateAppWidget(widgetId, new RemoteViews(sizeMap));
-            return;
-        }
-        Bundle opts = mgr.getAppWidgetOptions(widgetId);
-        int minH = opts != null ? opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 64) : 64;
-        mgr.updateAppWidget(widgetId, buildViews(context, minH >= 115));
+    private static void updateSingleWidget(Context context, AppWidgetManager mgr, int widgetId, int variant) {
+        try {
+            if (variant != V_RESPONSIVE) {
+                mgr.updateAppWidget(widgetId, buildViews(context, variant, false));
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= 31) {
+                Map<SizeF, RemoteViews> sizeMap = new HashMap<>();
+                sizeMap.put(new SizeF(180f, 56f), buildViews(context, V_RESPONSIVE, false));
+                sizeMap.put(new SizeF(180f, 118f), buildViews(context, V_RESPONSIVE, true));
+                mgr.updateAppWidget(widgetId, new RemoteViews(sizeMap));
+                return;
+            }
+            Bundle opts = mgr.getAppWidgetOptions(widgetId);
+            int minH = opts != null ? opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 64) : 64;
+            mgr.updateAppWidget(widgetId, buildViews(context, V_RESPONSIVE, minH >= 115));
+        } catch (Throwable ignored) {}
     }
 
-    private static RemoteViews buildViews(Context context, boolean expanded) {
+    private static RemoteViews buildViews(Context context, int variant, boolean large) {
+        final boolean square = variant == V_SQUARE;
+        final boolean full = variant == V_FULL;
+        final boolean hasText = !square;
+        final boolean hasProgress = variant == V_RESPONSIVE && large;
         SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         boolean playing = sp.getBoolean("playing", false);
         boolean shuffle = sp.getBoolean("shuffle", false);
@@ -270,18 +284,21 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         boolean isEn = "en".equalsIgnoreCase(lang);
 
         RemoteViews views = new RemoteViews(context.getPackageName(),
-                expanded ? R.layout.media_widget_expanded : R.layout.media_widget);
+                square ? R.layout.media_widget_square
+                        : full ? R.layout.media_widget_expanded
+                        : large ? R.layout.media_widget_large : R.layout.media_widget);
 
-        views.setTextViewText(R.id.widget_title, title.isEmpty() ? "Media Player" : title);
-        views.setTextViewText(R.id.widget_artist, artist.isEmpty()
-                ? (isEn ? "Tap to open player" : "Chạm để mở trình phát")
-                : artist);
-
-        if (lyric != null && !lyric.trim().isEmpty()) {
-            views.setViewVisibility(R.id.widget_lyric, View.VISIBLE);
-            views.setTextViewText(R.id.widget_lyric, lyric.trim());
-        } else {
-            views.setViewVisibility(R.id.widget_lyric, View.GONE);
+        if (hasText) {
+            views.setTextViewText(R.id.widget_title, title.isEmpty() ? "Media Player" : title);
+            views.setTextViewText(R.id.widget_artist, artist.isEmpty()
+                    ? (isEn ? "Tap to open player" : "Chạm để mở trình phát")
+                    : artist);
+            if (lyric != null && !lyric.trim().isEmpty()) {
+                views.setViewVisibility(R.id.widget_lyric, View.VISIBLE);
+                views.setTextViewText(R.id.widget_lyric, lyric.trim());
+            } else {
+                views.setViewVisibility(R.id.widget_lyric, View.GONE);
+            }
         }
 
         views.setImageViewResource(R.id.widget_play,
@@ -295,23 +312,33 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         int secondaryText = lightBg ? 0xFF49454F : 0xFFCAC4D0;
         int accentText = widgetAccent(context, lightBg ? 0xFF6750A4 : 0xFFD0BCFF);
 
-        views.setInt(R.id.widget_root, "setBackgroundColor", bgColor);
-        views.setTextColor(R.id.widget_title, primaryText);
-        views.setTextColor(R.id.widget_artist, secondaryText);
-        views.setTextColor(R.id.widget_lyric, accentText);
+        // API 31+: nhuộm nền bằng tint để giữ góc bo của drawable; thấp hơn thì đổi màu phẳng như trước
+        if (Build.VERSION.SDK_INT >= 31 && variant != V_RESPONSIVE || (Build.VERSION.SDK_INT >= 31 && large)) {
+            try { views.setColorStateList(R.id.widget_root, "setBackgroundTintList", android.content.res.ColorStateList.valueOf(bgColor)); }
+            catch (Throwable t) { views.setInt(R.id.widget_root, "setBackgroundColor", bgColor); }
+        } else {
+            views.setInt(R.id.widget_root, "setBackgroundColor", bgColor);
+        }
+        if (hasText) {
+            views.setTextColor(R.id.widget_title, primaryText);
+            views.setTextColor(R.id.widget_artist, secondaryText);
+            views.setTextColor(R.id.widget_lyric, accentText);
+        }
         views.setInt(R.id.widget_prev, "setColorFilter", primaryText);
         views.setInt(R.id.widget_next, "setColorFilter", primaryText);
 
-        if (expanded) {
+        if (hasProgress) {
             views.setTextViewText(R.id.widget_pos_time, formatTime(posMs));
             views.setTextViewText(R.id.widget_dur_time, formatTime(durMs));
             views.setTextColor(R.id.widget_pos_time, secondaryText);
             views.setTextColor(R.id.widget_dur_time, secondaryText);
             int progress = (durMs > 0) ? (int) Math.min(1000L, Math.max(0L, (posMs * 1000L) / durMs)) : 0;
             views.setProgressBar(R.id.widget_progress, 1000, progress, false);
+        }
 
+        if (full) {
             views.setInt(R.id.widget_shuffle, "setBackgroundResource",
-                    shuffle ? R.drawable.widget_ctrl_active_bg : R.drawable.widget_ctrl_btn_bg);
+                    shuffle ? R.drawable.widget_pill_active_bg : R.drawable.widget_pill_bg);
             views.setInt(R.id.widget_shuffle, "setColorFilter", shuffle ? accentText : primaryText);
             if (hasWidgetColors(context) && Build.VERSION.SDK_INT >= 31) {
                 try {
@@ -323,7 +350,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             views.setImageViewResource(R.id.widget_repeat,
                     repeatMode == 2 ? R.drawable.ic_widget_repeat_one : R.drawable.ic_widget_repeat);
             views.setInt(R.id.widget_repeat, "setBackgroundResource",
-                    repeatMode > 0 ? R.drawable.widget_ctrl_active_bg : R.drawable.widget_ctrl_btn_bg);
+                    repeatMode > 0 ? R.drawable.widget_pill_active_bg : R.drawable.widget_pill_bg);
             views.setInt(R.id.widget_repeat, "setColorFilter", repeatMode > 0 ? accentText : primaryText);
         }
 
@@ -348,8 +375,8 @@ public class MediaWidgetProvider extends AppWidgetProvider {
                 PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
         views.setOnClickPendingIntent(R.id.widget_root, openPi);
         views.setOnClickPendingIntent(R.id.widget_art_box, openPi);
-        if (expanded) {
-            views.setOnClickPendingIntent(R.id.widget_meta_box, openPi);
+        if (large || full) views.setOnClickPendingIntent(R.id.widget_meta_box, openPi);
+        if (full) {
             views.setOnClickPendingIntent(R.id.widget_shuffle, buildCmdPendingIntent(context, "shuffle", 104));
             views.setOnClickPendingIntent(R.id.widget_repeat, buildCmdPendingIntent(context, "repeat", 105));
         }

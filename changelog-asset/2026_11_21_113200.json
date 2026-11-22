@@ -76,6 +76,10 @@
     {
       "content": "Tối ưu chạy nền & tốc độ mở app: giữ CPU thức khi phát nhạc lúc tắt màn hình, ngừng vẽ giao diện và quét ảnh bìa khi ở nền, nạp ít thành phần giao diện hơn và hoãn tác vụ nền sau khi mở",
       "icon": "bolt"
+    },
+    {
+      "content": "Widget mới: Vuông tối giản 2×2, Tự co giãn 4×2 và Đầy đủ điều khiển 4×2 (có trộn bài, lặp lại); quay lại app tự phục hồi trang thay vì báo \"Trang không phản hồi\"",
+      "icon": "widgets"
     }
   ],
   "en": [
@@ -154,6 +158,10 @@
     {
       "content": "Background & startup performance: keeps the CPU awake while playing with the screen off, stops UI drawing and cover scanning in the background, loads fewer UI components and defers background tasks after launch",
       "icon": "bolt"
+    },
+    {
+      "content": "New widgets: Minimal square 2×2, Responsive 4×2 and Full controls 4×2 (shuffle, repeat); returning to the app now self-recovers the page instead of showing \"Page not responding\"",
+      "icon": "widgets"
     }
   ]
 }

@@ -75,9 +75,12 @@ public class MainActivity extends Activity {
     };
     private final Runnable pingTimeoutRunnable = () -> {
         if (appLeftHome || pageResponded) return;
+        // Quay lại app mà trang không trả lời ping: tự tải lại trước (tối đa 2 lần), chỉ hiện "Trang không phản hồi" khi vẫn không được
+        if (autoRecoveries < 2) { autoRecoveries++; recoverPage(); return; }
         onWatchdogTimeout();
     };
     private static final long AUTO_RELOAD_TIMEOUT_MS = 15000L;
+    private static final long PING_TIMEOUT_MS = 4000L;   // quay lại app: chờ phản hồi ngắn rồi tự phục hồi
 
     /** Quá thời gian chờ mà trang không phản hồi: hiển thị trực tiếp màn hình "Trang không phản hồi". */
     private void onWatchdogTimeout() {
@@ -102,7 +105,7 @@ public class MainActivity extends Activity {
                 boolean ok = "true".equals(value);
                 if (ok) return;
                 pageResponded = false;
-                showUnresponsiveDialog();
+                if (autoRecoveries < 2) { autoRecoveries++; recoverPage(); } else showUnresponsiveDialog();
             });
         } catch (Throwable ignored) {}
     }
@@ -370,7 +373,7 @@ public class MainActivity extends Activity {
                 if (url.startsWith("https://tuanphong3108.github.io/")) {
                     pageReady = true;
                     flushPending();
-                    scheduleBlankCheck(AUTO_RELOAD_TIMEOUT_MS);
+                    scheduleBlankCheck(5000L);
                     if (!appLeftHome && !pageResponded) sendHandshakePing();
                 } else {
                     pageReady = false;
@@ -735,7 +738,7 @@ public class MainActivity extends Activity {
         if (appLeftHome || pageResponded || hangAlertShown) return;
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
-        pingHandler.postDelayed(pingTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
+        pingHandler.postDelayed(pingTimeoutRunnable, PING_TIMEOUT_MS);
         callJs("window.__androidPing&&window.__androidPing()");
     }
 
@@ -801,7 +804,7 @@ public class MainActivity extends Activity {
                 showMd3LoadingOverlay();
                 pingHandler.removeCallbacks(loadTimeoutRunnable);
                 pingHandler.removeCallbacks(pingTimeoutRunnable);
-                pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
+                pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, pageReady ? PING_TIMEOUT_MS : AUTO_RELOAD_TIMEOUT_MS);
                 if (pageReady) callJs("window.__androidPing&&window.__androidPing()");
             });
             android.widget.LinearLayout.LayoutParams waitLp = new android.widget.LinearLayout.LayoutParams(
@@ -2076,19 +2079,19 @@ public class MainActivity extends Activity {
         }
         appLeftHome = false;
         try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Throwable ignored) {}
-        scheduleBlankCheck(AUTO_RELOAD_TIMEOUT_MS);
+        scheduleBlankCheck(5000L);
         if (pageResponded && pageReady && !hangAlertShown) {
             // Trang từng chạy bình thường: kiểm tra lại sau khi quay về từ nền (có thể đã bị đóng băng)
             pageResponded = false;
             autoRecoveries = 0;
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
-            pingHandler.postDelayed(pingTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
+            pingHandler.postDelayed(pingTimeoutRunnable, PING_TIMEOUT_MS);
             callJs("window.__androidPing&&window.__androidPing()");
         } else if (!pageResponded && !hangAlertShown) {
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
-            pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
+            pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, pageReady ? PING_TIMEOUT_MS : AUTO_RELOAD_TIMEOUT_MS);
             if (pageReady) sendHandshakePing();
         }
         callJs("window.__systemAccentChanged&&__systemAccentChanged()");
