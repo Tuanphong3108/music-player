@@ -2073,6 +2073,7 @@
         <div class="m-empty-t" data-i18n="mobile.empty_title">Chưa có gì để phát</div>
         <div class="m-empty-d" data-i18n="mobile.empty_desc">Thêm nhạc hoặc video từ thiết bị để bắt đầu nghe.</div></div>
     <div id="st-sheet"><div class="st-sheet-box"><div class="st-sheet-grip"></div><div class="st-sheet-title"></div><div class="st-sheet-list" style="display:flex;flex-direction:column;gap:2px;"></div></div></div>
+    <div id="share-sheet" role="dialog" aria-modal="true" aria-live="polite"><div class="share-sheet-box"><md-circular-progress indeterminate style="--md-circular-progress-size: 40px;"></md-circular-progress><div id="share-sheet-text">Đang xác định vị trí tệp...</div></div></div>
     <div id="settings-overlay" class="cl-overlay" style="align-items: stretch; justify-content: stretch;">
         <div id="settings-dialog" class="cl-dialog" style="width: var(--vw); max-width: var(--vw); height: var(--vh); max-height: var(--vh); border-radius: 0;">
             <div class="cl-header" id="settings-header" style="padding: 16px 32px; gap: 16px;">
@@ -5146,27 +5147,78 @@
             ];
         });
         // Chia sẻ tệp đang phát qua Web Share (nút Share trên thanh trên và mục trong menu chuột phải)
+        const shareSheetEl = document.getElementById('share-sheet');
+        const shareSheetTextEl = document.getElementById('share-sheet-text');
+        let shareSheetCloseTimer = null;
+        function setShareSheetStep(step) {
+            if (!shareSheetEl || !shareSheetTextEl) return;
+            const map = {
+                locating: ['share.locating', 'Đang xác định vị trí tệp...'],
+                preparing: ['share.preparing', 'Đang chuẩn bị tệp...'],
+                sharing: ['share.sharing', 'Đang chia sẻ...']
+            };
+            const item = map[step];
+            shareSheetTextEl.textContent = item ? tr2(item[0], item[1]) : String(step || '');
+        }
+        function openShareSheet(step) {
+            if (!shareSheetEl) return;
+            clearTimeout(shareSheetCloseTimer);
+            setShareSheetStep(step || 'locating');
+            shareSheetEl.classList.add('open');
+            requestAnimationFrame(() => requestAnimationFrame(() => shareSheetEl.classList.add('show')));
+        }
+        function closeShareSheet() {
+            if (!shareSheetEl) return;
+            clearTimeout(shareSheetCloseTimer);
+            shareSheetEl.classList.remove('show');
+            shareSheetCloseTimer = setTimeout(() => shareSheetEl.classList.remove('open'), 300);
+        }
+        window.__onAndroidShareStatus = function (status) {
+            if (!status) return;
+            if (status === 'done' || status === 'error') {
+                closeShareSheet();
+                return;
+            }
+            setShareSheetStep(status);
+        };
+
         async function shareCurrentFile() {
             const track = playlist[currentIndex];
             if (!track || !track.file) { showToast(tr2('share.no_file', 'Chưa có tệp nào đang phát để chia sẻ'), 'share'); return; }
+            const isMobileUI = document.documentElement.classList.contains('m-ui');
             try {
                 const data = { files: [track.file], title: track.name || track.file.name };
                 if (window.AndroidBridge && AndroidBridge.shareChunk) {
+                    if (isMobileUI) openShareSheet('locating');
+                    await new Promise(r => setTimeout(r, 80));
                     // WebView không có navigator.share cho file → gửi từng khúc base64 sang app native rồi mở khung chia sẻ Android
                     const f = track.file, CH = 768 * 1024;
                     const sid = String(Date.now());
+                    if (isMobileUI) setShareSheetStep('preparing');
                     for (let o = 0; o < f.size || o === 0; o += CH) {
                         const buf = new Uint8Array(await f.slice(o, o + CH).arrayBuffer());
                         let bin = ''; for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
                         const err = AndroidBridge.shareChunk(sid, btoa(bin), o + CH >= f.size, f.name || 'media', f.type || '');
-                        if (err) { showToast('Chia sẻ lỗi: ' + err, 'error'); return; }
+                        if (err) {
+                            if (isMobileUI) closeShareSheet();
+                            showToast('Chia sẻ lỗi: ' + err, 'error');
+                            return;
+                        }
                         if (f.size === 0) break;
                     }
                     return;
                 }
-                if (navigator.canShare && navigator.canShare(data)) await navigator.share(data);
-                else showToast(tr2('share.unsupported', 'Trình duyệt này chưa hỗ trợ chia sẻ tệp'), 'share');
+                if (navigator.canShare && navigator.canShare(data)) {
+                    if (isMobileUI) openShareSheet('preparing');
+                    try {
+                        if (isMobileUI) setShareSheetStep('sharing');
+                        await navigator.share(data);
+                    } finally {
+                        if (isMobileUI) closeShareSheet();
+                    }
+                } else showToast(tr2('share.unsupported', 'Trình duyệt này chưa hỗ trợ chia sẻ tệp'), 'share');
             } catch (e) {
+                if (isMobileUI) closeShareSheet();
                 if (e && e.name !== 'AbortError') showToast(tr2('share.failed', 'Không chia sẻ được tệp này') + (window.AndroidBridge ? ' (' + e + ')' : ''), 'error');
             }
         }
@@ -7485,6 +7537,10 @@
             const handleBackNavigation = function () {
                 try {
                     if (document.body.classList.contains('screen-animating')) {
+                        return true;
+                    }
+                    const shareSheet = document.getElementById('share-sheet');
+                    if (shareSheet && (shareSheet.classList.contains('open') || shareSheet.classList.contains('show'))) {
                         return true;
                     }
                     // Dialog của Material Web (md-dialog) nằm trong top layer nên luôn nằm trên mọi thứ khác -> đóng trước
