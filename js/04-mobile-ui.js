@@ -1011,7 +1011,13 @@
                     const priIco = document.getElementById('plc-primary-ico');
                     const priTxt = document.getElementById('plc-primary-txt');
 
-                    if (titleEl) titleEl.textContent = plc.mode === 'smart' ? tr2('pl.new_smart_title', 'Danh sách phát thông minh') : tr2('pl.new_title', 'Danh sách phát mới');
+                    if (titleEl) {
+                        if (plc.mode === 'manual' && plc.step === 1 && plc.pickedKeys.size > 0) {
+                            titleEl.textContent = tr2('pl.files_selected', '{n} file(s) selected').replace('{n}', String(plc.pickedKeys.size));
+                        } else {
+                            titleEl.textContent = plc.mode === 'smart' ? tr2('pl.new_smart_title', 'Danh sách phát thông minh') : tr2('pl.new_title', 'Danh sách phát mới');
+                        }
+                    }
                     document.getElementById('plc-mode-manual')?.classList.toggle('sel', plc.mode === 'manual');
                     document.getElementById('plc-mode-smart')?.classList.toggle('sel', plc.mode === 'smart');
                     const mChk = document.querySelector('#plc-mode-manual .material-symbols-rounded');
