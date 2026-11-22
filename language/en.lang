@@ -62,6 +62,9 @@ topbar.share=Share
 share.no_file=No file is playing to share
 share.unsupported=This browser does not support sharing files
 share.failed=Could not share this file
+share.locating=Locating file...
+share.preparing=Preparing file...
+share.sharing=Sharing...
 
 ## --- Reorder ---
 reorder.done_title=Done
