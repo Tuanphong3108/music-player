@@ -9882,7 +9882,7 @@
                     // (đường thẳng), = 1 ở giữa; tạm dừng thì cũng về 0. Biên độ chuyển dần (không nhảy) giữa thẳng <-> sóng.
                     const mn = +slider.min || 0, mx = +slider.max || 100;
                     const prog = Math.min(1, Math.max(0, ((+slider.value) - mn) / ((mx - mn) || 1)));
-                    const wavy = prog > 0.1 && prog < 0.95;
+                    const wavy = prog > 0.05 && prog < 0.98;
                     const target = (!audio.paused && !audio.ended && !reduce && wavy) ? 1 : 0;
                     amp += (target - amp) * (1 - Math.exp(-dt / 140));      // giảm/tăng dần về 0 <-> 1
                     if (Math.abs(target - amp) < 0.004) amp = target;

@@ -154,7 +154,7 @@
       "icon": "speed"
     },
     {
-      "content": "Sóng trên thanh seek chạy ngược chiều và theo đúng Material 3 Expressive: thẳng ở ≤10% và ≥95% tiến trình, sóng ở giữa, chuyển mượt giữa thẳng và sóng",
+      "content": "Sóng trên thanh seek chạy ngược chiều và theo đúng Material 3 Expressive: thẳng ở ≤5% và ≥98% tiến trình, sóng ở giữa, chuyển mượt giữa thẳng và sóng",
       "icon": "waves"
     },
     {
@@ -316,7 +316,7 @@
       "icon": "speed"
     },
     {
-      "content": "Seek-bar wave now travels the opposite way and follows Material 3 Expressive: flat at ≤10% and ≥95% progress, wavy in between, with smooth transitions",
+      "content": "Seek-bar wave now travels the opposite way and follows Material 3 Expressive: flat at ≤5% and ≥98% progress, wavy in between, with smooth transitions",
       "icon": "waves"
     },
     {
