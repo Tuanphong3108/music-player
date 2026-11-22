@@ -5477,6 +5477,7 @@
                 const videoFile = isVideoFile(file);
                 if (videoFile && !cover && !file.__nativeUrl && !window.IS_ANDROID_APP) cover = await captureVideoFrame(url);
                 if (videoFile && !lyricsRaw) lyricsRaw = loadVideoSubtitle(file);
+                if (!lyricsRaw && file.__nativeLrcText) lyricsRaw = file.__nativeLrcText;
 
                 const existingIndex = playlist.findIndex(t => 
                     t.name.toLowerCase() === title.toLowerCase() && 
@@ -7511,6 +7512,7 @@
                 try {
                     const files = [];
                     const disallowVideoOnAndroid = !!(window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || document.documentElement.classList.contains('is-android-app'));
+                    const isLibraryBatch = Array.isArray(list) && list.length > 0 && list.every(x => x && x.fromLibrary);
                     for (const it of list || []) {
                         const name = it.name || 'media';
                         const ext = (name.match(/\.([^.]+)$/) || ['', ''])[1].toLowerCase();
@@ -7527,6 +7529,28 @@
                             files.push(f);
                             continue;
                         }
+                        if (it.fromLibrary && it.url) {
+                            // Tệp quét từ thư viện thiết bị: dùng URL stream trực tiếp để khởi động nhanh và không ngốn RAM trên máy 4GB
+                            const size = Number(it.size) || 0;
+                            const f = new File([], name, { type: it.type || 'audio/mpeg', lastModified: it.modified || Date.now() });
+                            Object.defineProperty(f, 'size', { get: () => size });
+                            f.__nativeUrl = it.url;
+                            f.__nativeId = it.id || ((it.url || '').match(/\/f\/([^/?#]+)/) || [])[1] || null;
+                            f.__nativeLocation = it.location || it.uri || '';
+                            f.__nativeName = name;
+                            f.__fromLibrary = true;
+                            const part = async (a, b) => (await fetch(it.url, { headers: { Range: 'bytes=' + a + '-' + (Math.min(b, size) - 1) } })).arrayBuffer();
+                            f.slice = (a = 0, b = size) => ({ arrayBuffer: () => part(a, b), size: Math.max(0, Math.min(b, size) - a) });
+                            f.arrayBuffer = () => (await fetch(it.url)).arrayBuffer();
+                            if (it.lrcUrl) {
+                                try {
+                                    const lr = await fetch(it.lrcUrl);
+                                    if (lr.ok) f.__nativeLrcText = await lr.text();
+                                } catch (e) {}
+                            }
+                            files.push(f);
+                            continue;
+                        }
                         const r = await fetch(it.url);
                         const b = await r.blob();
                         const f = new File([b], name, { type: it.type || b.type || '' });
@@ -7535,9 +7559,53 @@
                         f.__nativeName = name;
                         files.push(f);
                     }
-                    if (files.length) handleFiles(files);
+                    if (files.length) await handleFiles(files, isLibraryBatch ? { noPlay: true } : undefined);
                 } catch (e) { console.log('native-open failed', e); }
             };
+            window.__clearLibraryTracksBeforeScan = function () {
+                try {
+                    for (let i = playlist.length - 1; i >= 0; i--) {
+                        const tr = playlist[i];
+                        if (tr && tr.file && tr.file.__fromLibrary && i !== currentIndex) {
+                            if (tr.url && tr.url.startsWith('blob:')) URL.revokeObjectURL(tr.url);
+                            playlist.splice(i, 1);
+                            if (currentIndex > i) currentIndex--;
+                        }
+                    }
+                    if (shuffleInitialized) generateShuffleOrder();
+                    updatePlaylistUI();
+                } catch (e) {}
+            };
+            window.__onAndroidPermissionsUpdated = function (info) {
+                try {
+                    const w = gettingStartedIframe && gettingStartedIframe.contentWindow;
+                    if (w && w.__gsOnPermissionsUpdated) w.__gsOnPermissionsUpdated(info);
+                } catch (e) {}
+            };
+            window.__onAndroidLibraryScanDone = function (count, missingPerm) {
+                try {
+                    if (missingPerm) return;
+                    if (count > 0 && currentIndex === -1 && playlist.length > 0 && !audio.src) {
+                        // Nạp sẵn thông tin bài đầu tiên ở trạng thái tạm dừng (không tự bật nhạc ngoài ý muốn)
+                        const first = playlist[0];
+                        currentIndex = 0;
+                        audio.src = first.url;
+                        trackNameEl.innerText = first.name;
+                        trackArtistEl.innerText = `${first.artist} | ${first.ext}`;
+                        updatePlaylistUI();
+                        updateFsUI();
+                    }
+                } catch (e) {}
+            };
+            if (window.IS_ANDROID_APP && AB && typeof AB.scanAllDeviceAudio === 'function') {
+                setTimeout(() => {
+                    try {
+                        if (gsStore.get('getting_started_done') === 'true') {
+                            AB.scanAllDeviceAudio(false);
+                        }
+                    } catch (e) {}
+                }, 600);
+            }
             window.__nativeCmd = function (c) {
                 if (c.startsWith('seek:')) { audio.currentTime = parseFloat(c.slice(5)) / 1000; return; }
                 if (c.startsWith('play_index:')) {
@@ -7574,6 +7642,13 @@
                     }
                     const shareSheet = document.getElementById('share-sheet');
                     if (shareSheet && (shareSheet.classList.contains('open') || shareSheet.classList.contains('show'))) {
+                        return true;
+                    }
+                    if (gettingStartedOverlay && gettingStartedOverlay.style.display === 'block') {
+                        try {
+                            const gw = gettingStartedIframe && gettingStartedIframe.contentWindow;
+                            if (gw && typeof gw.__gsAndroidBack === 'function' && gw.__gsAndroidBack()) return true;
+                        } catch (e) {}
                         return true;
                     }
                     // Dialog của Material Web (md-dialog) nằm trong top layer nên luôn nằm trên mọi thứ khác -> đóng trước
@@ -9107,6 +9182,9 @@
                     gsStore.set('getting_started_done', 'true');
                     gsStore.del('getting_started_pending');
                     closeGettingStarted();
+                    if (d.settings && d.settings.scanLibrary && window.AndroidBridge && typeof window.AndroidBridge.scanAllDeviceAudio === 'function') {
+                        try { window.AndroidBridge.scanAllDeviceAudio(true); } catch (err) {}
+                    }
                 }
                 return;
             }
