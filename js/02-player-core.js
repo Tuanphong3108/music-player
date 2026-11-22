@@ -1450,7 +1450,7 @@
                                     changed = true;
                                 }
                             }
-                            if (changed && currentIndex === index) {
+                            if (changed && playlist[currentIndex] === track) {
                                 trackNameEl.innerText = track.name;
                                 trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
                                 if (track.cover) {
@@ -1485,7 +1485,7 @@
                 const res = await fetch(track.nativeStreamUrl);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const blob = await res.blob();
-                if (seq !== libraryPlaySeq || currentIndex !== index) return;
+                if (seq !== libraryPlaySeq || playlist[currentIndex] !== track) return;
                 const realFile = new File([blob], track.nativeName || (track.name + '.' + (track.ext || 'mp3').toLowerCase()), {
                     type: blob.type || (track.file && track.file.type) || 'audio/mpeg',
                     lastModified: (track.file && track.file.lastModified) || Date.now()
@@ -1512,13 +1512,13 @@
                             if (txt && !track.lyricsRaw) {
                                 track.lyricsRaw = txt;
                                 track.lyrics = parseLRC(txt);
-                                if (currentIndex === index) { renderLyrics(); updatePlaylistUI(); }
+                                if (playlist[currentIndex] === track) { renderLyrics(); updatePlaylistUI(); }
                             }
                         }).catch(() => {});
                     }
                 }
             } catch (err) {
-                if (seq === libraryPlaySeq && currentIndex === index) {
+                if (seq === libraryPlaySeq && playlist[currentIndex] === track) {
                     setPlayBtnLoading(false);
                     audio.src = track.nativeStreamUrl;
                     audio.play().catch(() => {});
@@ -1544,7 +1544,7 @@
             if (isDirectLibStream) {
                 const onStreamErr = () => {
                     audio.removeEventListener('error', onStreamErr);
-                    if (mySeq !== libraryPlaySeq || currentIndex !== index || track._blobFallbackTried) return;
+                    if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track || track._blobFallbackTried) return;
                     track._blobFallbackTried = true;
                     hydrateAndPlayLibraryTrack(track, index, mySeq);
                 };
@@ -1553,12 +1553,12 @@
                     track._tagsHydrated = true;
                     // Stream trực tiếp không đi qua blob -> đọc thẻ nhúng (lyric, cover...) riêng ở nền, sau khi nhạc đã bắt đầu phát
                     setTimeout(() => {
-                        if (mySeq !== libraryPlaySeq || currentIndex !== index) return;
+                        if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track) return;
                         const viaRange = () => {
                             fetch(track.nativeStreamUrl, { headers: { Range: 'bytes=0-3145727' } })
                                 .then(r => r.ok ? r.blob() : null)
                                 .then(bl => {
-                                    if (!bl || currentIndex !== index) return;
+                                    if (!bl || playlist[currentIndex] !== track) return;
                                     const f = new File([bl], track.nativeName || (track.name + '.' + (track.ext || 'mp3').toLowerCase()), { type: bl.type || 'audio/mpeg' });
                                     hydrateTrackTags(track, index, f);
                                 }).catch(() => {});
@@ -1573,7 +1573,7 @@
                             if (txt && !track.lyricsRaw) {
                                 track.lyricsRaw = txt;
                                 track.lyrics = parseLRC(txt);
-                                if (currentIndex === index) { renderLyrics(); updatePlaylistUI(); }
+                                if (playlist[currentIndex] === track) { renderLyrics(); updatePlaylistUI(); }
                             }
                         }).catch(() => {});
                     }, 200);
