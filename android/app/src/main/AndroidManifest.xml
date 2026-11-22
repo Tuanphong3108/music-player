@@ -18,6 +18,7 @@
         android:usesCleartextTraffic="false"
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="true"
+        android:hardwareAccelerated="true"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
 
         <activity

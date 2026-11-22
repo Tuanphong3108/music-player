@@ -130,6 +130,13 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setAllowContentAccess(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // Giảm tải khởi động trên máy yếu: bỏ kiểm tra Safe Browsing mỗi lần tải, tắt zoom, nâng ưu tiên tiến trình hiển thị, bật tăng tốc phần cứng
+        if (Build.VERSION.SDK_INT >= 26) { try { s.setSafeBrowsingEnabled(false); } catch (Throwable ignored) {} }
+        s.setSupportZoom(false);
+        s.setBuiltInZoomControls(false);
+        s.setSaveFormData(false);
+        web.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        if (Build.VERSION.SDK_INT >= 26) { try { web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false); } catch (Throwable ignored) {} }
         s.setUserAgentString(s.getUserAgentString() + " MediaPlayerApp/1.0");
         web.addJavascriptInterface(new Bridge(), "AndroidBridge");
 
@@ -236,7 +243,7 @@ public class MainActivity extends Activity {
         if (b != null) web.restoreState(b);
         else web.loadUrl(isOnline() ? APP_URL : APP_URL); // SW của trang tự phục vụ offline; lỗi thì rơi về offline.html
         appLang = getSharedPreferences("app", MODE_PRIVATE).getString("lang", "vi");
-        ensureGoogleSansFlexLoaded();
+        pingHandler.post(this::ensureGoogleSansFlexLoaded);   // không chặn luồng giao diện lúc khởi động
         armLoadWatchdog();
         handleIntent(getIntent());
     }

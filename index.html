@@ -406,6 +406,11 @@
         @keyframes songIn { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .song-item.song-exit { transition: transform .28s cubic-bezier(.4,0,1,1), opacity .28s ease !important; transform: scale(.3) !important; opacity: 0; pointer-events: none; }
         html.reduce-motion .song-item.song-enter { animation: none; }
+        /* Tối ưu cho máy yếu (giao diện điện thoại): bỏ blur toàn màn hình ở lớp phủ, giảm bán kính blur nền, chỉ vẽ các dòng playlist đang nhìn thấy */
+        html.m-ui .cl-overlay { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(0,0,0,0.55); }
+        html.m-ui .bg-thumb-preview { filter: blur(32px) brightness(0.4); transform: translateZ(0); }
+        html.m-ui .song-item { content-visibility: auto; contain-intrinsic-size: auto 64px; }
+        html.m-ui .song-item:hover { transform: none; }
         .song-item.active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
         .song-item .song-more-btn {
             width: 34px; height: 34px; flex-shrink: 0; margin-left: auto;
@@ -3843,6 +3848,11 @@
             // Chuyển từ 2 công tắc cũ: "Nâng cao" = Hiệu năng tối đa; "Giảm chuyển động" = tắt riêng chuyển động
             if (localStorage.getItem('settings_reduce_effects') === 'true') return Object.assign({}, PERF_PRESETS.max);
             if (localStorage.getItem('settings_reduce_motion') === 'true') return Object.assign({}, PERF_PRESETS.default, { motion: false });
+            // Máy yếu (RAM ≤ 4GB hoặc ít nhân CPU) và chưa từng chỉnh: mặc định tắt kính mờ cho nhẹ; người dùng vẫn đổi lại được trong Cài đặt
+            try {
+                const mem = navigator.deviceMemory, cores = navigator.hardwareConcurrency;
+                if ((mem && mem <= 4) || (cores && cores <= 4)) return Object.assign({}, PERF_PRESETS.balanced);
+            } catch (e) {}
             return Object.assign({}, PERF_PRESETS.default);
         }
         function perfPresetOf(p) {
@@ -9277,7 +9287,8 @@
             if (clAllIds.length) clSaveSeen(clAllIds, clAllHashes);
             clApplyDots();
         }
-        clCheckNew();
+        // Hoãn việc kiểm tra changelog tới lúc rảnh để không tranh tài nguyên với lúc khởi động
+        (window.requestIdleCallback ? (fn) => requestIdleCallback(fn, { timeout: 8000 }) : (fn) => setTimeout(fn, 4000))(() => setTimeout(clCheckNew, 2500));
         document.addEventListener('visibilitychange', () => { if (!document.hidden) clCheckNew(); });
 
         // 3 "trang" dùng chung 1 dialog, điều hướng giữa chúng qua postMessage từ bên
