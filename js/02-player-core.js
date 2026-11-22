@@ -1439,6 +1439,17 @@
                                 track._hasRealCover = true;
                                 changed = true;
                             }
+                            if (tag.tags.picture) {
+                                const { data, format } = tag.tags.picture;
+                                let bin = '';
+                                for (let i = 0; i < data.length; i++) bin += String.fromCharCode(data[i]);
+                                const picUrl = `data:${format};base64,${window.btoa(bin)}`;
+                                if (track.cover !== picUrl) {
+                                    track.cover = picUrl;
+                                    track._hasRealCover = true;
+                                    changed = true;
+                                }
+                            }
                             if (changed && currentIndex === index) {
                                 trackNameEl.innerText = track.name;
                                 trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
@@ -1538,7 +1549,7 @@
                     hydrateAndPlayLibraryTrack(track, index, mySeq);
                 };
                 audio.addEventListener('error', onStreamErr, { once: true });
-                if (!track._tagsHydrated) {
+                if (!track._tagsHydrated || !track._hasRealCover) {
                     track._tagsHydrated = true;
                     // Stream trực tiếp không đi qua blob -> đọc thẻ nhúng (lyric, cover...) riêng ở nền, sau khi nhạc đã bắt đầu phát
                     setTimeout(() => {
@@ -1553,7 +1564,7 @@
                                 }).catch(() => {});
                         };
                         try { hydrateTrackTags(track, index, track.nativeStreamUrl, viaRange); } catch (e) { viaRange(); }
-                    }, 600);
+                    }, 300);
                 }
                 if (track.nativeLrcUrl && !track.lyricsRaw && !track._lrcTried) {
                     track._lrcTried = true;
