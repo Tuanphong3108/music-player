@@ -1857,6 +1857,7 @@
         }
         html.m-ui .m-lib-art {
             width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0; overflow: hidden;
+            position: relative;
             background: color-mix(in srgb, var(--md-sys-color-primary) 16%, var(--md-sys-color-surface));
             color: var(--md-sys-color-primary); display: grid; place-items: center;
         }
@@ -1864,7 +1865,117 @@
             background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 14%, transparent);
             color: var(--md-sys-color-on-primary-container);
         }
-        html.m-ui .m-lib-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        html.m-ui .m-lib-art img, html.m-ui .m-mini-art img {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+            opacity: 0; transition: opacity .18s ease;
+        }
+        html.m-ui .m-lib-art img.loaded, html.m-ui .m-mini-art img.loaded { opacity: 1; }
+        html.m-ui .m-lib-tabs {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 2px 0 4px;
+        }
+        html.m-ui .m-lib-tab {
+            height: 36px; padding: 0 18px; border: none; border-radius: 999px; cursor: pointer;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-on-surface-variant);
+            font-family: var(--app-font); font-size: calc(13px * var(--font-scale-factor, 1)); font-weight: 700;
+            letter-spacing: .3px; text-transform: uppercase;
+            transition: background .2s, color .2s, transform .15s;
+        }
+        html.m-ui .m-lib-tab.active {
+            background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+        }
+        html.m-ui .m-lib-tab:active { transform: scale(.96); }
+        html.m-ui .m-lib-pane { display: none; flex-direction: column; flex: 1; min-height: 0; gap: 10px; }
+        html.m-ui .m-lib-pane.active { display: flex; }
+        html.m-ui .m-pl-empty {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; gap: 8px; padding: 28px 24px; color: var(--md-sys-color-on-surface);
+        }
+        html.m-ui .m-pl-empty .material-symbols-rounded { font-size: 40px; opacity: .55; margin-bottom: 4px; }
+        html.m-ui .m-pl-empty h4 { margin: 0; font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 800; }
+        html.m-ui .m-pl-empty p { margin: 0; font-size: calc(13px * var(--font-scale-factor, 1)); opacity: .65; }
+        html.m-ui .m-pl-card {
+            display: flex; align-items: center; gap: 14px; padding: 10px 10px 10px 12px;
+            border-radius: 24px; cursor: pointer;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 42%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-on-surface); transition: transform .15s, background .2s;
+        }
+        html.m-ui .m-pl-card:active { transform: scale(.985); }
+        html.m-ui .m-pl-cover {
+            width: 56px; height: 56px; flex-shrink: 0; display: grid; place-items: center;
+            overflow: hidden; position: relative; border-radius: 16px;
+            background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+        }
+        html.m-ui .m-pl-detail-bar {
+            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+        }
+        html.m-ui .m-pl-detail-title {
+            flex: 1; min-width: 0; font-size: calc(17px * var(--font-scale-factor, 1)); font-weight: 800;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        /* New Playlist Creator Modal (Mobile) */
+        .plc-preview-wrap {
+            width: 148px; height: 148px; margin: 4px auto 0; display: grid; place-items: center;
+            position: relative; cursor: pointer;
+        }
+        .plc-preview-box {
+            width: 136px; height: 136px; border-radius: 28px; overflow: hidden; position: relative;
+            background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface-variant);
+            display: grid; place-items: center; transition: border-radius .25s ease, background .2s ease;
+        }
+        .plc-seg {
+            display: grid; grid-template-columns: 1fr 1fr; border-radius: 999px; overflow: hidden;
+            border: 1.5px solid var(--md-sys-color-outline);
+        }
+        .plc-seg button {
+            height: 40px; border: none; background: transparent; color: var(--md-sys-color-on-surface);
+            font-family: var(--app-font); font-size: 13.5px; font-weight: 700; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .plc-seg button.sel {
+            background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+        }
+        .plc-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+        .plc-pill {
+            height: 38px; padding: 0 16px; border: none; border-radius: 999px; cursor: pointer;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-on-surface); font-family: var(--app-font); font-size: 13px; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .plc-pill.sel {
+            background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+        }
+        .plc-swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .plc-sw {
+            width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid transparent;
+            cursor: pointer; justify-self: center; transition: transform .15s, border-color .2s;
+        }
+        .plc-sw.sel { border-color: var(--md-sys-color-on-surface); transform: scale(1.1); }
+        .plc-icons-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .plc-ico-btn {
+            width: 44px; height: 44px; border: none; border-radius: 14px; cursor: pointer;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface));
+            color: var(--md-sys-color-on-surface); display: grid; place-items: center;
+        }
+        .plc-ico-btn.sel {
+            background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+        }
+        .plc-shape-btn {
+            width: 52px; height: 52px; border: 2px solid transparent; border-radius: 16px; cursor: pointer;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 45%, var(--md-sys-color-surface));
+            display: grid; place-items: center;
+        }
+        .plc-shape-btn.sel {
+            background: var(--md-sys-color-primary-container); border-color: var(--md-sys-color-primary);
+        }
+        .plc-song-pick-row {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 18px;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 40%, var(--md-sys-color-surface));
+            cursor: pointer;
+        }
+        .plc-song-pick-row.picked {
+            background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+        }
         html.m-ui .m-lib-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         html.m-ui .m-lib-title { font-size: calc(14.5px * var(--font-scale-factor, 1)); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         html.m-ui .m-lib-artist { font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1884,10 +1995,10 @@
         html.m-ui #m-mini-player.swiping { transition: none; }
         html.m-ui .m-mini-art {
             width: 44px; height: 44px; border-radius: 16px; flex-shrink: 0; overflow: hidden;
+            position: relative;
             background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 12%, transparent);
             display: grid; place-items: center; color: inherit;
         }
-        html.m-ui .m-mini-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
         html.m-ui .m-mini-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
         html.m-ui .m-mini-title { font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         html.m-ui .m-mini-artist { font-size: calc(11.5px * var(--font-scale-factor, 1)); opacity: .78; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2789,6 +2900,87 @@
         <iframe id="getting-started-iframe" style="width: var(--vw); height: var(--vh); border: none; display: block;" src="about:blank"></iframe>
     </div>
 
+    <!-- Modal: Tạo Danh sách phát mới (Mobile Playlists Tab) -->
+    <div id="m-pl-creator-modal" class="cl-overlay" style="z-index: 4300;">
+        <div class="cl-dialog" style="max-width: 480px; height: min(92vh, 760px); border-radius: 28px;">
+            <div class="cl-header" style="padding: 14px 18px;">
+                <button class="btn-m3" id="plc-close-btn" title="Đóng" data-i18n-title="misc.close"><span class="material-symbols-rounded">close</span></button>
+                <h2 id="plc-modal-title" style="flex:1; text-align:center; font-size: calc(18px * var(--font-scale-factor, 1)); font-weight: 800; font-family: var(--app-font); padding-right: 36px;" data-i18n="pl.new_title">Danh sách phát mới</h2>
+            </div>
+            <div id="plc-step-config" style="flex:1; overflow-y:auto; padding: 14px 20px 24px; background: var(--md-sys-color-surface); display:flex; flex-direction:column; gap:14px;">
+                <div class="plc-preview-wrap" id="plc-preview-wrap">
+                    <div class="plc-preview-box" id="plc-preview-box"></div>
+                </div>
+                <div id="plc-preview-caption" style="text-align:center; font-size:12px; opacity:.7; margin-top:-6px;" data-i18n="pl.auto_collage">Ảnh ghép tự động</div>
+
+                <input type="text" id="plc-name-input" placeholder="Tên danh sách phát" data-i18n-placeholder="pl.name_placeholder" style="width:100%; height:48px; padding:0 16px; border-radius:16px; border:1px solid var(--playlist-border); background:color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface)); color:var(--md-sys-color-on-surface); font-family:var(--app-font); font-size:15px; font-weight:600; outline:none;">
+
+                <div class="plc-seg">
+                    <button type="button" id="plc-mode-manual" class="sel"><span class="material-symbols-rounded" style="font-size:17px;">check</span><span data-i18n="pl.mode_manual">Thủ công</span></button>
+                    <button type="button" id="plc-mode-smart"><span class="material-symbols-rounded" style="font-size:17px; display:none;">check</span><span data-i18n="pl.mode_smart">Thông minh</span></button>
+                </div>
+
+                <div id="plc-smart-rules-wrap" style="display:none; flex-direction:column; gap:8px;">
+                    <div style="font-size:12.5px; font-weight:700; opacity:.75;" data-i18n="pl.smart_rule">Quy tắc thông minh</div>
+                    <div class="plc-pills" id="plc-smart-rules">
+                        <button type="button" class="plc-pill sel" data-rule="top" data-i18n="pl.rule_top">Nghe nhiều nhất</button>
+                        <button type="button" class="plc-pill" data-rule="recent" data-i18n="pl.rule_recent">Nghe gần đây</button>
+                        <button type="button" class="plc-pill" data-rule="forgotten" data-i18n="pl.rule_forgotten">Yêu thích bị lãng quên</button>
+                        <button type="button" class="plc-pill" data-rule="new" data-i18n="pl.rule_new">Bài mới thêm</button>
+                    </div>
+                    <div id="plc-rule-desc" style="font-size:12px; opacity:.65;" data-i18n="pl.rule_top_desc">Những bài hát bạn phát nhiều nhất</div>
+                </div>
+
+                <div class="plc-pills" id="plc-cover-tabs" style="justify-content:center;">
+                    <button type="button" class="plc-pill sel" data-cover="default" data-i18n="pl.cover_default">Mặc định</button>
+                    <button type="button" class="plc-pill" data-cover="image" data-i18n="pl.cover_image">Ảnh</button>
+                    <button type="button" class="plc-pill" data-cover="icon" data-i18n="pl.cover_icon">Biểu tượng</button>
+                </div>
+
+                <div id="plc-icon-options" style="display:none; flex-direction:column; gap:12px;">
+                    <div style="font-size:12.5px; font-weight:700; opacity:.75;" data-i18n="pl.bg_color">Màu nền</div>
+                    <div class="plc-swatches" id="plc-bg-swatches"></div>
+                    <div style="font-size:12.5px; font-weight:700; opacity:.75;" data-i18n="pl.icon_symbol">Biểu tượng</div>
+                    <div class="plc-icons-grid" id="plc-icon-grid"></div>
+                    <div style="font-size:12.5px; font-weight:700; opacity:.75;" data-i18n="pl.shape_style">Kiểu hình dáng</div>
+                    <div style="display:flex; gap:10px;" id="plc-shape-grid">
+                        <button type="button" class="plc-shape-btn sel" data-shape="circle" title="Circle"><span style="width:26px;height:26px;border-radius:50%;background:var(--md-sys-color-primary);display:block;"></span></button>
+                        <button type="button" class="plc-shape-btn" data-shape="square" title="Square"><span style="width:26px;height:26px;border-radius:8px;background:var(--md-sys-color-on-surface-variant);display:block;"></span></button>
+                        <button type="button" class="plc-shape-btn" data-shape="oval" title="Oval"><span style="width:28px;height:20px;border-radius:999px;transform:rotate(-35deg);background:var(--md-sys-color-on-surface-variant);display:block;"></span></button>
+                        <button type="button" class="plc-shape-btn" data-shape="star" title="Star"><span class="material-symbols-rounded" style="font-size:26px;color:var(--md-sys-color-on-surface-variant);font-variation-settings:'FILL' 1;">star</span></button>
+                    </div>
+                    <div id="plc-star-params" style="display:none; flex-direction:column; gap:8px; padding-top:4px;">
+                        <div style="font-size:12.5px; font-weight:700; opacity:.75;" data-i18n="pl.shape_params">Thông số hình dáng</div>
+                        <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700;"><span data-i18n="pl.sides">Số cạnh</span><span id="plc-sides-val">5</span></div>
+                        <md-slider id="plc-sides" min="3" max="12" step="1" value="5" style="width:100%;"></md-slider>
+                        <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700;"><span data-i18n="pl.curve">Độ cong</span><span id="plc-curve-val">0.15</span></div>
+                        <md-slider id="plc-curve" min="0" max="40" step="1" value="15" style="width:100%;"></md-slider>
+                        <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700;"><span data-i18n="pl.rotation">Góc xoay</span><span id="plc-rot-val">0°</span></div>
+                        <md-slider id="plc-rot" min="0" max="360" step="5" value="0" style="width:100%;"></md-slider>
+                        <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700;"><span data-i18n="pl.scale">Tỉ lệ</span><span id="plc-scale-val">1.0x</span></div>
+                        <md-slider id="plc-scale" min="70" max="120" step="5" value="100" style="width:100%;"></md-slider>
+                    </div>
+                </div>
+            </div>
+            <div id="plc-step-songs" style="display:none; flex:1; flex-direction:column; min-height:0; background:var(--md-sys-color-surface);">
+                <div style="padding: 10px 16px; font-size:13px; font-weight:700; opacity:.75;" data-i18n="pl.select_songs">Chọn bài hát</div>
+                <div id="plc-song-pick-list" style="flex:1; overflow-y:auto; padding: 0 16px 16px; display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+            <div style="padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--md-sys-color-surface); border-top: 1px solid var(--playlist-border); display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <button type="button" class="btn-m3" id="plc-back-step-btn" style="display:none; width:auto; height:44px; padding:0 18px; border-radius:999px; background:var(--md-sys-color-surface-variant); color:var(--md-sys-color-on-surface); font-weight:700; align-items:center; gap:6px;">
+                    <span class="material-symbols-rounded" style="font-size:18px;">arrow_back</span>
+                    <span data-i18n="about.back">Quay lại</span>
+                </button>
+                <button type="button" class="btn-m3" id="plc-primary-btn" style="margin-left:auto; width:auto; height:46px; padding:0 24px; border-radius:999px; background:var(--md-sys-color-primary); color:var(--md-sys-color-on-primary); font-weight:700; display:inline-flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-rounded" id="plc-primary-ico" style="font-size:18px;">arrow_forward</span>
+                    <span id="plc-primary-txt" data-i18n="pl.next_step">Tiếp theo</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="plc-image-input" class="hidden" accept="image/*">
+    <input type="file" id="m-pl-import-input" class="hidden" accept=".m3u,.m3u8,audio/x-mpegurl">
+
     <!-- Modal: Thư mục loại trừ (Mobile Music Management) -->
     <div id="lib-excluded-modal" class="cl-overlay" style="z-index: 4200;">
         <div class="cl-dialog" style="max-width: 480px; height: min(86vh, 680px); border-radius: 28px;">
@@ -3195,20 +3387,50 @@
             </div>
 
             <div id="m-library-home" class="m-only">
-                <div class="m-lib-actions">
-                    <button type="button" class="m-lib-shuffle-btn" id="m-lib-shuffle">
-                        <span class="material-symbols-rounded">shuffle</span>
-                        <span data-i18n="playlist.tab_shuffle">Shuffle</span>
-                    </button>
-                    <div class="m-lib-search-wrap">
-                        <span class="material-symbols-rounded">search</span>
-                        <input type="text" id="m-lib-search" placeholder="Tìm tên bài, ca sĩ..." data-i18n-placeholder="playlist.search_placeholder">
-                    </div>
-                    <button type="button" class="m-lib-icon-btn" id="m-lib-rescan" title="Quét lại thư viện">
-                        <span class="material-symbols-rounded">refresh</span>
-                    </button>
+                <div class="m-lib-tabs" id="m-lib-tabs">
+                    <button type="button" class="m-lib-tab active" data-mlib="songs" data-i18n="pl.tab_songs">Bài hát</button>
+                    <button type="button" class="m-lib-tab" data-mlib="playlists" data-i18n="pl.tab_playlists">Danh sách phát</button>
                 </div>
-                <div class="m-lib-list" id="m-lib-list"></div>
+
+                <div class="m-lib-pane active" id="m-pane-songs">
+                    <div class="m-lib-actions">
+                        <button type="button" class="m-lib-shuffle-btn" id="m-lib-shuffle">
+                            <span class="material-symbols-rounded">shuffle</span>
+                            <span data-i18n="playlist.tab_shuffle">Shuffle</span>
+                        </button>
+                        <div class="m-lib-search-wrap">
+                            <span class="material-symbols-rounded">search</span>
+                            <input type="text" id="m-lib-search" placeholder="Tìm tên bài, ca sĩ..." data-i18n-placeholder="playlist.search_placeholder">
+                        </div>
+                        <button type="button" class="m-lib-icon-btn" id="m-lib-rescan" title="Quét lại thư viện">
+                            <span class="material-symbols-rounded">refresh</span>
+                        </button>
+                    </div>
+                    <div class="m-lib-list" id="m-lib-list"></div>
+                </div>
+
+                <div class="m-lib-pane" id="m-pane-playlists">
+                    <div class="m-lib-actions">
+                        <button type="button" class="m-lib-shuffle-btn" id="m-pl-new-btn">
+                            <span class="material-symbols-rounded">playlist_add</span>
+                            <span data-i18n="pl.new_btn">Tạo mới</span>
+                        </button>
+                        <button type="button" class="m-lib-shuffle-btn" id="m-pl-import-btn" style="background:color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface)); color:var(--md-sys-color-on-surface);">
+                            <span class="material-symbols-rounded">upload_file</span>
+                            <span data-i18n="pl.import_btn">Nhập (.m3u)</span>
+                        </button>
+                    </div>
+                    <div class="m-lib-list" id="m-pl-list"></div>
+                </div>
+
+                <div class="m-lib-pane" id="m-pane-pl-detail">
+                    <div class="m-pl-detail-bar">
+                        <button type="button" class="m-lib-icon-btn" id="m-pl-detail-back"><span class="material-symbols-rounded">arrow_back</span></button>
+                        <div class="m-pl-detail-title" id="m-pl-detail-title">Playlist</div>
+                        <button type="button" class="m-lib-shuffle-btn" id="m-pl-detail-play"><span class="material-symbols-rounded">play_arrow</span></button>
+                    </div>
+                    <div class="m-lib-list" id="m-pl-detail-list"></div>
+                </div>
             </div>
 
             <div class="visual-stage">
@@ -6771,16 +6993,23 @@
             if (typeof updateMoreInfoBtnState === 'function') updateMoreInfoBtnState();
             
             if (track.cover) {
+                artImg.classList.add('hidden');
+                artPlaceholder.classList.remove('hidden');
+                bgPreview.style.backgroundImage = 'none';
+                artImg.onload = () => {
+                    artImg.classList.remove('hidden');
+                    artPlaceholder.classList.add('hidden');
+                    bgPreview.style.backgroundImage = `url(${track.cover})`;
+                };
                 artImg.onerror = () => {
                     artImg.classList.add('hidden');
                     artPlaceholder.classList.remove('hidden');
                     bgPreview.style.backgroundImage = 'none';
                 };
                 artImg.src = track.cover;
-                artImg.classList.remove('hidden');
-                artPlaceholder.classList.add('hidden');
-                bgPreview.style.backgroundImage = `url(${track.cover})`;
             } else {
+                artImg.onload = null;
+                artImg.onerror = null;
                 artImg.classList.add('hidden');
                 artPlaceholder.classList.remove('hidden');
                 bgPreview.style.backgroundImage = 'none';
@@ -6812,6 +7041,7 @@
             pauseOverlay.classList.remove('visible');
             if (document.documentElement.classList.contains('m-ui')) {
                 document.body.classList.add('m-mini-visible');
+                if (typeof window.__recordMobilePlayStat === 'function') window.__recordMobilePlayStat(track);
                 if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
             }
             
@@ -8066,7 +8296,7 @@
                     const row = document.createElement('div');
                     row.className = 'm-lib-item' + (idx === currentIndex ? ' active' : '');
                     row.innerHTML =
-                        '<div class="m-lib-art">' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'material-symbols-rounded\',textContent:\'music_note\'}))">' : '<span class="material-symbols-rounded">music_note</span>') + '</div>' +
+                        '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>' +
                         '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
                         '<button type="button" class="m-lib-more" aria-label="More"><span class="material-symbols-rounded" style="font-size:20px;">more_vert</span></button>';
                     row.querySelector('.m-lib-title').textContent = tr.name || '';
@@ -8095,9 +8325,8 @@
                     if (mMiniTitle) mMiniTitle.textContent = tr.name || 'Media Player';
                     if (mMiniArtist) mMiniArtist.textContent = tr.artist || 'UNKNOWN ARTIST';
                     if (mMiniArt) {
-                        mMiniArt.innerHTML = tr.cover
-                            ? '<img src="' + tr.cover + '" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'material-symbols-rounded\',textContent:\'music_note\'}))">'
-                            : '<span class="material-symbols-rounded">music_note</span>';
+                        mMiniArt.innerHTML = '<span class="material-symbols-rounded">music_note</span>'
+                            + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '');
                     }
                 }
                 if (mMiniPlay) {
@@ -8211,6 +8440,409 @@
             if (mPlRepeat) mPlRepeat.addEventListener('click', () => { document.getElementById('repeat-btn').click(); syncMobileMiniPlayer(); });
             if (mPlSleep) mPlSleep.addEventListener('click', () => { document.getElementById('sleep-btn').click(); });
             if (mPlReorder) mPlReorder.addEventListener('click', () => { document.getElementById('reorder-btn').click(); });
+
+            // --- MOBILE PLAYLISTS TAB + NEW PLAYLIST / SMART PLAYLIST CREATOR ---
+            (function initMobilePlaylistsTab() {
+                const PL_STORE_KEY = 'mp_mobile_playlists_v1';
+                const STATS_KEY = 'mp_mobile_play_stats_v1';
+                const tabBtns = document.querySelectorAll('#m-lib-tabs .m-lib-tab');
+                const paneSongs = document.getElementById('m-pane-songs');
+                const panePls = document.getElementById('m-pane-playlists');
+                const paneDetail = document.getElementById('m-pane-pl-detail');
+                const plListEl = document.getElementById('m-pl-list');
+                const plDetailList = document.getElementById('m-pl-detail-list');
+                const plDetailTitle = document.getElementById('m-pl-detail-title');
+                const creatorModal = document.getElementById('m-pl-creator-modal');
+                let activeTab = 'songs';
+                let openedPlId = null;
+
+                const loadPls = () => { try { return JSON.parse(localStorage.getItem(PL_STORE_KEY) || '[]'); } catch (e) { return []; } };
+                const savePls = (arr) => { try { localStorage.setItem(PL_STORE_KEY, JSON.stringify(arr)); } catch (e) {} };
+                const loadStats = () => { try { return JSON.parse(localStorage.getItem(STATS_KEY) || '{}'); } catch (e) { return {}; } };
+                const saveStats = (o) => { try { localStorage.setItem(STATS_KEY, JSON.stringify(o)); } catch (e) {} };
+                const trackKeyOf = (t) => (t && (t.nativeLocation || t.rawName || t.name || '')).toLowerCase();
+
+                window.__recordMobilePlayStat = function (track) {
+                    if (!track) return;
+                    const k = trackKeyOf(track);
+                    if (!k) return;
+                    const st = loadStats();
+                    const cur = st[k] || { count: 0, last: 0 };
+                    cur.count = (cur.count || 0) + 1;
+                    cur.last = Date.now();
+                    st[k] = cur;
+                    saveStats(st);
+                };
+
+                function buildStarSvg(color, sides, curve, rot, scale, iconName, size) {
+                    const S = size || 136, cx = S / 2, cy = S / 2;
+                    const rOuter = (S * 0.44) * (scale || 1);
+                    const rInner = rOuter * Math.max(0.45, 0.92 - (curve || 0.15) * 1.1);
+                    const n = Math.max(3, Math.min(12, sides || 5));
+                    const pts = [];
+                    const total = n * 2;
+                    for (let i = 0; i < total; i++) {
+                        const a = (i * Math.PI / n) - Math.PI / 2 + ((rot || 0) * Math.PI / 180);
+                        const r = (i % 2 === 0) ? rOuter : rInner;
+                        pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+                    }
+                    let d = '';
+                    for (let i = 0; i < pts.length; i++) {
+                        const p0 = pts[(i - 1 + pts.length) % pts.length];
+                        const p1 = pts[i];
+                        const p2 = pts[(i + 1) % pts.length];
+                        const mx1 = (p0[0] + p1[0]) / 2, my1 = (p0[1] + p1[1]) / 2;
+                        const mx2 = (p1[0] + p2[0]) / 2, my2 = (p1[1] + p2[1]) / 2;
+                        d += (i === 0 ? `M ${mx1.toFixed(1)} ${my1.toFixed(1)} ` : '') + `Q ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} ${mx2.toFixed(1)} ${my2.toFixed(1)} `;
+                    }
+                    d += 'Z';
+                    return `<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" style="display:block;"><path d="${d}" fill="${color}"/></svg>`
+                        + `<span class="material-symbols-rounded" style="position:absolute;font-size:${Math.round(S * 0.36)}px;color:#111;font-variation-settings:'FILL' 1;">${iconName || 'music_note'}</span>`;
+                }
+
+                function renderPlCoverHtml(pl, size) {
+                    const S = size || 56;
+                    if (pl.coverType === 'image' && pl.coverImage) {
+                        return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;"><img src="${pl.coverImage}" style="width:100%;height:100%;object-fit:cover;"></div>`;
+                    }
+                    if (pl.coverType === 'icon') {
+                        const bg = pl.iconBg || '#93c5fd';
+                        const ico = pl.iconName || 'music_note';
+                        const sh = pl.iconShape || 'circle';
+                        if (sh === 'star') {
+                            return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;background:transparent;">${buildStarSvg(bg, pl.starSides, pl.starCurve, pl.starRot, pl.starScale, ico, S)}</div>`;
+                        }
+                        const rad = sh === 'circle' ? '50%' : (sh === 'oval' ? '999px' : '16px');
+                        const tf = sh === 'oval' ? 'transform:scaleY(0.76) rotate(-25deg);' : '';
+                        return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;background:transparent;"><div style="width:100%;height:100%;border-radius:${rad};background:${bg};display:grid;place-items:center;${tf}"></div><span class="material-symbols-rounded" style="position:absolute;font-size:${Math.round(S * 0.46)}px;color:#111;font-variation-settings:'FILL' 1;">${ico}</span></div>`;
+                    }
+                    return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;"><span class="material-symbols-rounded" style="font-size:${Math.round(S * 0.5)}px;opacity:.75;">grid_view</span></div>`;
+                }
+
+                function resolvePlaylistIndices(pl) {
+                    if (!pl) return [];
+                    if (pl.mode === 'smart') {
+                        const st = loadStats();
+                        const allIdx = playlist.map((_, i) => i);
+                        if (pl.smartRule === 'top') {
+                            return allIdx.sort((a, b) => ((st[trackKeyOf(playlist[b])]?.count || 0) - (st[trackKeyOf(playlist[a])]?.count || 0))).slice(0, 30);
+                        }
+                        if (pl.smartRule === 'recent') {
+                            return allIdx.filter(i => st[trackKeyOf(playlist[i])]?.last).sort((a, b) => (st[trackKeyOf(playlist[b])].last - st[trackKeyOf(playlist[a])].last)).slice(0, 30);
+                        }
+                        if (pl.smartRule === 'forgotten') {
+                            return allIdx.sort((a, b) => ((st[trackKeyOf(playlist[a])]?.last || 0) - (st[trackKeyOf(playlist[b])]?.last || 0))).slice(0, 30);
+                        }
+                        return allIdx.slice(0, 30);
+                    }
+                    const keys = new Set((pl.trackKeys || []).map(k => String(k).toLowerCase()));
+                    const out = [];
+                    playlist.forEach((t, i) => { if (keys.has(trackKeyOf(t))) out.push(i); });
+                    return out;
+                }
+
+                function setMobileLibTab(tab) {
+                    activeTab = tab;
+                    openedPlId = null;
+                    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.mlib === tab));
+                    paneSongs?.classList.toggle('active', tab === 'songs');
+                    panePls?.classList.toggle('active', tab === 'playlists');
+                    paneDetail?.classList.remove('active');
+                    if (tab === 'playlists') renderMobilePlaylists();
+                }
+                tabBtns.forEach(b => b.addEventListener('click', () => setMobileLibTab(b.dataset.mlib)));
+
+                function renderMobilePlaylists() {
+                    if (!plListEl) return;
+                    const pls = loadPls();
+                    plListEl.innerHTML = '';
+                    if (!pls.length) {
+                        plListEl.innerHTML =
+                            '<div class="m-pl-empty">' +
+                            '<span class="material-symbols-rounded">playlist_play</span>' +
+                            '<h4>' + tr2('pl.empty_title', 'Chưa có danh sách phát nào.') + '</h4>' +
+                            '<p>' + tr2('pl.empty_desc', "Chạm nút 'Tạo mới' để bắt đầu.") + '</p>' +
+                            '</div>';
+                        return;
+                    }
+                    pls.forEach(pl => {
+                        const indices = resolvePlaylistIndices(pl);
+                        const card = document.createElement('div');
+                        card.className = 'm-pl-card';
+                        card.innerHTML =
+                            renderPlCoverHtml(pl, 56) +
+                            '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
+                            '<button type="button" class="m-lib-more" aria-label="Delete"><span class="material-symbols-rounded" style="font-size:20px;">delete</span></button>';
+                        card.querySelector('.m-lib-title').textContent = pl.name;
+                        card.querySelector('.m-lib-artist').textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', indices.length) + (pl.mode === 'smart' ? ' • Smart' : '');
+                        card.addEventListener('click', () => openPlaylistDetail(pl.id));
+                        card.querySelector('.m-lib-more').addEventListener('click', async (ev) => {
+                            ev.stopPropagation();
+                            const ok = await confirmDialog(tr2('pl.delete_confirm', 'Bạn có chắc muốn xóa danh sách phát "{name}"?').replace('{name}', pl.name), tr2('misc.confirm', 'Xác nhận'));
+                            if (!ok) return;
+                            savePls(loadPls().filter(x => x.id !== pl.id));
+                            renderMobilePlaylists();
+                        });
+                        plListEl.appendChild(card);
+                    });
+                }
+
+                function openPlaylistDetail(plId) {
+                    const pl = loadPls().find(x => x.id === plId);
+                    if (!pl || !plDetailList) return;
+                    openedPlId = plId;
+                    paneSongs?.classList.remove('active');
+                    panePls?.classList.remove('active');
+                    paneDetail?.classList.add('active');
+                    if (plDetailTitle) plDetailTitle.textContent = pl.name;
+                    const indices = resolvePlaylistIndices(pl);
+                    plDetailList.innerHTML = '';
+                    indices.forEach(idx => {
+                        const tr = playlist[idx];
+                        if (!tr) return;
+                        const row = document.createElement('div');
+                        row.className = 'm-lib-item' + (idx === currentIndex ? ' active' : '');
+                        row.innerHTML =
+                            '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>' +
+                            '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>';
+                        row.querySelector('.m-lib-title').textContent = tr.name || '';
+                        row.querySelector('.m-lib-artist').textContent = tr.artist || '';
+                        row.addEventListener('click', () => { playTrack(idx); document.body.classList.add('m-mini-visible'); });
+                        plDetailList.appendChild(row);
+                    });
+                    document.getElementById('m-pl-detail-play').onclick = () => {
+                        if (indices.length) { playTrack(indices[0]); document.body.classList.add('m-mini-visible'); }
+                    };
+                }
+                document.getElementById('m-pl-detail-back')?.addEventListener('click', () => setMobileLibTab('playlists'));
+
+                // --- Creator Modal State ---
+                const BG_COLORS = ['#47628a','#93c5fd','#525b6e','#dbeafe','#525670','#c4b5fd','#b91c1c','#fecaca','#e2e8f0','#111827'];
+                const ICON_LIST = ['music_note','headphones','album','graphic_eq','speaker','favorite','piano','queue_music'];
+                const RULE_DESC_KEYS = { top:['pl.rule_top_desc','Những bài hát bạn phát nhiều nhất'], recent:['pl.rule_recent_desc','Những bài hát bạn vừa nghe gần đây'], forgotten:['pl.rule_forgotten_desc','Các bài trong thư viện đã lâu chưa phát lại'], new:['pl.rule_new_desc','Những bài hát mới nhất trong thư viện'] };
+                let plc = { step: 0, mode: 'manual', smartRule: 'top', coverType: 'default', coverImage: '', iconBg: '#93c5fd', iconName: 'music_note', iconShape: 'circle', starSides: 5, starCurve: 0.15, starRot: 0, starScale: 1, pickedKeys: new Set() };
+
+                const bgGrid = document.getElementById('plc-bg-swatches');
+                const icoGrid = document.getElementById('plc-icon-grid');
+                if (bgGrid) BG_COLORS.forEach(c => {
+                    const b = document.createElement('button'); b.type = 'button'; b.className = 'plc-sw'; b.style.background = c; b.dataset.color = c;
+                    b.addEventListener('click', () => { plc.iconBg = c; syncCreatorUI(); });
+                    bgGrid.appendChild(b);
+                });
+                if (icoGrid) ICON_LIST.forEach(ic => {
+                    const b = document.createElement('button'); b.type = 'button'; b.className = 'plc-ico-btn'; b.dataset.ico = ic;
+                    b.innerHTML = '<span class="material-symbols-rounded" style="font-variation-settings:\'FILL\' 1;">' + ic + '</span>';
+                    b.addEventListener('click', () => { plc.iconName = ic; syncCreatorUI(); });
+                    icoGrid.appendChild(b);
+                });
+
+                function syncCreatorUI() {
+                    const titleEl = document.getElementById('plc-modal-title');
+                    const prevBox = document.getElementById('plc-preview-box');
+                    const prevCap = document.getElementById('plc-preview-caption');
+                    const smartWrap = document.getElementById('plc-smart-rules-wrap');
+                    const iconOpts = document.getElementById('plc-icon-options');
+                    const starParams = document.getElementById('plc-star-params');
+                    const stepCfg = document.getElementById('plc-step-config');
+                    const stepSongs = document.getElementById('plc-step-songs');
+                    const backBtn = document.getElementById('plc-back-step-btn');
+                    const priBtn = document.getElementById('plc-primary-btn');
+                    const priIco = document.getElementById('plc-primary-ico');
+                    const priTxt = document.getElementById('plc-primary-txt');
+
+                    if (titleEl) titleEl.textContent = plc.mode === 'smart' ? tr2('pl.new_smart_title', 'Danh sách phát thông minh') : tr2('pl.new_title', 'Danh sách phát mới');
+                    document.getElementById('plc-mode-manual')?.classList.toggle('sel', plc.mode === 'manual');
+                    document.getElementById('plc-mode-smart')?.classList.toggle('sel', plc.mode === 'smart');
+                    const mChk = document.querySelector('#plc-mode-manual .material-symbols-rounded');
+                    const sChk = document.querySelector('#plc-mode-smart .material-symbols-rounded');
+                    if (mChk) mChk.style.display = plc.mode === 'manual' ? '' : 'none';
+                    if (sChk) sChk.style.display = plc.mode === 'smart' ? '' : 'none';
+                    if (smartWrap) smartWrap.style.display = plc.mode === 'smart' ? 'flex' : 'none';
+
+                    document.querySelectorAll('#plc-smart-rules .plc-pill').forEach(b => b.classList.toggle('sel', b.dataset.rule === plc.smartRule));
+                    const rd = RULE_DESC_KEYS[plc.smartRule] || RULE_DESC_KEYS.top;
+                    const rdEl = document.getElementById('plc-rule-desc');
+                    if (rdEl) rdEl.textContent = tr2(rd[0], rd[1]);
+
+                    document.querySelectorAll('#plc-cover-tabs .plc-pill').forEach(b => b.classList.toggle('sel', b.dataset.cover === plc.coverType));
+                    if (iconOpts) iconOpts.style.display = plc.coverType === 'icon' ? 'flex' : 'none';
+                    if (starParams) starParams.style.display = (plc.coverType === 'icon' && plc.iconShape === 'star') ? 'flex' : 'none';
+
+                    document.querySelectorAll('#plc-bg-swatches .plc-sw').forEach(b => b.classList.toggle('sel', b.dataset.color === plc.iconBg));
+                    document.querySelectorAll('#plc-icon-grid .plc-ico-btn').forEach(b => b.classList.toggle('sel', b.dataset.ico === plc.iconName));
+                    document.querySelectorAll('#plc-shape-grid .plc-shape-btn').forEach(b => b.classList.toggle('sel', b.dataset.shape === plc.iconShape));
+
+                    if (prevBox) {
+                        prevBox.style.background = 'var(--md-sys-color-surface-variant)';
+                        prevBox.style.borderRadius = '28px';
+                        if (plc.coverType === 'default') {
+                            prevBox.innerHTML = '<span class="material-symbols-rounded" style="font-size:48px;opacity:.6;">grid_view</span>';
+                            if (prevCap) { prevCap.style.display = ''; prevCap.textContent = tr2('pl.auto_collage', 'Ảnh ghép tự động'); }
+                        } else if (plc.coverType === 'image') {
+                            prevBox.innerHTML = plc.coverImage
+                                ? '<img src="' + plc.coverImage + '" style="width:100%;height:100%;object-fit:cover;">'
+                                : '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:36px;">add_photo_alternate</span><span style="font-size:12px;font-weight:700;">' + tr2('pl.pick_image', 'Chọn ảnh') + '</span></div>';
+                            if (prevCap) prevCap.style.display = 'none';
+                        } else {
+                            prevBox.style.background = 'transparent';
+                            if (plc.iconShape === 'star') {
+                                prevBox.innerHTML = buildStarSvg(plc.iconBg, plc.starSides, plc.starCurve, plc.starRot, plc.starScale, plc.iconName, 136);
+                            } else {
+                                const rad = plc.iconShape === 'circle' ? '50%' : (plc.iconShape === 'oval' ? '999px' : '28px');
+                                const tf = plc.iconShape === 'oval' ? 'transform:scaleY(0.76) rotate(-25deg);' : '';
+                                prevBox.innerHTML = '<div style="width:100%;height:100%;border-radius:' + rad + ';background:' + plc.iconBg + ';' + tf + '"></div><span class="material-symbols-rounded" style="position:absolute;font-size:50px;color:#111;font-variation-settings:\'FILL\' 1;">' + plc.iconName + '</span>';
+                            }
+                            if (prevCap) prevCap.style.display = 'none';
+                        }
+                    }
+
+                    if (stepCfg) stepCfg.style.display = plc.step === 0 ? 'flex' : 'none';
+                    if (stepSongs) stepSongs.style.display = plc.step === 1 ? 'flex' : 'none';
+                    if (backBtn) backBtn.style.display = plc.step === 1 ? 'inline-flex' : 'none';
+                    const isCreate = plc.mode === 'smart' || plc.step === 1;
+                    if (priIco) priIco.textContent = isCreate ? 'check' : 'arrow_forward';
+                    if (priTxt) priTxt.textContent = isCreate ? tr2('pl.create_btn', 'Tạo') : tr2('pl.next_step', 'Tiếp theo');
+                    const nameOk = (document.getElementById('plc-name-input')?.value || '').trim().length > 0;
+                    if (priBtn) priBtn.style.opacity = nameOk ? '1' : '.45';
+                }
+
+                function renderSongPicker() {
+                    const box = document.getElementById('plc-song-pick-list');
+                    if (!box) return;
+                    box.innerHTML = '';
+                    playlist.forEach(tr => {
+                        const key = trackKeyOf(tr);
+                        const picked = plc.pickedKeys.has(key);
+                        const row = document.createElement('div');
+                        row.className = 'plc-song-pick-row' + (picked ? ' picked' : '');
+                        row.innerHTML =
+                            '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>' +
+                            '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
+                            '<span class="material-symbols-rounded">' + (picked ? 'check_circle' : 'radio_button_unchecked') + '</span>';
+                        row.querySelector('.m-lib-title').textContent = tr.name || '';
+                        row.querySelector('.m-lib-artist').textContent = tr.artist || '';
+                        row.addEventListener('click', () => {
+                            if (plc.pickedKeys.has(key)) plc.pickedKeys.delete(key); else plc.pickedKeys.add(key);
+                            renderSongPicker();
+                        });
+                        box.appendChild(row);
+                    });
+                }
+
+                document.getElementById('m-pl-new-btn')?.addEventListener('click', () => {
+                    plc = { step: 0, mode: 'manual', smartRule: 'top', coverType: 'default', coverImage: '', iconBg: '#93c5fd', iconName: 'music_note', iconShape: 'circle', starSides: 5, starCurve: 0.15, starRot: 0, starScale: 1, pickedKeys: new Set() };
+                    const ni = document.getElementById('plc-name-input'); if (ni) ni.value = '';
+                    syncCreatorUI();
+                    creatorModal?.classList.add('open');
+                });
+                document.getElementById('plc-close-btn')?.addEventListener('click', () => creatorModal?.classList.remove('open'));
+                document.getElementById('plc-name-input')?.addEventListener('input', syncCreatorUI);
+                document.getElementById('plc-mode-manual')?.addEventListener('click', () => { plc.mode = 'manual'; syncCreatorUI(); });
+                document.getElementById('plc-mode-smart')?.addEventListener('click', () => { plc.mode = 'smart'; syncCreatorUI(); });
+                document.querySelectorAll('#plc-smart-rules .plc-pill').forEach(b => b.addEventListener('click', () => { plc.smartRule = b.dataset.rule; syncCreatorUI(); }));
+                document.querySelectorAll('#plc-cover-tabs .plc-pill').forEach(b => b.addEventListener('click', () => { plc.coverType = b.dataset.cover; syncCreatorUI(); }));
+                document.querySelectorAll('#plc-shape-grid .plc-shape-btn').forEach(b => b.addEventListener('click', () => { plc.iconShape = b.dataset.shape; syncCreatorUI(); }));
+                document.getElementById('plc-preview-wrap')?.addEventListener('click', () => {
+                    if (plc.coverType === 'image') document.getElementById('plc-image-input')?.click();
+                });
+                document.getElementById('plc-image-input')?.addEventListener('change', (e) => {
+                    const f = e.target.files && e.target.files[0]; if (!f) return;
+                    const rd = new FileReader();
+                    rd.onload = () => {
+                        const im = new Image();
+                        im.onload = () => {
+                            const cv = document.createElement('canvas'), S = 200;
+                            cv.width = S; cv.height = S;
+                            const k = Math.max(S / im.width, S / im.height);
+                            cv.getContext('2d').drawImage(im, (S - im.width * k) / 2, (S - im.height * k) / 2, im.width * k, im.height * k);
+                            plc.coverImage = cv.toDataURL('image/jpeg', 0.82);
+                            syncCreatorUI();
+                        };
+                        im.src = rd.result;
+                    };
+                    rd.readAsDataURL(f);
+                    e.target.value = '';
+                });
+                const bindStarSl = (id, valId, prop, fmt, div) => {
+                    const sl = document.getElementById(id), vl = document.getElementById(valId);
+                    if (!sl) return;
+                    sl.addEventListener('input', () => {
+                        plc[prop] = div ? (+sl.value / div) : (+sl.value);
+                        if (vl) vl.textContent = fmt(plc[prop]);
+                        syncCreatorUI();
+                    });
+                };
+                bindStarSl('plc-sides', 'plc-sides-val', 'starSides', v => String(v), 0);
+                bindStarSl('plc-curve', 'plc-curve-val', 'starCurve', v => v.toFixed(2), 100);
+                bindStarSl('plc-rot', 'plc-rot-val', 'starRot', v => v + '°', 0);
+                bindStarSl('plc-scale', 'plc-scale-val', 'starScale', v => v.toFixed(1) + 'x', 100);
+
+                document.getElementById('plc-back-step-btn')?.addEventListener('click', () => { plc.step = 0; syncCreatorUI(); });
+                document.getElementById('plc-primary-btn')?.addEventListener('click', () => {
+                    const name = (document.getElementById('plc-name-input')?.value || '').trim();
+                    if (!name) { document.getElementById('plc-name-input')?.focus(); return; }
+                    if (plc.mode === 'manual' && plc.step === 0) {
+                        plc.step = 1;
+                        renderSongPicker();
+                        syncCreatorUI();
+                        return;
+                    }
+                    const pls = loadPls();
+                    pls.unshift({
+                        id: 'pl_' + Date.now(),
+                        name,
+                        mode: plc.mode,
+                        smartRule: plc.smartRule,
+                        coverType: plc.coverType,
+                        coverImage: plc.coverImage,
+                        iconBg: plc.iconBg,
+                        iconName: plc.iconName,
+                        iconShape: plc.iconShape,
+                        starSides: plc.starSides,
+                        starCurve: plc.starCurve,
+                        starRot: plc.starRot,
+                        starScale: plc.starScale,
+                        trackKeys: Array.from(plc.pickedKeys)
+                    });
+                    savePls(pls);
+                    creatorModal?.classList.remove('open');
+                    renderMobilePlaylists();
+                    showToast(tr2('pl.created_toast', 'Đã tạo danh sách phát "{name}"!').replace('{name}', name), 'playlist_add_check', 3000);
+                });
+
+                // Import .m3u
+                document.getElementById('m-pl-import-btn')?.addEventListener('click', () => document.getElementById('m-pl-import-input')?.click());
+                document.getElementById('m-pl-import-input')?.addEventListener('change', (e) => {
+                    const f = e.target.files && e.target.files[0]; if (!f) return;
+                    const rd = new FileReader();
+                    rd.onload = () => {
+                        const lines = String(rd.result || '').split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith('#'));
+                        const matchedKeys = [];
+                        lines.forEach(line => {
+                            const base = line.split(/[\\/]/).pop().replace(/\.[^/.]+$/, '').toLowerCase();
+                            const found = playlist.find(t => (t.rawName || '').toLowerCase() === base || (t.name || '').toLowerCase() === base);
+                            if (found) matchedKeys.push(trackKeyOf(found));
+                        });
+                        if (!matchedKeys.length) {
+                            showToast(tr2('pl.import_empty', 'Không tìm thấy bài hát khớp với tệp .m3u này trong thư viện.'), 'info', 3500);
+                            return;
+                        }
+                        const plName = f.name.replace(/\.[^/.]+$/, '');
+                        const pls = loadPls();
+                        pls.unshift({ id: 'pl_' + Date.now(), name: plName, mode: 'manual', coverType: 'default', trackKeys: Array.from(new Set(matchedKeys)) });
+                        savePls(pls);
+                        renderMobilePlaylists();
+                        showToast(tr2('pl.imported_toast', 'Đã nhập danh sách phát "{name}" ({n} bài)!').replace('{name}', plName).replace('{n}', matchedKeys.length), 'playlist_add_check', 3000);
+                    };
+                    rd.readAsText(f);
+                    e.target.value = '';
+                });
+
+                window.__closeMobilePlDetailIfOpen = function () {
+                    if (openedPlId) { setMobileLibTab('playlists'); return true; }
+                    return false;
+                };
+            })();
         })();
 
         // Gọi pongReady sớm nhất có thể ngay khi có AndroidBridge để tránh bị báo "Trang không phản hồi" trên cả điện thoại và máy tính bảng
@@ -8473,6 +9105,9 @@
                     if (document.body.classList.contains('m-player-expanded')) {
                         document.body.classList.remove('m-player-expanded');
                         if (currentIndex >= 0 && playlist[currentIndex]) document.body.classList.add('m-mini-visible');
+                        return true;
+                    }
+                    if (typeof window.__closeMobilePlDetailIfOpen === 'function' && window.__closeMobilePlDetailIfOpen()) {
                         return true;
                     }
                     return false;
@@ -9192,7 +9827,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1535_fix_library_playback', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_22_1550_playlists_tab_art', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
@@ -12168,10 +12803,20 @@
                 fsTitle.innerText = track.name;
                 fsArtist.innerText = track.artist;
                 if (track.cover) {
+                    fsCoverImg.style.display = 'none';
+                    fsCoverPlaceholder.style.display = 'flex';
+                    fsCoverImg.onload = () => {
+                        fsCoverImg.style.display = 'block';
+                        fsCoverPlaceholder.style.display = 'none';
+                    };
+                    fsCoverImg.onerror = () => {
+                        fsCoverImg.style.display = 'none';
+                        fsCoverPlaceholder.style.display = 'flex';
+                    };
                     fsCoverImg.src = track.cover;
-                    fsCoverImg.style.display = 'block';
-                    fsCoverPlaceholder.style.display = 'none';
                 } else {
+                    fsCoverImg.onload = null;
+                    fsCoverImg.onerror = null;
                     fsCoverImg.style.display = 'none';
                     fsCoverPlaceholder.style.display = 'flex';
                 }
