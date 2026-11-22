@@ -76,16 +76,11 @@ public class MainActivity extends Activity {
         if (appLeftHome || pageResponded) return;
         onWatchdogTimeout();
     };
-    private static final long AUTO_RELOAD_TIMEOUT_MS = 25000L;
+    private static final long AUTO_RELOAD_TIMEOUT_MS = 15000L;
 
-    /** Sau khi bị hệ thống đóng băng/giải phóng bộ nhớ, trang thường không tự sống lại: tự tải lại tối đa 2 lần rồi mới báo lỗi. */
+    /** Quá thời gian chờ mà trang không phản hồi: hiển thị trực tiếp màn hình "Trang không phản hồi". */
     private void onWatchdogTimeout() {
-        if (autoRecoveries < 2 && web != null) {
-            autoRecoveries++;
-            recoverPage();
-        } else {
-            showUnresponsiveDialog();
-        }
+        showUnresponsiveDialog();
     }
 
     private final Runnable blankCheckRunnable = this::checkPageBlank;
@@ -105,7 +100,8 @@ public class MainActivity extends Activity {
             w.evaluateJavascript("(function(){var a=document.querySelector('.app-container');return !!(document.body&&a&&a.getBoundingClientRect().height>0)})()", value -> {
                 boolean ok = "true".equals(value);
                 if (ok) return;
-                if (autoRecoveries < 3) { autoRecoveries++; recoverPage(); }
+                pageResponded = false;
+                showUnresponsiveDialog();
             });
         } catch (Throwable ignored) {}
     }
@@ -594,7 +590,7 @@ public class MainActivity extends Activity {
         if (appLeftHome || pageResponded || hangAlertShown) return;
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
-        pingHandler.postDelayed(pingTimeoutRunnable, 20000);
+        pingHandler.postDelayed(pingTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
         callJs("window.__androidPing&&window.__androidPing()");
     }
 
@@ -623,8 +619,8 @@ public class MainActivity extends Activity {
 
             android.widget.TextView desc = new android.widget.TextView(this);
             desc.setText(en
-                    ? "The app waited over 10 seconds without receiving a response from the web page."
-                    : "Ứng dụng đã chờ quá 10 giây nhưng không nhận được phản hồi từ trang web.");
+                    ? "The app waited over 15 seconds without receiving a response from the web page."
+                    : "Ứng dụng đã chờ quá 15 giây nhưng không nhận được phản hồi từ trang web.");
             desc.setTextColor(0xFFD0C9DC);
             desc.setTextSize(14f);
             applyFontToView(desc, false);
@@ -660,7 +656,7 @@ public class MainActivity extends Activity {
                 showMd3LoadingOverlay();
                 pingHandler.removeCallbacks(loadTimeoutRunnable);
                 pingHandler.removeCallbacks(pingTimeoutRunnable);
-                pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, 10000);
+                pingHandler.postDelayed(pageReady ? pingTimeoutRunnable : loadTimeoutRunnable, AUTO_RELOAD_TIMEOUT_MS);
                 if (pageReady) callJs("window.__androidPing&&window.__androidPing()");
             });
             android.widget.LinearLayout.LayoutParams waitLp = new android.widget.LinearLayout.LayoutParams(
