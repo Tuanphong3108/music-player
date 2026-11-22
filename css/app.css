@@ -2155,3 +2155,4 @@ html.m-ui #like-btn { grid-area: lyric; justify-self: end; margin-right: 64px; w
 html.m-ui #like-btn.liked { color: #ff5a7a; }
 html.m-ui body.fullscreen-active #like-btn { display: none; }
 @media (max-height: 700px) { html.m-ui #like-btn { width: 40px; height: 40px; margin-right: 54px; } }
+html:not(.m-ui) #like-btn { display: none !important; }
