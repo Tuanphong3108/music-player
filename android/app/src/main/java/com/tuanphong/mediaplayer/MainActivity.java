@@ -228,7 +228,7 @@ public class MainActivity extends Activity {
                 if (url.startsWith("https://tuanphong3108.github.io/")) {
                     pageReady = true;
                     flushPending();
-                    scheduleBlankCheck(6000);
+                    scheduleBlankCheck(10000);
                     if (!appLeftHome && !pageResponded) sendHandshakePing();
                 } else {
                     pageReady = false;
@@ -1705,14 +1705,14 @@ public class MainActivity extends Activity {
         }
         appLeftHome = false;
         try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Throwable ignored) {}
-        scheduleBlankCheck(1500);
+        scheduleBlankCheck(10000);
         if (pageResponded && pageReady && !hangAlertShown) {
             // Trang từng chạy bình thường: kiểm tra lại sau khi quay về từ nền (có thể đã bị đóng băng)
             pageResponded = false;
             autoRecoveries = 0;
             pingHandler.removeCallbacks(loadTimeoutRunnable);
             pingHandler.removeCallbacks(pingTimeoutRunnable);
-            pingHandler.postDelayed(pingTimeoutRunnable, 6000);
+            pingHandler.postDelayed(pingTimeoutRunnable, 10000);
             callJs("window.__androidPing&&window.__androidPing()");
         } else if (!pageResponded && !hangAlertShown) {
             pingHandler.removeCallbacks(loadTimeoutRunnable);
