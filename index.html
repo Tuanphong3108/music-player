@@ -6373,29 +6373,44 @@
             if(typeof updatePiPUI === 'function') updatePiPUI(); 
         });
 
-        // Giao diện điện thoại: nút giãn ra như viên thuốc khi bấm rồi co về (Previous -> phải, Play/Pause -> 2 bên, Next -> trái)
+        // Giao diện điện thoại: nút giãn ra như viên thuốc khi bấm rồi co về (Previous -> phải, Play/Pause -> 2 bên, Next -> trái),
+        // đồng thời đẩy các nút bên cạnh xẹp lại chút (mép nút bên cạnh lùi đúng bằng phần nút kia giãn ra nên khoảng cách giữa các nút giữ nguyên).
         (function () {
-            const stretch = (id, extra) => {
+            const EASE = 'cubic-bezier(.34, 1.56, .64, 1)', DUR = 520;
+            const run = (el, frames) => {
+                if (el.__stretchAnim) { try { el.__stretchAnim.cancel(); } catch (e) {} }
+                const a = el.animate(frames, { duration: DUR, easing: EASE });
+                el.__stretchAnim = a;
+                const done = () => { if (el.__stretchAnim === a) { el.style.zIndex = ''; el.__stretchAnim = null; } };
+                a.onfinish = done; a.oncancel = done;
+            };
+            // extra: phần nút được giãn thêm; squeeze: [{ id, dw: phần bị xẹp, tx: dịch ngang để giữ nguyên mép phía kia }]
+            const stretch = (id, extra, squeeze) => {
                 const b = document.getElementById(id);
                 if (!b) return;
                 b.addEventListener('click', () => {
                     const root = document.documentElement;
                     if (!root.classList.contains('m-ui') || root.classList.contains('reduce-motion') || !b.animate) return;
-                    if (b.__stretchAnim) { try { b.__stretchAnim.cancel(); } catch (e) {} }
                     b.style.zIndex = '3';
-                    const a = b.animate([
+                    run(b, [
                         { width: '100%' },
                         { width: 'calc(100% + ' + extra + 'px)', offset: 0.4 },
                         { width: '100%' }
-                    ], { duration: 520, easing: 'cubic-bezier(.34, 1.56, .64, 1)' });
-                    b.__stretchAnim = a;
-                    const done = () => { if (b.__stretchAnim === a) { b.style.zIndex = ''; b.__stretchAnim = null; } };
-                    a.onfinish = done; a.oncancel = done;
+                    ]);
+                    squeeze.forEach(q => {
+                        const n = document.getElementById(q.id);
+                        if (!n) return;
+                        run(n, [
+                            { width: '100%', translate: '0px 0px' },
+                            { width: 'calc(100% - ' + q.dw + 'px)', translate: q.tx + 'px 0px', offset: 0.4 },
+                            { width: '100%', translate: '0px 0px' }
+                        ]);
+                    });
                 });
             };
-            stretch('prev-btn', 44);
-            stretch('play-btn', 56);
-            stretch('next-btn', 44);
+            stretch('prev-btn', 44, [{ id: 'play-btn', dw: 44, tx: 22 }]);
+            stretch('next-btn', 44, [{ id: 'play-btn', dw: 44, tx: -22 }]);
+            stretch('play-btn', 56, [{ id: 'prev-btn', dw: 28, tx: 0 }, { id: 'next-btn', dw: 28, tx: 0 }]);
         })();
 
         document.getElementById('next-btn').addEventListener('click', () => {
