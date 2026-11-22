@@ -7600,7 +7600,7 @@
             if (window.IS_ANDROID_APP && AB && typeof AB.scanAllDeviceAudio === 'function') {
                 setTimeout(() => {
                     try {
-                        if (gsStore.get('getting_started_done') === 'true') {
+                        if (localStorage.getItem('getting_started_done') === 'true') {
                             AB.scanAllDeviceAudio(false);
                         }
                     } catch (e) {}
@@ -8159,7 +8159,15 @@
                     sw.disabled = ok;
                     row.style.opacity = ok ? '0.6' : '1';
                 };
-                window.__onAndroidBatteryOptResult = applyState;
+                window.__onAndroidBatteryOptResult = (ignored) => {
+                    applyState(ignored);
+                    try {
+                        const gf = document.getElementById('getting-started-iframe');
+                        if (gf && gf.contentWindow && gf.contentWindow.__gsOnBatteryOptResult) {
+                            gf.contentWindow.__gsOnBatteryOptResult(ignored);
+                        }
+                    } catch (e) {}
+                };
                 let initialIgnored = false;
                 try {
                     if (AB && typeof AB.isIgnoringBatteryOptimizations === 'function') {
