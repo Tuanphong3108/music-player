@@ -6946,6 +6946,7 @@
                 renderPipPlaylist();
             }
             if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
+            if (typeof window.__syncPldActive === 'function') window.__syncPldActive();
             if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
         }
 
@@ -8835,6 +8836,14 @@
                 let pldReorderMode = false;
                 let pldSortAsc = true;
 
+                // Cập nhật bài đang phát (sáng) trong chi tiết danh sách phát mà không cần dựng lại
+                window.__syncPldActive = function () {
+                    if (!plDetailList) return;
+                    const t = playlist[currentIndex] || null;
+                    const k = t ? trackKeyOf(t) : '';
+                    plDetailList.querySelectorAll('.m-lib-item').forEach(r => r.classList.toggle('active', !!k && r.dataset.key === k));
+                };
+
                 function openPlaylistDetail(plId, keepModes) {
                     const pl = loadPls().find(x => x.id === plId);
                     if (!pl || !plDetailList) return;
@@ -8872,6 +8881,7 @@
                         const row = document.createElement('div');
                         const key = trackKeyOf(tr);
                         row.className = 'm-lib-item' + (activeKey && key === activeKey ? ' active' : '');
+                        row.dataset.key = key;
                         let leftHtml = pldReorderMode ? '<span class="material-symbols-rounded" style="opacity:.6;font-size:20px;">drag_indicator</span>' : '';
                         let rightHtml = '';
                         if (pldReorderMode) {
