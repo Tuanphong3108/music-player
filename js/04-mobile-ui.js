@@ -105,6 +105,98 @@
                 document.body.classList.add('m-mini-visible');
             }
 
+            // --- CACHE METADATA + ALBUM ART VÀO INDEXEDDB (CHỈ MOBILE) ---
+            const META_DB_NAME = 'mp_mobile_meta_cache_v1';
+            const META_STORE = 'tracks';
+            let metaDbPromise = null;
+            function openMetaCacheDB() {
+                if (metaDbPromise) return metaDbPromise;
+                metaDbPromise = new Promise((resolve, reject) => {
+                    try {
+                        const req = indexedDB.open(META_DB_NAME, 1);
+                        req.onupgradeneeded = () => {
+                            if (!req.result.objectStoreNames.contains(META_STORE)) {
+                                req.result.createObjectStore(META_STORE);
+                            }
+                        };
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(req.error);
+                    } catch (e) { reject(e); }
+                }).catch(() => { metaDbPromise = null; return null; });
+                return metaDbPromise;
+            }
+            async function loadAllMetaCache() {
+                const map = new Map();
+                const db = await openMetaCacheDB();
+                if (!db) return map;
+                return new Promise((resolve) => {
+                    try {
+                        const tx = db.transaction(META_STORE, 'readonly');
+                        const st = tx.objectStore(META_STORE);
+                        const req = st.openCursor();
+                        req.onsuccess = (ev) => {
+                            const cur = ev.target.result;
+                            if (cur) { map.set(cur.key, cur.value); cur.continue(); }
+                            else resolve(map);
+                        };
+                        req.onerror = () => resolve(map);
+                    } catch (e) { resolve(map); }
+                });
+            }
+            async function saveTrackMetaToCache(tr) {
+                if (!tr) return;
+                const key = mLibTrackId(tr);
+                if (!key) return;
+                const db = await openMetaCacheDB();
+                if (!db) return;
+                const coverVal = (tr.cover && tr.cover.startsWith('data:')) ? tr.cover : '';
+                const rec = {
+                    name: tr.name || '',
+                    artist: tr.artist || 'UNKNOWN ARTIST',
+                    album: tr.album || 'Unknown Album',
+                    year: tr.year || '',
+                    genre: tr.genre || '',
+                    composer: tr.composer || '',
+                    cover: coverVal,
+                    size: (tr.file && tr.file.size) || 0,
+                    modified: (tr.file && tr.file.lastModified) || 0,
+                    updatedAt: Date.now()
+                };
+                try {
+                    const tx = db.transaction(META_STORE, 'readwrite');
+                    tx.objectStore(META_STORE).put(rec, key);
+                } catch (e) {}
+            }
+            window.__saveTrackMetaToCache = saveTrackMetaToCache;
+
+            function patchMobileLibRowDom(tr) {
+                if (!mLibList || !tr) return;
+                const id = mLibTrackId(tr);
+                if (!id) return;
+                const rows = mLibList.querySelectorAll('.m-lib-item');
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (row.dataset.tid !== id) continue;
+                    row.classList.toggle('is-scanning', !!tr._metaLoading);
+                    const tEl = row.querySelector('.m-lib-title');
+                    const aEl = row.querySelector('.m-lib-artist');
+                    if (tEl && tEl.textContent !== (tr.name || '')) tEl.textContent = tr.name || '';
+                    if (aEl && aEl.textContent !== (tr.artist || '')) aEl.textContent = tr.artist || '';
+                    const artBox = row.querySelector('.m-lib-art');
+                    if (artBox) {
+                        const existingImg = artBox.querySelector('img');
+                        if (tr.cover) {
+                            if (!existingImg || existingImg.getAttribute('src') !== tr.cover) {
+                                artBox.innerHTML = '<span class="material-symbols-rounded">music_note</span><img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">';
+                            }
+                        } else if (existingImg) {
+                            existingImg.remove();
+                        }
+                    }
+                    break;
+                }
+            }
+
             let coverHydrateRunning = false;
             window.__hydrateMobileLibraryCovers = async function () {
                 if (coverHydrateRunning || !document.documentElement.classList.contains('m-ui')) return;
@@ -112,21 +204,74 @@
                 if (!pool.length) return;
                 coverHydrateRunning = true;
                 try {
+                    // Bước 1: Nạp tức thì metadata & ảnh bìa đã lưu trong app (IndexedDB) để mở lên là hiện ngay
+                    const cacheMap = await loadAllMetaCache();
+                    let appliedAnyCache = false;
+                    for (let i = 0; i < pool.length; i++) {
+                        const tr = pool[i];
+                        if (!tr) continue;
+                        const key = mLibTrackId(tr);
+                        const cached = key ? cacheMap.get(key) : null;
+                        if (cached) {
+                            if (cached.name) tr.name = cached.name;
+                            if (cached.artist) tr.artist = cached.artist;
+                            if (cached.album) tr.album = cached.album;
+                            if (cached.year) tr.year = cached.year;
+                            if (cached.genre !== undefined) tr.genre = cached.genre;
+                            if (cached.composer !== undefined) tr.composer = cached.composer;
+                            if (cached.cover && cached.cover.startsWith('data:')) {
+                                tr.cover = cached.cover;
+                                tr._hasRealCover = true;
+                            }
+                            tr._metaFromCache = true;
+                            tr._metaLoading = false;
+                            tr._metaLoaded = true;
+                            appliedAnyCache = true;
+                        } else if (tr.nativeStreamUrl && !tr._bgCoverChecked) {
+                            // Chưa có cache trong app -> bật trạng thái xoay Album Art cho tới khi quét xong
+                            tr._metaLoading = true;
+                        }
+                    }
+                    renderMobileLibrary();
+                    if (appliedAnyCache && typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+
+                    // Bước 2: Kiểm tra ngầm toàn bộ bài (kể cả bài đã có cache) để phát hiện thay đổi tag/ảnh bìa và cập nhật lại cache
                     for (let i = 0; i < pool.length; i++) {
                         const tr = pool[i];
                         if (!tr || !tr.nativeStreamUrl || tr._bgCoverChecked) continue;
                         tr._bgCoverChecked = true;
                         try {
                             const r = await fetch(tr.nativeStreamUrl, { headers: { Range: 'bytes=0-2097151' } });
-                            if (!r || !r.ok) continue;
+                            if (!r || !r.ok) {
+                                tr._metaLoading = false;
+                                tr._metaLoaded = true;
+                                patchMobileLibRowDom(tr);
+                                continue;
+                            }
                             const bl = await r.blob();
                             const f = new File([bl], tr.nativeName || (tr.name + '.' + (tr.ext || 'mp3').toLowerCase()), { type: bl.type || 'audio/mpeg' });
                             await new Promise((res) => {
                                 window.jsmediatags.read(f, {
                                     onSuccess: function (tag) {
                                         let changed = false;
-                                        if (tag.tags.artist && tr.artist === 'UNKNOWN ARTIST') { tr.artist = tag.tags.artist; changed = true; }
-                                        if (tag.tags.album && tr.album === 'Unknown Album') { tr.album = tag.tags.album; changed = true; }
+                                        if (tag.tags.title && tag.tags.title !== tr.name && (!tr._metaFromCache || tag.tags.title !== tr.rawName)) {
+                                            tr.name = tag.tags.title; changed = true;
+                                        }
+                                        if (tag.tags.artist && tag.tags.artist !== tr.artist) {
+                                            tr.artist = tag.tags.artist; changed = true;
+                                        }
+                                        if (tag.tags.album && tag.tags.album !== tr.album) {
+                                            tr.album = tag.tags.album; changed = true;
+                                        }
+                                        if (tag.tags.year && tag.tags.year !== tr.year) { tr.year = tag.tags.year; changed = true; }
+                                        if (tag.tags.genre && tag.tags.genre !== tr.genre) { tr.genre = tag.tags.genre; changed = true; }
+                                        const c = tag.tags.composer || tag.tags.TCOM || tag.tags['©wrt'] || tag.tags.COMPOSER;
+                                        if (c) {
+                                            let comp = (typeof c === 'object' ? (c.data != null ? c.data : '') : c);
+                                            if (Array.isArray(comp)) comp = comp.join(', ');
+                                            comp = String(comp || '');
+                                            if (comp && comp !== tr.composer) { tr.composer = comp; changed = true; }
+                                        }
                                         if (tag.tags.picture) {
                                             const { data, format } = tag.tags.picture;
                                             let bin = '';
@@ -137,18 +282,49 @@
                                                 tr._hasRealCover = true;
                                                 changed = true;
                                             }
+                                        } else if (tr._metaFromCache && tr.cover && tr.cover.startsWith('data:')) {
+                                            // Ảnh bìa nhúng đã bị xóa ngoài app -> đồng bộ lại
+                                            tr.cover = null;
+                                            tr._hasRealCover = false;
+                                            changed = true;
                                         }
+                                        tr._metaLoading = false;
+                                        tr._metaLoaded = true;
+                                        saveTrackMetaToCache(tr);
+                                        patchMobileLibRowDom(tr);
                                         if (changed) {
-                                            renderMobileLibrary();
+                                            if (playlist[currentIndex] === tr) {
+                                                trackNameEl.innerText = tr.name;
+                                                trackArtistEl.innerText = `${tr.artist} | ${tr.ext}`;
+                                                if (tr.cover) {
+                                                    artImg.src = tr.cover;
+                                                    artImg.classList.remove('hidden');
+                                                    artPlaceholder.classList.add('hidden');
+                                                    bgPreview.style.backgroundImage = `url(${tr.cover})`;
+                                                    refreshDynamicAccent(tr);
+                                                }
+                                                updateFsUI();
+                                                updateMediaSession();
+                                            }
                                             if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
                                         }
                                         res();
                                     },
-                                    onError: function () { res(); }
+                                    onError: function () {
+                                        tr._metaLoading = false;
+                                        tr._metaLoaded = true;
+                                        saveTrackMetaToCache(tr);
+                                        patchMobileLibRowDom(tr);
+                                        res();
+                                    }
                                 });
                             });
-                            await new Promise(r2 => setTimeout(r2, 40));
-                        } catch (e) {}
+                            await new Promise(r2 => setTimeout(r2, 35));
+                        } catch (e) {
+                            tr._metaLoading = false;
+                            tr._metaLoaded = true;
+                            patchMobileLibRowDom(tr);
+                        }
                     }
                 } finally {
                     coverHydrateRunning = false;
@@ -170,9 +346,11 @@
                         const hay = removeVietnameseTones((tr.name || '') + ' ' + (tr.artist || '')).toLowerCase();
                         if (!hay.includes(q)) continue;
                     }
-                    const isAct = !!(activeId && mLibTrackId(tr) === activeId);
+                    const tid = mLibTrackId(tr);
+                    const isAct = !!(activeId && tid === activeId);
                     const row = document.createElement('div');
-                    row.className = 'm-lib-item' + (isAct ? ' active' : '');
+                    row.className = 'm-lib-item' + (isAct ? ' active' : '') + (tr._metaLoading ? ' is-scanning' : '');
+                    row.dataset.tid = tid;
                     row.innerHTML =
                         '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>' +
                         '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
