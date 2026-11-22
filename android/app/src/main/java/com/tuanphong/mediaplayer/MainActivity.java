@@ -1422,6 +1422,7 @@ public class MainActivity extends Activity {
     public void onConfigurationChanged(android.content.res.Configuration c) {
         super.onConfigurationChanged(c);
         callJs("window.__systemAccentChanged&&__systemAccentChanged()");
+        callJs("window.__systemThemeChanged&&__systemThemeChanged()");
     }
 
     @Override
@@ -2095,6 +2096,12 @@ public class MainActivity extends Activity {
             JSONArray arr = new JSONArray();
             for (String p : getExcludedDirsSet()) arr.put(p);
             return arr.toString();
+        }
+
+        @JavascriptInterface
+        public boolean isSystemDarkMode() {
+            int mode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            return mode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
         }
 
         @JavascriptInterface
