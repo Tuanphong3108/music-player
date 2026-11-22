@@ -1179,8 +1179,12 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             List<JSONObject> scanned = new ArrayList<>();
             java.util.Set<String> excluded = getExcludedDirsSet();
+            android.content.SharedPreferences appSp = getSharedPreferences("app", MODE_PRIVATE);
+            int minDurSec = Math.max(0, appSp.getInt("min_duration_sec", 0));
+            long minDurMs = minDurSec * 1000L;
+            boolean autoScanLrc = appSp.getBoolean("auto_scan_lrc", true);
             java.util.Map<String, String> lrcByStem = new java.util.HashMap<>();
-            try {
+            if (autoScanLrc) try {
                 // Quét cả tệp .lrc qua MediaStore.Files nếu có quyền để tự ghép lời bài hát
                 android.net.Uri filesUri = android.provider.MediaStore.Files.getContentUri("external");
                 try (Cursor fc = getContentResolver().query(filesUri,
@@ -1220,7 +1224,9 @@ public class MainActivity extends Activity {
                         android.provider.MediaStore.Audio.Media.DATE_MODIFIED,
                         android.provider.MediaStore.Audio.Media.DURATION
                 };
-                String sel = "(" + android.provider.MediaStore.Audio.Media.DURATION + " >= 3000 OR LOWER(COALESCE(" + android.provider.MediaStore.Audio.Media.MIME_TYPE + ", '')) LIKE 'audio/%')"
+                String sel = (minDurMs > 0
+                        ? (android.provider.MediaStore.Audio.Media.DURATION + " >= " + minDurMs)
+                        : ("(" + android.provider.MediaStore.Audio.Media.DURATION + " >= 0 OR LOWER(COALESCE(" + android.provider.MediaStore.Audio.Media.MIME_TYPE + ", '')) LIKE 'audio/%')"))
                         + " AND " + android.provider.MediaStore.Audio.Media.DATA + " IS NOT NULL";
                 try (Cursor c = getContentResolver().query(audioUri, proj, sel, null,
                         android.provider.MediaStore.Audio.Media.DATE_ADDED + " DESC")) {
@@ -2102,6 +2108,14 @@ public class MainActivity extends Activity {
         public boolean isSystemDarkMode() {
             int mode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
             return mode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        }
+
+        @JavascriptInterface
+        public void setLibraryScanPrefs(int minDurationSec, boolean autoScanLrc) {
+            getSharedPreferences("app", MODE_PRIVATE).edit()
+                    .putInt("min_duration_sec", Math.max(0, minDurationSec))
+                    .putBoolean("auto_scan_lrc", autoScanLrc)
+                    .apply();
         }
 
         @JavascriptInterface
