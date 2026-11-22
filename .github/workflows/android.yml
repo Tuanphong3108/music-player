@@ -22,11 +22,21 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.7' }
+      - name: Compute version
+        id: ver
+        run: |
+          RUN_NUM=${{ github.run_number }}
+          MINOR=$((RUN_NUM / 100))
+          PATCH=$((RUN_NUM % 100))
+          VER="1.${MINOR}.${PATCH}"
+          echo "code=${RUN_NUM}" >> "$GITHUB_OUTPUT"
+          echo "name=${VER}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VER}" >> "$GITHUB_OUTPUT"
       - name: Build release APK
         working-directory: android
         env:
-          VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: 1.0.${{ github.run_number }}
+          VERSION_CODE: ${{ steps.ver.outputs.code }}
+          VERSION_NAME: ${{ steps.ver.outputs.name }}
         run: gradle --no-daemon assembleRelease
       - name: Prepare release notes
         env:
@@ -45,7 +55,7 @@ jobs:
       - name: Publish versioned release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: v1.0.${{ github.run_number }}
+          TAG: ${{ steps.ver.outputs.tag }}
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk MediaPlayer.apk
           gh release delete "$TAG" --yes --cleanup-tag || true
