@@ -100,7 +100,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
     static void saveLyricLine(Context context, String lyric) {
         SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String old = sp.getString("lyric", "");
-        String next = lyric == null ? "" : lyric;
+        String next = LyricsWidgetProvider.stripLyricCredit(lyric);
         if (next.equals(old)) return;
         sp.edit().putString("lyric", next).apply();
         updateAllWidgets(context);
