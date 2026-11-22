@@ -7836,6 +7836,13 @@
             let lastWidgetLyric = '';
             let lastWidgetQueueJson = '';
             let lastWidgetLyricsKey = '';
+            const getCleanTopLyric = () => {
+                const topEl = document.getElementById('top-active-lyric');
+                if (!topEl) return '';
+                const firstSpan = topEl.querySelector('span');
+                const raw = firstSpan ? firstSpan.textContent : topEl.textContent;
+                return (raw || '').trim();
+            };
             const syncWidgetsExtra = () => {
                 try {
                     const tr = playlist[currentIndex];
@@ -7872,8 +7879,7 @@
                         }
                     }
                     if (AB && AB.setWidgetLyricsData) {
-                        const topEl = document.getElementById('top-active-lyric');
-                        const syncedLine = (tr && topEl && topEl.textContent) ? topEl.textContent.trim() : '';
+                        const syncedLine = tr ? getCleanTopLyric() : '';
                         const hasLrc = !!(tr && Array.isArray(tr.lyrics) && tr.lyrics.length > 0);
                         let staticBlock = '';
                         if (tr && hasLrc) {
@@ -7892,6 +7898,7 @@
                         } else if (tr && tr.lyricsRaw) {
                             staticBlock = String(tr.lyricsRaw)
                                 .split(/\r?\n/)
+                                .filter(s => !LRC_HEADER_TAG.test(s))
                                 .map(s => s.replace(/\[[^\]]*\]/g, '').trim())
                                 .filter(Boolean)
                                 .slice(0, 5)
@@ -7911,8 +7918,7 @@
                 if (!audio.paused && !audio.ended) report();
                 try {
                     if (AB && AB.setWidgetLyric) {
-                        const topEl = document.getElementById('top-active-lyric');
-                        const line = (playlist[currentIndex] && topEl && topEl.textContent) ? topEl.textContent.trim() : '';
+                        const line = playlist[currentIndex] ? getCleanTopLyric() : '';
                         if (line !== lastWidgetLyric) {
                             lastWidgetLyric = line;
                             AB.setWidgetLyric(line);
