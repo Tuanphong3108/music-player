@@ -2288,6 +2288,7 @@ public class MainActivity extends Activity {
                     isEnglishLang() ? "Installer closed without completing update" : "Trình cài đặt đã đóng hoặc gặp lỗi khi cài") + ")");
         }
         appLeftHome = false;
+        NativeAudio.cancelSleepEndedNotification(this);
         try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Throwable ignored) {}
         scheduleBlankCheck(5000L);
         if (pageResponded && pageReady && !hangAlertShown) {
@@ -2489,6 +2490,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public boolean nativeAudioAvailable() { return true; }
         @JavascriptInterface public String nativeAudioState() { return NativeAudio.stateJson(); }
         @JavascriptInterface public String nativeAudioQueueState() { return NativeAudio.queueStateJson(); }
+        @JavascriptInterface public void consumeSleepEndedNotice() { NativeAudio.consumeSleepEndedNotice(); }
         @JavascriptInterface public int nativeAudioSessionId() { return NativeAudio.sessionId(); }
         @JavascriptInterface public void nativeAudioLoad(final String id, final String title, final String artist, final long startMs, final boolean play, final float vol, final float rate) {
             NativeAudio.lastAck = android.os.SystemClock.elapsedRealtime();
