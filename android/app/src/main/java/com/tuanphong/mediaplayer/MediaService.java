@@ -69,13 +69,17 @@ public class MediaService extends Service {
         session.setActive(false);
     }
 
-    /** Bài kế/trước: trang còn sống thì để trang quyết (shuffle/lặp); trang đang chết thì app tự làm bằng trình phát native. */
+    /** Bài kế/trước: nếu trang đang mở trên màn hình thì để trang quyết; nếu ở nền/tắt màn hình thì app tự chuyển bài bằng trình phát native để không bị loạn/chồng lệnh. */
     private void skip(final boolean next) {
         final String c = next ? "next" : "prev";
         MainActivity m = MainActivity.instance;
         if (!NativeAudio.active() || m == null) {
             if (NativeAudio.active()) { if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous(); return; }
             cmd(c); return;
+        }
+        if (m.isInBackgroundForMedia()) {
+            if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous();
+            return;
         }
         m.probeWeb(() -> cmd(c), () -> {
             if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous();
@@ -95,14 +99,16 @@ public class MediaService extends Service {
         boolean pwr = o.optBoolean("pwr");
         String ns = o.optBoolean("err") ? "error" : "ended".equals(st) ? "ended"
                 : (pwr ? ("buffering".equals(st) ? "buffering" : "playing") : "paused");
-        String t = o.optString("title"), ar = o.optString("artist");
+        String t = o.optString("title"), ar = o.optString("artist"), incomingId = o.optString("id");
         long d = o.optLong("dur", 0);
-        boolean metaChanged = (!t.isEmpty() && !t.equals(title)) || !ns.equals(state) || (d > 0 && d != dur);
-        if (!t.isEmpty() && !t.equals(title)) {
+        boolean trackChanged = (!incomingId.isEmpty() && !incomingId.equals(curTrackId)) || (!t.isEmpty() && !t.equals(title));
+        boolean metaChanged = trackChanged || !ns.equals(state) || (d > 0 && d != dur);
+        if (trackChanged) {
+            curTrackId = incomingId;
             art = null;
             artDirty = true;
             MediaWidgetProvider.saveArtwork(this, null);
-            loadNativeArtworkForId(o.optString("id"), t);
+            loadNativeArtworkForId(incomingId, t);
         }
         if (!t.isEmpty()) { title = t; artist = ar; }
         if (d > 0) dur = d;
@@ -116,12 +122,21 @@ public class MediaService extends Service {
         if (!metaChanged && session != null && session.isActive()) publishPlaybackOnly(); else publish();
     }
 
-    private volatile String loadingArtForTitle = "";
+    private volatile String curTrackId = "";
+    private volatile String loadingArtForId = "";
+    private final android.util.LruCache<String, Bitmap> artMemCache = new android.util.LruCache<>(12);
 
     /** Trích xuất trực tiếp ảnh bìa nhúng từ tệp gốc trên luồng nền Android khi đổi bài ở nền/màn hình khóa, không cần chờ WebView. */
     private void loadNativeArtworkForId(final String nativeId, final String expectedTitle) {
         if (nativeId == null || nativeId.isEmpty()) return;
-        loadingArtForTitle = expectedTitle == null ? "" : expectedTitle;
+        loadingArtForId = nativeId;
+        Bitmap cached = artMemCache.get(nativeId);
+        if (cached != null && !cached.isRecycled()) {
+            art = cached;
+            artDirty = false;
+            MediaWidgetProvider.saveArtwork(MediaService.this, cached);
+            return;
+        }
         new Thread(() -> {
             android.media.MediaMetadataRetriever mmr = null;
             try {
@@ -157,10 +172,10 @@ public class MediaService extends Service {
                         : cropped;
                 if (scaled != cropped) cropped.recycle();
                 if (cropped != decoded) decoded.recycle();
+                artMemCache.put(nativeId, scaled);
                 final Bitmap finalBmp = scaled;
                 fgHandler.post(() -> {
-                    if (!expectedTitle.equals(title)) {
-                        try { finalBmp.recycle(); } catch (Throwable ignored) {}
+                    if (!nativeId.equals(curTrackId) && (expectedTitle == null || !expectedTitle.equals(title))) {
                         return;
                     }
                     art = finalBmp;
@@ -201,7 +216,13 @@ public class MediaService extends Service {
         }
         if (i != null && ACTION_ART.equals(a)) {
             byte[] b = i.getByteArrayExtra("art");
-            art = (b == null || b.length == 0) ? null : BitmapFactory.decodeByteArray(b, 0, b.length);
+            Bitmap webArt = (b == null || b.length == 0) ? null : BitmapFactory.decodeByteArray(b, 0, b.length);
+            // Không để WebView gửi ảnh rỗng ("") đè mất ảnh bìa native đã trích xuất cho bài hiện tại
+            if (webArt == null && art != null && !artDirty && NativeAudio.active()) {
+                return START_NOT_STICKY;
+            }
+            art = webArt;
+            if (art != null && !curTrackId.isEmpty()) artMemCache.put(curTrackId, art);
             artDirty = false;
             MediaWidgetProvider.saveArtwork(this, art);
         } else if (i != null) {
