@@ -866,8 +866,9 @@
                 card.className = 'st-m-card'; card.dataset.tab = key; card.style.setProperty('--hue', m[0]);
                 const icon = tab.querySelector('.material-symbols-rounded').textContent;
                 const lbl = tab.querySelector('[data-i18n]');
-                card.innerHTML = '<span class="st-m-ic"><span class="material-symbols-rounded">' + icon + '</span></span><span class="st-m-tx"><span class="st-m-t" data-i18n="' + (lbl ? lbl.getAttribute('data-i18n') : '') + '"></span><span class="st-m-d" data-i18n="' + m[1] + '"></span></span>';
-                card.querySelector('.st-m-t').textContent = lbl ? lbl.textContent : key;
+                const fallbackTitle = key === 'ai' ? 'AI Integration (β)' : key;
+                card.innerHTML = '<span class="st-m-ic"><span class="material-symbols-rounded">' + icon + '</span></span><span class="st-m-tx"><span class="st-m-t"' + (lbl ? ' data-i18n="' + lbl.getAttribute('data-i18n') + '"' : '') + '></span><span class="st-m-d" data-i18n="' + m[1] + '"></span></span>';
+                card.querySelector('.st-m-t').textContent = lbl ? lbl.textContent : fallbackTitle;
                 card.querySelector('.st-m-d').textContent = tr(m[1], m[2]);
                 if (key === 'android') card.classList.add('st-m-android');
                 card.addEventListener('click', () => openDetail(key));
