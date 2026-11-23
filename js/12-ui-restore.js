@@ -522,6 +522,7 @@
                 // Bước 5: Chọn bài trong playlist tạm, đợi bài load xong hẳn rồi mới tua tới đoạn đã lưu & chốt trạng thái Pause
                 window.__adoptNative = false;
                 window.__restoreStartMs = Math.round(seekSec * 1000);
+                if (playlist[idx] && playlist[idx].nativeId && seekSec > 0) window.__restoreHint = { id: playlist[idx].nativeId, ms: Math.round(seekSec * 1000) };
                 window.__restoreOnce = { pos: seekSec, dur: durSec, play: false, fromNativeSession: false };
                 const loadedPromise = waitTrackLoaded(2500);
                 const itemEl = playlistContainer && playlistContainer.querySelector('.song-item[data-index="' + idx + '"]');
@@ -543,6 +544,11 @@
                 if (typeof window.__syncNativeQueue === 'function') window.__syncNativeQueue();
                 if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
                 armed = true;
+                // Người dùng đã bấm Play lúc đang khôi phục: phát tiếp từ đúng vị trí vừa tua
+                if (window.__pendingMiniResume) {
+                    window.__pendingMiniResume = false;
+                    try { audio.play(); } catch (e) {}
+                }
             } catch (e) {
                 armed = true;
             } finally {

@@ -61,6 +61,12 @@
 
     function doLoad(play) {
         N.pending = false;
+        // Dự phòng: nếu vị trí khôi phục bị mất trước khi nạp (vd. bấm Play quá sớm) thì dùng lại vị trí đã lưu của đúng bài này
+        const rh = window.__restoreHint;
+        if (rh && String(rh.id) === String(N.id)) {
+            if (!(N.startMs > 0) && rh.ms > 0) N.startMs = rh.ms;
+            window.__restoreHint = null;
+        }
         N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering';
         const t = nativeTrack();
         const ar = ((document.getElementById('track-artist') || {}).textContent || '').split('|')[0].trim();
