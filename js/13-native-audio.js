@@ -159,8 +159,13 @@
         try {
             if (!e) return;
             if (e.ev === 'sleep') {
-                if (typeof sleepState !== 'undefined' && sleepState) fireSleep();
-                else if (isNative()) { N.paused = true; fire('pause'); }
+                if (typeof window.__showNativeSleepEndedNotice === 'function') {
+                    window.__showNativeSleepEndedNotice(e.sleepFiredType || (typeof sleepState !== 'undefined' && sleepState && sleepState.type) || 'time', e.sleepFiredTotal || (typeof sleepState !== 'undefined' && sleepState && sleepState.total) || 1);
+                } else if (typeof sleepState !== 'undefined' && sleepState) {
+                    fireSleep();
+                } else if (isNative()) {
+                    N.paused = true; fire('pause');
+                }
                 return;
             }
             if (e.ev === 'advanced' || (e.ev === 'tick' && e.loaded && e.id && e.id !== N.id && !N.pending)) {
@@ -238,10 +243,10 @@
     function syncSleep() {
         try {
             const st = (typeof sleepState !== 'undefined') ? sleepState : null;
-            const key = st ? st.type + ':' + (st.endAt || st.remaining) : '';
+            const key = st ? st.type + ':' + (st.endAt || st.remaining || st.total || 0) : '';
             if (key === sleepSig) return;
             sleepSig = key;
-            AB.nativeAudioSetSleep(st && st.type === 'time' ? st.endAt : 0, st && st.type === 'tracks' ? st.remaining : 0);
+            AB.nativeAudioSetSleep(st && st.type === 'time' ? st.endAt : 0, st && st.type === 'tracks' ? Math.max(1, Number(st.remaining || st.total || 0)) : 0);
         } catch (e) {}
     }
     setInterval(() => { if (!document.hidden) syncSleep(); }, 3000);
