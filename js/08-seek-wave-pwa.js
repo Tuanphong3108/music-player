@@ -77,7 +77,9 @@
                     const mn = +slider.min || 0, mx = +slider.max || 100;
                     const prog = Math.min(1, Math.max(0, ((+slider.value) - mn) / ((mx - mn) || 1)));
                     const wavy = prog > 0.05 && prog < 0.98;
-                    const target = (!audio.paused && !audio.ended && !reduce && wavy) ? 1 : 0;
+                    const isActivelyPlaying = (!audio.paused && !audio.ended)
+                        || !!(window.__nativeAudioState && window.__nativeAudioState.mode === 'native' && !window.__nativeAudioState.paused && !window.__nativeAudioState.ended);
+                    const target = (isActivelyPlaying && !reduce && wavy) ? 1 : 0;
                     amp += (target - amp) * (1 - Math.exp(-dt / 140));      // giảm/tăng dần về 0 <-> 1
                     if (Math.abs(target - amp) < 0.004) amp = target;
                     if (amp > 0) phase += (dt / 1000) * Math.PI * 2;          // 1 wavelength / giây (waveSpeed mặc định MD3E); sóng chạy ngược (từ phải sang trái)
