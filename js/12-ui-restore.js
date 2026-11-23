@@ -337,7 +337,8 @@
         const shouldAutoPlay = !!window.__pendingMiniResume;
         window.__pendingMiniResume = false;
         const resumePos = (saved && saved.pos > 0) ? saved.pos : 0;
-        window.__restoreOnce = { pos: resumePos, play: shouldAutoPlay };
+        const resumeDur = (saved && saved.dur > 0) ? saved.dur : 0;
+        window.__restoreOnce = { pos: resumePos, dur: resumeDur, play: shouldAutoPlay };
         playTrack(idx);
         prioritizeTrack(idx);
         applyPanels();
