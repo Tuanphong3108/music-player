@@ -2725,7 +2725,7 @@ public class MainActivity extends Activity {
                 if (directPath != null && new File(directPath).canRead()) {
                     mmr.setDataSource(directPath);
                 } else if (src != null) {
-                    mmr.setDataSource(this, src);
+                    mmr.setDataSource(MainActivity.this, src);
                 } else {
                     return "";
                 }
