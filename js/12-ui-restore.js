@@ -133,7 +133,8 @@
             if (typeof applyRepeatUI === 'function') applyRepeatUI();
         }
         const nativeShuffled = nqData.shuffle === true;
-        const ord = (nativeShuffled && Array.isArray(nqData.order)) ? nqData.order.map(i => oldIdx[i]).filter(i => i >= 0) : [];
+        const rawOrder = Array.isArray(nqData.shuffleOrder) ? nqData.shuffleOrder : (Array.isArray(nqData.order) ? nqData.order : []);
+        const ord = nativeShuffled ? rawOrder.map(i => oldIdx[i]).filter(i => i >= 0) : [];
         if (nativeShuffled && ord.length === playlist.length && playlist.length > 0) {
             if (!isShuffle && typeof isShuffle !== 'undefined') {
                 isShuffle = true;
@@ -142,6 +143,12 @@
             }
             shuffleOrder = ord;
             shuffleInitialized = true;
+            if (typeof nqData.shufflePos === 'number' && nqData.shufflePos >= 0 && nqData.shufflePos < ord.length) {
+                const mappedIdx = ord[nqData.shufflePos];
+                if (typeof mappedIdx === 'number' && mappedIdx >= 0 && mappedIdx < playlist.length && currentIndex < 0) {
+                    currentIndex = mappedIdx;
+                }
+            }
         } else if (nqData.shuffle === false) {
             if (typeof isShuffle !== 'undefined' && isShuffle) {
                 isShuffle = false;
