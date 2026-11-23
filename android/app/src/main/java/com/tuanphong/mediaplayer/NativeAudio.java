@@ -156,7 +156,7 @@ final class NativeAudio {
                 ch.setShowBadge(true);
                 nm.createNotificationChannel(ch);
             }
-            String title = isEn ? "Sleep timer" : "Hẹn giờ tạm dừng";
+            String title = isEn ? "Sleep timer" : "Đã tạm dừng theo hẹn giờ";
             String body = "tracks".equals(type)
                     ? (isEn
                         ? "Playback paused automatically because the timer for " + total + " tracks finished."
