@@ -301,13 +301,31 @@
     let bootSince = 0, stubbed = false;
     function tryRestore() {
         if (window.__externalOpenActive) { trackDone = true; armed = true; return true; }
-        if (!saved && !(card && card.key) && !window.__nativeBoot) return true;
+        if (!saved && !(card && card.key) && !window.__nativeBoot && !(window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function')) return true;
         if (!touched) applyNav();
         if (trackDone) return true;
         if (touched || (typeof currentIndex !== 'undefined' && currentIndex >= 0)) { trackDone = true; return true; }
         if (typeof playlist === 'undefined') return false;
-        const boot = window.__nativeBoot || null;   // app đang phát/giữ sẵn bài nào đó: ưu tiên nhận lại đúng bài & hàng đợi đó
-        const bootQ = window.__nativeBootQueue || null;
+        let boot = window.__nativeBoot || null;   // app đang phát/giữ sẵn bài nào đó: ưu tiên nhận lại đúng bài & hàng đợi đó
+        let bootQ = window.__nativeBootQueue || null;
+        if (!bootQ && window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function') {
+            try {
+                const qs = JSON.parse(window.AndroidBridge.nativeAudioQueueState() || 'null');
+                if (qs && (qs.count > 0 || (Array.isArray(qs.ids) && qs.ids.length > 0) || qs.curId)) {
+                    bootQ = qs;
+                    window.__nativeBootQueue = qs;
+                }
+            } catch (e) {}
+        }
+        if (!boot && window.AndroidBridge && typeof window.AndroidBridge.nativeAudioState === 'function') {
+            try {
+                const ns = JSON.parse(window.AndroidBridge.nativeAudioState() || 'null');
+                if (ns && ns.loaded && ns.id) {
+                    boot = ns;
+                    window.__nativeBoot = ns;
+                }
+            } catch (e) {}
+        }
         if (boot) {
             if (bootQ) applyNativeQueue(bootQ);
             else restoreQueue();
@@ -394,11 +412,12 @@
 
     window.__hasPendingRestore = function () {
         if (window.__externalOpenActive || trackDone) return false;
-        return !!(window.__nativeBoot || (saved && saved.key) || (card && card.key));
+        const hasNative = !!(window.__nativeBoot || (window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function'));
+        return !!(hasNative || (saved && saved.key) || (card && card.key));
     };
     window.__hasPendingQueueRestore = function () {
         if (window.__externalOpenActive || qDone) return false;
-        return !!(window.__nativeBootQueue || localStorage.getItem(QKEY));
+        return !!(window.__nativeBootQueue || localStorage.getItem(QKEY) || (window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function'));
     };
     window.__tryRestoreNow = function (autoPlay) {
         if (autoPlay) window.__pendingMiniResume = true;
