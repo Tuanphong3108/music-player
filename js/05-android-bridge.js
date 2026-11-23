@@ -742,23 +742,17 @@
             };
             // Mọi sự kiện đổi trạng thái -> gửi ngay; khi đang phát thì chốt lại vị trí đúng mỗi giây (timeupdate chỉ ~4 lần/giây và không đều)
             ['play', 'playing', 'pause', 'ended', 'loadedmetadata', 'durationchange', 'seeking', 'seeked', 'waiting', 'stalled', 'canplay', 'ratechange', 'emptied', 'error', 'abort'].forEach(ev => audio.addEventListener(ev, report));
-            let lastWidgetLyric = '';
+            let lastWidgetModesKey = '';
             let lastWidgetQueueJson = '';
-            let lastWidgetLyricsKey = '';
-            const getCleanTopLyric = () => {
-                const topEl = document.getElementById('top-active-lyric');
-                if (!topEl) return '';
-                const firstSpan = topEl.querySelector('span');
-                const raw = firstSpan ? firstSpan.textContent : topEl.textContent;
-                return (raw || '').trim();
-            };
             const syncWidgetsExtra = () => {
                 try {
-                    const tr = playlist[currentIndex];
-                    const pos = (tr && audio.currentSrc) ? Math.round((audio.currentTime || 0) * 1000) : 0;
-                    const dur = (tr && audio.currentSrc && isFinite(audio.duration)) ? Math.round(audio.duration * 1000) : 0;
                     if (AB && AB.setWidgetDetails) {
-                        AB.setWidgetDetails(!!isShuffle, Number(repeatMode) || 0, pos, dur);
+                        const sh = !!isShuffle, rp = Number(repeatMode) || 0;
+                        const mKey = (sh ? '1' : '0') + '|' + rp;
+                        if (mKey !== lastWidgetModesKey) {
+                            lastWidgetModesKey = mKey;
+                            AB.setWidgetDetails(sh, rp, 0, 0);
+                        }
                     }
                     if (AB && AB.setWidgetQueue) {
                         const upcoming = [];
@@ -787,53 +781,11 @@
                             AB.setWidgetQueue(qJson);
                         }
                     }
-                    if (AB && AB.setWidgetLyricsData) {
-                        const syncedLine = tr ? getCleanTopLyric() : '';
-                        const hasLrc = !!(tr && Array.isArray(tr.lyrics) && tr.lyrics.length > 0);
-                        let staticBlock = '';
-                        if (tr && hasLrc) {
-                            let activeIdx = 0;
-                            const tNow = audio.currentTime || 0;
-                            for (let i = 0; i < tr.lyrics.length; i++) {
-                                if (tNow >= tr.lyrics[i].time - 0.2) activeIdx = i;
-                                else if (tr.lyrics[i].time >= 0) break;
-                            }
-                            const startIdx = Math.max(0, activeIdx - 1);
-                            staticBlock = tr.lyrics
-                                .slice(startIdx, startIdx + 5)
-                                .map(l => (l && l.text ? String(l.text).trim() : ''))
-                                .filter(Boolean)
-                                .join('\n');
-                        } else if (tr && tr.lyricsRaw) {
-                            staticBlock = String(tr.lyricsRaw)
-                                .split(/\r?\n/)
-                                .filter(s => !LRC_HEADER_TAG.test(s))
-                                .map(s => s.replace(/\[[^\]]*\]/g, '').trim())
-                                .filter(Boolean)
-                                .slice(0, 5)
-                                .join('\n');
-                        }
-                        const titleStr = tr ? (tr.name || '') : '';
-                        const lKey = syncedLine + '||' + staticBlock + '||' + titleStr + '||' + (hasLrc ? '1' : '0');
-                        if (lKey !== lastWidgetLyricsKey) {
-                            lastWidgetLyricsKey = lKey;
-                            AB.setWidgetLyricsData(syncedLine, staticBlock, titleStr, hasLrc);
-                        }
-                    }
                 } catch (e) {}
             };
             window.__syncAndroidWidgets = syncWidgetsExtra;
             setInterval(() => {
                 if (!audio.paused && !audio.ended) report();
-                try {
-                    if (AB && AB.setWidgetLyric) {
-                        const line = playlist[currentIndex] ? getCleanTopLyric() : '';
-                        if (line !== lastWidgetLyric) {
-                            lastWidgetLyric = line;
-                            AB.setWidgetLyric(line);
-                        }
-                    }
-                } catch (e) {}
                 syncWidgetsExtra();
             }, 1000);
             ['play', 'pause', 'ended', 'loadedmetadata', 'seeked'].forEach(ev => audio.addEventListener(ev, syncWidgetsExtra));
