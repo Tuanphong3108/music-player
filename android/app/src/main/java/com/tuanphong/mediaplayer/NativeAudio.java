@@ -666,6 +666,31 @@ final class NativeAudio {
     private static volatile String lastSnap = "{\"loaded\":false,\"id\":\"\"}";
     private static volatile long lastSnapAt = 0;
     /** Trạng thái gần nhất (đọc được từ mọi luồng); vị trí được ngoại suy theo thời gian đã trôi nếu đang phát. */
+    static String persistedSessionJson(Context ctx) {
+        try {
+            Context c = ctx != null ? ctx : app;
+            if (c == null) return "";
+            return c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE).getString("session_json", "");
+        } catch (Throwable ignored) {
+            return "";
+        }
+    }
+
+    static String persistedQueueJson(Context ctx) {
+        try {
+            Context c = ctx != null ? ctx : app;
+            if (c == null) return "";
+            return c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE).getString("queue_json", "");
+        } catch (Throwable ignored) {
+            return "";
+        }
+    }
+
+    static void saveBackupNow(Context ctx) {
+        if (ctx != null && app == null) app = ctx.getApplicationContext();
+        persistSessionBackup(SystemClock.elapsedRealtime(), true);
+    }
+
     static String stateJson() {
         try {
             JSONObject o = new JSONObject(lastSnap);
