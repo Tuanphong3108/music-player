@@ -319,13 +319,14 @@
         if (idx < 0) return false;
         trackDone = true;
         body.classList.remove('m-early-card');
+        const shouldPlay = !!(boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
         if (boot) {
             const matchedTrack = playlist[idx];
             if (matchedTrack && matchedTrack.nativeId && window.__nativeAudioState) {
                 window.__nativeAudioState.adoptId = matchedTrack.nativeId;
             }
             window.__adoptNative = true;
-            window.__restoreOnce = { pos: (boot.pos || 0) / 1000, play: !!boot.pwr, fromNativeSession: true };
+            window.__restoreOnce = { pos: (boot.pos || 0) / 1000, play: shouldPlay, fromNativeSession: true };
             playTrack(idx);
             prioritizeTrack(idx);
             applyPanels();
@@ -375,9 +376,10 @@
             if (idx < 0) return;
             const tr = playlist[idx];
             const curTimeMs = (audio.currentTime || 0) * 1000;
+            const sPlaying = !!(s.pwr && (s.st === 'ready' || s.st === 'buffering'));
             const diffTrack = idx !== currentIndex || !audio.currentSrc;
             const diffPos = Math.abs(curTimeMs - (s.pos || 0)) > 1500;
-            const diffPlay = audio.paused !== !s.pwr;
+            const diffPlay = audio.paused !== !sPlaying;
             if (diffTrack || diffPos || diffPlay) {
                 trackDone = true;
                 body.classList.remove('m-early-card');
@@ -385,7 +387,7 @@
                     window.__nativeAudioState.adoptId = tr.nativeId;
                 }
                 window.__adoptNative = true;
-                window.__restoreOnce = { pos: (s.pos || 0) / 1000, play: !!s.pwr, fromNativeSession: true };
+                window.__restoreOnce = { pos: (s.pos || 0) / 1000, play: sPlaying, fromNativeSession: true };
                 playTrack(idx);
                 if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
             }
