@@ -1,4 +1,5 @@
 <!-- Chỉ ghi nội dung thay đổi của BẢN CẬP NHẬT HIỆN TẠI tại đây (xóa sạch ghi chú của các bản cũ trước khi push). -->
 ### Có gì mới trong bản cập nhật Android này
-- **Đồng bộ trạng thái & hàng đợi từ khung app khi thoát ra vào lại**: khi mở lại hoặc quay lại ứng dụng, WebView chủ động hỏi `NativeAudio` (`nativeAudioState` + `nativeAudioQueueState`) xem khung app có đang giữ/phát bài nào và hàng đợi lúc đó ra sao; nếu có sẽ nhận lại đúng danh sách, đúng bài và tiếp tục mượt mà từ đúng vị trí đang phát, nếu không thì giữ nguyên trạng thái nghỉ.
-- **Sửa lỗi tab Danh sách phát hiện 0 bài khi vào lại & bấm phát trên Mini Player bị nhảy về bài đầu**: tự động cập nhật lại số bài trên tab Playlists ngay khi thư viện nạp xong, đồng thời giữ đúng bài, hàng đợi và đoạn đang nghe dở khi bấm tiếp tục phát từ Mini Player khôi phục.
+- **Sửa lỗi chuyển bài trên màn hình khóa bị nhảy loạn & mất ảnh bìa**:
+  - Khi ứng dụng đang ở nền hoặc khóa màn hình, `MediaService` chuyển thẳng bài qua `NativeAudio` (`advance` / `previous`) thay vì thăm dò WebView dễ gây chồng lệnh hoặc phát lặp 2 lần; đồng thời tắt `navigator.mediaSession.setActionHandler` phía WebView khi chạy trình phát native để không tranh quyền điều khiển hệ thống.
+  - Thêm bộ nhớ đệm ảnh bìa (`LruCache`) theo `nativeId` và chặn WebView gửi ảnh rỗng (`""`) lúc chuyển bài đè mất ảnh bìa native vừa trích xuất.
