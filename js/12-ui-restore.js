@@ -43,6 +43,64 @@
     window.addEventListener('pagehide', save);
     setInterval(() => { if (!document.hidden) save(); }, 3000);
 
+    // ===== Hàng đợi tạm (playlist đang phát): lưu đúng thứ tự + thứ tự shuffle, khôi phục sau khi quét xong thư viện =====
+    const QKEY = 'mp_queue_v1';
+    let qArmed = false, qDone = false, qSig = '';
+    function saveQueue() {
+        if (!qArmed || typeof playlist === 'undefined' || !playlist.length) return;
+        try {
+            const useOrder = !!(isShuffle && shuffleInitialized && shuffleOrder.length === playlist.length);
+            const keys = playlist.map(keyOf);
+            const sig = keys.length + '|' + keys[0] + '|' + keys[keys.length - 1] + '|' + keys.join('').length + '|' + (useOrder ? shuffleOrder.join(',') : '') + '|' + keys.filter((k, i) => i % 5 === 0).join('');
+            if (sig === qSig) return;
+            qSig = sig;
+            localStorage.setItem(QKEY, JSON.stringify({ keys: keys, order: useOrder ? shuffleOrder.slice() : null }));
+        } catch (e) {}
+    }
+    setInterval(() => { if (!document.hidden) saveQueue(); }, 3000);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) saveQueue(); });
+    window.addEventListener('pagehide', saveQueue);
+    function restoreQueue() {
+        if (qDone) return;
+        qDone = true;
+        try {
+            let q = null;
+            try { q = JSON.parse(localStorage.getItem(QKEY) || 'null'); } catch (e) {}
+            if (!q || !Array.isArray(q.keys) || !q.keys.length) return;
+            const pool = new Map();
+            (Array.isArray(window.__mobileLibrary) ? window.__mobileLibrary : []).concat(playlist).forEach(t => { const k = keyOf(t); if (k && !pool.has(k)) pool.set(k, t); });
+            const cur = (currentIndex >= 0 && playlist[currentIndex]) || null;
+            if (cur) pool.set(keyOf(cur), cur);
+            const nq = [], oldIdx = [];
+            q.keys.forEach((k, i) => { const t = pool.get(k); if (t) { nq.push(t); oldIdx[i] = nq.length - 1; } else oldIdx[i] = -1; });
+            if (!nq.length) return;
+            const same = nq.length === playlist.length && nq.every((t, i) => t === playlist[i]);
+            if (!same) {
+                playlist.length = 0;
+                nq.forEach(t => playlist.push(t));
+                currentIndex = cur ? playlist.indexOf(cur) : -1;
+                window.__queueRestored = true;
+            }
+            if (isShuffle) {
+                const ord = Array.isArray(q.order) ? q.order.map(i => oldIdx[i]).filter(i => i >= 0) : [];
+                if (ord.length === playlist.length) { shuffleOrder = ord; shuffleInitialized = true; }
+                else if (!same) generateShuffleOrder();
+            }
+            updatePlaylistUI();
+            if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+            if (typeof window.__syncNativeQueue === 'function') window.__syncNativeQueue();
+        } catch (e) {} finally { qArmed = true; }
+    }
+    (function () {
+        const o = window.__onAndroidLibraryScanDone;
+        window.__onAndroidLibraryScanDone = function (count, missingPerm) {
+            let r; try { if (o) r = o.apply(this, arguments); } catch (e) {}
+            if (!missingPerm) setTimeout(restoreQueue, 0); else qArmed = true;
+            return r;
+        };
+        setTimeout(() => { if (!qDone) { qArmed = true; } }, 60000);
+    })();
+
     function applyNav() {
         if (navApplied || !saved || touched) return;
         navApplied = true;

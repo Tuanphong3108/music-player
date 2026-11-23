@@ -74,11 +74,11 @@ public class MediaService extends Service {
         final String c = next ? "next" : "prev";
         MainActivity m = MainActivity.instance;
         if (!NativeAudio.active() || m == null) {
-            if (NativeAudio.active()) { if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.seek(0); return; }
+            if (NativeAudio.active()) { if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous(); return; }
             cmd(c); return;
         }
         m.probeWeb(() -> cmd(c), () -> {
-            if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.seek(0);
+            if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous();
         });
     }
 

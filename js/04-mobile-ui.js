@@ -515,6 +515,18 @@
             if (mPlShuffle) mPlShuffle.addEventListener('click', () => { document.getElementById('shuffle-btn').click(); syncMobileMiniPlayer(); });
             if (mPlRepeat) mPlRepeat.addEventListener('click', () => { document.getElementById('repeat-btn').click(); syncMobileMiniPlayer(); });
             if (mPlSleep) mPlSleep.addEventListener('click', () => { document.getElementById('sleep-btn').click(); });
+            // Nút hẹn giờ trong playlist: khi đang bật thì sáng lên và hiện số phút / số bài còn lại
+            window.__syncMPlSleep = function (label) {
+                if (!mPlSleep) return;
+                mPlSleep.classList.toggle('active', !!label);
+                mPlSleep.classList.toggle('has-txt', !!label);
+                let tx = mPlSleep.querySelector('.m-pl-sl-txt');
+                if (label) {
+                    if (!tx) { tx = document.createElement('span'); tx.className = 'm-pl-sl-txt'; mPlSleep.appendChild(tx); }
+                    tx.textContent = label;
+                } else if (tx) tx.remove();
+            };
+            if (typeof sleepState !== 'undefined' && sleepState) { try { updateSleepUI(); } catch (e) {} }
 
             // Popup 3 chấm của Playlist Sheet (Locate current song / Clear queue / Save as playlist)
             const syncPlMoreLabels = () => {

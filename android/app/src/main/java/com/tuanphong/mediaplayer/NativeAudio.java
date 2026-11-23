@@ -30,17 +30,56 @@ final class NativeAudio {
     private static Context app;
     private static ExoPlayer p;
     private static String curId = "", title = "", artist = "";
-    private static String nextId = "", nextTitle = "", nextArtist = "";
+    // Hàng đợi do trang gửi sang: id/tiêu đề/nghệ sĩ theo thứ tự danh sách, order = thứ tự phát (shuffle) dạng chỉ số, repeat 0 tắt / 1 tất cả / 2 một bài
+    private static String[] qIds = new String[0], qTitles = new String[0], qArtists = new String[0];
+    private static int[] order = new int[0];
+    private static int repeat = 0;
     private static boolean loaded = false, endedHandled = false;
     private static float rate = 1f, vol = 1f;
     /** elapsedRealtime của lần trang web phản hồi gần nhất (evaluateJavascript trả về = renderer còn sống). */
     static volatile long lastAck = 0;
 
+    private static long sleepAt = 0;
+    private static int sleepTracks = 0;
+    private static final Runnable sleepRun = () -> { sleepAt = 0; pause(); emit("sleep"); };
+    /** Hẹn giờ ngủ do app giữ để vẫn tạm dừng đúng giờ / đúng số bài khi WebView bị đóng băng. endAtMs = 0: không hẹn theo giờ; tracks = 0: không hẹn theo bài. */
+    static void setSleep(long endAtMs, int tracks) {
+        main.removeCallbacks(sleepRun);
+        sleepAt = endAtMs; sleepTracks = Math.max(0, tracks);
+        if (endAtMs > 0) main.postDelayed(sleepRun, Math.max(0, endAtMs - System.currentTimeMillis()));
+    }
+
     static void post(Runnable r) { main.post(r); }
 
     static boolean active() { return loaded && p != null; }
     static boolean webAlive() { return MainActivity.instance != null && SystemClock.elapsedRealtime() - lastAck < 4000; }
-    static boolean hasNext() { return !nextId.isEmpty() && MainActivity.resolveServed(nextId) != null; }
+    static boolean hasNext() { return stepQ(1) >= 0; }
+
+    private static int curQ() {
+        for (int i = 0; i < qIds.length; i++) if (qIds[i].equals(curId)) return i;
+        return -1;
+    }
+    /** Chỉ số (trong danh sách) của bài cách bài hiện tại `dir` bước theo thứ tự phát; -1 nếu không có. Bỏ qua bài không mở được. */
+    private static int stepQ(int dir) {
+        int c = curQ();
+        if (c < 0 || order.length == 0) return -1;
+        if (dir > 0 && repeat == 2) return c;
+        int pos = -1;
+        for (int i = 0; i < order.length; i++) if (order[i] == c) { pos = i; break; }
+        if (pos < 0) return -1;
+        int n = order.length;
+        for (int k = 1; k <= n; k++) {
+            int np = pos + dir * k;
+            if (np >= n || np < 0) {
+                if (dir > 0 && repeat != 1) return -1;
+                np = ((np % n) + n) % n;
+            }
+            int q = order[np];
+            if (q == c) return -1;
+            if (q >= 0 && q < qIds.length && !qIds[q].isEmpty() && MainActivity.resolveServed(qIds[q]) != null) return q;
+        }
+        return -1;
+    }
 
     private static final Runnable ticker = new Runnable() {
         @Override public void run() {
@@ -123,12 +162,24 @@ final class NativeAudio {
         if (p != null) { try { p.stop(); p.clearMediaItems(); } catch (Throwable ignored) {} }
     }
     static void release() {
+        main.removeCallbacks(sleepRun); sleepAt = 0; sleepTracks = 0;
         stop();
         if (p != null) { try { p.release(); } catch (Throwable ignored) {} p = null; }
     }
 
-    static void setNext(String id, String t, String a) {
-        nextId = id == null ? "" : id; nextTitle = t == null ? "" : t; nextArtist = a == null ? "" : a;
+    static void setQueue(String json) {
+        try {
+            JSONObject o = new JSONObject(json);
+            org.json.JSONArray ids = o.getJSONArray("ids"), ts = o.optJSONArray("titles"), as = o.optJSONArray("artists"), od = o.optJSONArray("order");
+            int n = ids.length();
+            String[] a1 = new String[n], a2 = new String[n], a3 = new String[n];
+            for (int i = 0; i < n; i++) {
+                a1[i] = ids.optString(i, ""); a2[i] = ts == null ? "" : ts.optString(i, ""); a3[i] = as == null ? "" : as.optString(i, "");
+            }
+            int[] ord = new int[od == null ? n : od.length()];
+            for (int i = 0; i < ord.length; i++) ord[i] = od == null ? i : od.optInt(i, i);
+            qIds = a1; qTitles = a2; qArtists = a3; order = ord; repeat = o.optInt("repeat", 0);
+        } catch (Throwable ignored) {}
     }
 
     static int sessionId() { return p == null ? 0 : p.getAudioSessionId(); }
@@ -138,16 +189,24 @@ final class NativeAudio {
         if (endedHandled) return;
         endedHandled = true;
         main.removeCallbacks(ticker);
-        if (!webAlive() && hasNext()) { advance(); return; }
+        if (!webAlive()) {
+            if (sleepTracks > 0 && --sleepTracks == 0) { emit("sleep"); return; }   // trang đang chết nên app tự đếm số bài hẹn giờ
+            if (hasNext()) { advance(); return; }
+        }
         emit("ended");
     }
 
-    /** Sang bài kế do trang đã báo trước (dùng khi trang đang chết / điều khiển từ thông báo). */
-    static boolean advance() {
-        if (p == null || !hasNext()) return false;
-        String id = nextId, t = nextTitle, a = nextArtist;
-        nextId = ""; 
-        load(app, id, t, a, 0, true, vol, rate);
+    /** Sang bài kế (dùng khi trang đang chết / điều khiển từ thông báo). */
+    static boolean advance() { return go(stepQ(1)); }
+    /** Bài trước: đã phát quá 3 giây thì tua về đầu bài, không thì lùi một bài theo thứ tự phát. */
+    static boolean previous() {
+        if (p != null && loaded && p.getCurrentPosition() > 3000) { seek(0); return true; }
+        if (!go(stepQ(-1))) { seek(0); }
+        return true;
+    }
+    private static boolean go(int q) {
+        if (p == null || q < 0 || q >= qIds.length) return false;
+        load(app, qIds[q], qTitles[q], qArtists[q], 0, true, vol, rate);
         emit("advanced");
         return true;
     }
@@ -173,7 +232,7 @@ final class NativeAudio {
             } else {
                 o.put("st", "idle"); o.put("pwr", false); o.put("pos", 0); o.put("dur", 0); o.put("buf", 0); o.put("rate", rate); o.put("err", false);
             }
-            o.put("nextId", nextId);
+            o.put("qn", qIds.length);
         } catch (Throwable ignored) {}
         return o;
     }

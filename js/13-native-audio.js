@@ -128,6 +128,11 @@
     window.__nativeAudioEv = function (e) {
         try {
             if (!e) return;
+            if (e.ev === 'sleep') {
+                if (typeof sleepState !== 'undefined' && sleepState) fireSleep();
+                else if (isNative()) { N.paused = true; fire('pause'); }
+                return;
+            }
             if (e.ev === 'advanced') {
                 // app tự sang bài kế (lúc trang không phản hồi / bấm Next từ thông báo): trang theo kịp bằng cách nhận lại đúng bài đó
                 N.adoptId = e.id;
@@ -151,32 +156,52 @@
         } catch (err) {}
     };
 
-    // Báo cho app biết bài kế tiếp (để app tự sang bài khi trang không phản hồi)
-    function nextIndex() {
+    // Gửi cả hàng đợi + thứ tự shuffle + chế độ lặp sang app native để app tự điều khiển bài kế/trước khi trang không phản hồi
+    let qSig = '';
+    function syncQueue(force) {
         try {
-            const n = playlist.length;
-            if (n < 2 && repeatMode !== 2) return -1;
-            if (repeatMode === 2) return currentIndex;
-            if (isShuffle && shuffleInitialized && shuffleOrder.length) {
-                const p = shuffleOrder.indexOf(currentIndex);
-                if (p >= 0 && p < shuffleOrder.length - 1) return shuffleOrder[p + 1];
-                return repeatMode === 1 ? shuffleOrder[0] : -1;
+            if (typeof playlist === 'undefined' || !playlist.length) return;
+            const useOrder = !!(isShuffle && shuffleInitialized && shuffleOrder.length === playlist.length);
+            let h = 0;
+            const ids = new Array(playlist.length);
+            for (let i = 0; i < playlist.length; i++) {
+                const t = playlist[i];
+                const id = t && t.nativeId && t.fromLibrary ? String(t.nativeId) : '';
+                ids[i] = id;
+                for (let k = 0; k < id.length; k++) h = (h * 31 + id.charCodeAt(k)) | 0;
+                h = (h * 31 + 7) | 0;
             }
-            if (currentIndex < n - 1) return currentIndex + 1;
-            return repeatMode === 1 ? 0 : -1;
-        } catch (e) { return -1; }
-    }
-    let nt = null;
-    function scheduleNext() { clearTimeout(nt); nt = setTimeout(reportNext, 400); }
-    function reportNext() {
-        try {
-            const i = nextIndex(), t = i >= 0 ? playlist[i] : null;
-            const id = t && t.nativeId && t.fromLibrary ? String(t.nativeId) : '';
-            AB.nativeAudioSetNext(id, id ? (t.name || '') : '', id ? (t.artist || '') : '');
+            if (useOrder) for (let i = 0; i < shuffleOrder.length; i++) h = (h * 33 + shuffleOrder[i] + 1) | 0;
+            const sig = playlist.length + '|' + h + '|' + (useOrder ? 1 : 0) + '|' + (Number(repeatMode) || 0);
+            if (!force && sig === qSig) return;
+            qSig = sig;
+            AB.nativeAudioSetQueue(JSON.stringify({
+                ids: ids,
+                titles: playlist.map((t, i) => ids[i] ? (t.name || '') : ''),
+                artists: playlist.map((t, i) => ids[i] ? (t.artist || '') : ''),
+                order: useOrder ? shuffleOrder : null,
+                repeat: Number(repeatMode) || 0
+            }));
         } catch (e) {}
     }
-    ['shuffle-btn', 'repeat-btn'].forEach(id => { const b = document.getElementById(id); if (b) b.addEventListener('click', scheduleNext); });
+    let nt = null;
+    function scheduleNext() { clearTimeout(nt); nt = setTimeout(() => syncQueue(false), 400); }
+    ['shuffle-btn', 'repeat-btn', 'reshuffle-btn'].forEach(id => { const b = document.getElementById(id); if (b) b.addEventListener('click', scheduleNext); });
     a.addEventListener('playing', scheduleNext);
+    setInterval(() => { if (isNative()) syncQueue(false); }, 2000);
+    // Hẹn giờ ngủ: báo cho app giữ để vẫn dừng đúng lúc dù WebView bị đóng băng
+    let sleepSig = '';
+    function syncSleep() {
+        try {
+            const st = (typeof sleepState !== 'undefined') ? sleepState : null;
+            const key = st ? st.type + ':' + (st.endAt || st.remaining) : '';
+            if (key === sleepSig) return;
+            sleepSig = key;
+            AB.nativeAudioSetSleep(st && st.type === 'time' ? st.endAt : 0, st && st.type === 'tracks' ? st.remaining : 0);
+        } catch (e) {}
+    }
+    setInterval(syncSleep, 1000);
+    window.__syncNativeQueue = () => syncQueue(true);
 
     // Hỏi lại trạng thái khi trang vừa (tải lại) mở: nếu app đang phát bài nào thì cho khôi phục UI nhận lại đúng bài đó
     try {

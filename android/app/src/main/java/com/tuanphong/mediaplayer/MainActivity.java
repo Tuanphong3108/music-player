@@ -2196,7 +2196,8 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void nativeAudioVolume(final float v) { NativeAudio.post(() -> NativeAudio.setVolume(v)); }
         @JavascriptInterface public void nativeAudioRate(final float r) { NativeAudio.post(() -> NativeAudio.setRate(r)); }
         @JavascriptInterface public void nativeAudioStop() { NativeAudio.post(NativeAudio::stop); }
-        @JavascriptInterface public void nativeAudioSetNext(String id, String title, String artist) { NativeAudio.setNext(id, title, artist); }
+        @JavascriptInterface public void nativeAudioSetSleep(final long endAtMs, final int tracks) { NativeAudio.post(() -> NativeAudio.setSleep(endAtMs, tracks)); }
+        @JavascriptInterface public void nativeAudioSetQueue(String json) { NativeAudio.setQueue(json); }
 
         /** Bản đầy đủ: state = playing | paused | buffering | ended | error | none; bufMs = vị trí đã đệm. Chụp elapsedRealtime ngay khi nhận để vị trí không bị trễ theo IPC. */
         @JavascriptInterface

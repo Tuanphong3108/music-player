@@ -382,6 +382,7 @@
                 } else sleepBadge.textContent = sleepState.remaining + (currentLangDict['sleep.unit_track'] || ' bài');
             } else if (!sleepAnimating) sleepBadge.textContent = '';
             sleepBtn.classList.toggle('sleep-active', !!sleepState && !sleepAnimating);
+            if (typeof window.__syncMPlSleep === 'function') window.__syncMPlSleep(sleepState ? sleepBadge.textContent : '');
         }
         // Hiệu ứng nút: mọi thứ thu nhỏ + nút co về kích thước cũ -> icon tick/"x" zoom-in ~1s -> thu nhỏ
         // -> icon đồng hồ hiện lại rồi nút giãn ra hiện số phút/bài còn lại (nếu đang có hẹn giờ)
