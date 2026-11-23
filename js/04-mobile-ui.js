@@ -171,6 +171,49 @@
                 } catch (e) {}
             }
             window.__saveTrackMetaToCache = saveTrackMetaToCache;
+            let coverHydrateSeq = 0;
+            async function clearMetaCache() {
+                coverHydrateSeq++;
+                coverHydratePending = false;
+                try {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.updateScanNotification === 'function') {
+                        window.AndroidBridge.updateScanNotification(0, 0, '');
+                    }
+                } catch (e) {}
+                try {
+                    const db = await openMetaCacheDB();
+                    if (db) {
+                        await new Promise((resolve) => {
+                            try {
+                                const tx = db.transaction(META_STORE, 'readwrite');
+                                tx.objectStore(META_STORE).clear();
+                                tx.oncomplete = () => resolve();
+                                tx.onerror = () => resolve();
+                                tx.onabort = () => resolve();
+                            } catch (e) { resolve(); }
+                        });
+                    }
+                } catch (e) {}
+                try { indexedDB.deleteDatabase('mp_mobile_meta_cache_v1'); } catch (e) {}
+                const resetTrackMeta = (tr) => {
+                    if (!tr) return;
+                    tr._metaFromCache = false;
+                    tr._bgCoverChecked = false;
+                    tr._metaLoaded = false;
+                    tr._metaLoading = false;
+                    tr._fullTagsHydrated = false;
+                    tr._tagsHydrated = false;
+                    tr._lyricNativeTried = false;
+                    tr._hasRealCover = false;
+                    tr._tech = null;
+                    tr.cover = null;
+                    tr.lyrics = null;
+                    tr.lyricsRaw = '';
+                };
+                if (Array.isArray(window.__mobileLibrary)) window.__mobileLibrary.forEach(resetTrackMeta);
+                if (typeof playlist !== 'undefined' && Array.isArray(playlist)) playlist.forEach(resetTrackMeta);
+            }
+            window.__clearMobileMetaCache = clearMetaCache;
 
             let mLibRowMap = new Map();
             function dataUrlToThumb(dataUrl) {
@@ -254,11 +297,13 @@
                 if (coverHydrateRunning) { coverHydratePending = true; return; }
                 const pool = Array.isArray(window.__mobileLibrary) ? window.__mobileLibrary : [];
                 if (!pool.length) return;
+                const mySeq = ++coverHydrateSeq;
                 coverHydrateRunning = true;
                 coverHydratePending = false;
                 try {
                     // Bước 1: Nạp tức thì metadata & ảnh bìa đã lưu trong app (IndexedDB) để mở lên là hiện ngay
                     const cacheMap = await loadAllMetaCache();
+                    if (mySeq !== coverHydrateSeq) return;
                     let appliedAnyCache = false;
                     for (let i = 0; i < pool.length; i++) {
                         const tr = pool[i];
@@ -304,6 +349,7 @@
 
                     // Bước 2: Thả xong toàn bộ danh sách thần tốc -> đọc bổ sung toàn bộ bài chưa có cache song song 3 tệp cùng lúc (chạy cả ở nền + thông báo tiến trình)
                     await new Promise(r0 => setTimeout(r0, 600));
+                    if (mySeq !== coverHydrateSeq) return;
                     const targets = [];
                     const curTrack = (typeof playlist !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
                     for (let i = 0; i < pool.length; i++) {
@@ -329,13 +375,15 @@
                         let doneCount = 0;
                         pushScanNotif(0, totalCount, targets[0] ? (targets[0].name || '') : '', true);
                         const hydrateOne = async (tr) => {
+                            if (mySeq !== coverHydrateSeq) return;
                             if (typeof window.__waitPriorityMeta === 'function') await window.__waitPriorityMeta();
-                            if (tr._bgCoverChecked) return;
+                            if (mySeq !== coverHydrateSeq || tr._bgCoverChecked) return;
                             tr._bgCoverChecked = true;
                             try {
                                 const meta = (typeof window.__readCompleteTrackTags === 'function')
                                     ? await window.__readCompleteTrackTags(tr, { preferThumb: true })
                                     : null;
+                                if (mySeq !== coverHydrateSeq) return;
                                 if (meta) {
                                     let changed = false;
                                     if (meta.title && meta.title !== tr.name && (!tr._metaFromCache || meta.title !== tr.rawName)) {
@@ -407,7 +455,9 @@
                         };
                         const runWorker = async () => {
                             while (cursor < targets.length) {
+                                if (mySeq !== coverHydrateSeq) return;
                                 if (typeof window.__waitPriorityMeta === 'function') await window.__waitPriorityMeta();
+                                if (mySeq !== coverHydrateSeq) return;
                                 const tr = targets[cursor++];
                                 if (!tr) continue;
                                 await hydrateOne(tr);
