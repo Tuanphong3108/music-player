@@ -938,6 +938,8 @@ public class MainActivity extends Activity {
         handleIntent(i);
     }
 
+    private volatile boolean pendingExternalOpen = false;
+
     private void handleIntent(Intent i) {
         if (i == null) return;
         String a = i.getAction();
@@ -959,7 +961,9 @@ public class MainActivity extends Activity {
             return;
         }
         i.setAction(Intent.ACTION_MAIN); // tránh nạp lại khi xoay màn hình
-        queueUris(uris);
+        pendingExternalOpen = true;
+        NativeAudio.stop(); // dừng bài cũ ngay để trang ưu tiên mở tệp từ nguồn ngoài thay vì khôi phục nguồn cũ
+        queueUris(uris, true);
     }
 
 
@@ -1241,10 +1245,15 @@ public class MainActivity extends Activity {
     private void flushPending() {
         if (!pageReady || pending.isEmpty()) return;
         JSONArray arr = new JSONArray();
-        for (JSONObject o : pending) arr.put(o);
+        boolean hadExternal = false;
+        for (JSONObject o : pending) {
+            if (o != null && o.optBoolean("fromExternal", false)) hadExternal = true;
+            arr.put(o);
+        }
         pending.clear();
         String js = "(function(l){if(window.__nativeOpenFiles)window.__nativeOpenFiles(l);else window.__pendingNativeFiles=(window.__pendingNativeFiles||[]).concat(l);})(" + arr + ");";
         web.evaluateJavascript(js, null);
+        if (hadExternal) pendingExternalOpen = false;
     }
 
     private void startSvc(Intent i) {
@@ -1348,6 +1357,10 @@ public class MainActivity extends Activity {
     }
 
     private void queueUris(List<Uri> uris) {
+        queueUris(uris, false);
+    }
+
+    private void queueUris(List<Uri> uris, boolean fromExternal) {
         prefetchFirst(uris);
         for (Uri u : uris) {
             try {
@@ -1366,6 +1379,7 @@ public class MainActivity extends Activity {
                 o.put("type", t == null ? "" : t);
                 o.put("size", querySize(u));
                 o.put("modified", queryModified(u));
+                if (fromExternal) o.put("fromExternal", true);
                 pending.add(o);
             } catch (Exception ignored) {}
         }
@@ -2534,6 +2548,11 @@ public class MainActivity extends Activity {
                 overwriteTmpFile = null;
                 return String.valueOf(e);
             }
+        }
+
+        @JavascriptInterface
+        public boolean hasPendingExternalOpen() {
+            return pendingExternalOpen;
         }
 
         @JavascriptInterface
