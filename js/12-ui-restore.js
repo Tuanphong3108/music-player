@@ -373,14 +373,23 @@
         if (idx < 0) return false;
         trackDone = true;
         body.classList.remove('m-early-card');
-        const shouldPlay = !!(boot && boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
+        // Khi vừa mở lại sau crash hoặc đóng app trước đó: luôn ép Pause để tránh phát đột ngột
+        const cleanOrCrashPause = !!(window.__wasCrashOrClosed || (saved && saved.ts && (Date.now() - saved.ts > 2000)));
+        const rawNativePlay = !!(boot && boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
+        const shouldPlay = boot ? (cleanOrCrashPause ? false : rawNativePlay) : false;
+        const seekSec = boot
+            ? Math.max(0, Number(boot.pos || 0) / 1000)
+            : Math.max(0, Number((saved && saved.pos) || 0));
+        const durSec = boot
+            ? Math.max(0, Number(boot.dur || 0) / 1000)
+            : Math.max(0, Number((saved && saved.dur) || 0));
         if (boot) {
             const matchedTrack = playlist[idx];
             if (matchedTrack && matchedTrack.nativeId && window.__nativeAudioState) {
                 window.__nativeAudioState.adoptId = matchedTrack.nativeId;
             }
             window.__adoptNative = true;
-            window.__restoreOnce = { pos: (boot.pos || 0) / 1000, play: shouldPlay, fromNativeSession: true };
+            window.__restoreOnce = { pos: seekSec, dur: durSec, play: shouldPlay, fromNativeSession: true };
             playTrack(idx);
             prioritizeTrack(idx);
             applyPanels();
@@ -396,12 +405,10 @@
             }
             return true;
         }
-        // Khung app không đang phát bài nào -> nạp sẵn bài cũ ở đoạn cũ (pos) ở trạng thái tạm dừng (chỉ tự phát nếu người dùng vừa bấm Play trên Mini Player)
-        const shouldAutoPlay = !!window.__pendingMiniResume;
-        window.__pendingMiniResume = false;
+        // Không có phiên native đang chạy: nạp sẵn bài + vị trí đã lưu và luôn đặt ở trạng thái Pause
         const resumePos = (saved && saved.pos > 0) ? saved.pos : 0;
         const resumeDur = (saved && saved.dur > 0) ? saved.dur : 0;
-        window.__restoreOnce = { pos: resumePos, dur: resumeDur, play: shouldAutoPlay, fromNativeSession: false };
+        window.__restoreOnce = { pos: resumePos, dur: resumeDur, play: false, fromNativeSession: false };
         playTrack(idx);
         prioritizeTrack(idx);
         applyPanels();
