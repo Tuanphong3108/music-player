@@ -1,5 +1,6 @@
 <!-- Ghi nội dung cập nhật cho bản build APK tiếp theo tại đây (hỗ trợ Markdown). Mỗi lần cập nhật Android, nội dung mới sẽ được ghi vào file này trước khi push để GitHub Release hiển thị đúng changelog thật! -->
 ### Có gì mới trong bản cập nhật Android này
+- **Nút "Khởi động lại WebView"**: khi trang không phản hồi, nút này ngắt WebView treo rồi dựng WebView mới thay vì tắt cả app. Nhạc vẫn tiếp tục phát và trang mới tự vào lại đúng bài, đúng màn hình.
 - **Hàng đợi, shuffle, lặp và hẹn giờ ngủ do app nắm**: danh sách đang phát (đúng thứ tự, kể cả thứ tự shuffle) được lưu và khôi phục y hệt khi vào lại app. App biết cả danh sách, chế độ lặp, shuffle nên tự sang bài kế/trước và tự tạm dừng khi hết giờ hẹn dù trang không phản hồi.
 - **Nút hẹn giờ trong playlist**: khi bật sẽ sáng lên và hiện số phút hoặc số bài còn lại.
 - **Tách trình phát nhạc khỏi giao diện**: nhạc trong thư viện máy giờ do app phát bằng ExoPlayer, trang web chỉ ra lệnh. WebView bị đóng băng hay tải lại thì nhạc không ngắt; mở lại app sẽ hỏi lại trạng thái, vào đúng bài, đúng vị trí và đúng màn hình đang mở. Nút Phát/Tạm dừng/Tua trên thông báo hoạt động trực tiếp, Bài kế khi trang không phản hồi do app tự xử lý.

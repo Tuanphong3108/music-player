@@ -35,6 +35,8 @@ public class MainActivity extends Activity {
     static final String APP_URL = "https://tuanphong3108.github.io/music-player/index.html?android=true";
     static final String ASSET_HOST = "appassets.local";
     static MainActivity instance;
+    /** Đang chỉ khởi động lại WebView (recreate): giữ dịch vụ + trình phát native sống, không đưa widget về trạng thái chưa phát. */
+    static volatile boolean keepPlaybackOnRecreate = false;
 
     private WebView web;
     private FrameLayout root;
@@ -260,7 +262,8 @@ public class MainActivity extends Activity {
         selfDestructing = false;
         checkHistoricalExitInfo();
         // Activity mới = WebView mới = chưa phát gì (kể cả khi app vừa sập rồi mở lại): đưa các widget về trạng thái chưa mở bài nào
-        MediaWidgetProvider.resetToIdle(this);
+        if (!keepPlaybackOnRecreate) MediaWidgetProvider.resetToIdle(this);
+        keepPlaybackOnRecreate = false;
         setupPredictiveBack();
         instance = this;
         root = new FrameLayout(this);
@@ -356,6 +359,7 @@ public class MainActivity extends Activity {
                 pingHandler.removeCallbacks(pingTimeoutRunnable);
                 destroyWebViewForSelfDestruct();
                 autoRecoveries = 0;
+                keepPlaybackOnRecreate = true;
                 if (!isFinishing() && !isDestroyed()) pingHandler.post(() -> { try { recreate(); } catch (Throwable ignored) {} });
                 return true;
             }
@@ -815,7 +819,7 @@ public class MainActivity extends Activity {
             waitBtn.setLayoutParams(waitLp);
 
             android.widget.Button restartBtn = new android.widget.Button(this);
-            restartBtn.setText(en ? "Restart app" : "Khởi động lại ứng dụng");
+            restartBtn.setText(en ? "Restart WebView" : "Khởi động lại WebView");
             restartBtn.setAllCaps(false);
             restartBtn.setTextColor(0xFF1C1B1F);
             restartBtn.setTextSize(15f);
@@ -826,7 +830,7 @@ public class MainActivity extends Activity {
             restartBtn.setBackground(pillRipple(bg, 0x33000000));
             pillReset(restartBtn);
             restartBtn.setPadding(btnPadH, btnPadV, btnPadH, btnPadV);
-            restartBtn.setOnClickListener(v -> restartApp());
+            restartBtn.setOnClickListener(v -> restartWebView());
 
             actionsRow.addView(waitBtn);
             actionsRow.addView(restartBtn);
@@ -863,6 +867,19 @@ public class MainActivity extends Activity {
                 hangOverlay = null;
             }
         });
+    }
+
+    /** Ngắt WebView treo rồi dựng WebView mới; nhạc do app (ExoPlayer) phát nên vẫn tiếp tục, trang mới tự hỏi lại trạng thái để vào đúng bài/màn hình. */
+    private void restartWebView() {
+        hangAlertShown = false;
+        hideUnresponsiveDialog();
+        pingHandler.removeCallbacks(loadTimeoutRunnable);
+        pingHandler.removeCallbacks(pingTimeoutRunnable);
+        pingHandler.removeCallbacks(blankCheckRunnable);
+        autoRecoveries = 0;
+        keepPlaybackOnRecreate = true;
+        destroyWebViewForSelfDestruct();
+        try { recreate(); } catch (Throwable t) { keepPlaybackOnRecreate = false; restartApp(); }
     }
 
     private void restartApp() {
@@ -2129,7 +2146,7 @@ public class MainActivity extends Activity {
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
         pingHandler.removeCallbacks(blankCheckRunnable);
-        try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {}
+        if (!keepPlaybackOnRecreate) { try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {} }
         super.onDestroy();
     }
 

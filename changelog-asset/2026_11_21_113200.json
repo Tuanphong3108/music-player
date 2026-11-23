@@ -92,6 +92,10 @@
     {
       "content": "Hàng đợi tạm được giữ y nguyên khi vào lại app; app native biết danh sách, shuffle, lặp và hẹn giờ; nút hẹn giờ trong playlist sáng lên và hiện thời gian/bài còn lại",
       "icon": "queue_music"
+    },
+    {
+      "content": "Nút \"Khởi động lại\" khi trang không phản hồi giờ chỉ khởi động lại WebView, nhạc vẫn tiếp tục phát",
+      "icon": "refresh"
     }
   ],
   "en": [
@@ -186,6 +190,10 @@
     {
       "content": "The temporary queue is preserved exactly on reopening; the native app knows the list, shuffle, repeat and sleep timer; the playlist sleep button now lights up and shows the time/tracks left",
       "icon": "queue_music"
+    },
+    {
+      "content": "The restart button on \"Page not responding\" now restarts only the WebView, and music keeps playing",
+      "icon": "refresh"
     }
   ]
 }
