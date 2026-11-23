@@ -2289,6 +2289,7 @@ public class MainActivity extends Activity {
         }
         appLeftHome = false;
         NativeAudio.cancelSleepEndedNotification(this);
+        NativeAudio.post(() -> NativeAudio.setVolume(1f));
         try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Throwable ignored) {}
         scheduleBlankCheck(5000L);
         if (pageResponded && pageReady && !hangAlertShown) {
