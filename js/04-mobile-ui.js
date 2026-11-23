@@ -295,7 +295,7 @@
                     renderMobileLibrary();
                     if (appliedAnyCache && typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
 
-                    // Bước 2: Thả xong toàn bộ danh sách thần tốc -> đọc bổ sung toàn bộ bài chưa có cache song song 3 tệp cùng lúc
+                    // Bước 2: Thả xong toàn bộ danh sách thần tốc -> đọc bổ sung toàn bộ bài chưa có cache song song 3 tệp cùng lúc (chạy cả ở nền + thông báo tiến trình)
                     await new Promise(r0 => setTimeout(r0, 600));
                     const targets = [];
                     const curTrack = (typeof playlist !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
@@ -305,13 +305,23 @@
                         if (tr === curTrack) targets.unshift(tr);
                         else targets.push(tr);
                     }
+                    let lastScanNotifAt = 0;
+                    const pushScanNotif = (done, total, title, force) => {
+                        try {
+                            if (!window.AndroidBridge || typeof window.AndroidBridge.updateScanNotification !== 'function') return;
+                            const nowTs = Date.now();
+                            if (!force && total > 0 && done < total && (nowTs - lastScanNotifAt) < 350) return;
+                            lastScanNotifAt = nowTs;
+                            window.AndroidBridge.updateScanNotification(done | 0, total | 0, String(title || ''));
+                        } catch (e) {}
+                    };
                     if (targets.length) {
                         const CONCURRENCY = 3;
+                        const totalCount = targets.length;
                         let cursor = 0;
+                        let doneCount = 0;
+                        pushScanNotif(0, totalCount, targets[0] ? (targets[0].name || '') : '', true);
                         const hydrateOne = async (tr) => {
-                            if (document.hidden) {
-                                await new Promise(rv => { const on = () => { if (!document.hidden) { document.removeEventListener('visibilitychange', on); rv(); } }; document.addEventListener('visibilitychange', on); });
-                            }
                             if (tr._bgCoverChecked) return;
                             tr._bgCoverChecked = true;
                             try {
@@ -382,6 +392,9 @@
                                 tr._metaLoading = false;
                                 tr._metaLoaded = true;
                                 patchMobileLibRowDom(tr);
+                            } finally {
+                                doneCount++;
+                                pushScanNotif(doneCount, totalCount, tr.name || '', doneCount >= totalCount);
                             }
                         };
                         const runWorker = async () => {
@@ -397,12 +410,19 @@
                             workers.push(runWorker());
                         }
                         await Promise.all(workers);
+                        pushScanNotif(totalCount, totalCount, '', true);
                     }
                 } finally {
                     coverHydrateRunning = false;
                     if (coverHydratePending) {
                         coverHydratePending = false;
                         setTimeout(() => { try { window.__hydrateMobileLibraryCovers(); } catch (e) {} }, 60);
+                    } else {
+                        try {
+                            if (window.AndroidBridge && typeof window.AndroidBridge.updateScanNotification === 'function') {
+                                window.AndroidBridge.updateScanNotification(0, 0, '');
+                            }
+                        } catch (e) {}
                     }
                 }
             };
