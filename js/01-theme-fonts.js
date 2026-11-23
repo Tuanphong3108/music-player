@@ -288,11 +288,11 @@
                 const heavy = w => w === 'bold' || w === 'bolder' || (parseInt(w, 10) >= 600);
                 const scan = rules => { for (const r of rules) {
                     if (r.cssRules && !r.selectorText) { scan(r.cssRules); continue; }
-                    if (r.style && r.selectorText && heavy(r.style.fontWeight)) r.selectorText.split(',').forEach(x => { x = x.trim(); if (x && !/::?(before|after|placeholder)/.test(x)) sels.add(x); });
+                    if (r.style && r.selectorText && (heavy(r.style.fontWeight) || /(?:^|[;{\s])font:\s*(?:(?:italic|oblique|normal|small-caps)\s+)*(?:bold|bolder|[6-9]00)\b/.test(r.cssText || ''))) r.selectorText.split(',').forEach(x => { x = x.trim(); if (x && !/::?(before|after|placeholder)/.test(x)) sels.add(x); });
                 } };
                 for (const sh of doc.styleSheets) { try { scan(sh.cssRules); } catch (e) {} }
                 const st = doc.createElement('style');
-                st.textContent = [...sels].map(x => ':root:not(.custom-font) ' + x).join(',\n') + ' { font-variation-settings: "ROND" 100; }';
+                st.textContent = [...sels].map(x => /^(html|:root)(?![\w-])/.test(x) ? x.replace(/^(html|:root)/, '$1:not(.custom-font)') : ':root:not(.custom-font) ' + x).join(',\n') + ' { font-variation-settings: "ROND" 100; }';
                 doc.head.appendChild(st);
             } catch (e) { console.warn('rounded bold:', e); }
         }
