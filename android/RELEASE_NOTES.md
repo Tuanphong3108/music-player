@@ -1,3 +1,3 @@
 <!-- Chỉ ghi nội dung thay đổi của BẢN CẬP NHẬT HIỆN TẠI tại đây (xóa sạch ghi chú của các bản cũ trước khi push). -->
 ### Có gì mới trong bản cập nhật Android này
-- **Hẹn giờ ngủ theo số bài & thông báo đồng nhất cách hiển thị của trang**: khi bài hát kết thúc với hẹn giờ theo số bài ở tầng native, luôn đếm và kích hoạt dừng đúng lúc, gửi thông báo lên Notification theo đúng câu chữ của trang (`sleep.fired_tracks` / `sleep.fired_time`), và khi mở lại app sẽ tự đóng thông báo đó để bật hộp thoại hết giờ trên giao diện.
+- **Khôi phục bài & hàng đợi mượt mà khi mở lại app**: nhận lại đúng bài và danh sách phát trong hàng đợi tạm (làm sáng đúng bài đang phát), tạm hạ âm lượng về 0% lúc nạp metadata & tua tới đúng đoạn cũ, sau đó đặt Play/Pause đúng theo trạng thái native rồi bật lại âm lượng 100% (và tự trả 100% ngay khi thoát/ẩn app).
