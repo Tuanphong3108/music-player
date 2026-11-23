@@ -126,6 +126,23 @@
     a.load = function () { if (!isNative()) oLoad.call(a); };
 
     // Sự kiện từ app native
+    let tickRaf = 0;
+    let lastTickUiPos = -1;
+    let tickNeedTimeupdate = false;
+    function scheduleTickUi(needTimeupdate) {
+        if (document.hidden) return;
+        if (needTimeupdate) tickNeedTimeupdate = true;
+        if (tickRaf) return;
+        tickRaf = requestAnimationFrame(() => {
+            tickRaf = 0;
+            const doTime = tickNeedTimeupdate;
+            tickNeedTimeupdate = false;
+            if (document.hidden) return;
+            if (doTime) fire('timeupdate');
+            if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+        });
+    }
+
     window.__nativeAudioEv = function (e) {
         try {
             if (!e) return;
@@ -155,11 +172,13 @@
             N.wasReady = nowReady; N.isPlaying = nowPlaying;
             if (wasPaused && !N.paused) fire('play');
             if (!wasPaused && N.paused && e.st !== 'ended') fire('pause');
-            if (e.ev === 'seeked') { fire('seeked'); }
+            if (e.ev === 'seeked') { lastTickUiPos = N.pos; fire('seeked'); }
             if (e.st === 'ended' && !wasEnded) { N.ended = true; N.paused = true; fire('pause'); fire('ended'); return; }
             if (e.ev === 'tick') {
-                fire('timeupdate');
-                if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+                const posChanged = Math.abs(N.pos - lastTickUiPos) >= 15;
+                const needTime = (!N.paused && !N.ended) || posChanged;
+                if (posChanged) lastTickUiPos = N.pos;
+                scheduleTickUi(needTime);
             }
         } catch (err) {}
     };
