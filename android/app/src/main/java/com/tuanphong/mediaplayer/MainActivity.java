@@ -967,61 +967,38 @@ public class MainActivity extends Activity {
     }
 
 
-    /** Trả ảnh bìa của bài hát theo id (loadThumbnail API 29+ -> MediaMetadataRetriever -> albumart). */
+    /** Trả ảnh bìa nhúng trực tiếp bên trong chính tệp nhạc theo id (không fallback sang albumart chung của thư mục để tránh gán nhầm ảnh bài khác). */
     private WebResourceResponse serveArtwork(String fid) {
         Map<String, String> h = new HashMap<>();
         h.put("Access-Control-Allow-Origin", "*");
-        h.put("Cache-Control", "public, max-age=86400");
+        h.put("Cache-Control", "no-store, must-revalidate");
         Uri src = served.get(fid);
         if (src == null) return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, null);
         byte[] bytes = null;
-        if (Build.VERSION.SDK_INT >= 29) {
-            try {
-                android.graphics.Bitmap bmp = getContentResolver().loadThumbnail(src, new android.util.Size(512, 512), null);
-                if (bmp != null) {
-                    java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
-                    bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 88, bos);
-                    bytes = bos.toByteArray();
-                    bmp.recycle();
-                }
-            } catch (Throwable ignored) {}
-        }
-        if (bytes == null || bytes.length == 0) {
-            android.media.MediaMetadataRetriever mmr = null;
-            try {
-                mmr = new android.media.MediaMetadataRetriever();
-                String directPath = servedLocations.get(fid);
-                if (directPath != null && new File(directPath).canRead()) {
-                    mmr.setDataSource(directPath);
-                } else {
-                    mmr.setDataSource(this, src);
-                }
-                bytes = mmr.getEmbeddedPicture();
-            } catch (Throwable ignored) {
-            } finally {
-                if (mmr != null) { try { mmr.release(); } catch (Throwable ignored) {} }
+        String mimeType = "image/jpeg";
+        android.media.MediaMetadataRetriever mmr = null;
+        try {
+            mmr = new android.media.MediaMetadataRetriever();
+            String directPath = servedLocations.get(fid);
+            if (directPath != null && new File(directPath).canRead()) {
+                mmr.setDataSource(directPath);
+            } else {
+                mmr.setDataSource(this, src);
             }
-        }
-        if (bytes == null || bytes.length == 0) {
-            Long albId = servedAlbumIds.get(fid);
-            if (albId != null && albId > 0) {
-                try {
-                    Uri artUri = android.content.ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albId);
-                    try (InputStream in = getContentResolver().openInputStream(artUri)) {
-                        if (in != null) {
-                            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
-                            byte[] buf = new byte[16384];
-                            int r;
-                            while ((r = in.read(buf)) != -1) bos.write(buf, 0, r);
-                            bytes = bos.toByteArray();
-                        }
-                    }
-                } catch (Throwable ignored) {}
-            }
+            bytes = mmr.getEmbeddedPicture();
+        } catch (Throwable ignored) {
+        } finally {
+            if (mmr != null) { try { mmr.release(); } catch (Throwable ignored) {} }
         }
         if (bytes != null && bytes.length > 0) {
+            if (bytes.length >= 4 && bytes[0] == (byte) 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
+                mimeType = "image/png";
+            } else if (bytes.length >= 12 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+                    && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50) {
+                mimeType = "image/webp";
+            }
             h.put("Content-Length", String.valueOf(bytes.length));
-            return new WebResourceResponse("image/jpeg", null, 200, "OK", h, new java.io.ByteArrayInputStream(bytes));
+            return new WebResourceResponse(mimeType, null, 200, "OK", h, new java.io.ByteArrayInputStream(bytes));
         }
         return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, null);
     }
