@@ -461,7 +461,7 @@ final class NativeAudio {
         }
     }
 
-    static int sessionId() { return sid; }
+    static boolean sessionId() { return false; } // placeholder replaced below
 
     /** Hết bài: kiểm tra hẹn giờ theo số bài trước; nếu trang chết thì app tự sang bài kế đã được báo trước. */
     private static void onEnded() {
