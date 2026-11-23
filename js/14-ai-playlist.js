@@ -751,6 +751,11 @@
         syncAllSettingsHosts();
         document.getElementById('m-pl-ai-btn')?.addEventListener('click', () => openAiLab(false));
         document.querySelector('.st-tab[data-tab="ai"]')?.addEventListener('click', syncAllSettingsHosts);
+        const prevAndroidBack = window.__androidHandleBack;
+        window.__androidHandleBack = function () {
+            if (handleAndroidBackForAi()) return true;
+            return typeof prevAndroidBack === 'function' ? prevAndroidBack.apply(this, arguments) : false;
+        };
     });
     window.__openAiPlaylistLab = () => openAiLab(false);
     window.__openAiSettings = () => openAiSettingsInApp(false);
