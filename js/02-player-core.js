@@ -616,37 +616,39 @@
                 let lyricsRaw = "";
                 
                 await new Promise((resolve) => {
-                    if (file.__nativeUrl && file.size === 0) return resolve();   // tệp thư viện chưa tải nội dung hoặc video stream: không có tag để đọc tại đây
-                    window.jsmediatags.read(file, {
-                        onSuccess: function(tag) {
-                            if (tag.tags.title) title = tag.tags.title;
-                            if (tag.tags.artist) artist = tag.tags.artist;
-                            if (tag.tags.album) album = tag.tags.album;
-                            if (tag.tags.year) year = tag.tags.year;
-                            if (tag.tags.genre) genre = tag.tags.genre;
-                            {
-                                // jsmediatags không có shortcut "composer": ID3 nằm ở frame TCOM, MP4 ở ©wrt
-                                const c = tag.tags.composer || tag.tags.TCOM || tag.tags['©wrt'] || tag.tags.COMPOSER;
-                                if (c) composer = (typeof c === 'object' ? (c.data != null ? c.data : '') : c);
-                                if (Array.isArray(composer)) composer = composer.join(', ');
-                                composer = String(composer || '');
-                            }
-                            // Hỗ trợ Lyric Embed cho các tệp nhạc phổ biến
-                            if (tag.tags.USLT) {
-                                lyricsRaw = typeof tag.tags.USLT.data === 'object' ? tag.tags.USLT.data.lyrics : tag.tags.USLT.data;
-                            }
-                            if (tag.tags.picture) {
-                                const { data, format } = tag.tags.picture;
-                                let base64String = "";
-                                for (let i = 0; i < data.length; i++) {
-                                    base64String += String.fromCharCode(data[i]);
+                    if (file.__nativeUrl || file.__fromLibrary || !window.jsmediatags) return resolve();   // tệp thư viện (virtual File) hoặc stream URL: bỏ qua jsmediatags ở bước nạp danh sách, metadata đầy đủ sẽ đọc qua native/hydrate
+                    try {
+                        window.jsmediatags.read(file, {
+                            onSuccess: function(tag) {
+                                if (tag.tags.title) title = tag.tags.title;
+                                if (tag.tags.artist) artist = tag.tags.artist;
+                                if (tag.tags.album) album = tag.tags.album;
+                                if (tag.tags.year) year = tag.tags.year;
+                                if (tag.tags.genre) genre = tag.tags.genre;
+                                {
+                                    // jsmediatags không có shortcut "composer": ID3 nằm ở frame TCOM, MP4 ở ©wrt
+                                    const c = tag.tags.composer || tag.tags.TCOM || tag.tags['©wrt'] || tag.tags.COMPOSER;
+                                    if (c) composer = (typeof c === 'object' ? (c.data != null ? c.data : '') : c);
+                                    if (Array.isArray(composer)) composer = composer.join(', ');
+                                    composer = String(composer || '');
                                 }
-                                cover = `data:${format};base64,${window.btoa(base64String)}`;
-                            }
-                            resolve();
-                        },
-                        onError: function() { resolve(); }
-                    });
+                                // Hỗ trợ Lyric Embed cho các tệp nhạc phổ biến
+                                if (tag.tags.USLT) {
+                                    lyricsRaw = typeof tag.tags.USLT.data === 'object' ? tag.tags.USLT.data.lyrics : tag.tags.USLT.data;
+                                }
+                                if (tag.tags.picture) {
+                                    const { data, format } = tag.tags.picture;
+                                    let base64String = "";
+                                    for (let i = 0; i < data.length; i++) {
+                                        base64String += String.fromCharCode(data[i]);
+                                    }
+                                    cover = `data:${format};base64,${window.btoa(base64String)}`;
+                                }
+                                resolve();
+                            },
+                            onError: function() { resolve(); }
+                        });
+                    } catch (e) { resolve(); }
                 });
 
                 const url = file.__nativeUrl || URL.createObjectURL(file);
