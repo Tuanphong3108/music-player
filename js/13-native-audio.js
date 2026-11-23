@@ -86,8 +86,9 @@
         N.mode = 'native'; N.id = m[1]; N.url = v; N.err = false; N.ended = false;
         if (adopting) {
             // trình phát native đã đang phát đúng bài này: đồng bộ metadata, tua tới vị trí cũ rồi áp dụng Play/Pause theo trạng thái native
-            N.loaded = true; N.pending = false;
-            let wantPlay = !N.paused;
+            N.loaded = false; N.pending = true; N.wasReady = false; N.isPlaying = false;
+            N.startMs = 0; N.pos = 0; N.dur = 0; N.buf = 0; N.st = 'buffering'; N.paused = false;
+            let wantPlay = true;
             let seekTargetMs = -1;
             try {
                 const ns = JSON.parse(AB.nativeAudioState() || 'null');
@@ -96,7 +97,7 @@
                     N.stamp = now();
                     N.dur = ns.dur || 0;
                     N.buf = ns.buf || 0;
-                    N.st = ns.st;
+                    N.st = ns.st || 'ready';
                     N.rate = ns.rate || 1;
                     wantPlay = !!(ns.pwr && (ns.st === 'ready' || ns.st === 'buffering'));
                     N.paused = !wantPlay;
@@ -110,9 +111,11 @@
             if (ro && typeof ro.play === 'boolean') wantPlay = ro.play;
             if (seekTargetMs > 0 && !restoreMuteActive) setRestoreMute(true);
             fire('loadstart');
+            N.loaded = true;
+            N.pending = false;
             N.wasReady = true;
+            N.hadMeta = true;
             setTimeout(() => {
-                N.hadMeta = true;
                 ['loadedmetadata', 'durationchange', 'loadeddata', 'canplay'].forEach(fire);
                 if (seekTargetMs > 0) {
                     N.pos = seekTargetMs;
