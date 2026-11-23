@@ -500,6 +500,36 @@ final class NativeAudio {
     }
 
     /** Sang bài kế (dùng khi trang đang chết / điều khiển từ thông báo). Bấm Next luôn sang bài kế ngay cả khi lặp 1 bài. */
+
+    /** Đường dẫn tệp của bài theo hàng đợi native (vẫn dùng được khi thư viện chưa quét lại sau lúc khởi động). */
+    static String locForId(String id) {
+        if (id == null || id.isEmpty()) return null;
+        String[] ids = qIds, locs = qLocs;
+        for (int i = 0; i < ids.length && i < locs.length; i++) {
+            if (id.equals(ids[i]) && locs[i] != null && !locs[i].isEmpty()) return locs[i];
+        }
+        return null;
+    }
+
+    /** Native chưa nạp bài (vd. vừa mở lại, trang chưa sẵn sàng): tự nạp bài đã lưu và phát, không cần nhờ WebView. Trả về false nếu chưa xác định được bài. */
+    static boolean resumeFromSaved(Context c) {
+        try {
+            String raw = persistedSessionJson(c);
+            if (raw == null || raw.isEmpty()) return false;
+            JSONObject o = new JSONObject(raw);
+            String id = o.optString("id", "");
+            String loc = o.optString("curLoc", "");
+            if (MainActivity.resolveServed(id) == null || (!loc.isEmpty() && !loc.equalsIgnoreCase(String.valueOf(MainActivity.resolveLocation(id))) && MainActivity.resolveLocation(id) != null)) {
+                String byLoc = loc.isEmpty() ? null : MainActivity.idForLocation(loc);
+                if (byLoc == null) return false;
+                id = byLoc;
+            }
+            if (MainActivity.resolveServed(id) == null) return false;
+            load(c, id, o.optString("title", ""), o.optString("artist", ""), o.optLong("pos", 0), true, vol <= 0 ? 1f : vol, rate <= 0 ? 1f : rate);
+            return true;
+        } catch (Throwable t) { return false; }
+    }
+
     static boolean advance() {
         final int q = stepQ(1, false);
         if (q < 0) return false;

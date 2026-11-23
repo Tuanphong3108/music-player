@@ -66,7 +66,7 @@ public class MediaService extends Service {
         inst = this;
         session = new MediaSession(this, "MediaPlayer");
         session.setCallback(new MediaSession.Callback() {
-            @Override public void onPlay() { if (NativeAudio.active()) NativeAudio.play(); else if (!playing) cmd("toggle"); }
+            @Override public void onPlay() { if (NativeAudio.active()) NativeAudio.play(); else if (!NativeAudio.resumeFromSaved(MediaService.this) && !playing) cmd("toggle"); }
             @Override public void onPause() { if (NativeAudio.active()) NativeAudio.pause(); else if (playing) cmd("toggle"); }
             @Override public void onSkipToNext() { skip(true); }
             @Override public void onSkipToPrevious() { skip(false); }
@@ -78,19 +78,12 @@ public class MediaService extends Service {
 
     /** Bài kế/trước: nếu trang đang mở trên màn hình thì để trang quyết; nếu ở nền/tắt màn hình thì app tự chuyển bài bằng trình phát native để không bị loạn/chồng lệnh. */
     private void skip(final boolean next) {
-        final String c = next ? "next" : "prev";
-        MainActivity m = MainActivity.instance;
-        if (!NativeAudio.active() || m == null) {
-            if (NativeAudio.active()) { if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous(); return; }
-            cmd(c); return;
-        }
-        if (m.isInBackgroundForMedia()) {
+        // Hàng đợi/shuffle/repeat do native giữ: luôn để native chuyển bài, trang chỉ nhận lại qua sự kiện "advanced"
+        if (NativeAudio.active()) {
             if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous();
             return;
         }
-        m.probeWeb(() -> cmd(c), () -> {
-            if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous();
-        });
+        cmd(next ? "next" : "prev");
     }
 
     /** Sự kiện từ trình phát native -> cập nhật phiên phát/thông báo ngay cả khi trang web không phản hồi. */
@@ -112,6 +105,7 @@ public class MediaService extends Service {
         boolean metaChanged = trackChanged || !ns.equals(state) || (d > 0 && d != dur);
         if (trackChanged) {
             curTrackId = incomingId;
+            artRetries = 0;
             art = null;
             artDirty = true;
             loadNativeArtworkForId(incomingId, t);
@@ -150,15 +144,18 @@ public class MediaService extends Service {
             try {
                 mmr = new android.media.MediaMetadataRetriever();
                 String directPath = MainActivity.resolveLocation(nativeId);
+                if (directPath == null) directPath = NativeAudio.locForId(nativeId);   // thư viện chưa quét lại: lấy đường dẫn từ hàng đợi native đã lưu
                 android.net.Uri src = MainActivity.resolveServed(nativeId);
                 if (directPath != null && new java.io.File(directPath).canRead()) {
                     mmr.setDataSource(directPath);
                 } else if (src != null) {
                     mmr.setDataSource(this, src);
                 } else {
+                    scheduleArtRetry(nativeId, expectedTitle);
                     return;
                 }
                 byte[] pic = mmr.getEmbeddedPicture();
+                if ((pic == null || pic.length == 0) && directPath != null) pic = folderCoverBytes(directPath);   // không có ảnh nhúng: thử cover.jpg/folder.jpg cùng thư mục
                 if (pic == null || pic.length == 0) return;
                 BitmapFactory.Options bounds = new BitmapFactory.Options();
                 bounds.inJustDecodeBounds = true;
@@ -195,6 +192,34 @@ public class MediaService extends Service {
                 if (mmr != null) { try { mmr.release(); } catch (Throwable ignored) {} }
             }
         }, "media-service-art").start();
+    }
+
+    private int artRetries = 0;
+    private void scheduleArtRetry(final String nativeId, final String expectedTitle) {
+        fgHandler.post(() -> {
+            if (artRetries >= 8 || !nativeId.equals(curTrackId) || art != null) return;
+            artRetries++;
+            fgHandler.postDelayed(() -> {
+                if (nativeId.equals(curTrackId) && art == null) loadNativeArtworkForId(nativeId, expectedTitle);
+            }, 2500);
+        });
+    }
+
+    private static byte[] folderCoverBytes(String path) {
+        try {
+            java.io.File dir = new java.io.File(path).getParentFile();
+            if (dir == null) return null;
+            String[] names = { "cover.jpg", "cover.png", "folder.jpg", "folder.png", "albumart.jpg", "AlbumArt.jpg", "front.jpg", "Cover.jpg", "Folder.jpg" };
+            for (String n : names) {
+                java.io.File f = new java.io.File(dir, n);
+                if (f.isFile() && f.canRead() && f.length() < 8L * 1024 * 1024) {
+                    java.io.FileInputStream in = new java.io.FileInputStream(f);
+                    try { java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(); byte[] buf = new byte[16384]; int r; while ((r = in.read(buf)) > 0) bo.write(buf, 0, r); return bo.toByteArray(); }
+                    finally { try { in.close(); } catch (Throwable ignored) {} }
+                }
+            }
+        } catch (Throwable ignored) {}
+        return null;
     }
 
     private void cmd(String c) { if (MainActivity.instance != null) MainActivity.instance.sendCmd(c); }

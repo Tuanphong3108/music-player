@@ -47,6 +47,13 @@ public class MainActivity extends Activity {
     private static final Map<String, String> servedLocations = new java.util.concurrent.ConcurrentHashMap<>();
     static Uri resolveServed(String id) { return id == null ? null : served.get(id); }
     static String resolveLocation(String id) { return id == null ? null : servedLocations.get(id); }
+    static String idForLocation(String loc) {
+        if (loc == null || loc.isEmpty()) return null;
+        for (Map.Entry<String, String> e : servedLocations.entrySet()) {
+            if (loc.equalsIgnoreCase(e.getValue())) return e.getKey();
+        }
+        return null;
+    }
     private final Map<String, Long> servedAlbumIds = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<String, File> cachedMediaFiles = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.concurrent.atomic.AtomicInteger nextId = new java.util.concurrent.atomic.AtomicInteger(1);

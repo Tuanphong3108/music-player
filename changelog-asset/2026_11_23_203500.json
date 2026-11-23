@@ -36,6 +36,10 @@
     {
       "content": "Quay lại app khi thư viện chưa quét xong: dựng ngay bài đang phát vào playlist tạm (sáng đúng bài, mở được player), tự khớp lại toàn bộ hàng đợi khi quét xong; vẫn tua về đúng đoạn và Phát/Tạm dừng theo trạng thái native",
       "icon": "restore"
+    },
+    {
+      "content": "Thông báo/MediaSession điều khiển trực tiếp trình phát native (Bài kế/trước, Phát) và sửa lỗi không hiện ảnh bìa trên thông báo sau khi mở lại app",
+      "icon": "queue_music"
     }
   ],
   "en": [
@@ -74,6 +78,10 @@
     {
       "content": "Returning to the app before the library scan finishes: the current track is restored into the temporary queue right away (highlighted, player opens) and the full queue is re-synced when the scan completes; still seeks to the right spot and follows native play/pause",
       "icon": "restore"
+    },
+    {
+      "content": "Media notification now controls the native player directly (next/previous, play) and album art is fixed after reopening the app",
+      "icon": "queue_music"
     }
   ]
 }
