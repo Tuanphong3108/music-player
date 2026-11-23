@@ -836,16 +836,55 @@
         })();
 
         if ('launchQueue' in window) {
+            const pendingLaunchHandles = [];
+            let launchDraining = false;
+            const waitScriptsReady = () => new Promise((resolve) => {
+                if (document.readyState === 'interactive' || document.readyState === 'complete') {
+                    // Đợi microtask/tick kế tiếp để chắc chắn toàn bộ script cuối <body> (08-seek-wave-pwa, 10-fullscreen-hotkeys...) đã chạy xong
+                    setTimeout(resolve, 0);
+                } else {
+                    document.addEventListener('DOMContentLoaded', () => setTimeout(resolve, 0), { once: true });
+                }
+            });
+            async function drainLaunchQueue() {
+                if (launchDraining || !pendingLaunchHandles.length) return;
+                launchDraining = true;
+                window.__launchQueueActive = true;
+                try {
+                    await waitScriptsReady();
+                    while (pendingLaunchHandles.length) {
+                        const batch = pendingLaunchHandles.splice(0, pendingLaunchHandles.length);
+                        const files = [];
+                        for (const h of batch) {
+                            try {
+                                if (!h || typeof h.getFile !== 'function') continue;
+                                const file = await h.getFile();
+                                file.fileHandle = h;
+                                files.push(file);
+                            } catch (err) {
+                                console.warn('Không đọc được tệp từ launchQueue:', err);
+                            }
+                        }
+                        if (files.length) {
+                            await handleFiles(files);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Lỗi xử lý launchQueue:', err);
+                } finally {
+                    launchDraining = false;
+                    // Giữ cờ một lúc để SW update không tự reload làm mất tệp vừa mở từ Files
+                    setTimeout(() => { if (!launchDraining && !pendingLaunchHandles.length) window.__launchQueueActive = false; }, 10000);
+                }
+            }
             window.launchQueue.setConsumer((params) => {
-                if (params.files && params.files.length) {
+                if (params && params.files && params.files.length) {
                     // params.files là FileSystemFileHandle thật (đến từ hệ điều hành khi
                     // double-click mở file bằng app), nên phải gắn lại .fileHandle để
                     // ghi thẳng vào file gốc được, giống hệt flow "Chọn file" và kéo-thả.
-                    Promise.all(params.files.map(async (h) => {
-                        const file = await h.getFile();
-                        file.fileHandle = h;
-                        return file;
-                    })).then(handleFiles);
+                    window.__launchQueueActive = true;
+                    pendingLaunchHandles.push(...params.files);
+                    drainLaunchQueue();
                 }
             });
         }
