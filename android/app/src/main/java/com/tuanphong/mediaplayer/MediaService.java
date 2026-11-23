@@ -98,7 +98,12 @@ public class MediaService extends Service {
         String t = o.optString("title"), ar = o.optString("artist");
         long d = o.optLong("dur", 0);
         boolean metaChanged = (!t.isEmpty() && !t.equals(title)) || !ns.equals(state) || (d > 0 && d != dur);
-        if (!t.isEmpty() && !t.equals(title)) { art = null; MediaWidgetProvider.saveArtwork(this, null); }
+        if (!t.isEmpty() && !t.equals(title)) {
+            art = null;
+            artDirty = true;
+            MediaWidgetProvider.saveArtwork(this, null);
+            loadNativeArtworkForId(o.optString("id"), t);
+        }
         if (!t.isEmpty()) { title = t; artist = ar; }
         if (d > 0) dur = d;
         state = ns;
@@ -109,6 +114,65 @@ public class MediaService extends Service {
         stamp = SystemClock.elapsedRealtime();
         speed = playing ? (float) o.optDouble("rate", 1.0) : 0f;
         if (!metaChanged && session != null && session.isActive()) publishPlaybackOnly(); else publish();
+    }
+
+    private volatile String loadingArtForTitle = "";
+
+    /** Trích xuất trực tiếp ảnh bìa nhúng từ tệp gốc trên luồng nền Android khi đổi bài ở nền/màn hình khóa, không cần chờ WebView. */
+    private void loadNativeArtworkForId(final String nativeId, final String expectedTitle) {
+        if (nativeId == null || nativeId.isEmpty()) return;
+        loadingArtForTitle = expectedTitle == null ? "" : expectedTitle;
+        new Thread(() -> {
+            android.media.MediaMetadataRetriever mmr = null;
+            try {
+                mmr = new android.media.MediaMetadataRetriever();
+                String directPath = MainActivity.resolveLocation(nativeId);
+                android.net.Uri src = MainActivity.resolveServed(nativeId);
+                if (directPath != null && new java.io.File(directPath).canRead()) {
+                    mmr.setDataSource(directPath);
+                } else if (src != null) {
+                    mmr.setDataSource(this, src);
+                } else {
+                    return;
+                }
+                byte[] pic = mmr.getEmbeddedPicture();
+                if (pic == null || pic.length == 0) return;
+                BitmapFactory.Options bounds = new BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                BitmapFactory.decodeByteArray(pic, 0, pic.length, bounds);
+                int sample = 1;
+                int maxDim = Math.max(bounds.outWidth, bounds.outHeight);
+                while (maxDim / (sample * 2) >= 320) sample *= 2;
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inSampleSize = sample;
+                Bitmap decoded = BitmapFactory.decodeByteArray(pic, 0, pic.length, opts);
+                if (decoded == null) return;
+                int bw = decoded.getWidth(), bh = decoded.getHeight();
+                int side = Math.min(bw, bh);
+                Bitmap cropped = (bw != bh && side > 0)
+                        ? Bitmap.createBitmap(decoded, (bw - side) / 2, (bh - side) / 2, side, side)
+                        : decoded;
+                Bitmap scaled = (cropped.getWidth() > 320 || cropped.getHeight() > 320)
+                        ? Bitmap.createScaledBitmap(cropped, 320, 320, true)
+                        : cropped;
+                if (scaled != cropped) cropped.recycle();
+                if (cropped != decoded) decoded.recycle();
+                final Bitmap finalBmp = scaled;
+                fgHandler.post(() -> {
+                    if (!expectedTitle.equals(title)) {
+                        try { finalBmp.recycle(); } catch (Throwable ignored) {}
+                        return;
+                    }
+                    art = finalBmp;
+                    artDirty = false;
+                    MediaWidgetProvider.saveArtwork(MediaService.this, finalBmp);
+                    publish();
+                });
+            } catch (Throwable ignored) {
+            } finally {
+                if (mmr != null) { try { mmr.release(); } catch (Throwable ignored) {} }
+            }
+        }, "media-service-art").start();
     }
 
     private void cmd(String c) { if (MainActivity.instance != null) MainActivity.instance.sendCmd(c); }
