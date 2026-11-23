@@ -98,7 +98,7 @@
                     N.buf = ns.buf || 0;
                     N.st = ns.st;
                     N.rate = ns.rate || 1;
-                    wantPlay = !!ns.pwr;
+                    wantPlay = !!(ns.pwr && (ns.st === 'ready' || ns.st === 'buffering'));
                     N.paused = !wantPlay;
                     N.ended = ns.st === 'ended';
                     if (ns.pos > 0) seekTargetMs = ns.pos;
@@ -400,10 +400,11 @@
                 }, 120);
             }
             if (s && s.loaded && s.id) {
+                const sPlaying = !!(s.pwr && (s.st === 'ready' || s.st === 'buffering'));
                 window.__nativeBoot = s;
                 window.__nativeBootQueue = q;
                 N.adoptId = s.id;
-                N.paused = !s.pwr;
+                N.paused = !sPlaying;
                 N.vol = 1;
                 if (fromResume && typeof window.__adoptNativeSessionNow === 'function') {
                     window.__adoptNativeSessionNow(s, q);
