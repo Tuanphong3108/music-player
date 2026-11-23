@@ -192,7 +192,7 @@
     function scheduleNext() { clearTimeout(nt); nt = setTimeout(() => syncQueue(false), 400); }
     ['shuffle-btn', 'repeat-btn', 'reshuffle-btn'].forEach(id => { const b = document.getElementById(id); if (b) b.addEventListener('click', scheduleNext); });
     a.addEventListener('playing', scheduleNext);
-    setInterval(() => { if (isNative()) syncQueue(false); }, 2000);
+    setInterval(() => { if (!document.hidden && isNative()) syncQueue(false); }, 8000);
     // Hẹn giờ ngủ: báo cho app giữ để vẫn dừng đúng lúc dù WebView bị đóng băng
     let sleepSig = '';
     function syncSleep() {
@@ -204,7 +204,7 @@
             AB.nativeAudioSetSleep(st && st.type === 'time' ? st.endAt : 0, st && st.type === 'tracks' ? st.remaining : 0);
         } catch (e) {}
     }
-    setInterval(syncSleep, 1000);
+    setInterval(() => { if (!document.hidden) syncSleep(); }, 3000);
     window.__syncNativeQueue = () => syncQueue(true);
 
     // Hỏi lại trạng thái khi trang vừa (tải lại) mở: nếu app đang phát bài nào thì cho khôi phục UI nhận lại đúng bài đó
