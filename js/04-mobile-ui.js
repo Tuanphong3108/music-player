@@ -295,85 +295,108 @@
                     renderMobileLibrary();
                     if (appliedAnyCache && typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
 
-                    // Bước 2: Quét bổ sung các bài chưa có cache bằng trình đọc metadata đầy đủ (native MediaMetadataRetriever / toàn tệp)
-                    await new Promise(r0 => setTimeout(r0, 4500));
-                    let bgScanned = 0;
-                    const MAX_BG_PER_PASS = 36;
-                    for (let i = 0; i < pool.length && bgScanned < MAX_BG_PER_PASS; i++) {
+                    // Bước 2: Thả xong toàn bộ danh sách thần tốc -> đọc bổ sung toàn bộ bài chưa có cache song song 3 tệp cùng lúc
+                    await new Promise(r0 => setTimeout(r0, 600));
+                    const targets = [];
+                    const curTrack = (typeof playlist !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
+                    for (let i = 0; i < pool.length; i++) {
                         const tr = pool[i];
                         if (!tr || !tr.nativeStreamUrl || tr._bgCoverChecked || tr._metaFromCache) continue;
-                        if (document.hidden) {
-                            await new Promise(rv => { const on = () => { if (!document.hidden) { document.removeEventListener('visibilitychange', on); rv(); } }; document.addEventListener('visibilitychange', on); });
-                        }
-                        tr._bgCoverChecked = true;
-                        bgScanned++;
-                        try {
-                            const meta = (typeof window.__readCompleteTrackTags === 'function')
-                                ? await window.__readCompleteTrackTags(tr)
-                                : null;
-                            if (meta) {
-                                let changed = false;
-                                if (meta.title && meta.title !== tr.name && (!tr._metaFromCache || meta.title !== tr.rawName)) {
-                                    tr.name = meta.title; changed = true;
-                                }
-                                if (meta.artist && meta.artist !== tr.artist) {
-                                    tr.artist = meta.artist; changed = true;
-                                }
-                                if (meta.album && meta.album !== tr.album) {
-                                    tr.album = meta.album; changed = true;
-                                }
-                                if (meta.year && meta.year !== tr.year) { tr.year = meta.year; changed = true; }
-                                if (meta.genre && meta.genre !== tr.genre) { tr.genre = meta.genre; changed = true; }
-                                if (meta.composer && meta.composer !== tr.composer) { tr.composer = meta.composer; changed = true; }
-                                if (meta.lyrics && !tr.lyricsRaw) {
-                                    tr.lyricsRaw = meta.lyrics;
-                                    tr.lyrics = parseLRC(meta.lyrics);
-                                    changed = true;
-                                }
-                                if (meta.pictureDataUrl) {
-                                    const picUrl = await dataUrlToThumb(meta.pictureDataUrl) || meta.pictureDataUrl;
-                                    if (picUrl && (tr.cover !== picUrl || !tr._hasRealCover)) {
-                                        tr.cover = picUrl;
-                                        tr._hasRealCover = true;
+                        if (tr === curTrack) targets.unshift(tr);
+                        else targets.push(tr);
+                    }
+                    if (targets.length) {
+                        const CONCURRENCY = 3;
+                        let cursor = 0;
+                        const hydrateOne = async (tr) => {
+                            if (document.hidden) {
+                                await new Promise(rv => { const on = () => { if (!document.hidden) { document.removeEventListener('visibilitychange', on); rv(); } }; document.addEventListener('visibilitychange', on); });
+                            }
+                            if (tr._bgCoverChecked) return;
+                            tr._bgCoverChecked = true;
+                            try {
+                                const meta = (typeof window.__readCompleteTrackTags === 'function')
+                                    ? await window.__readCompleteTrackTags(tr, { preferThumb: true })
+                                    : null;
+                                if (meta) {
+                                    let changed = false;
+                                    if (meta.title && meta.title !== tr.name && (!tr._metaFromCache || meta.title !== tr.rawName)) {
+                                        tr.name = meta.title; changed = true;
+                                    }
+                                    if (meta.artist && meta.artist !== tr.artist) {
+                                        tr.artist = meta.artist; changed = true;
+                                    }
+                                    if (meta.album && meta.album !== tr.album) {
+                                        tr.album = meta.album; changed = true;
+                                    }
+                                    if (meta.year && meta.year !== tr.year) { tr.year = meta.year; changed = true; }
+                                    if (meta.genre && meta.genre !== tr.genre) { tr.genre = meta.genre; changed = true; }
+                                    if (meta.composer && meta.composer !== tr.composer) { tr.composer = meta.composer; changed = true; }
+                                    if (meta.lyrics && !tr.lyricsRaw) {
+                                        tr.lyricsRaw = meta.lyrics;
+                                        tr.lyrics = parseLRC(meta.lyrics);
                                         changed = true;
                                     }
-                                } else if (!meta.hasPicture && (tr.cover || tr._hasRealCover)) {
-                                    tr.cover = null;
-                                    tr._hasRealCover = false;
-                                    changed = true;
-                                }
-                                tr._metaLoading = false;
-                                tr._metaLoaded = true;
-                                saveTrackMetaToCache(tr);
-                                patchMobileLibRowDom(tr);
-                                if (changed) {
-                                    if (playlist[currentIndex] === tr) {
-                                        trackNameEl.innerText = tr.name;
-                                        trackArtistEl.innerText = `${tr.artist} | ${tr.ext}`;
-                                        if (tr.cover) {
-                                            artImg.src = tr.cover;
-                                            artImg.classList.remove('hidden');
-                                            artPlaceholder.classList.add('hidden');
-                                            bgPreview.style.backgroundImage = `url(${tr.cover})`;
-                                            refreshDynamicAccent(tr);
+                                    if (meta.pictureDataUrl) {
+                                        // Nếu native đã trả sẵn thumbnail JPEG nhỏ gọn (< 32KB) thì dùng luôn, khỏi vẽ lại qua Canvas
+                                        const picUrl = (meta.pictureDataUrl.length < 36000)
+                                            ? meta.pictureDataUrl
+                                            : (await dataUrlToThumb(meta.pictureDataUrl) || meta.pictureDataUrl);
+                                        if (picUrl && (tr.cover !== picUrl || !tr._hasRealCover)) {
+                                            tr.cover = picUrl;
+                                            tr._hasRealCover = true;
+                                            changed = true;
                                         }
-                                        updateFsUI();
-                                        updateMediaSession();
+                                    } else if (!meta.hasPicture && (tr.cover || tr._hasRealCover)) {
+                                        tr.cover = null;
+                                        tr._hasRealCover = false;
+                                        changed = true;
                                     }
-                                    if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+                                    tr._metaLoading = false;
+                                    tr._metaLoaded = true;
+                                    saveTrackMetaToCache(tr);
+                                    patchMobileLibRowDom(tr);
+                                    if (changed) {
+                                        if (playlist[currentIndex] === tr) {
+                                            trackNameEl.innerText = tr.name;
+                                            trackArtistEl.innerText = `${tr.artist} | ${tr.ext}`;
+                                            if (tr.cover) {
+                                                artImg.src = tr.cover;
+                                                artImg.classList.remove('hidden');
+                                                artPlaceholder.classList.add('hidden');
+                                                bgPreview.style.backgroundImage = `url(${tr.cover})`;
+                                                refreshDynamicAccent(tr);
+                                            }
+                                            updateFsUI();
+                                            updateMediaSession();
+                                        }
+                                        if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+                                    }
+                                } else {
+                                    tr._metaLoading = false;
+                                    tr._metaLoaded = true;
+                                    saveTrackMetaToCache(tr);
+                                    patchMobileLibRowDom(tr);
                                 }
-                            } else {
+                            } catch (e) {
                                 tr._metaLoading = false;
                                 tr._metaLoaded = true;
-                                saveTrackMetaToCache(tr);
                                 patchMobileLibRowDom(tr);
                             }
-                            await new Promise(r2 => setTimeout(r2, 90));
-                        } catch (e) {
-                            tr._metaLoading = false;
-                            tr._metaLoaded = true;
-                            patchMobileLibRowDom(tr);
+                        };
+                        const runWorker = async () => {
+                            while (cursor < targets.length) {
+                                const tr = targets[cursor++];
+                                if (!tr) continue;
+                                await hydrateOne(tr);
+                                await new Promise(r2 => setTimeout(r2, 25));
+                            }
+                        };
+                        const workers = [];
+                        for (let w = 0; w < Math.min(CONCURRENCY, targets.length); w++) {
+                            workers.push(runWorker());
                         }
+                        await Promise.all(workers);
                     }
                 } finally {
                     coverHydrateRunning = false;
