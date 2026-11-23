@@ -319,19 +319,23 @@
         if (typeof playlist === 'undefined') return false;
         let boot = window.__nativeBoot || null;   // app đang phát/giữ sẵn bài nào đó: ưu tiên nhận lại đúng bài & hàng đợi đó
         let bootQ = window.__nativeBootQueue || null;
-        if (!bootQ && window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function') {
+        if (!bootQ && window.AndroidBridge) {
             try {
-                const qs = JSON.parse(window.AndroidBridge.nativeAudioQueueState() || 'null');
+                const rawQ = (typeof window.AndroidBridge.nativeAudioQueueState === 'function' ? window.AndroidBridge.nativeAudioQueueState() : '')
+                    || (typeof window.AndroidBridge.nativeAudioSavedQueue === 'function' ? window.AndroidBridge.nativeAudioSavedQueue() : '');
+                const qs = JSON.parse(rawQ || 'null');
                 if (qs && (qs.count > 0 || (Array.isArray(qs.ids) && qs.ids.length > 0) || qs.curId)) {
                     bootQ = qs;
                     window.__nativeBootQueue = qs;
                 }
             } catch (e) {}
         }
-        if (!boot && window.AndroidBridge && typeof window.AndroidBridge.nativeAudioState === 'function') {
+        if (!boot && window.AndroidBridge) {
             try {
-                const ns = JSON.parse(window.AndroidBridge.nativeAudioState() || 'null');
-                if (ns && ns.loaded && ns.id) {
+                const rawS = (typeof window.AndroidBridge.nativeAudioState === 'function' ? window.AndroidBridge.nativeAudioState() : '')
+                    || (typeof window.AndroidBridge.nativeAudioSavedState === 'function' ? window.AndroidBridge.nativeAudioSavedState() : '');
+                const ns = JSON.parse(rawS || 'null');
+                if (ns && (ns.loaded || ns.id)) {
                     boot = ns;
                     window.__nativeBoot = ns;
                 }
