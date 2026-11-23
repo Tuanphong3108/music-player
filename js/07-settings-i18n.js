@@ -547,7 +547,8 @@
              'settings_font_scale_sync','settings_language','settings_output_device','settings_playback_speed',
              'settings_reduce_effects','settings_reduce_motion','settings_perf','settings_repeat_mode','settings_show_fs_lyric',
              'settings_show_main_lyric','settings_show_pip_lyric','settings_shuffle','settings_theme','settings_ui_scale',
-             'settings_volume','settings_wake_lock','settings_mixer','settings_subs','getting_started_done','getting_started_pending'
+             'settings_volume','settings_wake_lock','settings_mixer','settings_subs','getting_started_done','getting_started_pending',
+             'mp_ai_lyric_trans_v1','mp_ai_lyric_show_v1','mp_ai_integration_v1','mp_ai_usage_v1','mp_gemini_models_v1'
             ].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
             try { localStorage.setItem('getting_started_pending', '1'); } catch (e) {}
             try {
@@ -1205,6 +1206,8 @@
                     if (!ok) return;
                     try { localStorage.removeItem('settings_subs'); } catch (e) {}
                     try { localStorage.removeItem('mp_last_card_v1'); } catch (e) {}
+                    try { localStorage.removeItem('mp_ai_lyric_trans_v1'); } catch (e) {}
+                    if (typeof window.__clearAiLyricTranslations === 'function') window.__clearAiLyricTranslations(true);
                     if (typeof window.__clearMobileMetaCache === 'function') {
                         await window.__clearMobileMetaCache();
                     }
