@@ -1981,6 +1981,10 @@
         audio.addEventListener('play', () => { try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {} clearTimeout(pauseFlashTimer); if (document.body.classList.contains('has-video')) pauseOverlay.classList.remove('visible'); });
 
         playBtn.addEventListener('click', () => {
+            if (!audio.src && currentIndex === -1) {
+                if (typeof window.__tryRestoreNow === 'function' && window.__tryRestoreNow(true)) return;
+                if (typeof window.__hasPendingRestore === 'function' && window.__hasPendingRestore()) return;
+            }
             if (!audio.src && playlist.length > 0) playTrack(0);
             else if (audio.paused) { 
                 audio.play(); 
