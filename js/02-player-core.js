@@ -261,23 +261,14 @@
             };
 
             doc.addEventListener('contextmenu', (e) => {
+                const el = findEditable(e);
+                if (el) { close(); return; }
                 e.preventDefault();                       // luôn chặn menu mặc định
                 if (e.target.closest && e.target.closest('.song-item')) { close(); return; }   // bài trong playlist có menu riêng
                 const items = [];
-                const el = findEditable(e);
-                if (el) {
-                    const has = !!selText(el), ro = el.readOnly || el.disabled;
-                    items.push(
-                        { label: tr('contextmenu.cut', 'Cắt'), icon: 'content_cut', px: 'cut', hint: 'Ctrl+X', off: !has || ro, run: () => doCut(el) },
-                        { label: tr('contextmenu.copy', 'Sao chép'), icon: 'content_copy', px: 'copy', hint: 'Ctrl+C', off: !has, run: () => doCopy(el) },
-                        { label: tr('contextmenu.paste', 'Dán'), icon: 'content_paste', px: 'paste', hint: 'Ctrl+V', off: ro, run: () => doPaste(el) },
-                        { label: tr('contextmenu.select_all', 'Chọn tất cả'), icon: 'select_all', px: 'all', hint: 'Ctrl+A', run: () => doSelectAll(el) }
-                    );
-                } else {
-                    const sel = (win.getSelection() || '').toString();
-                    if (sel) items.push({ label: tr('contextmenu.copy', 'Sao chép'), icon: 'content_copy', px: 'copy', hint: 'Ctrl+C', run: () => writeClip(sel) });
-                }
-                if (extra && !el) {
+                const sel = (win.getSelection() || '').toString();
+                if (sel) items.push({ label: tr('contextmenu.copy', 'Sao chép'), icon: 'content_copy', px: 'copy', hint: 'Ctrl+C', run: () => writeClip(sel) });
+                if (extra) {
                     const more = extra(e) || [];
                     if (more.length && items.length) items.push('-');
                     items.push(...more);
@@ -1765,6 +1756,15 @@
                 const at0 = restoreOpts.pos;
                 track._resumeAt = at0;
                 audio.addEventListener('loadedmetadata', () => { if (mySeq === libraryPlaySeq) { try { audio.currentTime = at0; } catch (e) {} } }, { once: true });
+            }
+            if (restoreOpts && restoreOpts.dur > 0 && track.fromLibrary && track.nativeStreamUrl && !track._blobLoaded) {
+                const durEl = document.getElementById('duration');
+                if (durEl && typeof formatTime === 'function' && (!audio.duration || !isFinite(audio.duration))) {
+                    durEl.innerText = formatTime(restoreOpts.dur, restoreOpts.dur);
+                }
+                if (typeof window.__setRestoreDurationHint === 'function') {
+                    window.__setRestoreDurationHint(track.nativeStreamUrl, restoreOpts.dur);
+                }
             }
             // Dừng ngay bài đang phát trước khi nạp bài mới
             if (prevIdx !== index || !audio.paused) {
