@@ -2556,18 +2556,8 @@ public class MainActivity extends Activity {
 
         // ===== Trình phát native (ExoPlayer) =====
         @JavascriptInterface public boolean nativeAudioAvailable() { return true; }
-        @JavascriptInterface public String nativeAudioState() {
-            String live = NativeAudio.stateJson();
-            if (live != null && !live.contains("\"id\":\"\"")) return live;
-            String saved = NativeAudio.persistedSessionJson(MainActivity.this);
-            return (saved != null && !saved.isEmpty()) ? saved : live;
-        }
-        @JavascriptInterface public String nativeAudioQueueState() {
-            String live = NativeAudio.queueStateJson();
-            if (live != null && !live.contains("\"count\":0")) return live;
-            String saved = NativeAudio.persistedQueueJson(MainActivity.this);
-            return (saved != null && !saved.isEmpty()) ? saved : live;
-        }
+        @JavascriptInterface public String nativeAudioState() { return NativeAudio.stateJson(); }
+        @JavascriptInterface public String nativeAudioQueueState() { return NativeAudio.queueStateJson(); }
         @JavascriptInterface public String nativeAudioSavedState() { return NativeAudio.persistedSessionJson(MainActivity.this); }
         @JavascriptInterface public String nativeAudioSavedQueue() { return NativeAudio.persistedQueueJson(MainActivity.this); }
         @JavascriptInterface public void consumeSleepEndedNotice() { NativeAudio.consumeSleepEndedNotice(); }
