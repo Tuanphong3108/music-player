@@ -2,6 +2,7 @@
     'use strict';
     const CFG_KEY = 'mp_ai_integration_v1';
     const USAGE_KEY = 'mp_ai_usage_v1';
+    const MODELS_CACHE_KEY = 'mp_gemini_models_v1';
     const DEFAULT_PROMPTS = {
         curator: "You are 'Vibe-Engine', a professional music curator. Analyze the user's request and listening profile to provide smart music recommendations from the local library. Always prioritize flow, emotional coherence, and exact metadata matching. Respond strictly in valid JSON.",
         creative: "You are 'Vibe-Engine' in creative discovery mode. Craft adventurous, mood-rich local playlists with unexpected transitions while honoring every constraint. Respond strictly in valid JSON."
@@ -9,29 +10,51 @@
     const MOODS = ['Chill', 'Energetic', 'Happy', 'Dark', 'Romantic', 'Melancholic'];
     const ACTIVITIES = ['Workout', 'Focus', 'Road trip', 'Party', 'Study', 'Late night'];
     const ERAS = ['Any era', '70s', '80s', '90s', '2000s', '2010s', '2020s'];
-    const PROVIDERS = ['Google Gemini', 'OpenAI', 'OpenRouter'];
-    const MODELS = {
-        'Google Gemini': ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.1-flash-lite-preview'],
-        'OpenAI': ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini'],
-        'OpenRouter': ['google/gemini-2.5-flash', 'anthropic/claude-3.5-haiku', 'openai/gpt-4o-mini']
-    };
+    const PROVIDERS = ['Google Gemini'];
+
+    function loadModelsCache(apiKey) {
+        if (!apiKey) return [];
+        try {
+            const raw = JSON.parse(localStorage.getItem(MODELS_CACHE_KEY) || 'null');
+            if (raw && raw.keyHash === hashKey(apiKey) && Array.isArray(raw.models)) {
+                return raw.models.filter(Boolean);
+            }
+        } catch (e) {}
+        return [];
+    }
+    function saveModelsCache(apiKey, models) {
+        if (!apiKey) return;
+        try {
+            localStorage.setItem(MODELS_CACHE_KEY, JSON.stringify({ keyHash: hashKey(apiKey), models: models || [] }));
+        } catch (e) {}
+    }
+    function hashKey(k) {
+        let h = 2166136261;
+        for (let i = 0; i < k.length; i++) { h ^= k.charCodeAt(i); h = Math.imul(h, 16777619); }
+        return String(h >>> 0);
+    }
 
     function loadCfg() {
         let saved = {};
         try { saved = JSON.parse(localStorage.getItem(CFG_KEY) || '{}') || {}; } catch (e) {}
-        const prov = PROVIDERS.includes(saved.provider) ? saved.provider : 'Google Gemini';
-        const modList = MODELS[prov] || MODELS['Google Gemini'];
+        const apiKey = typeof saved.apiKey === 'string' ? saved.apiKey.trim() : '';
+        const cachedModels = loadModelsCache(apiKey);
+        const savedModel = typeof saved.model === 'string' ? saved.model.trim() : '';
+        const model = apiKey && savedModel && (!cachedModels.length || cachedModels.includes(savedModel))
+            ? savedModel
+            : (apiKey && cachedModels.length ? cachedModels[0] : '');
         return {
-            provider: prov,
+            provider: 'Google Gemini',
             safeToken: saved.safeToken !== false,
-            apiKey: typeof saved.apiKey === 'string' ? saved.apiKey : '',
-            model: saved.model || modList[0],
+            apiKey,
+            model,
             preset: saved.preset === 'creative' ? 'creative' : 'curator',
             systemPrompt: typeof saved.systemPrompt === 'string' && saved.systemPrompt.trim() ? saved.systemPrompt : DEFAULT_PROMPTS.curator
         };
     }
     function saveCfg(nextCfg) {
-        try { localStorage.setItem(CFG_KEY, JSON.stringify(nextCfg)); } catch (e) {}
+        const clean = Object.assign({}, nextCfg, { provider: 'Google Gemini' });
+        try { localStorage.setItem(CFG_KEY, JSON.stringify(clean)); } catch (e) {}
     }
     function loadUsage() {
         try {
@@ -47,6 +70,9 @@
     }
 
     let cfg = loadCfg();
+    let fetchedModels = loadModelsCache(cfg.apiKey);
+    let fetchingModels = false;
+    let lastModelError = '';
     let labOpen = false;
     let pendingOpenLabAfterSetup = false;
     let labState = {
@@ -54,6 +80,50 @@
         era: 'Any era', energy: 3, discovery: 3, minSongs: 12, maxSongs: 24,
         prioGenres: '', avoidGenres: '', prefLang: '', prioFavs: true, avoidExplicit: false
     };
+
+    async function fetchGeminiModels(apiKey, silent) {
+        const key = String(apiKey || '').trim();
+        if (!key) {
+            fetchedModels = [];
+            lastModelError = '';
+            cfg.model = '';
+            saveCfg(cfg);
+            syncAllSettingsHosts();
+            return [];
+        }
+        fetchingModels = true;
+        lastModelError = '';
+        syncAllSettingsHosts();
+        try {
+            const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key));
+            const data = await res.json();
+            if (!res.ok) throw new Error((data && data.error && data.error.message) || ('HTTP ' + res.status));
+            const list = (Array.isArray(data && data.models) ? data.models : [])
+                .filter(m => m && Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+                .map(m => String(m.name || '').replace(/^models\//, ''))
+                .filter(name => name && !/embedding|imagen|veo|aqa/i.test(name));
+            fetchedModels = Array.from(new Set(list));
+            saveModelsCache(key, fetchedModels);
+            if (!cfg.model || !fetchedModels.includes(cfg.model)) {
+                cfg.model = fetchedModels[0] || '';
+            }
+            saveCfg(cfg);
+            fetchingModels = false;
+            syncAllSettingsHosts();
+            if (!silent && typeof showToast === 'function') {
+                showToast('Đã tải ' + fetchedModels.length + ' mô hình Gemini!', 'check_circle', 2200);
+            }
+            return fetchedModels;
+        } catch (err) {
+            fetchingModels = false;
+            lastModelError = (err && err.message) ? err.message : String(err);
+            syncAllSettingsHosts();
+            if (!silent && typeof showToast === 'function') {
+                showToast('Không tải được danh sách mô hình: ' + lastModelError, 'error', 3500);
+            }
+            return [];
+        }
+    }
 
     function injectStyles() {
         if (document.getElementById('ai-playlist-lab-style')) return;
@@ -69,8 +139,9 @@
           .ai-pill-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1px solid var(--playlist-border,rgba(255,255,255,.14));font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:color-mix(in srgb,var(--md-sys-color-on-surface) 10%,transparent);color:var(--md-sys-color-on-surface);align-self:flex-start;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s;}
           .ai-pill-btn:active,.ai-chip:active,.ai-reset-btn:active,.ai-gen-btn:active,.ai-save-btn:active{transform:scale(.96);}
           .ai-pill-btn.active,.ai-pill-btn.sel{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);border-color:var(--md-sys-color-primary);}
-          .ai-sheet-trigger{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-primary) 45%,var(--md-sys-color-outline,#888));background:color-mix(in srgb,var(--md-sys-color-primary-container) 55%,var(--md-sys-color-surface));color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;align-self:flex-start;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s;}
-          .ai-sheet-trigger:active{transform:scale(.96);}
+          .ai-sheet-trigger{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-primary) 45%,var(--md-sys-color-outline,#888));background:color-mix(in srgb,var(--md-sys-color-primary-container) 55%,var(--md-sys-color-surface));color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;align-self:flex-start;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s,opacity .2s;}
+          .ai-sheet-trigger:active:not(:disabled){transform:scale(.96);}
+          .ai-sheet-trigger:disabled{opacity:.55;cursor:default;}
           .ai-input,.ai-textarea{width:100%;box-sizing:border-box;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 40%,transparent);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13.5px;padding:12px 14px;outline:none;transition:border-color .2s;}
           .ai-input:focus,.ai-textarea:focus{border-color:var(--md-sys-color-primary);}
           .ai-textarea{min-height:110px;resize:vertical;line-height:1.45;}
@@ -176,10 +247,20 @@
         const host = document.getElementById(containerId);
         if (!host) return;
         const usage = loadUsage();
+        const hasKey = !!(cfg.apiKey && cfg.apiKey.trim());
+        const modelLabel = fetchingModels
+            ? 'Loading models...'
+            : (!hasKey ? 'Enter API key first' : (cfg.model || 'No model selected'));
+        const modelDesc = fetchingModels
+            ? 'Fetching available Gemini models from Google AI Studio...'
+            : (!hasKey
+                ? 'Model list stays empty until you enter a Gemini API key.'
+                : (lastModelError ? ('Fetch error: ' + lastModelError) : (fetchedModels.length ? (fetchedModels.length + ' Gemini models loaded.') : 'Tap to fetch Gemini models.')));
+
         host.innerHTML = `
           ${pendingOpenLabAfterSetup ? `<div class="ai-banner-info" style="margin-bottom:14px;">
             <div style="font-size:15px;font-weight:800;">Thiết lập AI lần đầu để tạo danh sách phát</div>
-            <div style="font-size:12.5px;opacity:.9;">Nhập API Key của bạn rồi bấm Save — sau đó hệ thống sẽ mở thẳng AI Playlist Lab.</div>
+            <div style="font-size:12.5px;opacity:.9;">Nhập Gemini API Key rồi bấm Save — hệ thống sẽ tải danh sách mô hình và mở AI Playlist Lab.</div>
           </div>` : ''}
           <div class="ai-sec-lbl">AI Provider</div>
           <div class="ai-card">
@@ -187,10 +268,10 @@
               <div class="ai-ico-box"><span class="material-symbols-rounded">science</span></div>
               <div style="flex:1;min-width:0;">
                 <div class="ai-card-title">Provider</div>
-                <div class="ai-card-desc">Choose your AI provider</div>
+                <div class="ai-card-desc">Google Gemini</div>
               </div>
               <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="provider">
-                <span>${cfg.provider}</span>
+                <span>Google Gemini</span>
                 <span class="material-symbols-rounded" style="font-size:18px;">expand_more</span>
               </button>
             </div>
@@ -210,11 +291,11 @@
           <div class="ai-sec-lbl">Credentials</div>
           <div class="ai-card">
             <div>
-              <div class="ai-card-title">${cfg.provider} API Key</div>
+              <div class="ai-card-title">Google Gemini API Key</div>
               <div class="ai-card-desc">Get from Google AI Studio (aistudio.google.com)</div>
             </div>
-            <input type="password" class="ai-input" data-ai-field="apiKey" placeholder="Paste API key..." value="${(cfg.apiKey || '').replace(/"/g, '&quot;')}">
-            <button type="button" class="ai-save-btn" data-ai-action="save-key">Save</button>
+            <input type="password" class="ai-input" data-ai-field="apiKey" placeholder="Paste Gemini API key..." value="${(cfg.apiKey || '').replace(/"/g, '&quot;')}">
+            <button type="button" class="ai-save-btn" data-ai-action="save-key">Save &amp; Fetch Models</button>
           </div>
 
           <div class="ai-sec-lbl">Model Selection</div>
@@ -223,11 +304,11 @@
               <div class="ai-ico-box"><span class="material-symbols-rounded">auto_awesome</span></div>
               <div style="flex:1;min-width:0;">
                 <div class="ai-card-title">AI Model</div>
-                <div class="ai-card-desc">Select a model.</div>
+                <div class="ai-card-desc">${modelDesc}</div>
               </div>
-              <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="model">
-                <span>${cfg.model}</span>
-                <span class="material-symbols-rounded" style="font-size:18px;">expand_more</span>
+              <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="model"${(!hasKey || fetchingModels) ? ' disabled' : ''}>
+                <span>${modelLabel}</span>
+                <span class="material-symbols-rounded" style="font-size:18px;">${fetchingModels ? 'sync' : 'expand_more'}</span>
               </button>
             </div>
           </div>
@@ -254,16 +335,16 @@
         `;
 
         host.querySelector('[data-ai-open-sheet="provider"]')?.addEventListener('click', () => {
-            openChoiceSheet('Provider', PROVIDERS, cfg.provider, (val) => {
-                cfg.provider = val;
-                const list = MODELS[cfg.provider] || MODELS['Google Gemini'];
-                if (!list.includes(cfg.model)) cfg.model = list[0];
+            openChoiceSheet('Provider', PROVIDERS, 'Google Gemini', () => {
+                cfg.provider = 'Google Gemini';
                 saveCfg(cfg);
                 syncAllSettingsHosts();
             });
         });
-        host.querySelector('[data-ai-open-sheet="model"]')?.addEventListener('click', () => {
-            const list = MODELS[cfg.provider] || MODELS['Google Gemini'];
+        host.querySelector('[data-ai-open-sheet="model"]')?.addEventListener('click', async () => {
+            if (!cfg.apiKey) return;
+            const list = fetchedModels.length ? fetchedModels : await fetchGeminiModels(cfg.apiKey, false);
+            if (!list.length) return;
             openChoiceSheet('AI Model', list, cfg.model, (val) => {
                 cfg.model = val;
                 saveCfg(cfg);
@@ -293,12 +374,19 @@
                 setTimeout(() => openAiLab(true), 220);
             }
         };
-        host.querySelector('[data-ai-action="save-key"]')?.addEventListener('click', () => {
+        host.querySelector('[data-ai-action="save-key"]')?.addEventListener('click', async () => {
             const inp = host.querySelector('[data-ai-field="apiKey"]');
             cfg.apiKey = (inp?.value || '').trim();
+            if (!cfg.apiKey) {
+                cfg.model = '';
+                fetchedModels = [];
+                saveCfg(cfg);
+                syncAllSettingsHosts();
+                return;
+            }
             saveCfg(cfg);
-            if (typeof showToast === 'function') showToast('Đã lưu API Key!', 'check_circle', 2200);
-            syncAllSettingsHosts();
+            if (typeof showToast === 'function') showToast('Đang lưu API Key & tải danh sách mô hình Gemini...', 'sync', 2000);
+            await fetchGeminiModels(cfg.apiKey, false);
             maybeContinueToLab();
         });
         host.querySelector('[data-ai-action="save-prompt"]')?.addEventListener('click', () => {
@@ -618,6 +706,14 @@
 
     async function callAiForPlaylist(tracks, reqSpec) {
         cfg = loadCfg();
+        if (!cfg.apiKey) throw new Error('Chưa nhập Google Gemini API Key.');
+        let activeModel = cfg.model;
+        if (!activeModel) {
+            const list = await fetchGeminiModels(cfg.apiKey, true);
+            activeModel = list[0] || '';
+        }
+        if (!activeModel) throw new Error('Không tìm thấy mô hình Gemini khả dụng cho API Key này.');
+
         const schemaInstruction = `Return ONLY a single valid JSON object (no markdown fences, no commentary) with exact schema: {"playlistName":"string","description":"string","trackKeys":["string"]}. Pick only from provided items' "key" values, between ${reqSpec.minSongs} and ${reqSpec.maxSongs} songs.`;
         const userPayload = JSON.stringify({
             request: reqSpec,
@@ -627,42 +723,20 @@
         });
         const sysMsg = `${cfg.systemPrompt}\n\n${schemaInstruction}`;
 
-        if (cfg.provider === 'Google Gemini') {
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: sysMsg }] },
-                    contents: [{ role: 'user', parts: [{ text: userPayload }] }],
-                    generationConfig: { responseMimeType: 'application/json', temperature: Math.min(1.4, 0.4 + reqSpec.discovery * 0.18) }
-                })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error((data && data.error && data.error.message) || ('HTTP ' + res.status));
-            const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            const estTokens = Math.round((sysMsg.length + userPayload.length + txt.length) / 4);
-            return { parsed: parseJsonResponse(txt), tokensEst: estTokens };
-        }
-
-        const baseUrl = cfg.provider === 'OpenRouter'
-            ? 'https://openrouter.ai/api/v1/chat/completions'
-            : 'https://api.openai.com/v1/chat/completions';
-        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey };
-        if (cfg.provider === 'OpenRouter') headers['HTTP-Referer'] = location.origin || 'https://tuanphong3108.github.io';
-        const res = await fetch(baseUrl, {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(activeModel)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
+        const res = await fetch(endpoint, {
             method: 'POST',
-            headers,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: cfg.model,
-                response_format: { type: 'json_object' },
-                messages: [{ role: 'system', content: sysMsg }, { role: 'user', content: userPayload }]
+                systemInstruction: { parts: [{ text: sysMsg }] },
+                contents: [{ role: 'user', parts: [{ text: userPayload }] }],
+                generationConfig: { responseMimeType: 'application/json', temperature: Math.min(1.4, 0.4 + reqSpec.discovery * 0.18) }
             })
         });
         const data = await res.json();
         if (!res.ok) throw new Error((data && data.error && data.error.message) || ('HTTP ' + res.status));
-        const txt = data?.choices?.[0]?.message?.content || '';
-        const estTokens = Number(data?.usage?.total_tokens) || Math.round((sysMsg.length + userPayload.length + txt.length) / 4);
+        const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const estTokens = Number(data?.usageMetadata?.totalTokenCount) || Math.round((sysMsg.length + userPayload.length + txt.length) / 4);
         return { parsed: parseJsonResponse(txt), tokensEst: estTokens };
     }
 
@@ -749,8 +823,16 @@
         injectStyles();
         ensureModals();
         syncAllSettingsHosts();
+        if (cfg.apiKey && !fetchedModels.length) {
+            fetchGeminiModels(cfg.apiKey, true);
+        }
         document.getElementById('m-pl-ai-btn')?.addEventListener('click', () => openAiLab(false));
-        document.querySelector('.st-tab[data-tab="ai"]')?.addEventListener('click', syncAllSettingsHosts);
+        document.querySelector('.st-tab[data-tab="ai"]')?.addEventListener('click', () => {
+            syncAllSettingsHosts();
+            if (cfg.apiKey && !fetchedModels.length && !fetchingModels) {
+                fetchGeminiModels(cfg.apiKey, true);
+            }
+        });
         const prevAndroidBack = window.__androidHandleBack;
         window.__androidHandleBack = function () {
             if (handleAndroidBackForAi()) return true;
