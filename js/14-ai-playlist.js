@@ -3,6 +3,9 @@
     const CFG_KEY = 'mp_ai_integration_v1';
     const USAGE_KEY = 'mp_ai_usage_v1';
     const MODELS_CACHE_KEY = 'mp_gemini_models_v1';
+    const LYRIC_TRANS_KEY = 'mp_ai_lyric_trans_v1';
+    const LYRIC_SHOW_KEY = 'mp_ai_lyric_show_v1';
+    const TRANSLATE_LANGS = ['Tiếng Việt', 'English', '日本語', '한국어', '中文 (简体)', 'Français', 'Español', 'Deutsch', 'Tùy chỉnh...'];
     const DEFAULT_PROMPTS = {
         curator: "You are 'Vibe-Engine', a professional music curator. Analyze the user's request and listening profile to provide smart music recommendations from the local library. Always prioritize flow, emotional coherence, and exact metadata matching. Respond strictly in valid JSON.",
         creative: "You are 'Vibe-Engine' in creative discovery mode. Craft adventurous, mood-rich local playlists with unexpected transitions while honoring every constraint. Respond strictly in valid JSON."
@@ -43,13 +46,16 @@
         const model = apiKey && savedModel && (!cachedModels.length || cachedModels.includes(savedModel))
             ? savedModel
             : (apiKey && cachedModels.length ? cachedModels[0] : '');
+        const defaultLang = /^en/i.test(localStorage.getItem('settings_language') || '') ? 'English' : 'Tiếng Việt';
         return {
             provider: 'Google Gemini',
             safeToken: saved.safeToken !== false,
             apiKey,
             model,
             preset: saved.preset === 'creative' ? 'creative' : 'curator',
-            systemPrompt: typeof saved.systemPrompt === 'string' && saved.systemPrompt.trim() ? saved.systemPrompt : DEFAULT_PROMPTS.curator
+            systemPrompt: typeof saved.systemPrompt === 'string' && saved.systemPrompt.trim() ? saved.systemPrompt : DEFAULT_PROMPTS.curator,
+            translateLang: (typeof saved.translateLang === 'string' && saved.translateLang.trim()) ? saved.translateLang.trim() : defaultLang,
+            bilingualLyrics: saved.bilingualLyrics !== false
         };
     }
     function saveCfg(nextCfg) {
@@ -208,6 +214,17 @@
           #ai-local-sheet .ai-ls-opt.sel{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-weight:700;}
           #ai-local-sheet .ai-ls-opt .st-chk{visibility:hidden;font-size:20px;}
           #ai-local-sheet .ai-ls-opt.sel .st-chk{visibility:visible;}
+          .lyric-translate-btn{position:absolute;top:16px;right:16px;height:44px;z-index:16;display:inline-flex;align-items:center;gap:6px;padding:0 16px;border-radius:22px;background:var(--md-sys-color-surface-variant);color:var(--md-sys-color-on-surface-variant);border:1px solid var(--playlist-border);cursor:pointer;font-family:var(--app-font);font-size:calc(13.5px * var(--font-scale-factor, 1));font-weight:700;opacity:0;pointer-events:none;transition:var(--m3-transition),background .2s,color .2s;}
+          .lyric-translate-btn:hover{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);}
+          .lyric-translate-btn.active{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);border-color:var(--md-sys-color-primary);}
+          .lyric-translate-btn.busy .material-symbols-rounded,#m-lyric-translate.busy .material-symbols-rounded{animation:spin 1s linear infinite;}
+          .lyric-translate-btn .material-symbols-rounded{font-size:19px;}
+          body.lyrics-open .lyric-translate-btn{opacity:1;pointer-events:auto;}
+          body.fullscreen-active .lyric-translate-btn,html.m-ui .lyric-translate-btn{display:none !important;}
+          #m-lyric-translate.active{background:var(--md-sys-color-primary-container) !important;color:var(--md-sys-color-on-primary-container) !important;}
+          .lyric-trans-sub{font-size:.66em;font-weight:500;opacity:.76;margin-top:4px;line-height:1.38;}
+          .lyric-line.active .lyric-trans-sub{opacity:.9;}
+          .lyric-trans-inline{display:block;font-size:.66em;font-weight:600;opacity:.85;margin-top:4px;line-height:1.32;}
         `;
         document.head.appendChild(st);
     }
@@ -314,7 +331,19 @@
             <button type="button" class="ai-save-btn" data-ai-action="save-prompt">Lưu</button>
           </div>
           <div class="ai-sr ai-sr-col">
-            <div class="ai-sr-text"><span class="ai-sr-t">Mức sử dụng AI</span><span class="ai-sr-d">Đã tạo <b>${usage.runs}</b> danh sách phát • Ước tính <b>${usage.tokensEst}</b> token${usage.lastPlaylist ? ' • Gần nhất: <b>' + esc(usage.lastPlaylist) + '</b>' : ''}</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">Ngôn ngữ dịch lời bài hát</span><span class="ai-sr-d">Bản dịch được lưu trực tiếp trong ứng dụng (tự xóa khi đặt lại cài đặt gốc hoặc tạo lại cơ sở dữ liệu).</span></div>
+            <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="translateLang"><span>${esc(cfg.translateLang)}</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
+          </div>
+          <div class="ai-sr ai-sr-row">
+            <div class="ai-sr-text"><span class="ai-sr-t">Hiển thị lời song ngữ</span><span class="ai-sr-d">${cfg.bilingualLyrics ? 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.' : 'Tắt — chỉ hiển thị lời đã dịch.'}</span></div>
+            <md-switch icons data-ai-field="bilingualLyrics"${cfg.bilingualLyrics ? ' selected' : ''}>
+              <span class="material-symbols-rounded" slot="on-icon">check</span>
+              <span class="material-symbols-rounded" slot="off-icon">close</span>
+            </md-switch>
+          </div>
+          <div class="ai-sr ai-sr-col">
+            <div class="ai-sr-text"><span class="ai-sr-t">Mức sử dụng AI</span><span class="ai-sr-d">Đã tạo <b>${usage.runs}</b> danh sách phát • Đã lưu <b>${countSavedTranslations()}</b> bản dịch lời • Ước tính <b>${usage.tokensEst}</b> token${usage.lastPlaylist ? ' • Gần nhất: <b>' + esc(usage.lastPlaylist) + '</b>' : ''}</span></div>
+            ${countSavedTranslations() > 0 ? '<button type="button" class="ai-pill-btn" data-ai-action="clear-trans"><span class="material-symbols-rounded" style="font-size:17px;">delete_sweep</span><span>Xóa bản dịch đã lưu</span></button>' : ''}
           </div>
         `;
 
@@ -334,6 +363,20 @@
                 saveCfg(cfg);
                 syncAllSettingsHosts();
             });
+        });
+        host.querySelector('[data-ai-open-sheet="translateLang"]')?.addEventListener('click', () => {
+            openTranslateLangPicker(false);
+        });
+        host.querySelector('[data-ai-field="bilingualLyrics"]')?.addEventListener('change', (e) => {
+            cfg.bilingualLyrics = !!e.target.selected;
+            saveCfg(cfg);
+            syncAllSettingsHosts();
+            if (typeof renderLyrics === 'function') renderLyrics();
+            if (typeof syncLyrics === 'function') syncLyrics();
+        });
+        host.querySelector('[data-ai-action="clear-trans"]')?.addEventListener('click', () => {
+            clearAllLyricTranslations(false);
+            syncAllSettingsHosts();
         });
         host.querySelector('[data-ai-field="safeToken"]')?.addEventListener('change', (e) => {
             cfg.safeToken = !!e.target.selected;
@@ -874,6 +917,215 @@
         }
     }
 
+    // ===== DỊCH LỜI BÀI HÁT BẰNG AI (LƯU TRONG APP, XÓA KHI RESET / REBUILD DB) =====
+    let lyricTranslating = false;
+    function loadTransMap() {
+        try {
+            const o = JSON.parse(localStorage.getItem(LYRIC_TRANS_KEY) || '{}');
+            return (o && typeof o === 'object') ? o : {};
+        } catch (e) { return {}; }
+    }
+    function saveTransMap(map) {
+        try { localStorage.setItem(LYRIC_TRANS_KEY, JSON.stringify(map || {})); } catch (e) {}
+    }
+    function countSavedTranslations() {
+        return Object.keys(loadTransMap()).length;
+    }
+    function isShowTranslatedOn() {
+        try { return localStorage.getItem(LYRIC_SHOW_KEY) !== 'false'; } catch (e) { return true; }
+    }
+    function setShowTranslatedOn(on) {
+        try { localStorage.setItem(LYRIC_SHOW_KEY, on ? 'true' : 'false'); } catch (e) {}
+    }
+    function lyricTrackStorageKey(track) {
+        if (!track) return '';
+        const base = String(track.nativeLocation || track.rawName || track.name || '').toLowerCase().trim();
+        const artist = String(track.artist || '').toLowerCase().trim();
+        const lrcHash = hashKey(String(track.lyricsRaw || (Array.isArray(track.lyrics) ? track.lyrics.map(x => x.text).join('\n') : '')));
+        return base + '|' + artist + '|' + lrcHash;
+    }
+    function getSavedTranslation(track, lang) {
+        if (!track || !Array.isArray(track.lyrics) || !track.lyrics.length) return null;
+        const map = loadTransMap();
+        const entry = map[lyricTrackStorageKey(track)];
+        if (!entry || !Array.isArray(entry.lines)) return null;
+        if (lang && String(entry.lang || '').toLowerCase() !== String(lang).toLowerCase()) return null;
+        return entry;
+    }
+    function getActiveLyricTranslation(track) {
+        if (!track || !isShowTranslatedOn()) return null;
+        cfg = loadCfg();
+        const entry = getSavedTranslation(track, cfg.translateLang) || getSavedTranslation(track, '');
+        if (!entry) return null;
+        return { active: true, bilingual: !!cfg.bilingualLyrics, lang: entry.lang || cfg.translateLang, lines: entry.lines };
+    }
+    function clearAllLyricTranslations(silent) {
+        try { localStorage.removeItem(LYRIC_TRANS_KEY); } catch (e) {}
+        if (typeof renderLyrics === 'function') renderLyrics();
+        if (typeof syncLyrics === 'function') syncLyrics();
+        syncAiTranslateBtn();
+        if (!silent && typeof showToast === 'function') {
+            showToast('Đã xóa toàn bộ bản dịch lời bài hát đã lưu!', 'delete_sweep', 2600);
+        }
+    }
+    function syncAiTranslateBtn() {
+        const pcBtn = document.getElementById('lyric-translate-btn');
+        const pcLbl = document.getElementById('lyric-translate-label');
+        const mBtn = document.getElementById('m-lyric-translate');
+        const track = (typeof playlist !== 'undefined' && typeof currentIndex !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
+        const hasLyrics = !!(track && Array.isArray(track.lyrics) && track.lyrics.length > 0);
+        cfg = loadCfg();
+        const saved = hasLyrics ? getSavedTranslation(track, cfg.translateLang) : null;
+        const active = !!(saved && isShowTranslatedOn());
+        [pcBtn, mBtn].forEach(b => {
+            if (!b) return;
+            b.classList.toggle('active', active);
+            b.classList.toggle('busy', lyricTranslating);
+            b.disabled = lyricTranslating;
+            const ico = b.querySelector('.material-symbols-rounded');
+            if (ico) ico.textContent = lyricTranslating ? 'sync' : 'translate';
+        });
+        if (pcBtn) {
+            pcBtn.style.display = hasLyrics ? '' : 'none';
+            pcBtn.title = saved
+                ? (active ? ('Đang hiển thị bản dịch (' + cfg.translateLang + ') — bấm để ẩn, chuột phải đổi ngôn ngữ') : ('Đã có bản dịch (' + cfg.translateLang + ') — bấm để hiện'))
+                : ('Dịch lời sang ' + cfg.translateLang + ' bằng AI (chuột phải để đổi ngôn ngữ)');
+        }
+        if (pcLbl) {
+            pcLbl.textContent = lyricTranslating ? 'Đang dịch...' : (active ? cfg.translateLang : 'Dịch');
+        }
+    }
+    function openTranslateLangPicker(translateAfter) {
+        cfg = loadCfg();
+        const list = TRANSLATE_LANGS.slice();
+        if (cfg.translateLang && !list.includes(cfg.translateLang)) list.unshift(cfg.translateLang);
+        openChoiceSheet('Ngôn ngữ dịch lời bài hát', list, cfg.translateLang, async (val) => {
+            let chosen = val;
+            if (val === 'Tùy chỉnh...') {
+                const custom = await askText('Ngôn ngữ dịch tùy chỉnh', 'Ví dụ: Tiếng Việt, English, Thai...');
+                if (!custom || !custom.trim()) return;
+                chosen = custom.trim();
+            }
+            cfg.translateLang = chosen;
+            saveCfg(cfg);
+            syncAllSettingsHosts();
+            syncAiTranslateBtn();
+            if (translateAfter) {
+                await translateCurrentTrackLyrics(true);
+            } else {
+                if (typeof renderLyrics === 'function') renderLyrics();
+                if (typeof syncLyrics === 'function') syncLyrics();
+            }
+        });
+    }
+    async function callAiForLyricTranslation(track, targetLang) {
+        cfg = loadCfg();
+        if (!cfg.apiKey) throw new Error('Chưa nhập Google Gemini API Key.');
+        let activeModel = cfg.model;
+        if (!activeModel) {
+            const list = await fetchGeminiModels(cfg.apiKey, true);
+            activeModel = list[0] || '';
+        }
+        if (!activeModel) throw new Error('Không tìm thấy mô hình Gemini khả dụng cho API Key này.');
+
+        const items = [];
+        track.lyrics.forEach((l, i) => {
+            const txt = String(l && l.text || '').trim();
+            if (txt) items.push({ i, t: txt });
+        });
+        if (!items.length) throw new Error('Lời bài hát không có nội dung để dịch.');
+
+        const sysMsg = `You are an expert song lyric translator. Translate every lyric line naturally into "${targetLang}" preserving poetic tone, emotion, and line-by-line alignment. Return ONLY a valid JSON object with exact schema: {"lines":[{"i":0,"t":"translated line"}]}. Keep the exact "i" indices from the input. Do not merge or skip lines.`;
+        const userPayload = JSON.stringify({
+            title: String(track.name || ''),
+            artist: String(track.artist || ''),
+            targetLanguage: targetLang,
+            lines: items
+        });
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(activeModel)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                systemInstruction: { parts: [{ text: sysMsg }] },
+                contents: [{ role: 'user', parts: [{ text: userPayload }] }],
+                generationConfig: { responseMimeType: 'application/json', temperature: 0.3 }
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error((data && data.error && data.error.message) || ('HTTP ' + res.status));
+        const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const parsed = parseJsonResponse(txt);
+        const out = new Array(track.lyrics.length).fill('');
+        if (Array.isArray(parsed && parsed.lines)) {
+            parsed.lines.forEach((row, pos) => {
+                if (typeof row === 'string') {
+                    if (items[pos]) out[items[pos].i] = row.trim();
+                } else if (row && typeof row.i === 'number' && row.i >= 0 && row.i < out.length) {
+                    out[row.i] = String(row.t || '').trim();
+                }
+            });
+        }
+        const estTokens = Number(data?.usageMetadata?.totalTokenCount) || Math.round((sysMsg.length + userPayload.length + txt.length) / 4);
+        return { lines: out, tokensEst: estTokens };
+    }
+    async function translateCurrentTrackLyrics(forceRetranslate) {
+        if (lyricTranslating) return;
+        const track = (typeof playlist !== 'undefined' && typeof currentIndex !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
+        if (!track || !Array.isArray(track.lyrics) || !track.lyrics.length) {
+            if (typeof showToast === 'function') showToast('Bài hát này chưa có lời để dịch!', 'lyrics', 2600);
+            return;
+        }
+        cfg = loadCfg();
+        const existing = getSavedTranslation(track, cfg.translateLang);
+        if (existing && !forceRetranslate) {
+            const nextShow = !isShowTranslatedOn();
+            setShowTranslatedOn(nextShow);
+            if (typeof renderLyrics === 'function') renderLyrics();
+            if (typeof syncLyrics === 'function') syncLyrics();
+            syncAiTranslateBtn();
+            if (typeof showToast === 'function') {
+                showToast(nextShow ? ('Đang hiển thị bản dịch (' + cfg.translateLang + ')') : 'Đã ẩn bản dịch lời bài hát', 'translate', 2000);
+            }
+            return;
+        }
+        if (!hasAiConfigured()) {
+            openAiSettingsInApp(false);
+            if (typeof showToast === 'function') showToast('Hãy nhập Google Gemini API Key để dịch lời bài hát!', 'key', 3000);
+            return;
+        }
+        lyricTranslating = true;
+        syncAiTranslateBtn();
+        try {
+            if (typeof showToast === 'function') showToast('Đang dịch lời sang ' + cfg.translateLang + '...', 'translate', 2400);
+            const { lines, tokensEst } = await callAiForLyricTranslation(track, cfg.translateLang);
+            if (!lines.some(Boolean)) throw new Error('AI không trả về dòng dịch hợp lệ.');
+            const map = loadTransMap();
+            const storageKey = lyricTrackStorageKey(track);
+            map[storageKey] = { lang: cfg.translateLang, lines, ts: Date.now() };
+            // Giới hạn nhẹ ~80 bài để không phình localStorage quá lớn
+            const keys = Object.keys(map);
+            if (keys.length > 80) {
+                keys.sort((a, b) => (map[a].ts || 0) - (map[b].ts || 0));
+                keys.slice(0, keys.length - 80).forEach(k => delete map[k]);
+            }
+            saveTransMap(map);
+            setShowTranslatedOn(true);
+            addUsage(tokensEst, 'Dịch: ' + (track.name || 'Lyric'));
+            syncAllSettingsHosts();
+            if (typeof renderLyrics === 'function') renderLyrics();
+            if (typeof syncLyrics === 'function') syncLyrics();
+            if (typeof showToast === 'function') showToast('Đã dịch & lưu lời (' + cfg.translateLang + ')!', 'check_circle', 3000);
+        } catch (err) {
+            if (typeof showToast === 'function') {
+                showToast('Lỗi dịch lời bài hát: ' + (err && err.message ? err.message : String(err)), 'error', 4000);
+            }
+        } finally {
+            lyricTranslating = false;
+            syncAiTranslateBtn();
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         injectStyles();
         ensureModals();
@@ -882,6 +1134,23 @@
             fetchGeminiModels(cfg.apiKey, true);
         }
         document.getElementById('m-pl-ai-btn')?.addEventListener('click', () => openAiLab(false));
+        const pcTrBtn = document.getElementById('lyric-translate-btn');
+        if (pcTrBtn) {
+            pcTrBtn.addEventListener('click', () => translateCurrentTrackLyrics(false));
+            pcTrBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); openTranslateLangPicker(true); });
+        }
+        const mTrBtn = document.getElementById('m-lyric-translate');
+        if (mTrBtn) {
+            let lpTimer = 0, lpFired = false;
+            mTrBtn.addEventListener('pointerdown', () => {
+                lpFired = false;
+                clearTimeout(lpTimer);
+                lpTimer = setTimeout(() => { lpFired = true; openTranslateLangPicker(true); }, 550);
+            });
+            ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => mTrBtn.addEventListener(ev, () => clearTimeout(lpTimer)));
+            mTrBtn.addEventListener('click', () => { if (lpFired) { lpFired = false; return; } translateCurrentTrackLyrics(false); });
+        }
+        syncAiTranslateBtn();
         document.querySelector('.st-tab[data-tab="ai"]')?.addEventListener('click', () => {
             syncAllSettingsHosts();
             if (cfg.apiKey && !fetchedModels.length && !fetchingModels) {
@@ -897,4 +1166,8 @@
     window.__openAiPlaylistLab = () => openAiLab(false);
     window.__openAiSettings = () => openAiSettingsInApp(false);
     window.__handleAndroidBackAi = handleAndroidBackForAi;
+    window.__getAiLyricTranslation = getActiveLyricTranslation;
+    window.__clearAiLyricTranslations = clearAllLyricTranslations;
+    window.__syncAiTranslateBtn = syncAiTranslateBtn;
+    window.__translateCurrentLyrics = () => translateCurrentTrackLyrics(false);
 })();
