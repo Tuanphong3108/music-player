@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'media-player-';
 const LEGACY_PREFIX = 'audio-player-';   // tên cũ trước khi đổi sang Media Player, để dọn cache cũ
-const CACHE_VERSION = 'v2026_11_23_pl_collage';
+const CACHE_VERSION = 'v2026_11_23_fresh_update';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-${CACHE_VERSION}`;
 
@@ -69,7 +69,8 @@ const CACHEABLE_DESTINATIONS = new Set([
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
-    await cache.addAll(APP_SHELL);
+    // cache:'reload' để bỏ qua HTTP cache của GitHub Pages (max-age 10 phút) -> không precache nhầm bản cũ
+    await cache.addAll(APP_SHELL.map(u => new Request(u, { cache: 'reload' })));
     const rt = await caches.open(RUNTIME_CACHE);
     await Promise.all(FONT_CSS_PRECACHE.map(url =>
       fetch(new Request(url, { mode: 'no-cors' })).then(res => rt.put(url, res)).catch(() => {})
@@ -124,7 +125,7 @@ self.addEventListener('fetch', event => {
 async function staleWhileRevalidateNavigation(request) {
   const shellCache = await caches.open(SHELL_CACHE);
   const cachedPage = await caches.match(request);
-  const networkPromise = fetch(request).then(async (response) => {
+  const networkPromise = fetch(request, { cache: 'no-cache' }).then(async (response) => {
     if (response && response.ok) {
       await shellCache.put(request, response.clone());
     }
@@ -172,7 +173,7 @@ async function networkFirstWithTimeout(request, ms) {
 
 async function staleWhileRevalidateAsset(request) {
   const cachedResponse = await caches.match(request);
-  const fetchPromise = fetch(request).then(async (response) => {
+  const fetchPromise = fetch(request, isSameOrigin_(request) ? { cache: 'no-cache' } : undefined).then(async (response) => {
     if (response && response.ok && (response.type === 'basic' || response.type === 'cors')) {
       const runtimeCache = await caches.open(RUNTIME_CACHE);
       await runtimeCache.put(request, response.clone());
@@ -232,3 +233,5 @@ self.addEventListener('notificationclick', event => {
     return self.clients.openWindow(targetUrl);
   })());
 });
+
+function isSameOrigin_(req) { try { return new URL(req.url).origin === new URL(self.registration.scope).origin; } catch (e) { return false; } }

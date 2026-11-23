@@ -1199,7 +1199,7 @@
             const triggerSwReload = () => {
                 if (!hadSwController || swReloading) return;
                 // Đang phát nhạc thì không tải lại giữa chừng: đợi tới khi tạm dừng/hết bài (bản mới sẽ áp dụng ở lần mở sau nếu không kịp)
-                if (isPlayingNow()) { swReloadPending = true; return; }
+                if (isPlayingNow() && !(window.__nativeAudioState && window.IS_ANDROID_APP)) { swReloadPending = true; return; }
                 swReloading = true;
                 location.reload();
             };
