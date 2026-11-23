@@ -539,7 +539,8 @@
             nameWrapper.style.animation = '';
             nameWrapper.querySelectorAll('.clone').forEach(c => c.remove());
             marqueeTimer = setTimeout(() => {
-                const availW = nameContainer.clientWidth || nameContainer.offsetWidth;
+                if (!nameContainer || !nameWrapper || !trackNameEl) return;
+                const availW = nameContainer.clientWidth || nameContainer.offsetWidth || trackNameEl.parentElement?.clientWidth || 0;
                 if (!availW) return;
                 // Bỏ phần padding-right 50px của .track-name-text khi đo độ rộng chữ thật để xác định chữ có vừa khung hay không
                 const padRight = parseFloat(getComputedStyle(trackNameEl).paddingRight) || 0;
@@ -551,6 +552,7 @@
                     // Quãng đường 1 vòng lặp = textW + padRight; giữ tốc độ cố định ~38px/s cho mọi bài
                     const distance = textW + padRight;
                     const durationSec = Math.max(3, distance / 38);
+                    nameWrapper.style.setProperty('--marquee-dist', (-distance).toFixed(2) + 'px');
                     nameWrapper.style.animationDuration = durationSec.toFixed(2) + 's';
                     nameContainer.classList.add('is-scrolling');
                 }
