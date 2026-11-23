@@ -191,6 +191,7 @@ public class MainActivity extends Activity {
     static void triggerBackgroundSelfDestruct(Context ctx, String code, String reason) {
         if (ctx == null || selfDestructing) return;
         selfDestructing = true;
+        try { NativeAudio.release(); } catch (Throwable ignored) {}
         try { recordCrashSync(ctx, code, reason); } catch (Throwable ignored) {}
         try { MediaWidgetProvider.resetToIdle(ctx); } catch (Throwable ignored) {}
         try { MediaWidgetProvider.resetWidgetColors(ctx); } catch (Throwable ignored) {}
@@ -2324,7 +2325,10 @@ public class MainActivity extends Activity {
         pingHandler.removeCallbacks(loadTimeoutRunnable);
         pingHandler.removeCallbacks(pingTimeoutRunnable);
         pingHandler.removeCallbacks(blankCheckRunnable);
-        if (!keepPlaybackOnRecreate) { try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {} }
+        if (!keepPlaybackOnRecreate) {
+            try { NativeAudio.release(); } catch (Exception ignored) {}
+            try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {}
+        }
         super.onDestroy();
     }
 
