@@ -343,6 +343,7 @@
                     <button class="st-tab" data-tab="mixer"><span class="material-symbols-rounded">equalizer</span><span data-i18n="settings.cat_mixer">Bộ trộn âm thanh</span></button>
                     <button class="st-tab" data-tab="performance"><span class="material-symbols-rounded">speed</span><span data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</span></button>
                     <div class="st-tab-spacer"></div>
+                    <button class="st-tab" data-tab="ai"><span class="material-symbols-rounded">auto_awesome</span><span>AI Integration (β)</span></button>
                     <button class="st-tab st-tab-link" id="st-android-apk-btn" data-tab="android"><span class="material-symbols-rounded">android</span><span data-i18n="settings.download_android">Tải bản Android</span></button>
                     <button class="st-tab" data-tab="about"><span class="material-symbols-rounded">info</span><span data-i18n="about.title">About</span></button>
                 </nav>
@@ -735,6 +736,10 @@
                             <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.65;" data-i18n="lib.reset_lyrics_desc">Xóa toàn bộ lời bài hát đã nạp thủ công khỏi bộ nhớ tạm.</span>
                         </div>
                     </div>
+                </div>
+                <div class="st-pane" data-pane="ai">
+                    <h3 class="st-pane-title">AI Integration (β)</h3>
+                    <div id="ai-settings-host"></div>
                 </div>
                 <div class="st-pane" data-pane="android">
                     <h3 class="st-pane-title" data-i18n="settings.download_android">Tải bản Android</h3>
@@ -1345,10 +1350,14 @@
                 </div>
 
                 <div class="m-lib-pane" id="m-pane-playlists">
-                    <div class="m-lib-actions">
+                    <div class="m-lib-actions" style="flex-wrap:wrap;">
                         <button type="button" class="m-lib-shuffle-btn" id="m-pl-new-btn">
                             <span class="material-symbols-rounded">playlist_add</span>
                             <span data-i18n="pl.new_btn">Tạo mới</span>
+                        </button>
+                        <button type="button" class="m-lib-shuffle-btn" id="m-pl-ai-btn">
+                            <span class="material-symbols-rounded">auto_awesome</span>
+                            <span>Tạo danh sách phát bằng AI</span>
                         </button>
                     </div>
                     <div class="m-lib-list" id="m-pl-list"></div>
