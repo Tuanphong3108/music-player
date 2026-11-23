@@ -11,7 +11,10 @@
     if (hasExtLaunch) window.__externalOpenActive = true;
     let armed = hasExtLaunch;          // chỉ ghi đè trạng thái đã lưu sau khi đã khôi phục xong / người dùng đã thao tác
     let trackDone = hasExtLaunch || !saved || !saved.key;
-    if (!hasExtLaunch && window.__nativeBoot) { saved = saved || { key: '', ts: 0 }; trackDone = false; }
+    if (!hasExtLaunch && (window.__nativeBoot || (window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function'))) {
+        saved = saved || { key: '', ts: 0 };
+        trackDone = false;
+    }
     let navApplied = hasExtLaunch;
     let touched = hasExtLaunch;
     window.addEventListener('pointerdown', (ev) => {
@@ -162,6 +165,7 @@
         }
         qDone = true;
         qArmed = true;
+        if (typeof window.__syncNativeQueue === 'function') window.__syncNativeQueue();
         updatePlaylistUI();
         if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
         return true;
@@ -397,7 +401,12 @@
             }
             window.__adoptNative = true;
             window.__restoreOnce = { pos: seekSec, dur: durSec, play: shouldPlay, fromNativeSession: true };
-            playTrack(idx);
+            const itemEl = playlistContainer && playlistContainer.querySelector('.song-item[data-index="' + idx + '"]');
+            if (itemEl && typeof itemEl.click === 'function' && currentIndex !== idx) {
+                itemEl.click();
+            } else {
+                playTrack(idx);
+            }
             prioritizeTrack(idx);
             applyPanels();
             navApplied = false; applyNav();
