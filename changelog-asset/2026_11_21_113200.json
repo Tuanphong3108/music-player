@@ -96,6 +96,10 @@
     {
       "content": "Nút \"Khởi động lại\" khi trang không phản hồi giờ chỉ khởi động lại WebView, nhạc vẫn tiếp tục phát",
       "icon": "refresh"
+    },
+    {
+      "content": "Vào app hiện ngay thẻ bài đang phát (tên, nghệ sĩ, ảnh bìa) và ưu tiên đọc metadata của bài đó trước",
+      "icon": "bolt"
     }
   ],
   "en": [
@@ -194,6 +198,10 @@
     {
       "content": "The restart button on \"Page not responding\" now restarts only the WebView, and music keeps playing",
       "icon": "refresh"
+    },
+    {
+      "content": "Opening the app now shows the current track card (title, artist, cover) instantly and reads that track's metadata first",
+      "icon": "bolt"
     }
   ]
 }

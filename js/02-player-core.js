@@ -1582,7 +1582,7 @@
                     track._tagsHydrated = true;
                     // Stream trực tiếp không đi qua blob -> đọc thẻ nhúng (lyric, cover...) riêng ở nền, sau khi nhạc đã bắt đầu phát
                     setTimeout(() => {
-                        if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track) return;
+                        if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track || track._prioDone) return;
                         const viaRange = () => {
                             fetch(track.nativeStreamUrl, { headers: { Range: 'bytes=0-3145727' } })
                                 .then(r => r.ok ? r.blob() : null)

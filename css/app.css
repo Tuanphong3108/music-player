@@ -1702,12 +1702,12 @@
         #m-library-home, #m-mini-player, #m-collapse-player-btn, #m-pl-footer { display: none; }
 
         /* Mặc định trên Mobile (khi chưa nở Full Player và đã có bài): hiện Màn hình Thư viện, ẩn khung phát lớn */
-        html.m-ui body:not(.m-player-expanded):not(.no-track) .visual-stage,
-        html.m-ui body:not(.m-player-expanded):not(.no-track) .player-shell { display: none !important; }
-        html.m-ui body:not(.m-player-expanded):not(.no-track) #m-library-home {
+        html.m-ui body:not(.m-player-expanded):not(.no-track:not(.m-early-card)) .visual-stage,
+        html.m-ui body:not(.m-player-expanded):not(.no-track:not(.m-early-card)) .player-shell { display: none !important; }
+        html.m-ui body:not(.m-player-expanded):not(.no-track:not(.m-early-card)) #m-library-home {
             display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 10px; padding: 2px 0 4px;
         }
-        html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track) #m-lib-list {
+        html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track:not(.m-early-card)) #m-lib-list {
             padding-bottom: 84px;
         }
         html.m-ui .m-lib-actions {
@@ -1919,7 +1919,7 @@
         }
 
         /* Mini Player Pill ở đáy màn hình Mobile */
-        html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track):not(.m-playlist-open):not(.lyrics-open):not(.reorder-active) #m-mini-player {
+        html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track:not(.m-early-card)):not(.m-playlist-open):not(.lyrics-open):not(.reorder-active) #m-mini-player {
             display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
             z-index: 2200; align-items: center; gap: 10px; padding: 8px 10px 8px 10px; border-radius: 28px;
             background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);

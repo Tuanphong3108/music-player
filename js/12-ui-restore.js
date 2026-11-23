@@ -101,6 +101,50 @@
         setTimeout(() => { if (!qDone) { qArmed = true; } }, 60000);
     })();
 
+    // ===== Thẻ bài đang phát lưu sẵn: hiện mini player NGAY khi mở app (trước khi quét xong thư viện) =====
+    const CKEY = 'mp_last_card_v1';
+    let card = null;
+    try { card = JSON.parse(localStorage.getItem(CKEY) || 'null'); } catch (e) {}
+    function showEarlyCard() {
+        try {
+            if (!card || !card.name || !document.documentElement.classList.contains('m-ui')) return;
+            const t = document.getElementById('m-mini-title'), ar = document.getElementById('m-mini-artist'), art = document.getElementById('m-mini-art');
+            if (t) t.textContent = card.name;
+            if (ar) ar.textContent = card.artist || '';
+            if (art) art.innerHTML = '<span class="material-symbols-rounded">music_note</span>' + (card.thumb ? '<img src="' + card.thumb + '" alt="" class="loaded">' : '');
+            body.classList.add('m-early-card', 'm-mini-visible');
+            // không tìm lại được bài trong thư viện sau một lúc -> gỡ thẻ tạm
+            setTimeout(() => { if (typeof currentIndex !== 'undefined' && currentIndex < 0) body.classList.remove('m-early-card', 'm-mini-visible'); }, 50000);
+        } catch (e) {}
+    }
+    showEarlyCard();
+    let cardKey = '';
+    function saveCard() {
+        try {
+            const tr = (typeof playlist !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
+            if (!tr) return;
+            const k = keyOf(tr) + '|' + (tr.cover ? 1 : 0) + '|' + tr.name + '|' + tr.artist;
+            if (k === cardKey) return;
+            let thumb = card && card.key === keyOf(tr) ? card.thumb : '';
+            const img = document.getElementById('art-img');
+            if (tr.cover && img && !img.classList.contains('hidden') && img.naturalWidth) {
+                const c = document.createElement('canvas'), n = 144;
+                c.width = n; c.height = n;
+                const kk = Math.max(n / img.naturalWidth, n / img.naturalHeight);
+                const w = img.naturalWidth * kk, h = img.naturalHeight * kk;
+                c.getContext('2d').drawImage(img, (n - w) / 2, (n - h) / 2, w, h);
+                thumb = c.toDataURL('image/jpeg', 0.75);
+            } else if (!tr.cover) thumb = '';
+            cardKey = k;
+            card = { key: keyOf(tr), name: tr.name || '', artist: tr.artist || '', thumb: thumb };
+            localStorage.setItem(CKEY, JSON.stringify(card));
+        } catch (e) {}
+    }
+    setInterval(saveCard, 2500);
+    audio.addEventListener('loadedmetadata', () => setTimeout(saveCard, 800));
+    const artEl = document.getElementById('art-img');
+    if (artEl) artEl.addEventListener('load', () => setTimeout(saveCard, 100));
+
     function applyNav() {
         if (navApplied || !saved || touched) return;
         navApplied = true;
@@ -111,6 +155,23 @@
             if (saved.expanded) { body.classList.add('m-player-expanded'); if (typeof updateFsUI === 'function') updateFsUI(); }
             if (saved.queue) body.classList.add('m-playlist-open');
             if (saved.lyrics && saved.expanded) { const lb = document.getElementById('lyric-btn'); if (lb && !body.classList.contains('lyrics-open')) lb.click(); }
+        } catch (e) {}
+    }
+    // Đọc ngay thẻ nhúng + ảnh bìa của bài đang khôi phục (không chờ 300ms/3s như các bài khác)
+    function prioritizeTrack(idx) {
+        try {
+            const tr = playlist[idx];
+            if (!tr) return;
+            if (!tr._hasRealCover && tr.nativeStreamUrl && typeof hydrateTrackTags === 'function') {
+                tr._tagsHydrated = true; tr._prioDone = true;
+                const viaRange = () => {
+                    fetch(tr.nativeStreamUrl, { headers: { Range: 'bytes=0-3145727' } }).then(r => r.ok ? r.blob() : null).then(bl => {
+                        if (!bl || playlist[currentIndex] !== tr) return;
+                        hydrateTrackTags(tr, idx, new File([bl], tr.nativeName || (tr.name + '.' + (tr.ext || 'mp3').toLowerCase()), { type: bl.type || 'audio/mpeg' }));
+                    }).catch(() => {});
+                };
+                try { hydrateTrackTags(tr, idx, tr.nativeStreamUrl, viaRange); } catch (e) { viaRange(); }
+            }
         } catch (e) {}
     }
     function tryRestore() {
@@ -126,6 +187,7 @@
         if (boot) {
             window.__restoreOnce = { pos: 0, play: !!boot.pwr };
             playTrack(idx);
+            prioritizeTrack(idx);
             applyPanels();
             navApplied = false; applyNav();
             armed = true;
@@ -135,12 +197,22 @@
         const fresh = Date.now() - (saved.ts || 0) < 120000;
         window.__restoreOnce = { pos: saved.pos || 0, play: !!(saved.playing && fresh) };
         playTrack(idx);
+        prioritizeTrack(idx);
         applyPanels();
         // Mở lại danh sách/tab sau khi thư viện đã có bài (playlist chi tiết cần thư viện mới có nội dung)
         navApplied = false; applyNav();
         armed = true;
         return true;
     }
+    (function () {
+        const o = window.__nativeOpenFiles;
+        if (typeof o !== 'function') return;
+        window.__nativeOpenFiles = async function () {
+            const r = await o.apply(this, arguments);
+            try { if (!trackDone) tryRestore(); } catch (e) {}
+            return r;
+        };
+    })();
     let n = 0;
     const iv = setInterval(() => {
         n++;
