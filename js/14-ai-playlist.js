@@ -130,6 +130,8 @@
         const st = document.createElement('style');
         st.id = 'ai-playlist-lab-style';
         st.textContent = `
+          body:has(#ai-playlist-lab-modal.open) #settings-overlay{z-index:9650;}
+          body:has(#ai-playlist-lab-modal.open) #st-sheet{z-index:9660;}
           #ai-settings-host{display:contents;}
           .ai-sr{display:flex;gap:24px;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--playlist-border);}
           .ai-sr.ai-sr-col{flex-direction:column;align-items:stretch;gap:12px;}
@@ -173,7 +175,7 @@
           .ai-switch-thumb{width:18px;height:18px;border-radius:50%;background:var(--md-sys-color-outline);transition:.28s cubic-bezier(.34,1.56,.64,1);display:grid;place-items:center;}
           .ai-switch input:checked + .ai-switch-track{background:var(--md-sys-color-primary);border-color:var(--md-sys-color-primary);}
           .ai-switch input:checked + .ai-switch-track .ai-switch-thumb{transform:translateX(22px);width:20px;height:20px;background:var(--md-sys-color-on-primary);color:var(--md-sys-color-primary);}
-          #ai-playlist-lab-modal{position:fixed;inset:0;z-index:9600;display:none;flex-direction:column;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:var(--app-font);padding-top:env(safe-area-inset-top, 0px);opacity:0;transform:scale(.95);transition:opacity .28s cubic-bezier(.2,0,0,1),transform .36s cubic-bezier(.2,0,0,1);}
+          #ai-playlist-lab-modal{position:fixed;inset:0;z-index:9600;display:none;flex-direction:column;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:var(--app-font);padding-top:0;opacity:0;transform:scale(.95);transition:opacity .28s cubic-bezier(.2,0,0,1),transform .36s cubic-bezier(.2,0,0,1);}
           #ai-playlist-lab-modal.open{display:flex;}
           #ai-playlist-lab-modal.show{opacity:1;transform:scale(1);}
           html.reduce-motion #ai-playlist-lab-modal{transition:none !important;transform:none !important;}
@@ -424,7 +426,7 @@
             const actChips = ACTIVITIES.map(x => `<button type="button" class="ai-chip" data-act="${x}">${x}</button>`).join('') +
                 `<button type="button" class="ai-chip" id="ai-add-custom-act">+ Custom...</button>`;
             const eraChips = ERAS.map(x => `<button type="button" class="ai-chip${x === 'Any era' ? ' active' : ''}" data-era="${x}">${x}</button>`).join('');
-            const seg5 = (cls) => [1, 2, 3, 4, 5].map(n => `<button type="button" class="${cls}${n === 3 ? ' active' : ''}" data-val="${n}">${n === 3 ? '✓ 3' : n}</button>`).join('');
+            const seg5 = (cls) => [1, 2, 3, 4, 5].map(n => `<button type="button" class="${cls}${n === 3 ? ' active' : ''}" data-val="${n}">${n === 3 ? '<span class="material-symbols-rounded" style="font-size:18px;">check</span>3' : n}</button>`).join('');
 
             lab.innerHTML = `
               <div class="ai-modal-top">
@@ -498,13 +500,13 @@
                   <div class="ai-st-card">
                     <div class="ai-row-flex">
                       <span class="ai-card-title">Prioritize favorites</span>
-                      <label class="ai-switch"><input type="checkbox" id="ai-prio-favs" checked><span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">check</span></span></span></label>
+                      <md-switch icons id="ai-prio-favs" selected><span class="material-symbols-rounded" slot="on-icon">check</span><span class="material-symbols-rounded" slot="off-icon">close</span></md-switch>
                     </div>
                   </div>
                   <div class="ai-st-card">
                     <div class="ai-row-flex">
                       <span class="ai-card-title">Avoid explicit lyrics</span>
-                      <label class="ai-switch"><input type="checkbox" id="ai-avoid-exp"><span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">close</span></span></span></label>
+                      <md-switch icons id="ai-avoid-exp"><span class="material-symbols-rounded" slot="on-icon">check</span><span class="material-symbols-rounded" slot="off-icon">close</span></md-switch>
                     </div>
                   </div>
                 </div>
@@ -524,7 +526,7 @@
             const n = Number(b.dataset.val);
             const active = n === val;
             b.classList.toggle('active', active);
-            b.textContent = active ? ('✓ ' + n) : String(n);
+            b.innerHTML = active ? ('<span class="material-symbols-rounded" style="font-size:18px;">check</span>' + n) : String(n);
         });
     }
 
@@ -592,8 +594,8 @@
             if ($('#ai-prio-genres')) $('#ai-prio-genres').value = '';
             if ($('#ai-avoid-genres')) $('#ai-avoid-genres').value = '';
             if ($('#ai-pref-lang')) $('#ai-pref-lang').value = '';
-            if ($('#ai-prio-favs')) $('#ai-prio-favs').checked = true;
-            if ($('#ai-avoid-exp')) $('#ai-avoid-exp').checked = false;
+            if ($('#ai-prio-favs')) $('#ai-prio-favs').selected = true;
+            if ($('#ai-avoid-exp')) $('#ai-avoid-exp').selected = false;
             document.querySelectorAll('#ai-mood-wrap .ai-chip, #ai-act-wrap .ai-chip').forEach(c => c.classList.remove('active'));
             labState.era = 'Any era';
             document.querySelectorAll('#ai-era-wrap [data-era]').forEach(c => c.classList.toggle('active', c.dataset.era === 'Any era'));
@@ -770,8 +772,8 @@
                 prioritizeGenres: ($('ai-prio-genres')?.value || '').trim(),
                 avoidGenres: ($('ai-avoid-genres')?.value || '').trim(),
                 preferredLanguage: ($('ai-pref-lang')?.value || '').trim(),
-                prioritizeFavorites: !!$('ai-prio-favs')?.checked,
-                avoidExplicitLyrics: !!$('ai-avoid-exp')?.checked
+                prioritizeFavorites: !!$('ai-prio-favs')?.selected,
+                avoidExplicitLyrics: !!$('ai-avoid-exp')?.selected
             };
             const { parsed, tokensEst } = await callAiForPlaylist(tracks, spec);
             const validKeys = new Set(tracks.map(t => t.key));
