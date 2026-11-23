@@ -153,6 +153,7 @@
             }
             if (e.ev === 'advanced' || (e.ev === 'tick' && e.loaded && e.id && e.id !== N.id && !N.pending)) {
                 // app tự sang bài kế (hoặc trang lỡ sự kiện chuyển bài): nhận lại đúng bài đang phát
+                if (N.adoptId === e.id && window.__adoptNative) return;
                 N.adoptId = e.id;
                 const i = (typeof playlist !== 'undefined') ? playlist.findIndex(t => t && t.nativeId === e.id) : -1;
                 if (i >= 0 && i !== currentIndex) { window.__adoptNative = true; playTrack(i); }
@@ -188,6 +189,8 @@
     function syncQueue(force) {
         try {
             if (typeof playlist === 'undefined' || !playlist.length) return;
+            // Đang chờ khôi phục hàng đợi cũ sau khi mở lại app -> chưa ghi đè hàng đợi mới lên khung app
+            if (typeof window.__hasPendingQueueRestore === 'function' && window.__hasPendingQueueRestore()) return;
             const useOrder = !!(isShuffle && shuffleInitialized && shuffleOrder.length === playlist.length);
             let h = 0;
             const ids = new Array(playlist.length);
