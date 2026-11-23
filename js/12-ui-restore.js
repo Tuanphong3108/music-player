@@ -104,6 +104,7 @@
 
     function applyNativeQueue(nqData) {
         if (!nqData || typeof playlist === 'undefined') return false;
+        const isBackup = !!nqData.fromBackup;
         const locs = Array.isArray(nqData.locations) ? nqData.locations : [];
         const ids = Array.isArray(nqData.ids) ? nqData.ids : [];
         const len = Math.max(locs.length, ids.length);
@@ -113,7 +114,10 @@
         for (let i = 0; i < len; i++) {
             const loc = String(locs[i] || '').toLowerCase();
             const id = String(ids[i] || '');
-            const tr = (id && byId.get(id)) || (loc && byKey.get(loc)) || null;
+            // Bản lưu sau khi sập/đóng app (fromBackup): ID cũ của tiến trình trước không còn hợp lệ -> chỉ khớp theo đường dẫn tệp (location)
+            const tr = isBackup
+                ? ((loc && byKey.get(loc)) || null)
+                : ((id && byId.get(id)) || (loc && byKey.get(loc)) || null);
             if (tr) { nq.push(tr); oldIdx[i] = nq.length - 1; }
             else oldIdx[i] = -1;
         }
@@ -126,7 +130,7 @@
             let ci = cur ? playlist.indexOf(cur) : -1;
             if (cur && ci < 0) {   // bài đang phát vừa được thay bằng bản thật trong thư viện (hoặc ngược lại) -> khớp theo id / đường dẫn
                 const ck = keyOf(cur);
-                ci = playlist.findIndex(t => t && ((cur.nativeId && t.nativeId === cur.nativeId) || (ck && keyOf(t) === ck)));
+                ci = playlist.findIndex(t => t && ((!isBackup && cur.nativeId && t.nativeId === cur.nativeId) || (ck && keyOf(t) === ck)));
             }
             currentIndex = ci;
             window.__queueRestored = true;
@@ -146,12 +150,6 @@
             }
             shuffleOrder = ord;
             shuffleInitialized = true;
-            if (typeof nqData.shufflePos === 'number' && nqData.shufflePos >= 0 && nqData.shufflePos < ord.length) {
-                const mappedIdx = ord[nqData.shufflePos];
-                if (typeof mappedIdx === 'number' && mappedIdx >= 0 && mappedIdx < playlist.length && currentIndex < 0) {
-                    currentIndex = mappedIdx;
-                }
-            }
         } else if (nqData.shuffle === false) {
             if (typeof isShuffle !== 'undefined' && isShuffle) {
                 isShuffle = false;
@@ -317,47 +315,74 @@
         if (trackDone) return true;
         if (touched || (typeof currentIndex !== 'undefined' && currentIndex >= 0)) { trackDone = true; return true; }
         if (typeof playlist === 'undefined') return false;
-        let boot = window.__nativeBoot || null;   // app đang phát/giữ sẵn bài nào đó: ưu tiên nhận lại đúng bài & hàng đợi đó
+        let boot = window.__nativeBoot || null;   // app đang phát/giữ sẵn bài nào đó (live) hoặc bản lưu từ SharedPreferences
         let bootQ = window.__nativeBootQueue || null;
-        if (!bootQ && window.AndroidBridge) {
-            try {
-                const rawQ = (typeof window.AndroidBridge.nativeAudioQueueState === 'function' ? window.AndroidBridge.nativeAudioQueueState() : '')
-                    || (typeof window.AndroidBridge.nativeAudioSavedQueue === 'function' ? window.AndroidBridge.nativeAudioSavedQueue() : '');
-                const qs = JSON.parse(rawQ || 'null');
-                if (qs && (qs.count > 0 || (Array.isArray(qs.ids) && qs.ids.length > 0) || qs.curId)) {
-                    bootQ = qs;
-                    window.__nativeBootQueue = qs;
-                }
-            } catch (e) {}
+        if (window.AndroidBridge) {
+            // 1. Ưu tiên hỏi trạng thái LIVE đang chạy trên ExoPlayer trước
+            if (!boot && typeof window.AndroidBridge.nativeAudioState === 'function') {
+                try {
+                    const liveS = JSON.parse(window.AndroidBridge.nativeAudioState() || 'null');
+                    if (liveS && liveS.loaded && liveS.id) {
+                        boot = liveS;
+                        window.__nativeBoot = liveS;
+                    }
+                } catch (e) {}
+            }
+            if (!bootQ && typeof window.AndroidBridge.nativeAudioQueueState === 'function') {
+                try {
+                    const liveQ = JSON.parse(window.AndroidBridge.nativeAudioQueueState() || 'null');
+                    if (liveQ && (liveQ.count > 0 || (Array.isArray(liveQ.ids) && liveQ.ids.length > 0) || liveQ.curId)) {
+                        bootQ = liveQ;
+                        window.__nativeBootQueue = liveQ;
+                    }
+                } catch (e) {}
+            }
+            // 2. Nếu ExoPlayer đang trống (mở lại sau khi đóng/crash) -> hỏi bản lưu ngoài khung app (SharedPreferences)
+            if (!boot && typeof window.AndroidBridge.nativeAudioSavedState === 'function') {
+                try {
+                    const savedS = JSON.parse(window.AndroidBridge.nativeAudioSavedState() || 'null');
+                    if (savedS && (savedS.curLoc || savedS.id || savedS.title)) {
+                        savedS.fromBackup = true;
+                        savedS.pwr = false;
+                        boot = savedS;
+                        window.__nativeBoot = savedS;
+                    }
+                } catch (e) {}
+            }
+            if (!bootQ && typeof window.AndroidBridge.nativeAudioSavedQueue === 'function') {
+                try {
+                    const savedQ = JSON.parse(window.AndroidBridge.nativeAudioSavedQueue() || 'null');
+                    if (savedQ && (savedQ.count > 0 || (Array.isArray(savedQ.locations) && savedQ.locations.length > 0))) {
+                        savedQ.fromBackup = true;
+                        bootQ = savedQ;
+                        window.__nativeBootQueue = savedQ;
+                    }
+                } catch (e) {}
+            }
         }
-        if (!boot && window.AndroidBridge) {
-            try {
-                const rawS = (typeof window.AndroidBridge.nativeAudioState === 'function' ? window.AndroidBridge.nativeAudioState() : '')
-                    || (typeof window.AndroidBridge.nativeAudioSavedState === 'function' ? window.AndroidBridge.nativeAudioSavedState() : '');
-                const ns = JSON.parse(rawS || 'null');
-                if (ns && (ns.loaded || ns.id)) {
-                    boot = ns;
-                    window.__nativeBoot = ns;
-                }
-            } catch (e) {}
-        }
-        if (boot) {
-            if (bootQ) applyNativeQueue(bootQ);
-            else restoreQueue();
+        const isLiveBoot = !!(boot && !boot.fromBackup && boot.loaded && boot.id);
+        if (bootQ) {
+            applyNativeQueue(bootQ);
         } else {
             restoreQueue();
         }
         const targetKey = (saved && saved.key) || (card && card.key) || '';
-        const bootLoc = (bootQ && bootQ.curLoc) ? String(bootQ.curLoc).toLowerCase() : '';
+        const bootLoc = String((boot && boot.curLoc) || (bootQ && bootQ.curLoc) || '').toLowerCase();
         let idx = -1;
-        if (boot) {
+        if (isLiveBoot) {
             idx = playlist.findIndex(x => x && x.nativeId === boot.id);
             if (idx < 0 && bootLoc) idx = playlist.findIndex(x => keyOf(x) === bootLoc);
             if (idx < 0 && targetKey) idx = playlist.findIndex(x => keyOf(x) === targetKey);
-        } else if (targetKey) {
-            idx = playlist.findIndex(x => keyOf(x) === targetKey);
-            if (idx < 0 && Array.isArray(window.__mobileLibrary)) {
-                const libTr = window.__mobileLibrary.find(x => keyOf(x) === targetKey);
+        } else if (boot || targetKey) {
+            // Khôi phục từ bản lưu sau khi đóng/crash: chỉ khớp theo đường dẫn tệp (location), không dùng ID tiến trình cũ
+            if (bootLoc) idx = playlist.findIndex(x => keyOf(x) === bootLoc);
+            if (idx < 0 && targetKey) idx = playlist.findIndex(x => keyOf(x) === targetKey);
+            if (idx < 0 && bootQ && typeof bootQ.shufflePos === 'number' && isShuffle && shuffleOrder.length === playlist.length && bootQ.shufflePos >= 0 && bootQ.shufflePos < shuffleOrder.length) {
+                idx = shuffleOrder[bootQ.shufflePos];
+            }
+            if (idx < 0 && (bootLoc || targetKey) && Array.isArray(window.__mobileLibrary)) {
+                const wantKey = bootLoc || targetKey;
+                const libTr = window.__mobileLibrary.find(x => keyOf(x) === wantKey);
                 if (libTr) {
                     playlist.unshift(libTr);
                     idx = 0;
@@ -365,7 +390,7 @@
                 }
             }
         }
-        if (idx < 0 && boot && boot.id) {
+        if (idx < 0 && isLiveBoot) {
             // Thư viện chưa quét tới bài này: đợi một chút rồi dựng bài tạm từ thông tin native để vẫn mở được player + sáng bài trong playlist tạm
             if (!bootSince) bootSince = Date.now();
             if (Date.now() - bootSince < 1500) return false;
@@ -388,29 +413,22 @@
         if (idx < 0) return false;
         trackDone = true;
         body.classList.remove('m-early-card');
-        // Khi vừa mở lại sau crash hoặc đóng app trước đó: luôn ép Pause để tránh phát đột ngột
-        const cleanOrCrashPause = !!(window.__wasCrashOrClosed || (saved && saved.ts && (Date.now() - saved.ts > 2000)));
-        const rawNativePlay = !!(boot && boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
-        const shouldPlay = boot ? (cleanOrCrashPause ? false : rawNativePlay) : false;
         const seekSec = boot
             ? Math.max(0, Number(boot.pos || 0) / 1000)
             : Math.max(0, Number((saved && saved.pos) || 0));
         const durSec = boot
             ? Math.max(0, Number(boot.dur || 0) / 1000)
             : Math.max(0, Number((saved && saved.dur) || 0));
-        if (boot) {
+        if (isLiveBoot) {
+            // ExoPlayer vẫn đang giữ bài sống trong RAM -> nhận lại phiên đang chạy và giữ đúng trạng thái Play/Pause của khung app
+            const rawNativePlay = !!(boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
             const matchedTrack = playlist[idx];
             if (matchedTrack && matchedTrack.nativeId && window.__nativeAudioState) {
                 window.__nativeAudioState.adoptId = matchedTrack.nativeId;
             }
             window.__adoptNative = true;
-            window.__restoreOnce = { pos: seekSec, dur: durSec, play: shouldPlay, fromNativeSession: true };
-            const itemEl = playlistContainer && playlistContainer.querySelector('.song-item[data-index="' + idx + '"]');
-            if (itemEl && typeof itemEl.click === 'function' && currentIndex !== idx) {
-                itemEl.click();
-            } else {
-                playTrack(idx);
-            }
+            window.__restoreOnce = { pos: seekSec, dur: durSec, play: rawNativePlay, fromNativeSession: true };
+            playTrack(idx);
             prioritizeTrack(idx);
             applyPanels();
             navApplied = false; applyNav();
@@ -425,15 +443,21 @@
             }
             return true;
         }
-        // Không có phiên native đang chạy: nạp sẵn bài + vị trí đã lưu và luôn đặt ở trạng thái Pause
-        const resumePos = (saved && saved.pos > 0) ? saved.pos : 0;
-        const resumeDur = (saved && saved.dur > 0) ? saved.dur : 0;
-        window.__restoreOnce = { pos: resumePos, dur: resumeDur, play: false, fromNativeSession: false };
-        playTrack(idx);
+        // Mở lại sau khi đóng/crash (ExoPlayer đang trống): nạp bài thật vào ExoPlayer, tua tới đoạn đã lưu sau khi nạp và ép trạng thái Pause
+        window.__adoptNative = false;
+        window.__restoreStartMs = Math.round(seekSec * 1000);
+        window.__restoreOnce = { pos: seekSec, dur: durSec, play: false, fromNativeSession: false };
+        const itemEl = playlistContainer && playlistContainer.querySelector('.song-item[data-index="' + idx + '"]');
+        if (itemEl && typeof itemEl.click === 'function' && currentIndex !== idx) {
+            itemEl.click();
+        } else {
+            playTrack(idx);
+        }
         prioritizeTrack(idx);
         applyPanels();
         navApplied = false; applyNav();
         armed = true;
+        if (typeof window.__syncNativeQueue === 'function') window.__syncNativeQueue();
         return true;
     }
 
