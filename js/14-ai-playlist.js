@@ -130,6 +130,22 @@
         const st = document.createElement('style');
         st.id = 'ai-playlist-lab-style';
         st.textContent = `
+          #ai-settings-host{display:contents;}
+          .ai-sr{display:flex;gap:24px;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--playlist-border);}
+          .ai-sr.ai-sr-col{flex-direction:column;align-items:stretch;gap:12px;}
+          .ai-sr-text{display:flex;flex-direction:column;gap:4px;min-width:0;}
+          .ai-sr-t{font-size:calc(16px * var(--font-scale-factor, 1));font-weight:700;}
+          .ai-sr-d{font-size:calc(12px * var(--font-scale-factor, 1));opacity:.6;line-height:1.45;}
+          .ai-sr-banner{flex-direction:column;align-items:stretch;gap:4px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);border-radius:20px;padding:16px 20px !important;border:none;}
+          .ai-sr.ai-sr-col .ai-sheet-trigger{align-self:flex-start;max-width:100%;}
+          #ai-settings-host > .ai-sr:last-child{border-bottom:none;padding-bottom:0;}
+          html.m-ui .st-pane > #ai-settings-host{display:flex;flex-direction:column;gap:2px;background:none !important;padding:0 !important;border-radius:0 !important;border:none !important;}
+          html.m-ui .ai-sr:not(.ai-sr-banner){background:var(--md-sys-color-surface-container, color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface)));padding:18px 20px;border:none;border-radius:8px;}
+          html.m-ui #ai-settings-host > .ai-sr:first-child{border-radius:28px 28px 8px 8px;}
+          html.m-ui #ai-settings-host > .ai-sr:last-child{border-radius:8px 8px 28px 28px;padding-bottom:18px;}
+          html.m-ui #ai-settings-host > .ai-sr:only-child{border-radius:28px;}
+          html.m-ui .ai-sr-banner{margin-bottom:10px;}
+          html.m-ui .ai-sr-banner + .ai-sr{border-radius:28px 28px 8px 8px !important;}
           .ai-st-group{display:flex;flex-direction:column;gap:2px;margin-bottom:20px;}
           .ai-st-sec{font-size:calc(12px * var(--font-scale-factor, 1));font-weight:700;letter-spacing:.4px;color:var(--md-sys-color-primary);margin:0 0 8px;padding:0 4px;text-transform:uppercase;}
           .ai-st-card{background:var(--md-sys-color-surface-container, color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface)));border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:14px;border:none;}
@@ -260,92 +276,43 @@
                 ? 'Model list stays empty until you enter a Gemini API key.'
                 : (lastModelError ? ('Fetch error: ' + lastModelError) : (fetchedModels.length ? (fetchedModels.length + ' Gemini models loaded.') : 'Tap to fetch Gemini models.')));
 
+        const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
         host.innerHTML = `
-          ${pendingOpenLabAfterSetup ? `<div class="ai-banner-info" style="margin-bottom:20px;">
-            <div style="font-size:calc(15px * var(--font-scale-factor, 1));font-weight:800;">Thiết lập AI lần đầu để tạo danh sách phát</div>
-            <div style="font-size:calc(12.5px * var(--font-scale-factor, 1));opacity:.9;">Nhập Gemini API Key rồi bấm Save — hệ thống sẽ tải danh sách mô hình và mở AI Playlist Lab.</div>
+          ${pendingOpenLabAfterSetup ? `<div class="ai-sr ai-sr-banner">
+            <div class="ai-sr-t">Thiết lập AI lần đầu để tạo danh sách phát</div>
+            <div class="ai-sr-d">Nhập Gemini API Key rồi bấm Save — hệ thống sẽ tải danh sách mô hình và mở AI Playlist Lab.</div>
           </div>` : ''}
-          <div class="ai-st-sec">AI Provider</div>
-          <div class="ai-st-group">
-            <div class="ai-st-card">
-              <div class="ai-row-flex">
-                <div class="ai-ico-box"><span class="material-symbols-rounded">science</span></div>
-                <div style="flex:1;min-width:0;">
-                  <div class="ai-card-title">Provider</div>
-                  <div class="ai-card-desc">Google Gemini</div>
-                </div>
-                <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="provider">
-                  <span>Google Gemini</span>
-                  <span class="material-symbols-rounded" style="font-size:18px;">expand_more</span>
-                </button>
-              </div>
-            </div>
-            <div class="ai-st-card">
-              <div class="ai-row-flex">
-                <div class="ai-ico-box"><span class="material-symbols-rounded">monitoring</span></div>
-                <div style="flex:1;min-width:0;">
-                  <div class="ai-card-title">Safe Token Mode</div>
-                  <div class="ai-card-desc">${cfg.safeToken ? 'ON — Fast & cheap. Sends compact track metadata to AI.' : 'OFF — Sends full track metadata & filters.'}</div>
-                </div>
-                <label class="ai-switch">
-                  <input type="checkbox" data-ai-field="safeToken"${cfg.safeToken ? ' checked' : ''}>
-                  <span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">${cfg.safeToken ? 'check' : 'close'}</span></span></span>
-                </label>
-              </div>
-            </div>
+          <div class="ai-sr ai-sr-col">
+            <div class="ai-sr-text"><span class="ai-sr-t">Provider</span><span class="ai-sr-d">Nhà cung cấp AI dùng để tạo danh sách phát</span></div>
+            <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="provider"><span>Google Gemini</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
           </div>
-
-          <div class="ai-st-sec">Credentials</div>
-          <div class="ai-st-group">
-            <div class="ai-st-card">
-              <div>
-                <div class="ai-card-title">Google Gemini API Key</div>
-                <div class="ai-card-desc">Get from Google AI Studio (aistudio.google.com)</div>
-              </div>
-              <input type="password" class="ai-input" data-ai-field="apiKey" placeholder="Paste Gemini API key..." value="${(cfg.apiKey || '').replace(/"/g, '&quot;')}">
-              <button type="button" class="ai-save-btn" data-ai-action="save-key">Save &amp; Fetch Models</button>
-            </div>
+          <div class="ai-sr ai-sr-row">
+            <div class="ai-sr-text"><span class="ai-sr-t">Safe Token Mode</span><span class="ai-sr-d">${cfg.safeToken ? 'Bật — nhanh &amp; tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.' : 'Tắt — gửi đầy đủ metadata và bộ lọc.'}</span></div>
+            <md-switch icons data-ai-field="safeToken"${cfg.safeToken ? ' selected' : ''}>
+              <span class="material-symbols-rounded" slot="on-icon">check</span>
+              <span class="material-symbols-rounded" slot="off-icon">close</span>
+            </md-switch>
           </div>
-
-          <div class="ai-st-sec">Model Selection</div>
-          <div class="ai-st-group">
-            <div class="ai-st-card">
-              <div class="ai-row-flex">
-                <div class="ai-ico-box"><span class="material-symbols-rounded">auto_awesome</span></div>
-                <div style="flex:1;min-width:0;">
-                  <div class="ai-card-title">AI Model</div>
-                  <div class="ai-card-desc">${modelDesc}</div>
-                </div>
-                <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="model"${(!hasKey || fetchingModels) ? ' disabled' : ''}>
-                  <span>${modelLabel}</span>
-                  <span class="material-symbols-rounded" style="font-size:18px;">${fetchingModels ? 'sync' : 'expand_more'}</span>
-                </button>
-              </div>
-            </div>
+          <div class="ai-sr ai-sr-col">
+            <div class="ai-sr-text"><span class="ai-sr-t">Google Gemini API Key</span><span class="ai-sr-d">Lấy tại Google AI Studio (aistudio.google.com)</span></div>
+            <input type="password" class="ai-input" data-ai-field="apiKey" placeholder="Dán Gemini API key..." value="${esc(cfg.apiKey || '')}">
+            <button type="button" class="ai-save-btn" data-ai-action="save-key">Lưu &amp; tải mô hình</button>
           </div>
-
-          <div class="ai-st-sec">Prompt Behavior</div>
-          <div class="ai-st-group">
-            <div class="ai-st-card">
-              <div>
-                <div class="ai-card-title">System Prompt</div>
-                <div class="ai-card-desc">Customize how the AI behaves &amp; returns JSON.</div>
-              </div>
-              <div class="ai-chip-wrap">
-                <button type="button" class="ai-pill-btn${cfg.preset === 'curator' ? ' active' : ''}" data-ai-preset="curator">Professional Curator</button>
-                <button type="button" class="ai-pill-btn${cfg.preset === 'creative' ? ' active' : ''}" data-ai-preset="creative">Creative</button>
-              </div>
-              <textarea class="ai-textarea" data-ai-field="systemPrompt">${cfg.systemPrompt.replace(/</g, '&lt;')}</textarea>
-              <button type="button" class="ai-save-btn" data-ai-action="save-prompt">Save</button>
-            </div>
+          <div class="ai-sr ai-sr-col">
+            <div class="ai-sr-text"><span class="ai-sr-t">AI Model</span><span class="ai-sr-d">${esc(modelDesc)}</span></div>
+            <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="model"${(!hasKey || fetchingModels) ? ' disabled' : ''}><span>${esc(modelLabel)}</span><span class="material-symbols-rounded" style="font-size:20px;">${fetchingModels ? 'sync' : 'expand_more'}</span></button>
           </div>
-
-          <div class="ai-st-sec">AI Usage Report</div>
-          <div class="ai-st-group">
-            <div class="ai-st-card">
-              <div class="ai-card-title">Total Consumption</div>
-              <div class="ai-card-desc">Generated playlists: <b>${usage.runs}</b> • Est. tokens: <b>${usage.tokensEst}</b>${usage.lastPlaylist ? ' • Latest: <b>' + usage.lastPlaylist.replace(/</g, '&lt;') + '</b>' : ''}</div>
+          <div class="ai-sr ai-sr-col">
+            <div class="ai-sr-text"><span class="ai-sr-t">System Prompt</span><span class="ai-sr-d">Tùy chỉnh cách AI hành xử và trả về JSON.</span></div>
+            <div class="ai-chip-wrap">
+              <button type="button" class="ai-pill-btn${cfg.preset === 'curator' ? ' active' : ''}" data-ai-preset="curator">Professional Curator</button>
+              <button type="button" class="ai-pill-btn${cfg.preset === 'creative' ? ' active' : ''}" data-ai-preset="creative">Creative</button>
             </div>
+            <textarea class="ai-textarea" data-ai-field="systemPrompt">${esc(cfg.systemPrompt)}</textarea>
+            <button type="button" class="ai-save-btn" data-ai-action="save-prompt">Lưu</button>
+          </div>
+          <div class="ai-sr ai-sr-col">
+            <div class="ai-sr-text"><span class="ai-sr-t">Mức sử dụng AI</span><span class="ai-sr-d">Đã tạo <b>${usage.runs}</b> danh sách phát • Ước tính <b>${usage.tokensEst}</b> token${usage.lastPlaylist ? ' • Gần nhất: <b>' + esc(usage.lastPlaylist) + '</b>' : ''}</span></div>
           </div>
         `;
 
@@ -367,7 +334,7 @@
             });
         });
         host.querySelector('[data-ai-field="safeToken"]')?.addEventListener('change', (e) => {
-            cfg.safeToken = !!e.target.checked;
+            cfg.safeToken = !!e.target.selected;
             saveCfg(cfg);
             syncAllSettingsHosts();
         });
@@ -408,7 +375,7 @@
             const ta = host.querySelector('[data-ai-field="systemPrompt"]');
             const sp = host.querySelector('[data-ai-field="safeToken"]');
             if (ta) cfg.systemPrompt = ta.value;
-            if (sp) cfg.safeToken = !!sp.checked;
+            if (sp) cfg.safeToken = !!sp.selected;
             saveCfg(cfg);
             if (typeof showToast === 'function') showToast('Đã lưu cấu hình AI!', 'check_circle', 2200);
             syncAllSettingsHosts();
