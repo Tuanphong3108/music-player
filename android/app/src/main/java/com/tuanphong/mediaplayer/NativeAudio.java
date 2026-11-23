@@ -318,9 +318,12 @@ final class NativeAudio {
         loaded = false; curId = "";
         ph.removeCallbacks(ticker);
         if (p != null) { try { p.stop(); p.clearMediaItems(); } catch (Throwable ignored) {} }
+        emit("stop");
     }
     static void release() {
         loaded = false;
+        lastSnap = "{\"loaded\":false,\"id\":\"\",\"st\":\"idle\",\"pwr\":false}";
+        lastSnapAt = SystemClock.elapsedRealtime();
         ph.post(() -> {
             ph.removeCallbacks(sleepRun); sleepAt = 0; sleepTracks = 0;
             stopImpl();
