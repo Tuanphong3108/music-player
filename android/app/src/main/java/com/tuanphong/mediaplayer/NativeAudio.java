@@ -116,6 +116,12 @@ final class NativeAudio {
         }
     }
 
+    static void checkTrackSleepOnEnd() {
+        if (sleepTracks > 0 && --sleepTracks == 0) {
+            triggerSleepEnded();
+        }
+    }
+
     static void consumeSleepEndedNotice() {
         sleepFiredPending = false;
         sleepFiredType = "";
@@ -150,7 +156,7 @@ final class NativeAudio {
                 ch.setShowBadge(true);
                 nm.createNotificationChannel(ch);
             }
-            String title = isEn ? "Paused by sleep timer" : "Đã tự tạm dừng do hết giờ ngủ";
+            String title = isEn ? "Sleep timer" : "Hẹn giờ ngủ";
             String body = "tracks".equals(type)
                     ? (isEn
                         ? "Playback paused automatically because the timer for " + total + " tracks finished."
@@ -393,13 +399,17 @@ final class NativeAudio {
 
     static int sessionId() { return sid; }
 
-    /** Hết bài: nếu trang còn sống thì để trang tự quyết (shuffle/lặp/…); nếu trang chết thì app tự sang bài kế đã được báo trước. */
+    /** Hết bài: kiểm tra hẹn giờ theo số bài trước; nếu trang chết thì app tự sang bài kế đã được báo trước. */
     private static void onEnded() {
         if (endedHandled) return;
         endedHandled = true;
-        if (!webAlive()) {
-            if (sleepTracks > 0 && --sleepTracks == 0) { triggerSleepEnded(); return; }   // trang đang chết nên app tự đếm số bài hẹn giờ
-            if (hasNext()) { advance(); return; }
+        if (sleepTracks > 0) {
+            checkTrackSleepOnEnd();
+            return;
+        }
+        if (!webAlive() && hasNext()) {
+            advance();
+            return;
         }
         emit("ended");
     }
