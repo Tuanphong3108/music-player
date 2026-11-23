@@ -211,9 +211,14 @@
     setInterval(() => { if (!document.hidden) syncSleep(); }, 3000);
     window.__syncNativeQueue = () => syncQueue(true);
 
-    // Hỏi lại trạng thái khi trang vừa (tải lại) mở: nếu app đang phát bài nào thì cho khôi phục UI nhận lại đúng bài đó
+    // Hỏi lại trạng thái khi trang vừa (tải lại) mở: nếu app đang phát bài nào thì cho khôi phục UI nhận lại đúng bài đó (trừ khi đang mở tệp từ nguồn ngoài)
     try {
-        const s = JSON.parse(AB.nativeAudioState() || 'null');
-        if (s && s.loaded && s.id) { window.__nativeBoot = s; N.adoptId = s.id; N.paused = !s.pwr; N.vol = 1; }
+        const hasExt = !!(window.__externalOpenActive || (typeof AB.hasPendingExternalOpen === 'function' && AB.hasPendingExternalOpen()));
+        if (hasExt) {
+            window.__externalOpenActive = true;
+        } else {
+            const s = JSON.parse(AB.nativeAudioState() || 'null');
+            if (s && s.loaded && s.id) { window.__nativeBoot = s; N.adoptId = s.id; N.paused = !s.pwr; N.vol = 1; }
+        }
     } catch (e) {}
 })();
