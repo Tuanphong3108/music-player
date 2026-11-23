@@ -54,6 +54,9 @@ public class MainActivity extends Activity {
     private final List<JSONObject> pending = new ArrayList<>();
     private final android.os.Handler pingHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean appLeftHome = false;
+    boolean isInBackgroundForMedia() {
+        return appLeftHome || !hasWindowFocus();
+    }
     private boolean pageResponded = false;
     private boolean hangAlertShown = false;
     private boolean updateInstallPending = false;
