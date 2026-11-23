@@ -224,17 +224,18 @@
     (function () {
         const o = window.__onAndroidLibraryScanDone;
         window.__onAndroidLibraryScanDone = function (count, missingPerm) {
-            if (!missingPerm && window.__ingestBusy > 0) { const args = arguments; setTimeout(() => window.__onAndroidLibraryScanDone.apply(null, args), 120); return; }
+            if (!missingPerm && window.__ingestBusy > 0) { const args = arguments; setTimeout(() => window.__onAndroidLibraryScanDone.apply(null, args), 150); return; }
             let r; try { if (o) r = o.apply(this, arguments); } catch (e) {}
             libScanFinished = true;
             if (!missingPerm) {
+                // Đợi một nhịp ngắn sau khi quét xong để toàn bộ danh sách & DOM ổn định rồi mới chạy pipeline khôi phục tuần tự
                 setTimeout(() => {
                     window.__plDefer = false;
                     if (typeof window.__plFlush === 'function') window.__plFlush();
                     if (!trackDone && !window.__externalOpenActive) tryRestore(false);
                     else restoreQueue();
                     if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
-                }, 0);
+                }, 220);
             } else {
                 qArmed = true;
             }
@@ -330,20 +331,40 @@
             }
         } catch (e) {}
     }
-    let bootSince = 0, stubbed = false;
+    let bootSince = 0, stubbed = false, restorePipelineRunning = false;
+    const waitMs = (ms) => new Promise(r => setTimeout(r, ms));
+    const waitFrames = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    function waitTrackLoaded(timeoutMs) {
+        return new Promise((resolve) => {
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                clearTimeout(tm);
+                audio.removeEventListener('loadedmetadata', finish);
+                audio.removeEventListener('canplay', finish);
+                resolve();
+            };
+            const tm = setTimeout(finish, timeoutMs || 2500);
+            audio.addEventListener('loadedmetadata', finish, { once: true });
+            audio.addEventListener('canplay', finish, { once: true });
+        });
+    }
+
     function tryRestore(forceNow) {
         if (window.__externalOpenActive) { trackDone = true; armed = true; return true; }
         if (!saved && !(card && card.key) && !window.__nativeBoot && !(window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function')) return true;
         if (!touched) applyNav();
-        if (trackDone) return true;
+        if (trackDone || restorePipelineRunning) return true;
         if (touched || (typeof currentIndex !== 'undefined' && currentIndex >= 0)) { trackDone = true; return true; }
         if (typeof playlist === 'undefined') return false;
         // Bước 1: Đợi load xong toàn bộ thư viện / playlist trước rồi mới khôi phục hàng đợi và chọn bài (trừ khi người dùng chủ động bấm Play sớm)
         if (!forceNow && (!libScanFinished || window.__ingestBusy > 0)) return false;
-        let boot = window.__nativeBoot || null;   // app đang phát/giữ sẵn bài nào đó (live) hoặc bản lưu từ SharedPreferences
+
+        // Bước 2: Request khung app lấy trạng thái + hàng đợi (live trước, không có thì lấy bản lưu SharedPreferences)
+        let boot = window.__nativeBoot || null;
         let bootQ = window.__nativeBootQueue || null;
         if (window.AndroidBridge) {
-            // 1. Ưu tiên hỏi trạng thái LIVE đang chạy trên ExoPlayer trước
             if (!boot && typeof window.AndroidBridge.nativeAudioState === 'function') {
                 try {
                     const liveS = JSON.parse(window.AndroidBridge.nativeAudioState() || 'null');
@@ -362,7 +383,6 @@
                     }
                 } catch (e) {}
             }
-            // 2. Nếu ExoPlayer đang trống (mở lại sau khi đóng/crash) -> hỏi bản lưu ngoài khung app (SharedPreferences)
             if (!boot && typeof window.AndroidBridge.nativeAudioSavedState === 'function') {
                 try {
                     const savedS = JSON.parse(window.AndroidBridge.nativeAudioSavedState() || 'null');
@@ -386,107 +406,138 @@
             }
         }
         const isLiveBoot = !!(boot && !boot.fromBackup && boot.loaded && boot.id);
-        if (bootQ) {
-            applyNativeQueue(bootQ);
-        } else {
-            restoreQueue();
-        }
-        const targetKey = (saved && saved.key) || (card && card.key) || '';
-        const bootLoc = String((boot && boot.curLoc) || (bootQ && bootQ.curLoc) || '').toLowerCase();
-        let idx = -1;
-        if (isLiveBoot) {
-            idx = playlist.findIndex(x => x && x.nativeId === boot.id);
-            if (idx < 0 && bootLoc) idx = playlist.findIndex(x => keyOf(x) === bootLoc);
-            if (idx < 0 && targetKey) idx = playlist.findIndex(x => keyOf(x) === targetKey);
-        } else if (boot || targetKey) {
-            // Khôi phục từ bản lưu sau khi đóng/crash: chỉ khớp theo đường dẫn tệp (location), không dùng ID tiến trình cũ
-            if (bootLoc) idx = playlist.findIndex(x => keyOf(x) === bootLoc);
-            if (idx < 0 && targetKey) idx = playlist.findIndex(x => keyOf(x) === targetKey);
-            if (idx < 0 && bootQ && typeof bootQ.shufflePos === 'number' && isShuffle && shuffleOrder.length === playlist.length && bootQ.shufflePos >= 0 && bootQ.shufflePos < shuffleOrder.length) {
-                idx = shuffleOrder[bootQ.shufflePos];
-            }
-            if (idx < 0 && (bootLoc || targetKey) && Array.isArray(window.__mobileLibrary)) {
-                const wantKey = bootLoc || targetKey;
-                const libTr = window.__mobileLibrary.find(x => keyOf(x) === wantKey);
-                if (libTr) {
-                    playlist.unshift(libTr);
-                    idx = 0;
-                    if (shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
+        restorePipelineRunning = true;
+
+        (async () => {
+            try {
+                // Bước 3: Nhập lại playlist tạm (kèm đúng thứ tự Shuffle nếu bật) và đợi DOM playlist dựng xong hẳn
+                if (bootQ) {
+                    applyNativeQueue(bootQ);
+                } else {
+                    restoreQueue();
                 }
+                window.__plDefer = false;
+                window.__plDirty = false;
+                if (typeof updatePlaylistUI === 'function') updatePlaylistUI();
+                await waitFrames();
+                await waitMs(120);
+
+                if (window.__externalOpenActive || touched || (typeof currentIndex !== 'undefined' && currentIndex >= 0)) {
+                    trackDone = true;
+                    armed = true;
+                    return;
+                }
+
+                // Bước 4: Tìm đúng bài hát trong playlist tạm vừa nạp
+                const targetKey = (saved && saved.key) || (card && card.key) || '';
+                const bootLoc = String((boot && boot.curLoc) || (bootQ && bootQ.curLoc) || '').toLowerCase();
+                let idx = -1;
+                if (isLiveBoot) {
+                    idx = playlist.findIndex(x => x && x.nativeId === boot.id);
+                    if (idx < 0 && bootLoc) idx = playlist.findIndex(x => keyOf(x) === bootLoc);
+                    if (idx < 0 && targetKey) idx = playlist.findIndex(x => keyOf(x) === targetKey);
+                } else if (boot || targetKey) {
+                    if (bootLoc) idx = playlist.findIndex(x => keyOf(x) === bootLoc);
+                    if (idx < 0 && targetKey) idx = playlist.findIndex(x => keyOf(x) === targetKey);
+                    if (idx < 0 && bootQ && typeof bootQ.shufflePos === 'number' && isShuffle && shuffleOrder.length === playlist.length && bootQ.shufflePos >= 0 && bootQ.shufflePos < shuffleOrder.length) {
+                        idx = shuffleOrder[bootQ.shufflePos];
+                    }
+                    if (idx < 0 && (bootLoc || targetKey) && Array.isArray(window.__mobileLibrary)) {
+                        const wantKey = bootLoc || targetKey;
+                        const libTr = window.__mobileLibrary.find(x => keyOf(x) === wantKey);
+                        if (libTr) {
+                            playlist.unshift(libTr);
+                            idx = 0;
+                            if (shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
+                            if (typeof updatePlaylistUI === 'function') updatePlaylistUI();
+                            await waitFrames();
+                        }
+                    }
+                }
+                if (idx < 0 && isLiveBoot) {
+                    if (!bootSince) bootSince = Date.now();
+                    if (Date.now() - bootSince < 1500) return;
+                    idx = playlist.findIndex(x => x && x.nativeId === boot.id);
+                    if (idx < 0) {
+                        const stub = {
+                            name: boot.title || bootLoc.split('/').pop() || '...', artist: boot.artist || '', album: '', year: '', genre: '', composer: '',
+                            cover: null, url: 'https://appassets.local/f/' + boot.id, isVideo: false,
+                            ext: '', lyrics: null, lyricsRaw: '', file: null, fileHandle: null,
+                            nativeId: boot.id, nativeLocation: bootLoc, nativeName: boot.title || '',
+                            nativeStreamUrl: 'https://appassets.local/f/' + boot.id, nativeLrcUrl: '', fromLibrary: true,
+                            rawName: boot.title || '', _stub: true
+                        };
+                        playlist.push(stub);
+                        idx = playlist.length - 1;
+                        if (shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
+                        stubbed = true;
+                    }
+                }
+                if (idx < 0) return;
+
+                trackDone = true;
+                body.classList.remove('m-early-card');
+                const seekSec = boot
+                    ? Math.max(0, Number(boot.pos || 0) / 1000)
+                    : Math.max(0, Number((saved && saved.pos) || 0));
+                const durSec = boot
+                    ? Math.max(0, Number(boot.dur || 0) / 1000)
+                    : Math.max(0, Number((saved && saved.dur) || 0));
+
+                if (isLiveBoot) {
+                    const rawNativePlay = !!(boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
+                    const matchedTrack = playlist[idx];
+                    if (matchedTrack && matchedTrack.nativeId && window.__nativeAudioState) {
+                        window.__nativeAudioState.adoptId = matchedTrack.nativeId;
+                    }
+                    window.__adoptNative = true;
+                    window.__restoreOnce = { pos: seekSec, dur: durSec, play: rawNativePlay, fromNativeSession: true };
+                    playTrack(idx);
+                    await waitFrames();
+                    prioritizeTrack(idx);
+                    applyPanels();
+                    navApplied = false; applyNav();
+                    armed = true;
+                    if (stubbed && bootQ) {
+                        let k = 0;
+                        const iv2 = setInterval(() => {
+                            k++;
+                            try { applyNativeQueue(bootQ); } catch (e) {}
+                            if ((!(window.__ingestBusy > 0) && k > 3) || k > 70) clearInterval(iv2);
+                        }, 1500);
+                    }
+                    return;
+                }
+
+                // Bước 5: Chọn bài trong playlist tạm, đợi bài load xong hẳn rồi mới tua tới đoạn đã lưu & chốt trạng thái Pause
+                window.__adoptNative = false;
+                window.__restoreStartMs = Math.round(seekSec * 1000);
+                window.__restoreOnce = { pos: seekSec, dur: durSec, play: false, fromNativeSession: false };
+                const loadedPromise = waitTrackLoaded(2500);
+                const itemEl = playlistContainer && playlistContainer.querySelector('.song-item[data-index="' + idx + '"]');
+                if (itemEl && typeof itemEl.click === 'function' && currentIndex !== idx) {
+                    itemEl.click();
+                } else {
+                    playTrack(idx);
+                }
+                await loadedPromise;
+                await waitMs(80);
+                if (seekSec > 0 && Math.abs((audio.currentTime || 0) - seekSec) > 1.0) {
+                    try { audio.currentTime = seekSec; } catch (e) {}
+                }
+                try { if (!audio.paused) audio.pause(); } catch (e) {}
+                prioritizeTrack(idx);
+                applyPanels();
+                navApplied = false; applyNav();
+                if (typeof window.__syncNativeQueue === 'function') window.__syncNativeQueue();
+                if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+                armed = true;
+            } catch (e) {
+                armed = true;
+            } finally {
+                restorePipelineRunning = false;
             }
-        }
-        if (idx < 0 && isLiveBoot) {
-            // Thư viện chưa quét tới bài này: đợi một chút rồi dựng bài tạm từ thông tin native để vẫn mở được player + sáng bài trong playlist tạm
-            if (!bootSince) bootSince = Date.now();
-            if (Date.now() - bootSince < 1500) return false;
-            idx = playlist.findIndex(x => x && x.nativeId === boot.id);
-            if (idx < 0) {
-                const stub = {
-                    name: boot.title || bootLoc.split('/').pop() || '...', artist: boot.artist || '', album: '', year: '', genre: '', composer: '',
-                    cover: null, url: 'https://appassets.local/f/' + boot.id, isVideo: false,
-                    ext: '', lyrics: null, lyricsRaw: '', file: null, fileHandle: null,
-                    nativeId: boot.id, nativeLocation: bootLoc, nativeName: boot.title || '',
-                    nativeStreamUrl: 'https://appassets.local/f/' + boot.id, nativeLrcUrl: '', fromLibrary: true,
-                    rawName: boot.title || '', _stub: true
-                };
-                playlist.push(stub);
-                idx = playlist.length - 1;
-                if (shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
-                stubbed = true;
-            }
-        }
-        if (idx < 0) return false;
-        trackDone = true;
-        body.classList.remove('m-early-card');
-        const seekSec = boot
-            ? Math.max(0, Number(boot.pos || 0) / 1000)
-            : Math.max(0, Number((saved && saved.pos) || 0));
-        const durSec = boot
-            ? Math.max(0, Number(boot.dur || 0) / 1000)
-            : Math.max(0, Number((saved && saved.dur) || 0));
-        if (isLiveBoot) {
-            // ExoPlayer vẫn đang giữ bài sống trong RAM -> nhận lại phiên đang chạy và giữ đúng trạng thái Play/Pause của khung app
-            const rawNativePlay = !!(boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
-            const matchedTrack = playlist[idx];
-            if (matchedTrack && matchedTrack.nativeId && window.__nativeAudioState) {
-                window.__nativeAudioState.adoptId = matchedTrack.nativeId;
-            }
-            window.__adoptNative = true;
-            window.__restoreOnce = { pos: seekSec, dur: durSec, play: rawNativePlay, fromNativeSession: true };
-            playTrack(idx);
-            prioritizeTrack(idx);
-            applyPanels();
-            navApplied = false; applyNav();
-            armed = true;
-            if (stubbed && bootQ) {
-                let k = 0;
-                const iv2 = setInterval(() => {
-                    k++;
-                    try { applyNativeQueue(bootQ); } catch (e) {}
-                    if ((!(window.__ingestBusy > 0) && k > 3) || k > 70) clearInterval(iv2);
-                }, 1500);
-            }
-            return true;
-        }
-        // Đảm bảo danh sách playlist tạm đã dựng xong lên DOM trước khi nhấn chọn bài
-        window.__plDefer = false;
-        window.__plDirty = false;
-        if (typeof updatePlaylistUI === 'function') updatePlaylistUI();
-        // Mở lại sau khi đóng/crash (ExoPlayer đang trống): nạp bài thật vào ExoPlayer, đợi load xong rồi tua tới đoạn đã lưu và ép trạng thái Pause
-        window.__adoptNative = false;
-        window.__restoreStartMs = Math.round(seekSec * 1000);
-        window.__restoreOnce = { pos: seekSec, dur: durSec, play: false, fromNativeSession: false };
-        const itemEl = playlistContainer && playlistContainer.querySelector('.song-item[data-index="' + idx + '"]');
-        if (itemEl && typeof itemEl.click === 'function' && currentIndex !== idx) {
-            itemEl.click();
-        } else {
-            playTrack(idx);
-        }
-        prioritizeTrack(idx);
-        applyPanels();
-        navApplied = false; applyNav();
-        armed = true;
-        if (typeof window.__syncNativeQueue === 'function') window.__syncNativeQueue();
+        })();
         return true;
     }
 
