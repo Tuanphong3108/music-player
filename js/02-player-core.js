@@ -601,10 +601,10 @@
                 else if (file.__fromLibrary || file.type.startsWith('audio/') || isVideoFile(file) || /\.(mp3|m4a|aac|flac|ogg|oga|opus|wav|wma|amr|m4b|alac)$/i.test(file.name)) audioFiles.push(file);
             });
 
-            // Bảng tra bài trùng (tên + nghệ sĩ) dựng một lần thay vì quét cả playlist cho từng tệp (O(n²))
+            // Bảng tra bài trùng (ưu tiên đường dẫn tệp gốc nếu có, tránh gộp nhầm 2 bài khác nhau trùng tên)
             const dupMap = new Map();
-            const dupKey = (n, a) => String(n || '').toLowerCase() + '\u0001' + String(a || '').toLowerCase();
-            playlist.forEach((t, i) => { const k = dupKey(t.name, t.artist); if (!dupMap.has(k)) dupMap.set(k, i); });
+            const dupKey = (n, a, loc) => loc ? ('loc:' + String(loc).toLowerCase()) : (String(n || '').toLowerCase() + '\u0001' + String(a || '').toLowerCase());
+            playlist.forEach((t, i) => { const k = dupKey(t.name, t.artist, t.nativeLocation); if (!dupMap.has(k)) dupMap.set(k, i); });
             for (const file of audioFiles) {
                 let title = file.__metaTitle || file.name.replace(/\.[^/.]+$/, "");
                 let artist = file.__metaArtist || "UNKNOWN ARTIST";
@@ -612,11 +612,11 @@
                 let year = file.__metaYear || "";
                 let genre = "";
                 let composer = "";
-                let cover = file.__nativeArtUrl || null;
+                let cover = null;
                 let lyricsRaw = "";
                 
                 await new Promise((resolve) => {
-                    if (file.__nativeUrl) return resolve();   // video phát trực tiếp qua URL: không có tag để đọc
+                    if (file.__nativeUrl && file.size === 0) return resolve();   // tệp thư viện chưa tải nội dung hoặc video stream: không có tag để đọc tại đây
                     window.jsmediatags.read(file, {
                         onSuccess: function(tag) {
                             if (tag.tags.title) title = tag.tags.title;
@@ -655,7 +655,7 @@
                 if (videoFile && !lyricsRaw) lyricsRaw = loadVideoSubtitle(file);
                 if (!lyricsRaw && file.__nativeLrcText) lyricsRaw = file.__nativeLrcText;
 
-                const existingIndex = dupMap.has(dupKey(title, artist)) ? dupMap.get(dupKey(title, artist)) : -1;
+                const existingIndex = dupMap.has(dupKey(title, artist, file.__nativeLocation)) ? dupMap.get(dupKey(title, artist, file.__nativeLocation)) : -1;
 
                 if (existingIndex !== -1) {
                     lastAutoPlayIndex = existingIndex;
@@ -685,7 +685,7 @@
                     };
                     playlist.push(newTrack);
                     lastAutoPlayIndex = playlist.length - 1;
-                    dupMap.set(dupKey(title, artist), lastAutoPlayIndex);
+                    dupMap.set(dupKey(title, artist, file.__nativeLocation), lastAutoPlayIndex);
 
                     // Bài mới thêm: ném xuống cuối trong tab Playlist (đã đúng do .push ở
                     // trên), còn trong tab Shuffle thì chèn vào 1 vị trí NGẪU NHIÊN trong
@@ -1444,24 +1444,22 @@
                                     changed = true;
                                 }
                             }
-                            if (tag.tags.picture && !track._hasRealCover) {
-                                const { data, format } = tag.tags.picture;
-                                let bin = '';
-                                for (let i = 0; i < data.length; i++) bin += String.fromCharCode(data[i]);
-                                track.cover = `data:${format};base64,${window.btoa(bin)}`;
-                                track._hasRealCover = true;
-                                changed = true;
-                            }
                             if (tag.tags.picture) {
                                 const { data, format } = tag.tags.picture;
+                                const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
                                 let bin = '';
-                                for (let i = 0; i < data.length; i++) bin += String.fromCharCode(data[i]);
-                                const picUrl = `data:${format};base64,${window.btoa(bin)}`;
-                                if (track.cover !== picUrl) {
+                                for (let i = 0; i < bytes.length; i += 8192) {
+                                    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+                                }
+                                const picUrl = `data:${format || 'image/jpeg'};base64,${window.btoa(bin)}`;
+                                if (track.cover !== picUrl || !track._hasRealCover) {
                                     track.cover = picUrl;
                                     track._hasRealCover = true;
                                     changed = true;
                                 }
+                            } else if (!track._hasRealCover && track.cover) {
+                                track.cover = null;
+                                changed = true;
                             }
                             if (changed && playlist[currentIndex] === track) {
                                 trackNameEl.innerText = track.name;
