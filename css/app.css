@@ -1749,6 +1749,9 @@
             background: color-mix(in srgb, var(--md-sys-color-surface-variant) 42%, var(--md-sys-color-surface));
             color: var(--md-sys-color-on-surface);
             transition: background .2s, transform .15s, border-radius .25s;
+            content-visibility: auto;
+            contain-intrinsic-size: 0 66px;
+            contain: layout style paint;
         }
         html.m-ui .m-lib-item:active { transform: scale(.985); }
         html.m-ui .m-lib-item.active {
