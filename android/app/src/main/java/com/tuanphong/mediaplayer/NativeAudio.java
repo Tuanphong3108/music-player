@@ -558,9 +558,62 @@ final class NativeAudio {
     }
 
     private static long lastMatchSyncAt = 0;
+    private static long lastBgPersistAt = 0L;
+    private static final String PREFS_NATIVE_SESSION = "native_session_backup";
 
-    /** Khớp trạng thái 0.5s: đồng bộ hàng đợi/shuffle/repeat/sleep nếu WebView gửi lệch hoặc lúc WebView đang chết ở nền. */
+    /** Ghi trạng thái hàng đợi, shuffle/repeat, hẹn giờ ngủ và vị trí bài hiện tại xuống SharedPreferences để khôi phục nếu WebView chết hoặc app sập. */
+    private static void persistSessionBackup(long nowElapsed, boolean force) {
+        try {
+            Context c = app;
+            if (c == null) {
+                MainActivity ma = MainActivity.instance;
+                if (ma != null) c = ma.getApplicationContext();
+            }
+            if (c == null) return;
+            if (!force && nowElapsed - lastBgPersistAt < 1000L) return;
+            lastBgPersistAt = nowElapsed;
+
+            long posNow = 0L;
+            long durNow = 0L;
+            boolean pwrNow = false;
+            String stNow = "idle";
+            if (p != null && loaded) {
+                int st = p.getPlaybackState();
+                stNow = st == Player.STATE_ENDED ? "ended" : st == Player.STATE_BUFFERING ? "buffering" : st == Player.STATE_READY ? "ready" : "idle";
+                pwrNow = p.getPlayWhenReady();
+                posNow = Math.max(0L, p.getCurrentPosition());
+                long d = p.getDuration();
+                durNow = d == C.TIME_UNSET ? 0L : Math.max(0L, d);
+            }
+
+            JSONObject snap = new JSONObject();
+            snap.put("id", curId == null ? "" : curId);
+            snap.put("title", title == null ? "" : title);
+            snap.put("artist", artist == null ? "" : artist);
+            snap.put("loaded", loaded);
+            snap.put("st", stNow);
+            snap.put("pwr", pwrNow);
+            snap.put("pos", posNow);
+            snap.put("dur", durNow);
+            snap.put("rate", rate);
+            snap.put("shuffle", shuffled && order != null && order.length == qIds.length);
+            snap.put("repeat", repeat);
+            snap.put("savedAtElapsed", nowElapsed);
+            snap.put("savedAtWall", System.currentTimeMillis());
+
+            c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE)
+                    .edit()
+                    .putString("session_json", snap.toString())
+                    .putString("queue_json", queueStateJson())
+                    .putLong("updated_at", System.currentTimeMillis())
+                    .apply();
+        } catch (Throwable ignored) {}
+    }
+
+    /** Khớp trạng thái 0.5s: lưu snapshot phục hồi + đồng bộ hàng đợi/shuffle/repeat/sleep nếu WebView gửi lệch hoặc lúc WebView đang chết ở nền. */
     private static void matchStateEveryHalfSec() {
+        long nowElapsed = SystemClock.elapsedRealtime();
+        persistSessionBackup(nowElapsed, false);
         long nowMs = System.currentTimeMillis();
         if (sleepAt > 0L && nowMs >= sleepAt) {
             triggerSleepEnded();
