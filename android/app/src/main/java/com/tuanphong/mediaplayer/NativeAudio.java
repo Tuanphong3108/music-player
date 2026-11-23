@@ -246,19 +246,26 @@ final class NativeAudio {
     /** Chỉ số (trong danh sách) của bài cách bài hiện tại `dir` bước theo thứ tự phát; -1 nếu không có. Bỏ qua bài không mở được. */
     private static int stepQ(int dir) {
         int c = curQ();
-        if (c < 0 || order.length == 0) return -1;
+        int total = qIds.length;
+        if (c < 0 || total == 0) return -1;
         if (dir > 0 && repeat == 2) return c;
+        int[] seq = null;
+        if (!shuffled || order.length != total) {
+            seq = new int[total];
+            for (int i = 0; i < total; i++) seq[i] = i;
+        }
+        int[] ord = seq != null ? seq : order;
         int pos = -1;
-        for (int i = 0; i < order.length; i++) if (order[i] == c) { pos = i; break; }
+        for (int i = 0; i < ord.length; i++) if (ord[i] == c) { pos = i; break; }
         if (pos < 0) return -1;
-        int n = order.length;
+        int n = ord.length;
         for (int k = 1; k <= n; k++) {
             int np = pos + dir * k;
             if (np >= n || np < 0) {
                 if (dir > 0 && repeat != 1) return -1;
                 np = ((np % n) + n) % n;
             }
-            int q = order[np];
+            int q = ord[np];
             if (q == c) return -1;
             if (q >= 0 && q < qIds.length && !qIds[q].isEmpty() && MainActivity.resolveServed(qIds[q]) != null) return q;
         }
