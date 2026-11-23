@@ -521,6 +521,57 @@
         }
     }
 
+    // Hộp thoại nhập văn bản dùng md-dialog (thay cho prompt() mặc định của trình duyệt/WebView)
+    function askText(title, label) {
+        return new Promise((resolve) => {
+            let dlg = document.getElementById('ai-prompt-dialog');
+            if (!dlg) {
+                if (!document.getElementById('ai-prompt-dialog-style')) {
+                    const st = document.createElement('style');
+                    st.id = 'ai-prompt-dialog-style';
+                    st.textContent = `#ai-prompt-dialog{--md-ref-typeface-plain:var(--app-font);--md-ref-typeface-brand:var(--app-font);--md-dialog-container-color:var(--md-sys-color-surface);--md-dialog-container-shape:24px;--md-dialog-headline-color:var(--md-sys-color-on-surface);--md-dialog-headline-font:var(--app-font);--md-dialog-headline-weight:700;--md-text-button-label-text-font:var(--app-font);--md-text-button-label-text-color:var(--md-sys-color-primary);--md-filled-button-label-text-font:var(--app-font);--md-filled-button-container-color:var(--md-sys-color-primary);--md-filled-button-label-text-color:var(--md-sys-color-on-primary);--md-outlined-text-field-input-text-font:var(--app-font);--md-outlined-text-field-label-text-font:var(--app-font);font-family:var(--app-font);color:var(--md-sys-color-on-surface);}#ai-prompt-dialog::part(scrim){background:#000;}#ai-prompt-dialog md-outlined-text-field{width:100%;}`;
+                    document.head.appendChild(st);
+                }
+                dlg = document.createElement('md-dialog');
+                dlg.id = 'ai-prompt-dialog';
+                dlg.style.cssText = 'max-width:min(92vw,420px);font-family:var(--app-font);';
+                dlg.innerHTML = `<div slot="headline" id="ai-prompt-title"></div>
+                    <form slot="content" id="ai-prompt-form" method="dialog" onsubmit="return false;"><md-outlined-text-field id="ai-prompt-input" type="text"></md-outlined-text-field></form>
+                    <div slot="actions"><md-text-button id="ai-prompt-cancel">Huỷ</md-text-button><md-filled-button id="ai-prompt-ok">Thêm</md-filled-button></div>`;
+                document.body.appendChild(dlg);
+            }
+            const input = dlg.querySelector('#ai-prompt-input');
+            dlg.querySelector('#ai-prompt-title').textContent = title || '';
+            input.label = label || '';
+            input.value = '';
+            let done = false;
+            const finish = (val) => {
+                if (done) return;
+                done = true;
+                cleanup();
+                dlg.close();
+                resolve(val);
+            };
+            const onOk = () => finish((input.value || '').trim());
+            const onCancel = () => finish('');
+            const onKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); onOk(); } };
+            const onClosed = () => finish('');
+            const okBtn = dlg.querySelector('#ai-prompt-ok'), cancelBtn = dlg.querySelector('#ai-prompt-cancel');
+            function cleanup() {
+                okBtn.removeEventListener('click', onOk);
+                cancelBtn.removeEventListener('click', onCancel);
+                input.removeEventListener('keydown', onKey);
+                dlg.removeEventListener('closed', onClosed);
+            }
+            okBtn.addEventListener('click', onOk);
+            cancelBtn.addEventListener('click', onCancel);
+            input.addEventListener('keydown', onKey);
+            dlg.addEventListener('closed', onClosed);
+            dlg.show();
+            setTimeout(() => { try { input.focus(); } catch (e) {} }, 150);
+        });
+    }
+
     function updateSegButtons(containerSelector, val) {
         document.querySelectorAll(containerSelector + ' button').forEach(b => {
             const n = Number(b.dataset.val);
@@ -547,8 +598,8 @@
             if (labState.activities.has(a)) labState.activities.delete(a); else labState.activities.add(a);
             chip.classList.toggle('active', labState.activities.has(a));
         });
-        document.getElementById('ai-add-custom-mood')?.addEventListener('click', () => {
-            const v = prompt('Custom mood:');
+        document.getElementById('ai-add-custom-mood')?.addEventListener('click', async () => {
+            const v = await askText('Tâm trạng tùy chỉnh', 'Custom mood');
             if (!v || !v.trim()) return;
             const label = v.trim();
             labState.moods.add(label);
@@ -556,8 +607,8 @@
             btn.type = 'button'; btn.className = 'ai-chip active'; btn.dataset.mood = label; btn.textContent = label;
             document.getElementById('ai-add-custom-mood')?.before(btn);
         });
-        document.getElementById('ai-add-custom-act')?.addEventListener('click', () => {
-            const v = prompt('Custom activity:');
+        document.getElementById('ai-add-custom-act')?.addEventListener('click', async () => {
+            const v = await askText('Hoạt động tùy chỉnh', 'Custom activity');
             if (!v || !v.trim()) return;
             const label = v.trim();
             labState.activities.add(label);
