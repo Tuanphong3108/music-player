@@ -194,6 +194,33 @@ public class MediaService extends Service {
     }
 
 
+    /** Đọc trực tiếp vị trí và thời lượng từ MediaSession (tự nội suy theo tốc độ phát khi đang phát) để Widget không phụ thuộc WebView. */
+    static long[] readSessionProgress() {
+        MediaService s = inst;
+        if (s == null || s.session == null) return null;
+        try {
+            android.media.session.MediaController ctrl = s.session.getController();
+            if (ctrl == null) return null;
+            PlaybackState ps = ctrl.getPlaybackState();
+            MediaMetadata md = ctrl.getMetadata();
+            if (ps == null && md == null) return null;
+            long durMs = md != null ? Math.max(0L, md.getLong(MediaMetadata.METADATA_KEY_DURATION)) : 0L;
+            long posMs = 0L;
+            if (ps != null) {
+                posMs = Math.max(0L, ps.getPosition());
+                if (ps.getState() == PlaybackState.STATE_PLAYING) {
+                    long elapsed = Math.max(0L, SystemClock.elapsedRealtime() - ps.getLastPositionUpdateTime());
+                    float spd = ps.getPlaybackSpeed() > 0f ? ps.getPlaybackSpeed() : 1f;
+                    posMs += (long) (elapsed * spd);
+                }
+            }
+            if (durMs > 0L) posMs = Math.min(posMs, durMs);
+            return new long[]{ posMs, durMs };
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     /** Chỉ cập nhật PlaybackState (mỗi giây): không dựng lại thông báo, vị trí + thời điểm chụp + tốc độ + bộ đệm đều chính xác. */
     private void publishPlaybackOnly() {
         if (session == null) return;
@@ -217,6 +244,7 @@ public class MediaService extends Service {
         if (buffered > 0) pb.setBufferedPosition(Math.max(p, buffered));
         if (st == PlaybackState.STATE_ERROR) pb.setErrorMessage("Không phát được tệp này");
         session.setPlaybackState(pb.build());
+        MediaWidgetProvider.saveProgress(this, p, dur);
     }
 
     private void publish() {
