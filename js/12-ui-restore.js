@@ -120,7 +120,12 @@
         if (!same) {
             playlist.length = 0;
             nq.forEach(tr => playlist.push(tr));
-            currentIndex = cur ? playlist.indexOf(cur) : -1;
+            let ci = cur ? playlist.indexOf(cur) : -1;
+            if (cur && ci < 0) {   // bài đang phát vừa được thay bằng bản thật trong thư viện (hoặc ngược lại) -> khớp theo id / đường dẫn
+                const ck = keyOf(cur);
+                ci = playlist.findIndex(t => t && ((cur.nativeId && t.nativeId === cur.nativeId) || (ck && keyOf(t) === ck)));
+            }
+            currentIndex = ci;
             window.__queueRestored = true;
         }
         if (typeof nqData.repeat === 'number' && typeof repeatMode !== 'undefined' && repeatMode !== nqData.repeat) {
@@ -283,6 +288,7 @@
             }
         } catch (e) {}
     }
+    let bootSince = 0, stubbed = false;
     function tryRestore() {
         if (window.__externalOpenActive) { trackDone = true; armed = true; return true; }
         if (!saved && !(card && card.key) && !window.__nativeBoot) return true;
@@ -316,10 +322,30 @@
                 }
             }
         }
+        if (idx < 0 && boot && boot.id) {
+            // Thư viện chưa quét tới bài này: đợi một chút rồi dựng bài tạm từ thông tin native để vẫn mở được player + sáng bài trong playlist tạm
+            if (!bootSince) bootSince = Date.now();
+            if (Date.now() - bootSince < 1500) return false;
+            idx = playlist.findIndex(x => x && x.nativeId === boot.id);
+            if (idx < 0) {
+                const stub = {
+                    name: boot.title || bootLoc.split('/').pop() || '...', artist: boot.artist || '', album: '', year: '', genre: '', composer: '',
+                    cover: null, url: 'https://appassets.local/f/' + boot.id, isVideo: false,
+                    ext: '', lyrics: null, lyricsRaw: '', file: null, fileHandle: null,
+                    nativeId: boot.id, nativeLocation: bootLoc, nativeName: boot.title || '',
+                    nativeStreamUrl: 'https://appassets.local/f/' + boot.id, nativeLrcUrl: '', fromLibrary: true,
+                    rawName: boot.title || '', _stub: true
+                };
+                playlist.push(stub);
+                idx = playlist.length - 1;
+                if (shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
+                stubbed = true;
+            }
+        }
         if (idx < 0) return false;
         trackDone = true;
         body.classList.remove('m-early-card');
-        const shouldPlay = !!(boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
+        const shouldPlay = !!(boot && boot.pwr && (boot.st === 'ready' || boot.st === 'buffering'));
         if (boot) {
             const matchedTrack = playlist[idx];
             if (matchedTrack && matchedTrack.nativeId && window.__nativeAudioState) {
@@ -332,6 +358,14 @@
             applyPanels();
             navApplied = false; applyNav();
             armed = true;
+            if (stubbed && bootQ) {
+                let k = 0;
+                const iv2 = setInterval(() => {
+                    k++;
+                    try { applyNativeQueue(bootQ); } catch (e) {}
+                    if ((!(window.__ingestBusy > 0) && k > 3) || k > 70) clearInterval(iv2);
+                }, 1500);
+            }
             return true;
         }
         // Khung app không đang phát bài nào -> nạp sẵn bài cũ ở đoạn cũ (pos) ở trạng thái tạm dừng (chỉ tự phát nếu người dùng vừa bấm Play trên Mini Player)

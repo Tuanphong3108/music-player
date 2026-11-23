@@ -32,6 +32,10 @@
     {
       "content": "Khôi phục phiên & âm lượng mượt mà: nhận lại bài & làm sáng đúng bài trong hàng đợi tạm, tạm hạ âm lượng về 0% lúc đợi metadata & tua tới đoạn cũ, đặt Play/Pause theo trạng thái native rồi bật lại 100% (và tự trả 100% ngay khi thoát/ẩn app).",
       "icon": "volume_up"
+    },
+    {
+      "content": "Quay lại app khi thư viện chưa quét xong: dựng ngay bài đang phát vào playlist tạm (sáng đúng bài, mở được player), tự khớp lại toàn bộ hàng đợi khi quét xong; vẫn tua về đúng đoạn và Phát/Tạm dừng theo trạng thái native",
+      "icon": "restore"
     }
   ],
   "en": [
@@ -66,6 +70,10 @@
     {
       "content": "Smooth session & volume restore: highlights the restored track in the queue, mutes to 0% while awaiting metadata and seeking to the saved position, applies native play/pause state, then restores 100% volume (and immediately resets to 100% on exit/background).",
       "icon": "volume_up"
+    },
+    {
+      "content": "Returning to the app before the library scan finishes: the current track is restored into the temporary queue right away (highlighted, player opens) and the full queue is re-synced when the scan completes; still seeks to the right spot and follows native play/pause",
+      "icon": "restore"
     }
   ]
 }
