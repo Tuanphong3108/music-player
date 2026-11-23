@@ -315,6 +315,10 @@ public class MainActivity extends Activity {
                     String fid = u.getPath().substring(5);
                     return serveArtwork(fid);
                 }
+                if (ASSET_HOST.equals(u.getHost()) && u.getPath() != null && u.getPath().startsWith("/meta/")) {
+                    String fid = u.getPath().substring(6);
+                    return serveMetadata(fid);
+                }
                 return null;
             }
 
@@ -1001,6 +1005,107 @@ public class MainActivity extends Activity {
             return new WebResourceResponse(mimeType, null, 200, "OK", h, new java.io.ByteArrayInputStream(bytes));
         }
         return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, null);
+    }
+
+    /** Đọc metadata + (tuỳ chọn) ảnh bìa thu nhỏ 144px dạng base64 từ chính tệp gốc qua MediaMetadataRetriever. */
+    private String extractMetadataJsonInternal(String nativeId, boolean includeThumb) {
+        if (nativeId == null || nativeId.isEmpty()) return "";
+        Uri src = served.get(nativeId);
+        String directPath = servedLocations.get(nativeId);
+        if (src == null && (directPath == null || directPath.isEmpty())) return "";
+        android.media.MediaMetadataRetriever mmr = null;
+        try {
+            mmr = new android.media.MediaMetadataRetriever();
+            if (directPath != null && new File(directPath).canRead()) {
+                mmr.setDataSource(directPath);
+            } else if (src != null) {
+                mmr.setDataSource(this, src);
+            } else {
+                return "";
+            }
+            JSONObject o = new JSONObject();
+            String t = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE);
+            String ar = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            if (ar == null || ar.trim().isEmpty() || "<unknown>".equalsIgnoreCase(ar.trim())) {
+                ar = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
+            }
+            String al = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM);
+            String yr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR);
+            if (yr == null || yr.trim().isEmpty()) {
+                String dt = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DATE);
+                if (dt != null && dt.trim().length() >= 4) yr = dt.trim().substring(0, 4);
+            }
+            String gn = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_GENRE);
+            String cp = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_COMPOSER);
+            if (cp == null || cp.trim().isEmpty()) {
+                cp = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_WRITER);
+            }
+            if (t != null && !t.trim().isEmpty()) o.put("title", t.trim());
+            if (ar != null && !ar.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(ar.trim())) o.put("artist", ar.trim());
+            if (al != null && !al.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(al.trim())) o.put("album", al.trim());
+            if (yr != null && !yr.trim().isEmpty()) o.put("year", yr.trim());
+            if (gn != null && !gn.trim().isEmpty()) o.put("genre", gn.trim());
+            if (cp != null && !cp.trim().isEmpty()) o.put("composer", cp.trim());
+
+            byte[] pic = mmr.getEmbeddedPicture();
+            if (pic != null && pic.length > 0) {
+                o.put("hasPicture", true);
+                o.put("artUrl", "https://" + ASSET_HOST + "/art/" + nativeId);
+                if (includeThumb) {
+                    try {
+                        android.graphics.BitmapFactory.Options bounds = new android.graphics.BitmapFactory.Options();
+                        bounds.inJustDecodeBounds = true;
+                        android.graphics.BitmapFactory.decodeByteArray(pic, 0, pic.length, bounds);
+                        int sample = 1;
+                        int maxDim = Math.max(bounds.outWidth, bounds.outHeight);
+                        while (maxDim / (sample * 2) >= 144) sample *= 2;
+                        android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
+                        opts.inSampleSize = sample;
+                        android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeByteArray(pic, 0, pic.length, opts);
+                        if (bmp != null) {
+                            int bw = bmp.getWidth(), bh = bmp.getHeight();
+                            int s = Math.min(bw, bh);
+                            android.graphics.Bitmap cropped = (bw != bh && s > 0)
+                                    ? android.graphics.Bitmap.createBitmap(bmp, (bw - s) / 2, (bh - s) / 2, s, s)
+                                    : bmp;
+                            android.graphics.Bitmap scaled = (cropped.getWidth() > 144 || cropped.getHeight() > 144)
+                                    ? android.graphics.Bitmap.createScaledBitmap(cropped, 144, 144, true)
+                                    : cropped;
+                            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                            scaled.compress(android.graphics.Bitmap.CompressFormat.JPEG, 78, bos);
+                            byte[] jpg = bos.toByteArray();
+                            if (scaled != cropped) scaled.recycle();
+                            if (cropped != bmp) cropped.recycle();
+                            bmp.recycle();
+                            if (jpg.length > 0) {
+                                o.put("thumb", "data:image/jpeg;base64," + android.util.Base64.encodeToString(jpg, android.util.Base64.NO_WRAP));
+                            }
+                        }
+                    } catch (Throwable ignored) {}
+                }
+            } else {
+                o.put("hasPicture", false);
+            }
+            return o.toString();
+        } catch (Throwable ignored) {
+            return "";
+        } finally {
+            if (mmr != null) { try { mmr.release(); } catch (Throwable ignored) {} }
+        }
+    }
+
+    /** Endpoint bất đồng bộ /meta/<id> chạy trên luồng IO của WebView để JS đọc song song 3 tệp cùng lúc mà không chặn UI. */
+    private WebResourceResponse serveMetadata(String fid) {
+        Map<String, String> h = new HashMap<>();
+        h.put("Access-Control-Allow-Origin", "*");
+        h.put("Cache-Control", "no-store, must-revalidate");
+        String json = extractMetadataJsonInternal(fid, true);
+        if (json == null || json.isEmpty()) {
+            return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, null);
+        }
+        byte[] data = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        h.put("Content-Length", String.valueOf(data.length));
+        return new WebResourceResponse("application/json", "utf-8", 200, "OK", h, new java.io.ByteArrayInputStream(data));
     }
 
     /** Lấy hoặc tạo bản sao cục bộ trong cache/media_stream/ để phát Range nhanh, seek chuẩn bằng RandomAccessFile và không bị mất quyền URI khi chạy nền. */
@@ -2715,57 +2820,7 @@ public class MainActivity extends Activity {
         /** Đọc đầy đủ metadata (title, artist, album, year, genre, composer, cover) trực tiếp qua MediaMetadataRetriever của Android — hỗ trợ cả FLAC/M4A/OGG/OPUS/ID3v2.4 mà jsmediatags dễ bỏ sót hoặc đọc thiếu khi cắt 2MB đầu. */
         @JavascriptInterface
         public String readTrackMetadataJson(String nativeId) {
-            if (nativeId == null || nativeId.isEmpty()) return "";
-            Uri src = served.get(nativeId);
-            String directPath = servedLocations.get(nativeId);
-            if (src == null && (directPath == null || directPath.isEmpty())) return "";
-            android.media.MediaMetadataRetriever mmr = null;
-            try {
-                mmr = new android.media.MediaMetadataRetriever();
-                if (directPath != null && new File(directPath).canRead()) {
-                    mmr.setDataSource(directPath);
-                } else if (src != null) {
-                    mmr.setDataSource(MainActivity.this, src);
-                } else {
-                    return "";
-                }
-                JSONObject o = new JSONObject();
-                String t = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE);
-                String ar = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST);
-                if (ar == null || ar.trim().isEmpty() || "<unknown>".equalsIgnoreCase(ar.trim())) {
-                    ar = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
-                }
-                String al = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM);
-                String yr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR);
-                if (yr == null || yr.trim().isEmpty()) {
-                    String dt = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DATE);
-                    if (dt != null && dt.trim().length() >= 4) yr = dt.trim().substring(0, 4);
-                }
-                String gn = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_GENRE);
-                String cp = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_COMPOSER);
-                if (cp == null || cp.trim().isEmpty()) {
-                    cp = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_WRITER);
-                }
-                if (t != null && !t.trim().isEmpty()) o.put("title", t.trim());
-                if (ar != null && !ar.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(ar.trim())) o.put("artist", ar.trim());
-                if (al != null && !al.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(al.trim())) o.put("album", al.trim());
-                if (yr != null && !yr.trim().isEmpty()) o.put("year", yr.trim());
-                if (gn != null && !gn.trim().isEmpty()) o.put("genre", gn.trim());
-                if (cp != null && !cp.trim().isEmpty()) o.put("composer", cp.trim());
-
-                byte[] pic = mmr.getEmbeddedPicture();
-                if (pic != null && pic.length > 0) {
-                    o.put("hasPicture", true);
-                    o.put("artUrl", "https://" + ASSET_HOST + "/art/" + nativeId);
-                } else {
-                    o.put("hasPicture", false);
-                }
-                return o.toString();
-            } catch (Throwable ignored) {
-                return "";
-            } finally {
-                if (mmr != null) { try { mmr.release(); } catch (Throwable ignored) {} }
-            }
+            return extractMetadataJsonInternal(nativeId, true);
         }
 
         @JavascriptInterface
