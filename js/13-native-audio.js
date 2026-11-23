@@ -134,8 +134,8 @@
                 else if (isNative()) { N.paused = true; fire('pause'); }
                 return;
             }
-            if (e.ev === 'advanced') {
-                // app tự sang bài kế (lúc trang không phản hồi / bấm Next từ thông báo): trang theo kịp bằng cách nhận lại đúng bài đó
+            if (e.ev === 'advanced' || (e.ev === 'tick' && e.loaded && e.id && e.id !== N.id && !N.pending)) {
+                // app tự sang bài kế (hoặc trang lỡ sự kiện chuyển bài): nhận lại đúng bài đang phát
                 N.adoptId = e.id;
                 const i = (typeof playlist !== 'undefined') ? playlist.findIndex(t => t && t.nativeId === e.id) : -1;
                 if (i >= 0 && i !== currentIndex) { window.__adoptNative = true; playTrack(i); }
@@ -145,6 +145,7 @@
             const wasPaused = N.paused, hadDur = N.dur > 0, wasEnded = N.ended;
             N.pos = e.pos || 0; N.stamp = now(); N.dur = e.dur || N.dur; N.buf = e.buf || 0; N.st = e.st; N.rate = e.rate || 1;
             N.paused = !e.pwr;
+            if (e.st !== 'ended') N.ended = false;
             if (e.err) { N.err = true; fire('error'); return; }
             if (!hadDur && N.dur > 0) { N.hadMeta = true; ['loadedmetadata', 'durationchange', 'loadeddata'].forEach(fire); }
             if (e.st === 'buffering' && !N.paused) fire('waiting');
@@ -156,7 +157,10 @@
             if (!wasPaused && N.paused && e.st !== 'ended') fire('pause');
             if (e.ev === 'seeked') { fire('seeked'); }
             if (e.st === 'ended' && !wasEnded) { N.ended = true; N.paused = true; fire('pause'); fire('ended'); return; }
-            if (e.ev === 'tick') fire('timeupdate');
+            if (e.ev === 'tick') {
+                fire('timeupdate');
+                if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+            }
         } catch (err) {}
     };
 
