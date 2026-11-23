@@ -15,9 +15,16 @@
     const now = () => performance.now();
 
     // N = trạng thái phản chiếu của trình phát native
+    let restoreDurHintMs = 0;
     const N = { mode: 'web', id: '', url: '', loaded: false, pending: false, startMs: 0, paused: true, pos: 0, stamp: 0, dur: 0, buf: 0,
         rate: 1, vol: 1, st: 'idle', ended: false, err: false, hadMeta: false, adopt: false };
     window.__nativeAudioState = N;
+    window.__setRestoreDurationHint = function (url, durSec) {
+        if (url && durSec > 0 && N.url === url && !(N.dur > 0)) {
+            restoreDurHintMs = Math.round(durSec * 1000);
+            if (typeof syncMediaSessionState === 'function') syncMediaSessionState();
+        }
+    };
 
     const fire = (t) => { try { a.dispatchEvent(new Event(t)); } catch (e) {} };
     const curPos = () => {
@@ -88,7 +95,12 @@
     });
     def('paused', function () { return isNative() ? (N.paused || N.ended) : orig.paused.get.call(a); });
     def('ended', function () { return isNative() ? N.ended : orig.ended.get.call(a); });
-    def('duration', function () { return isNative() ? (N.dur > 0 ? N.dur / 1000 : NaN) : orig.duration.get.call(a); });
+    def('duration', function () {
+        if (!isNative()) return orig.duration.get.call(a);
+        if (N.dur > 0) return N.dur / 1000;
+        if (restoreDurHintMs > 0) return restoreDurHintMs / 1000;
+        return NaN;
+    });
     def('seeking', function () { return isNative() ? false : orig.seeking.get.call(a); });
     def('error', function () { return isNative() ? (N.err ? { code: 2, message: 'native playback error' } : null) : orig.error.get.call(a); });
     def('readyState', function () { return isNative() ? (N.loaded && N.dur > 0 && N.st !== 'buffering' ? 4 : (N.loaded && N.dur > 0 ? 2 : 0)) : orig.readyState.get.call(a); });
