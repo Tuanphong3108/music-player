@@ -114,15 +114,36 @@ final class NativeAudio {
         if (app != null && isAppInBackground(app)) {
             showSleepEndedNotification(app, type, total);
         }
+        if (isAppInBackground(app)) {
+            MediaService.onNative(snapshot("sleep"));
+        }
+    }
+
+    static boolean hasPendingSleepEndedNotice() {
+        return sleepFiredPending;
+    }
+
+    static void notifyWebSleepEndedIfReady() {
+        if (!sleepFiredPending) return;
+        MainActivity a = MainActivity.instance;
+        if (a != null) {
+            String jsType = org.json.JSONObject.quote(sleepFiredType == null ? "time" : sleepFiredType);
+            a.evalAck("window.__showNativeSleepEndedNotice&&window.__showNativeSleepEndedNotice(" + jsType + "," + sleepFiredTotal + ")");
+        }
     }
 
     /** Kiểm tra thật ở tầng hệ thống xem app đang chạy ở nền / tắt màn hình hay đang mở trên màn hình. */
     private static boolean isAppInBackground(Context ctx) {
         MainActivity act = MainActivity.instance;
         if (act == null || act.isInBackgroundForMedia()) return true;
+        if (ctx == null) return true;
         try {
             android.os.PowerManager pm = (android.os.PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
             if (pm != null && !pm.isInteractive()) return true;
+        } catch (Throwable ignored) {}
+        try {
+            android.app.KeyguardManager km = (android.app.KeyguardManager) ctx.getSystemService(Context.KEYGUARD_SERVICE);
+            if (km != null && km.isKeyguardLocked()) return true;
         } catch (Throwable ignored) {}
         try {
             android.app.ActivityManager am = (android.app.ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
