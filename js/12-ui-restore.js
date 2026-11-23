@@ -143,18 +143,32 @@
         const rawOrder = Array.isArray(nqData.shuffleOrder) ? nqData.shuffleOrder : (Array.isArray(nqData.order) ? nqData.order : []);
         const ord = nativeShuffled ? rawOrder.map(i => oldIdx[i]).filter(i => i >= 0) : [];
         if (nativeShuffled && ord.length === playlist.length && playlist.length > 0) {
-            if (!isShuffle && typeof isShuffle !== 'undefined') {
+            if (typeof isShuffle !== 'undefined') {
                 isShuffle = true;
+                try { localStorage.setItem('settings_shuffle', 'true'); } catch (e) {}
                 document.getElementById('shuffle-btn')?.classList.add('active');
                 document.getElementById('m-pl-shuffle')?.classList.add('active');
+                if (typeof activePlTab !== 'undefined') activePlTab = 'shuffle';
+                document.getElementById('pl-tab-playlist')?.classList.remove('active');
+                document.getElementById('pl-tab-shuffle')?.classList.add('active');
+                document.getElementById('pl-tabs')?.classList.add('expanded');
+                const rb = document.getElementById('reshuffle-btn');
+                if (rb) rb.style.display = 'flex';
             }
             shuffleOrder = ord;
             shuffleInitialized = true;
         } else if (nqData.shuffle === false) {
-            if (typeof isShuffle !== 'undefined' && isShuffle) {
+            if (typeof isShuffle !== 'undefined') {
                 isShuffle = false;
+                try { localStorage.setItem('settings_shuffle', 'false'); } catch (e) {}
                 document.getElementById('shuffle-btn')?.classList.remove('active');
                 document.getElementById('m-pl-shuffle')?.classList.remove('active');
+                if (typeof activePlTab !== 'undefined') activePlTab = 'playlist';
+                document.getElementById('pl-tab-playlist')?.classList.add('active');
+                document.getElementById('pl-tab-shuffle')?.classList.remove('active');
+                document.getElementById('pl-tabs')?.classList.remove('expanded');
+                const rb = document.getElementById('reshuffle-btn');
+                if (rb) rb.style.display = 'none';
             }
             shuffleOrder = [];
             shuffleInitialized = false;
@@ -163,7 +177,8 @@
         }
         qDone = true;
         qArmed = true;
-        if (typeof window.__syncNativeQueue === 'function') window.__syncNativeQueue();
+        window.__plDefer = false;
+        window.__plDirty = false;
         updatePlaylistUI();
         if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
         return true;
@@ -205,15 +220,19 @@
             if (qDone) qArmed = true;
         }
     }
+    let libScanFinished = false;
     (function () {
         const o = window.__onAndroidLibraryScanDone;
         window.__onAndroidLibraryScanDone = function (count, missingPerm) {
             if (!missingPerm && window.__ingestBusy > 0) { const args = arguments; setTimeout(() => window.__onAndroidLibraryScanDone.apply(null, args), 120); return; }
             let r; try { if (o) r = o.apply(this, arguments); } catch (e) {}
+            libScanFinished = true;
             if (!missingPerm) {
                 setTimeout(() => {
-                    restoreQueue();
-                    if (!trackDone && !window.__externalOpenActive) tryRestore();
+                    window.__plDefer = false;
+                    if (typeof window.__plFlush === 'function') window.__plFlush();
+                    if (!trackDone && !window.__externalOpenActive) tryRestore(false);
+                    else restoreQueue();
                     if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
                 }, 0);
             } else {
@@ -221,7 +240,11 @@
             }
             return r;
         };
-        setTimeout(() => { if (!qDone) { qArmed = true; } }, 60000);
+        setTimeout(() => {
+            libScanFinished = true;
+            if (!trackDone && !window.__externalOpenActive) tryRestore(false);
+            if (!qDone) { qArmed = true; }
+        }, 12000);
     })();
 
     // ===== Thẻ bài đang phát lưu sẵn: hiện mini player NGAY khi mở app (trước khi quét xong thư viện) =====
@@ -308,13 +331,15 @@
         } catch (e) {}
     }
     let bootSince = 0, stubbed = false;
-    function tryRestore() {
+    function tryRestore(forceNow) {
         if (window.__externalOpenActive) { trackDone = true; armed = true; return true; }
         if (!saved && !(card && card.key) && !window.__nativeBoot && !(window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function')) return true;
         if (!touched) applyNav();
         if (trackDone) return true;
         if (touched || (typeof currentIndex !== 'undefined' && currentIndex >= 0)) { trackDone = true; return true; }
         if (typeof playlist === 'undefined') return false;
+        // Bước 1: Đợi load xong toàn bộ thư viện / playlist trước rồi mới khôi phục hàng đợi và chọn bài (trừ khi người dùng chủ động bấm Play sớm)
+        if (!forceNow && (!libScanFinished || window.__ingestBusy > 0)) return false;
         let boot = window.__nativeBoot || null;   // app đang phát/giữ sẵn bài nào đó (live) hoặc bản lưu từ SharedPreferences
         let bootQ = window.__nativeBootQueue || null;
         if (window.AndroidBridge) {
@@ -443,7 +468,11 @@
             }
             return true;
         }
-        // Mở lại sau khi đóng/crash (ExoPlayer đang trống): nạp bài thật vào ExoPlayer, tua tới đoạn đã lưu sau khi nạp và ép trạng thái Pause
+        // Đảm bảo danh sách playlist tạm đã dựng xong lên DOM trước khi nhấn chọn bài
+        window.__plDefer = false;
+        window.__plDirty = false;
+        if (typeof updatePlaylistUI === 'function') updatePlaylistUI();
+        // Mở lại sau khi đóng/crash (ExoPlayer đang trống): nạp bài thật vào ExoPlayer, đợi load xong rồi tua tới đoạn đã lưu và ép trạng thái Pause
         window.__adoptNative = false;
         window.__restoreStartMs = Math.round(seekSec * 1000);
         window.__restoreOnce = { pos: seekSec, dur: durSec, play: false, fromNativeSession: false };
@@ -472,7 +501,7 @@
     };
     window.__tryRestoreNow = function (autoPlay) {
         if (autoPlay) window.__pendingMiniResume = true;
-        return !!tryRestore();
+        return !!tryRestore(true);
     };
     // Đồng bộ lại ngay khi người dùng thoát app ra ngoài rồi quay lại (onResume / visibilitychange) mà WebView chưa bị tải lại
     window.__adoptNativeSessionNow = function (s, q) {
@@ -516,14 +545,14 @@
                 cancelRestoreForExternal();
             }
             const r = await o.apply(this, arguments);
-            try { if (!trackDone && !window.__externalOpenActive) tryRestore(); } catch (e) {}
+            try { if (libScanFinished && !trackDone && !window.__externalOpenActive) tryRestore(false); } catch (e) {}
             return r;
         };
     })();
     let n = 0;
     const iv = setInterval(() => {
         n++;
-        if (tryRestore() || n > 60) {   // ~42 giây
+        if ((libScanFinished && tryRestore(false)) || n > 60) {   // ~42 giây
             clearInterval(iv);
             armed = true;
         }
