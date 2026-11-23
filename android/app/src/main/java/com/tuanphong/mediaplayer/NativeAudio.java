@@ -52,10 +52,10 @@ final class NativeAudio {
     private static volatile int sid = 0;
     private static volatile String curId = "";
     private static String title = "", artist = "";
-    // Hàng đợi do trang gửi sang: id/tiêu đề/nghệ sĩ theo thứ tự danh sách, order = thứ tự phát (shuffle) dạng chỉ số, repeat 0 tắt / 1 tất cả / 2 một bài
-    private static volatile String[] qIds = new String[0], qTitles = new String[0], qArtists = new String[0];
+    // Hàng đợi do trang gửi sang: id/tiêu đề/nghệ sĩ/đường dẫn theo thứ tự danh sách, order = thứ tự phát (shuffle) dạng chỉ số, repeat 0 tắt / 1 tất cả / 2 một bài
+    private static volatile String[] qIds = new String[0], qTitles = new String[0], qArtists = new String[0], qLocs = new String[0];
     private static volatile int[] order = new int[0];
-    private static int repeat = 0;
+    private static volatile int repeat = 0;
     private static volatile boolean loaded = false;
     private static boolean endedHandled = false;
     private static float rate = 1f, vol = 1f;
@@ -220,16 +220,56 @@ final class NativeAudio {
     static void setQueue(String json) {
         try {
             JSONObject o = new JSONObject(json);
-            org.json.JSONArray ids = o.getJSONArray("ids"), ts = o.optJSONArray("titles"), as = o.optJSONArray("artists"), od = o.optJSONArray("order");
+            org.json.JSONArray ids = o.getJSONArray("ids"), ts = o.optJSONArray("titles"), as = o.optJSONArray("artists"), locs = o.optJSONArray("locations"), od = o.optJSONArray("order");
             int n = ids.length();
-            String[] a1 = new String[n], a2 = new String[n], a3 = new String[n];
+            String[] a1 = new String[n], a2 = new String[n], a3 = new String[n], a4 = new String[n];
             for (int i = 0; i < n; i++) {
-                a1[i] = ids.optString(i, ""); a2[i] = ts == null ? "" : ts.optString(i, ""); a3[i] = as == null ? "" : as.optString(i, "");
+                a1[i] = ids.optString(i, "");
+                a2[i] = ts == null ? "" : ts.optString(i, "");
+                a3[i] = as == null ? "" : as.optString(i, "");
+                String l = locs == null ? "" : locs.optString(i, "");
+                if (l.isEmpty() && !a1[i].isEmpty()) {
+                    String rl = MainActivity.resolveLocation(a1[i]);
+                    if (rl != null) l = rl;
+                }
+                a4[i] = l;
             }
             int[] ord = new int[od == null ? n : od.length()];
             for (int i = 0; i < ord.length; i++) ord[i] = od == null ? i : od.optInt(i, i);
-            qIds = a1; qTitles = a2; qArtists = a3; order = ord; repeat = o.optInt("repeat", 0);
+            qIds = a1; qTitles = a2; qArtists = a3; qLocs = a4; order = ord; repeat = o.optInt("repeat", 0);
         } catch (Throwable ignored) {}
+    }
+
+    /** Trả về hàng đợi hiện tại của trình phát native (kèm đường dẫn tệp + chế độ lặp/trộn) để WebView đồng bộ lại khi thoát ra vào lại. */
+    static String queueStateJson() {
+        try {
+            JSONObject o = new JSONObject();
+            String[] ids = qIds;
+            String[] locs = qLocs;
+            int[] ord = order;
+            org.json.JSONArray jIds = new org.json.JSONArray();
+            org.json.JSONArray jLocs = new org.json.JSONArray();
+            for (int i = 0; i < ids.length; i++) {
+                String id = ids[i] == null ? "" : ids[i];
+                jIds.put(id);
+                String loc = (locs != null && i < locs.length && locs[i] != null && !locs[i].isEmpty())
+                        ? locs[i]
+                        : MainActivity.resolveLocation(id);
+                jLocs.put(loc == null ? "" : loc);
+            }
+            org.json.JSONArray jOrd = new org.json.JSONArray();
+            for (int v : ord) jOrd.put(v);
+            o.put("ids", jIds);
+            o.put("locations", jLocs);
+            o.put("order", jOrd);
+            o.put("repeat", repeat);
+            o.put("curId", curId == null ? "" : curId);
+            String curLoc = MainActivity.resolveLocation(curId);
+            o.put("curLoc", curLoc == null ? "" : curLoc);
+            return o.toString();
+        } catch (Throwable t) {
+            return "{\"ids\":[],\"locations\":[],\"order\":[],\"repeat\":0,\"curId\":\"\",\"curLoc\":\"\"}";
+        }
     }
 
     static int sessionId() { return sid; }
