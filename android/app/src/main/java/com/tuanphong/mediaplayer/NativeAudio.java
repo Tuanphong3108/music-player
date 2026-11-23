@@ -506,7 +506,7 @@ final class NativeAudio {
         ph.post(() -> go(q));
         return true;
     }
-    /** Bài trước: khi bật Shuffle và đã phát quá 5s thì về 0:00, dưới/bằng 5s thì về bài trước; khi tắt Shuffle thì luôn lùi về bài trước. */
+    /** Bài trước: khi bật Shuffle và đã phát quá 5s thì về 0:00, từ 0-5s hoặc khi tắt Shuffle thì lùi về bài trước. */
     static boolean previous() {
         ph.post(() -> {
             if (p != null && loaded && shuffled && p.getCurrentPosition() > 5000) { p.seekTo(0); endedHandled = false; return; }
