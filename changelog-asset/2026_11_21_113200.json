@@ -112,6 +112,10 @@
     {
       "content": "EQ, preamp, mono, nén âm, cân bằng và sóng nhạc hoạt động với trình phát của app (xử lý trong ExoPlayer)",
       "icon": "graphic_eq"
+    },
+    {
+      "content": "Tối ưu giao diện cho máy tính bảng: thư viện chia nhiều cột, mini player và danh sách phát có độ rộng hợp lý, màn hình phát nhạc căn giữa (dọc) hoặc chia đôi ảnh bìa/điều khiển (ngang)",
+      "icon": "tablet_android"
     }
   ],
   "en": [
@@ -226,6 +230,10 @@
     {
       "content": "EQ, preamp, mono, compressor, balance and the music visualizer now work with the app's own player (processed inside ExoPlayer)",
       "icon": "graphic_eq"
+    },
+    {
+      "content": "Tablet-optimized layout: multi-column library, sensibly sized mini player and playlist sheet, centered player in portrait and art/controls split in landscape",
+      "icon": "tablet_android"
     }
   ]
 }

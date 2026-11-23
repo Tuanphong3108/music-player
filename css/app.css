@@ -2193,3 +2193,39 @@ html.m-ui #like-btn.liked { color: #ff5a7a; }
 html.m-ui body.fullscreen-active #like-btn { display: none; }
 @media (max-height: 700px) { html.m-ui #like-btn { width: 40px; height: 40px; margin-right: 54px; } }
 html:not(.m-ui) #like-btn { display: none !important; }
+
+/* ===== MÁY TÍNH BẢNG (Android, màn hình rộng ≥ 700px) ===== */
+@media (min-width: 700px) {
+    /* Thư viện: danh sách nhiều cột thay vì một cột kéo dài */
+    html.m-ui .m-lib-list {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px 12px;
+        align-content: start; grid-auto-rows: min-content;
+    }
+    html.m-ui .m-lib-list > :not(.m-lib-item) { grid-column: 1 / -1; }
+    html.m-ui .m-lib-actions { max-width: 720px; }
+    /* Mini player: thanh nổi ở giữa, không kéo dài hết màn hình */
+    html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track:not(.m-early-card)):not(.m-playlist-open):not(.lyrics-open):not(.reorder-active) #m-mini-player {
+        left: 0; right: 0; margin-inline: auto; width: min(640px, calc(100% - 32px));
+    }
+}
+@media (min-width: 700px) and (orientation: landscape) {
+    /* Màn hình ngang: bố cục luôn căn giữa; thư viện chiếm cả hai cột (trước đây chỉ nằm nửa trái) */
+    html.m-ui .app-container {
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 500px);
+        column-gap: 40px;
+    }
+    html.m-ui body:not(.m-player-expanded):not(.no-track:not(.m-early-card)) .main-content { grid-column: 1 / -1; }
+    html.m-ui body.m-player-expanded .visual-stage { justify-content: center; }
+    html.m-ui body.m-player-expanded .player-shell { max-width: 500px; width: 100%; }
+}
+@media (min-width: 700px) and (orientation: portrait) {
+    html.m-ui .app-container { max-width: 880px; padding: 14px 20px 18px; }
+    /* Player dọc: ảnh bìa vừa tầm, bảng điều khiển không bị đẩy xuống đáy */
+    html.m-ui body.m-player-expanded:not(.lyrics-open) .visual-stage {
+        width: min(100%, 52vh); max-height: 52vh; margin-inline: auto; flex: 0 0 auto; aspect-ratio: 1;
+    }
+    html.m-ui body.m-player-expanded:not(.lyrics-open) .main-content { display: flex; flex-direction: column; justify-content: center; flex: 0 0 auto; margin-top: auto; }
+    html.m-ui body.m-player-expanded:not(.lyrics-open) .player-shell { width: min(100%, 640px); margin-inline: auto; margin-bottom: auto; }
+    /* Danh sách phát (bottom sheet) không kéo dài hết cỡ màn hình */
+    html.m-ui body.m-playlist-open .playlist-card { left: 0; right: 0; margin-inline: auto; width: min(680px, calc(100% - 16px)); }
+}
