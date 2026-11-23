@@ -2823,6 +2823,12 @@ public class MainActivity extends Activity {
             return extractMetadataJsonInternal(nativeId, true);
         }
 
+        /** Hiện / cập nhật thông báo tiến trình quét metadata ở nền; tự động xóa khi done >= total hoặc total <= 0. */
+        @JavascriptInterface
+        public void updateScanNotification(int done, int total, String currentTitle) {
+            updateScanNotificationInternal(done, total, currentTitle);
+        }
+
         @JavascriptInterface
         public boolean openFileInSystemFiles(String filePath, String nativeId) {
             try {
@@ -2973,6 +2979,63 @@ public class MainActivity extends Activity {
                 getSharedPreferences("app", MODE_PRIVATE).edit().putStringSet("excluded_dirs", set).apply();
             } catch (Throwable ignored) {}
         }
+    }
+
+    private static final String SCAN_NOTIF_CHANNEL = "mp_scan_progress";
+    private static final int SCAN_NOTIF_ID = 2026;
+
+    private void cancelScanNotificationInternal() {
+        try {
+            android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (nm != null) nm.cancel(SCAN_NOTIF_ID);
+        } catch (Throwable ignored) {}
+    }
+
+    private void updateScanNotificationInternal(int done, int total, String currentTitle) {
+        try {
+            android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (nm == null) return;
+            if (total <= 0 || done >= total) {
+                nm.cancel(SCAN_NOTIF_ID);
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= 33 && !hasNotificationPermissionInternal()) return;
+            if (Build.VERSION.SDK_INT >= 26) {
+                android.app.NotificationChannel ch = new android.app.NotificationChannel(
+                        SCAN_NOTIF_CHANNEL,
+                        isEnglishLang() ? "Library scanning" : "Quét thư viện nhạc",
+                        android.app.NotificationManager.IMPORTANCE_LOW
+                );
+                ch.setShowBadge(false);
+                ch.enableVibration(false);
+                ch.setSound(null, null);
+                nm.createNotificationChannel(ch);
+            }
+            int safeDone = Math.max(0, Math.min(done, total));
+            String title = isEnglishLang() ? "Scanning track metadata..." : "Đang quét thông tin bài hát...";
+            String sub = safeDone + "/" + total;
+            if (currentTitle != null && !currentTitle.trim().isEmpty()) {
+                sub = sub + " • " + currentTitle.trim();
+            }
+            android.app.PendingIntent open = android.app.PendingIntent.getActivity(
+                    this,
+                    SCAN_NOTIF_ID,
+                    new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                    android.app.PendingIntent.FLAG_IMMUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT
+            );
+            android.app.Notification.Builder b = Build.VERSION.SDK_INT >= 26
+                    ? new android.app.Notification.Builder(this, SCAN_NOTIF_CHANNEL)
+                    : new android.app.Notification.Builder(this);
+            b.setSmallIcon(android.R.drawable.ic_popup_sync)
+                    .setContentTitle(title)
+                    .setContentText(sub)
+                    .setContentIntent(open)
+                    .setProgress(total, safeDone, false)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+            nm.notify(SCAN_NOTIF_ID, b.build());
+        } catch (Throwable ignored) {}
     }
 
     private boolean isIgnoringBatteryOptimizationsInternal() {
