@@ -3040,17 +3040,6 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
-        public void openAppPermissionSettings() {
-            runOnUiThread(() -> {
-                try {
-                    Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                    i.setData(Uri.parse("package:" + getPackageName()));
-                    startActivity(i);
-                } catch (Throwable ignored) {}
-            });
-        }
-
-        @JavascriptInterface
         public boolean hasNearbyPermission() { return hasNearbyPermissionInternal(); }
 
         @JavascriptInterface
