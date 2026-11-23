@@ -31,7 +31,7 @@
 
     function doLoad(play) {
         N.pending = false;
-        N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering';
+        N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering';
         const t = nativeTrack();
         const ar = ((document.getElementById('track-artist') || {}).textContent || '').split('|')[0].trim();
         try { AB.nativeAudioLoad(N.id, (t && t.name) || '', (t && t.artist) || ar || '', Math.round(N.startMs), !!play, N.vol, N.rate); } catch (e) {}
@@ -62,10 +62,11 @@
                 if (ns && ns.id === m[1]) { N.pos = ns.pos || 0; N.stamp = now(); N.dur = ns.dur || 0; N.buf = ns.buf || 0; N.st = ns.st; N.rate = ns.rate || 1; N.paused = !ns.pwr; N.ended = ns.st === 'ended'; }
             } catch (e) {}
             fire('loadstart');
+            N.wasReady = true; N.isPlaying = !N.paused;
             setTimeout(() => { N.hadMeta = true; ['loadedmetadata', 'durationchange', 'loadeddata', 'canplay'].forEach(fire); if (!N.paused) { fire('play'); fire('playing'); } }, 0);
             return;
         }
-        N.loaded = false; N.pending = true;
+        N.loaded = false; N.pending = true; N.wasReady = false; N.isPlaying = false;
         N.startMs = 0; N.paused = true; N.pos = 0; N.dur = 0; N.stamp = now(); N.st = 'buffering';
         fire('loadstart');
         // nếu không ai gọi play() ngay sau đó (vd. khôi phục ở trạng thái tạm dừng) thì vẫn nạp để có thời lượng/vị trí
@@ -147,7 +148,10 @@
             if (e.err) { N.err = true; fire('error'); return; }
             if (!hadDur && N.dur > 0) { N.hadMeta = true; ['loadedmetadata', 'durationchange', 'loadeddata'].forEach(fire); }
             if (e.st === 'buffering' && !N.paused) fire('waiting');
-            if (e.st === 'ready') { fire('canplay'); if (!N.paused) fire('playing'); }
+            const nowReady = e.st === 'ready', nowPlaying = nowReady && !N.paused;
+            if (nowReady && !N.wasReady) fire('canplay');
+            if (nowPlaying && !N.isPlaying) fire('playing');
+            N.wasReady = nowReady; N.isPlaying = nowPlaying;
             if (wasPaused && !N.paused) fire('play');
             if (!wasPaused && N.paused && e.st !== 'ended') fire('pause');
             if (e.ev === 'seeked') { fire('seeked'); }

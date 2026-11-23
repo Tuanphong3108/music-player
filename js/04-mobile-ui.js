@@ -399,7 +399,8 @@
                 if (tr) {
                     if (mMiniTitle) mMiniTitle.textContent = tr.name || 'Media Player';
                     if (mMiniArtist) mMiniArtist.textContent = tr.artist || 'UNKNOWN ARTIST';
-                    if (mMiniArt) {
+                    if (mMiniArt && !(mMiniArt._tr === tr && mMiniArt._cv === (tr.cover || ''))) {
+                        mMiniArt._tr = tr; mMiniArt._cv = tr.cover || '';
                         mMiniArt.innerHTML = '<span class="material-symbols-rounded">music_note</span>'
                             + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '');
                     }
