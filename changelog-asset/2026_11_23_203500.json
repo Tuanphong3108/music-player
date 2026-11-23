@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-23",
+  "vi": [
+    {
+      "content": "Chia sẻ tệp trực tiếp ở tầng native (shareNativeFile): khắc phục lỗi Failed to fetch khi chia sẻ nhạc trên Android, sao chép từ tệp gốc trên luồng nền rồi mở Share Sheet qua FileProvider.",
+      "icon": "share"
+    },
+    {
+      "content": "Tạo lại cơ sở dữ liệu (Rebuild Database): xóa sạch cache metadata/ảnh bìa đã lưu và quét lại thư viện để nạp lại metadata mới.",
+      "icon": "database"
+    },
+    {
+      "content": "Gỡ lời bài hát khỏi toàn bộ Widget & bỏ Lyrics Widget; tự đánh thức WebView khi thao tác trên Widget; thanh tiến độ Widget lấy trực tiếp từ MediaSession; sửa lỗi bố cục Widget 4×2 bị ép bẹp hàng nút điều khiển.",
+      "icon": "widgets"
+    },
+    {
+      "content": "Tải ảnh bìa tức thì khi chuyển bài từ màn hình khóa / khi thoát app qua luồng nền native, kèm bộ nhớ đệm ảnh theo bài và sửa lỗi chuyển bài ở màn hình khóa bị nhảy loạn.",
+      "icon": "image"
+    },
+    {
+      "content": "Chạy chữ (marquee) giữ tốc độ cố định ~38px/s và tự bỏ chạy chữ nếu tên bài đã vừa khung; chặn bấm nhầm menu chuột phải khi cảm ứng hơi khựng lag.",
+      "icon": "text_fields"
+    },
+    {
+      "content": "Khôi phục trạng thái & hàng đợi khi thoát ra vào lại: đồng bộ bài đang phát, danh sách phát tạm, thứ tự shuffle, chế độ lặp và hẹn giờ ngủ; sửa lỗi tab Danh sách phát hiện 0 bài lúc vào lại và sửa lỗi bấm phát từ Mini Player khôi phục bị nhảy về bài đầu.",
+      "icon": "restore"
+    },
+    {
+      "content": "Khớp trạng thái hàng đợi, shuffle, repeat & hẹn giờ ngủ mỗi 0,5s; khi hết giờ ngủ ở tầng native (cả theo phút lẫn theo số bài) sẽ đẩy thông báo \"Đã tạm dừng theo hẹn giờ\" lên Notification, và khi mở lại app sẽ tự đóng thông báo đó để hiện hộp thoại trên giao diện.",
+      "icon": "bedtime"
+    },
+    {
+      "content": "Khôi phục phiên & âm lượng mượt mà: nhận lại bài & làm sáng đúng bài trong hàng đợi tạm, tạm hạ âm lượng về 0% lúc đợi metadata & tua tới đoạn cũ, đặt Play/Pause theo trạng thái native rồi bật lại 100% (và tự trả 100% ngay khi thoát/ẩn app).",
+      "icon": "volume_up"
+    }
+  ],
+  "en": [
+    {
+      "content": "Direct native file sharing (shareNativeFile): fixes Failed to fetch on Android by copying from the source file in the background and opening the Share Sheet via FileProvider.",
+      "icon": "share"
+    },
+    {
+      "content": "Rebuild Database: clears cached metadata and cover art and rescans the library to re-read and save fresh metadata.",
+      "icon": "database"
+    },
+    {
+      "content": "Removed lyrics from all widgets and removed Lyrics Widget; wakes WebView on widget actions; reads widget progress directly from MediaSession; fixed 4×2 widget control buttons getting squished.",
+      "icon": "widgets"
+    },
+    {
+      "content": "Instant album art on lock-screen/background track skips via native background extraction with an in-memory art cache, plus fixed erratic lock-screen track skipping.",
+      "icon": "image"
+    },
+    {
+      "content": "Constant ~38px/s marquee speed that skips scrolling when the title already fits, and prevents accidental context menu triggers when touch input lags.",
+      "icon": "text_fields"
+    },
+    {
+      "content": "Session & queue restore on reopen/resume: syncs active track, queue, shuffle list, repeat mode, and sleep timer; fixes Playlists tab showing 0 tracks on reopen and resuming from Mini Player jumping to track 0.",
+      "icon": "restore"
+    },
+    {
+      "content": "0.5s state matching across queue, shuffle, repeat, and sleep timer; when native sleep timer ends (by time or track count), posts notification and dismisses it on reopen while showing the standard sleep-timer dialog.",
+      "icon": "bedtime"
+    },
+    {
+      "content": "Smooth session & volume restore: highlights the restored track in the queue, mutes to 0% while awaiting metadata and seeking to the saved position, applies native play/pause state, then restores 100% volume (and immediately resets to 100% on exit/background).",
+      "icon": "volume_up"
+    }
+  ]
+}
