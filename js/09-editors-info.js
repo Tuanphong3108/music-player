@@ -647,6 +647,7 @@
                 track._metaLoaded = true;
                 track._bgCoverChecked = true;
                 track._metaFromCache = true;
+                track._unsavedLocalEdit = !persisted;
                 if (typeof window.__saveTrackMetaToCache === 'function') {
                     try { window.__saveTrackMetaToCache(track); } catch (e) {}
                 }
