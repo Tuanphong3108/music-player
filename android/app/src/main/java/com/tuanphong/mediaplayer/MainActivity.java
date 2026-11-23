@@ -2305,6 +2305,7 @@ public class MainActivity extends Activity {
         callJs("window.__systemThemeChanged&&__systemThemeChanged()");
         callJs("window.__onAndroidPipModeChanged&&window.__onAndroidPipModeChanged(false)");
         callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(" + isIgnoringBatteryOptimizationsInternal() + ")");
+        if (pageReady) callJs("window.__onAndroidAppResume&&window.__onAndroidAppResume()");
     }
 
     @Override
@@ -2484,6 +2485,7 @@ public class MainActivity extends Activity {
         // ===== Trình phát native (ExoPlayer) =====
         @JavascriptInterface public boolean nativeAudioAvailable() { return true; }
         @JavascriptInterface public String nativeAudioState() { return NativeAudio.stateJson(); }
+        @JavascriptInterface public String nativeAudioQueueState() { return NativeAudio.queueStateJson(); }
         @JavascriptInterface public int nativeAudioSessionId() { return NativeAudio.sessionId(); }
         @JavascriptInterface public void nativeAudioLoad(final String id, final String title, final String artist, final long startMs, final boolean play, final float vol, final float rate) {
             NativeAudio.lastAck = android.os.SystemClock.elapsedRealtime();
