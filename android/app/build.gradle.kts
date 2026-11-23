@@ -19,22 +19,37 @@ run {
             }
             val sdkManager = candidates.firstOrNull { it.isFile }
             if (sdkManager != null) {
-                println("Installing missing Android Platform SDK 37 via ${sdkManager.absolutePath}...")
-                try {
-                    val licProc = ProcessBuilder(sdkManager.absolutePath, "--licenses")
-                        .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                        .redirectError(ProcessBuilder.Redirect.DISCARD)
-                        .start()
-                    licProc.outputStream.bufferedWriter().use { w ->
-                        repeat(100) { w.write("y\n") }
+                println("Installing missing Android Platform SDK 37 via ${sdkManager.absolutePath} (sdkDir=$sdkDir, writable=${file(sdkDir).canWrite()})...")
+                fun runSdk(printOut: Boolean, vararg args: String): Pair<Int, String> {
+                    val cmd = listOf(sdkManager.absolutePath) + args.toList()
+                    val proc = ProcessBuilder(cmd).redirectErrorStream(true).start()
+                    val writer = Thread {
+                        try {
+                            proc.outputStream.bufferedWriter().use { w ->
+                                repeat(100) { w.write("y\n") }
+                                w.flush()
+                            }
+                        } catch (_: Throwable) {}
                     }
-                    licProc.waitFor()
-                } catch (_: Throwable) {}
-                val instProc = ProcessBuilder(sdkManager.absolutePath, "platforms;android-37")
-                    .inheritIO()
-                    .start()
-                val exit = instProc.waitFor()
+                    writer.isDaemon = true
+                    writer.start()
+                    val out = proc.inputStream.bufferedReader().readText()
+                    val code = proc.waitFor()
+                    if (printOut && out.isNotBlank()) println(out.takeLast(4000))
+                    return code to out
+                }
+                runSdk(false, "--sdk_root=$sdkDir", "--licenses")
+                var (exit, _) = runSdk(true, "--sdk_root=$sdkDir", "platforms;android-37")
                 println("sdkmanager platforms;android-37 exited with code $exit")
+                if (exit != 0 || !platformJar.exists()) {
+                    val (exit3, _) = runSdk(true, "--sdk_root=$sdkDir", "--channel=3", "platforms;android-37")
+                    println("sdkmanager --channel=3 platforms;android-37 exited with code $exit3")
+                }
+                if (!platformJar.exists()) {
+                    val (_, listOut) = runSdk(false, "--sdk_root=$sdkDir", "--list")
+                    val avail = listOut.lines().filter { it.contains("platforms;android-3") }.take(20)
+                    println("Available android-3x platforms:\n" + avail.joinToString("\n"))
+                }
             } else {
                 println("Warning: sdkmanager not found under $sdkDir; cannot auto-install platforms;android-37")
             }
