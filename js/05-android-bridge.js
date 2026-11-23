@@ -78,6 +78,7 @@
                         if (isLibraryBatch && document.documentElement.classList.contains('m-ui')) {
                             if (typeof window.__syncMobileLibraryFromPlaylist === 'function') window.__syncMobileLibraryFromPlaylist();
                             if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
+                            if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
                             if (typeof window.__hydrateMobileLibraryCovers === 'function') window.__hydrateMobileLibraryCovers();
                         } else if (isExternalBatch && document.documentElement.classList.contains('m-ui')) {
                             document.body.classList.remove('m-early-card');
@@ -124,6 +125,7 @@
                         if (shuffleInitialized) generateShuffleOrder();
                     }
                     if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
+                    if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
                     clearTimeout(window.__plDeferT);
                     const isMobileHomeHiddenQueue = document.documentElement.classList.contains('m-ui')
                         && !document.body.classList.contains('m-playlist-open')
