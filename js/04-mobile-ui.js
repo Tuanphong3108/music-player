@@ -1479,6 +1479,7 @@
                     } catch (e) {}
                 };
                 window.__closeMobilePlDetailIfOpen = function () {
+                    if (typeof window.__handleAndroidBackAi === 'function' && window.__handleAndroidBackAi()) return true;
                     if (openedPlId) { setMobileLibTab(detailReturnTab); return true; }
                     return false;
                 };
