@@ -94,7 +94,7 @@ final class NativeAudio {
         @Override public void run() {
             if (p != null && loaded) {
                 emit("tick");
-                ph.postDelayed(this, 1000);
+                ph.postDelayed(this, 500);
             }
         }
     };
@@ -117,7 +117,7 @@ final class NativeAudio {
             }
             @Override public void onPlayWhenReadyChanged(boolean pwr, int reason) {
                 ph.removeCallbacks(ticker);
-                if (loaded) ph.postDelayed(ticker, 1000);
+                if (loaded) ph.postDelayed(ticker, 500);
                 emit("state");
             }
             @Override public void onPositionDiscontinuity(Player.PositionInfo o, Player.PositionInfo n, int reason) {
@@ -159,7 +159,7 @@ final class NativeAudio {
         p.setPlayWhenReady(play);
         emit("load");
         ph.removeCallbacks(ticker);
-        ph.postDelayed(ticker, 1000);
+        ph.postDelayed(ticker, 500);
     }
 
     static void play() { ph.post(NativeAudio::playImpl); }
@@ -281,13 +281,29 @@ final class NativeAudio {
         } catch (Throwable t) { return lastSnap; }
     }
 
+    private static long lastSvcTickAt = 0;
+    private static long lastTickSentAt = 0;
+
     private static void emit(String ev) {
         try {
             final JSONObject o = snapshot(ev);
-            lastSnap = o.toString(); lastSnapAt = SystemClock.elapsedRealtime();
-            uiH.post(() -> MediaService.onNative(o));
+            final String json = o.toString();
+            final long now = SystemClock.elapsedRealtime();
+            lastSnap = json;
+            lastSnapAt = now;
+            final boolean isTick = "tick".equals(ev);
+            // MediaSession tự nội suy vị trí theo tốc độ phát -> giãn tick xuống 1.5s để không spam IPC hệ thống
+            if (!isTick || now - lastSvcTickAt >= 1500) {
+                lastSvcTickAt = now;
+                uiH.post(() -> MediaService.onNative(o));
+            }
             MainActivity a = MainActivity.instance;
-            if (a != null) a.evalAck("window.__nativeAudioEv&&window.__nativeAudioEv(" + o.toString() + ")");
+            if (a != null) {
+                // Nếu WebView chưa xử lý xong tick trước (< 1.5s) thì bỏ qua tick trùng để không dồn hàng đợi gây lag UI
+                if (isTick && lastTickSentAt > lastAck && now - lastTickSentAt < 1500) return;
+                if (isTick) lastTickSentAt = now;
+                a.evalAck("window.__nativeAudioEv&&window.__nativeAudioEv(" + json + ")");
+            }
         } catch (Throwable ignored) {}
     }
 }
