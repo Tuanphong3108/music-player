@@ -325,7 +325,7 @@
                 window.__nativeAudioState.adoptId = matchedTrack.nativeId;
             }
             window.__adoptNative = true;
-            window.__restoreOnce = { pos: (boot.pos || 0) / 1000, play: !!boot.pwr };
+            window.__restoreOnce = { pos: (boot.pos || 0) / 1000, play: !!boot.pwr, fromNativeSession: true };
             playTrack(idx);
             prioritizeTrack(idx);
             applyPanels();
@@ -338,7 +338,7 @@
         window.__pendingMiniResume = false;
         const resumePos = (saved && saved.pos > 0) ? saved.pos : 0;
         const resumeDur = (saved && saved.dur > 0) ? saved.dur : 0;
-        window.__restoreOnce = { pos: resumePos, dur: resumeDur, play: shouldAutoPlay };
+        window.__restoreOnce = { pos: resumePos, dur: resumeDur, play: shouldAutoPlay, fromNativeSession: false };
         playTrack(idx);
         prioritizeTrack(idx);
         applyPanels();
@@ -385,7 +385,7 @@
                     window.__nativeAudioState.adoptId = tr.nativeId;
                 }
                 window.__adoptNative = true;
-                window.__restoreOnce = { pos: (s.pos || 0) / 1000, play: !!s.pwr };
+                window.__restoreOnce = { pos: (s.pos || 0) / 1000, play: !!s.pwr, fromNativeSession: true };
                 playTrack(idx);
                 if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
             }
