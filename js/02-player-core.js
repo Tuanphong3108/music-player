@@ -1423,11 +1423,85 @@
         }
         document.getElementById('locate-btn').addEventListener('click', (e) => { e.stopPropagation(); locateCurrentTrack(true); });
 
+        // Cơ chế nhường luồng: khi người dùng chọn bài, tạm dừng quét nền 3 luồng để dồn toàn bộ I/O + CPU đọc full metadata & lyric embed cho bài đang chọn
+        let priorityMetaCount = 0;
+        let priorityMetaWaiters = [];
+        window.__enterPriorityMeta = function () { priorityMetaCount++; };
+        window.__leavePriorityMeta = function () {
+            priorityMetaCount = Math.max(0, priorityMetaCount - 1);
+            if (priorityMetaCount === 0 && priorityMetaWaiters.length) {
+                const ws = priorityMetaWaiters.splice(0);
+                ws.forEach(fn => { try { fn(); } catch (e) {} });
+            }
+        };
+        window.__waitPriorityMeta = function () {
+            if (priorityMetaCount <= 0) return Promise.resolve();
+            return new Promise(res => priorityMetaWaiters.push(res));
+        };
+
+        function extractJsMediaTagsLyrics(t) {
+            if (!t) return '';
+            const candidates = [t.USLT, t.lyrics, t['©lyr'], t.LYRICS, t.UNSYNCEDLYRICS, t.unsyncedlyrics];
+            for (const c of candidates) {
+                if (!c) continue;
+                let v = '';
+                if (typeof c === 'string') v = c;
+                else if (typeof c.data === 'string') v = c.data;
+                else if (c.data && typeof c.data === 'object') v = c.data.lyrics || c.data.text || '';
+                else if (typeof c.lyrics === 'string') v = c.lyrics;
+                if (v && v.trim()) return v;
+            }
+            return '';
+        }
+
+        function readTagsWithJsMediaTags(targetFile) {
+            if (!targetFile || !window.jsmediatags) return Promise.resolve(null);
+            return new Promise((resolve) => {
+                try {
+                    window.jsmediatags.read(targetFile, {
+                        onSuccess: function (tag) {
+                            const t = (tag && tag.tags) || {};
+                            const c = t.composer || t.TCOM || t['©wrt'] || t.COMPOSER;
+                            let comp = c ? (typeof c === 'object' ? (c.data != null ? c.data : '') : c) : '';
+                            if (Array.isArray(comp)) comp = comp.join(', ');
+                            const ly = extractJsMediaTagsLyrics(t);
+                            let picUrl = null;
+                            if (t.picture) {
+                                const { data, format } = t.picture;
+                                const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+                                let bin = '';
+                                for (let i = 0; i < bytes.length; i += 8192) {
+                                    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+                                }
+                                picUrl = `data:${format || 'image/jpeg'};base64,${window.btoa(bin)}`;
+                            }
+                            resolve({
+                                title: t.title || '',
+                                artist: t.artist || '',
+                                album: t.album || '',
+                                year: t.year || '',
+                                genre: t.genre || '',
+                                composer: String(comp || ''),
+                                lyrics: ly || '',
+                                pictureDataUrl: picUrl,
+                                hasPicture: !!picUrl,
+                                source: 'jsmediatags'
+                            });
+                        },
+                        onError: function () { resolve(null); }
+                    });
+                } catch (e) { resolve(null); }
+            });
+        }
+
         let nativeMetaEndpointSupported = true;
         async function readCompleteTrackTags(track, opts) {
             if (!track) return null;
             const preferThumb = !!(opts && opts.preferThumb);
-            // 1. Trên Android native: ưu tiên gọi endpoint bất đồng bộ /meta/<id> (chạy trên luồng IO của WebView -> đọc song song 3 tệp cùng lúc không chặn UI)
+            const includeLyrics = !!(opts && opts.includeLyrics);
+            let nativeResult = null;
+
+            // 1. Trên Android native: gọi endpoint bất đồng bộ /meta/<id> (chạy trên luồng IO của WebView)
             if (track.nativeId && window.IS_ANDROID_APP) {
                 let m = null;
                 if (nativeMetaEndpointSupported) {
@@ -1469,7 +1543,7 @@
                             coverDataUrl = m.thumb;
                         }
                     }
-                    return {
+                    nativeResult = {
                         title: m.title || '',
                         artist: m.artist || '',
                         album: m.album || '',
@@ -1481,10 +1555,13 @@
                         hasPicture: !!m.hasPicture,
                         source: 'native'
                     };
+                    // Nếu chỉ quét nhanh nền danh sách (không cần lyric embed) -> trả về ngay
+                    if (!includeLyrics) return nativeResult;
                 }
             }
 
-            // 2. Đọc bằng jsmediatags trên TOÀN BỘ tệp (không cắt 2MB đầu để tránh mất ảnh bìa lớn hoặc tag cuối file ID3v1/APEv2/M4A)
+            // 2. Đọc bằng jsmediatags trên TOÀN BỘ tệp để lấy đủ Lyric Embed (USLT/©lyr/LYRICS) và mọi tag còn thiếu
+            let jsResult = null;
             try {
                 let targetFile = (track.file && track.file.size > 0 && !track.file.__fromLibrary) ? track.file : null;
                 if (!targetFile && track.nativeStreamUrl) {
@@ -1494,95 +1571,83 @@
                         targetFile = new File([bl], track.nativeName || (track.name + '.' + (track.ext || 'mp3').toLowerCase()), { type: bl.type || 'audio/mpeg' });
                     }
                 }
-                if (!targetFile || !window.jsmediatags) return null;
-                return await new Promise((resolve) => {
-                    window.jsmediatags.read(targetFile, {
-                        onSuccess: function (tag) {
-                            const t = (tag && tag.tags) || {};
-                            const c = t.composer || t.TCOM || t['©wrt'] || t.COMPOSER;
-                            let comp = c ? (typeof c === 'object' ? (c.data != null ? c.data : '') : c) : '';
-                            if (Array.isArray(comp)) comp = comp.join(', ');
-                            let ly = '';
-                            if (t.USLT) ly = typeof t.USLT.data === 'object' ? t.USLT.data.lyrics : t.USLT.data;
-                            let picUrl = null;
-                            if (t.picture) {
-                                const { data, format } = t.picture;
-                                const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-                                let bin = '';
-                                for (let i = 0; i < bytes.length; i += 8192) {
-                                    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
-                                }
-                                picUrl = `data:${format || 'image/jpeg'};base64,${window.btoa(bin)}`;
-                            }
-                            resolve({
-                                title: t.title || '',
-                                artist: t.artist || '',
-                                album: t.album || '',
-                                year: t.year || '',
-                                genre: t.genre || '',
-                                composer: String(comp || ''),
-                                lyrics: ly || '',
-                                pictureDataUrl: picUrl,
-                                hasPicture: !!picUrl,
-                                source: 'jsmediatags'
-                            });
-                        },
-                        onError: function () { resolve(null); }
-                    });
-                });
-            } catch (e) {
-                return null;
+                if (targetFile) {
+                    jsResult = await readTagsWithJsMediaTags(targetFile);
+                }
+            } catch (e) {}
+
+            if (nativeResult && jsResult) {
+                return {
+                    title: nativeResult.title || jsResult.title || '',
+                    artist: nativeResult.artist || jsResult.artist || '',
+                    album: nativeResult.album || jsResult.album || '',
+                    year: nativeResult.year || jsResult.year || '',
+                    genre: nativeResult.genre || jsResult.genre || '',
+                    composer: nativeResult.composer || jsResult.composer || '',
+                    lyrics: jsResult.lyrics || '',
+                    pictureDataUrl: nativeResult.pictureDataUrl || jsResult.pictureDataUrl || null,
+                    hasPicture: !!(nativeResult.hasPicture || jsResult.hasPicture),
+                    source: 'native+jsmediatags'
+                };
             }
+            return nativeResult || jsResult || null;
         }
         window.__readCompleteTrackTags = readCompleteTrackTags;
 
         async function hydrateTrackTags(track, index, src, onFail) {
             if (!track) return;
-            const meta = await readCompleteTrackTags(track);
-            if (!meta) {
-                if (typeof onFail === 'function') onFail();
-                return;
-            }
-            let changed = false;
-            if (meta.title && (!track.name || track.name === track.rawName)) { track.name = meta.title; changed = true; }
-            if (meta.artist && (!track.artist || track.artist === 'UNKNOWN ARTIST')) { track.artist = meta.artist; changed = true; }
-            if (meta.album && (!track.album || track.album === 'Unknown Album')) { track.album = meta.album; changed = true; }
-            if (meta.year && !track.year) { track.year = meta.year; changed = true; }
-            if (meta.genre && !track.genre) { track.genre = meta.genre; changed = true; }
-            if (meta.composer && !track.composer) { track.composer = meta.composer; changed = true; }
-            if (meta.lyrics && !track.lyricsRaw) {
-                track.lyricsRaw = meta.lyrics;
-                track.lyrics = parseLRC(meta.lyrics);
-                changed = true;
-            }
-            if (meta.pictureDataUrl) {
-                if (track.cover !== meta.pictureDataUrl || !track._hasRealCover) {
-                    track.cover = meta.pictureDataUrl;
-                    track._hasRealCover = true;
+            window.__enterPriorityMeta();
+            try {
+                const meta = await readCompleteTrackTags(track, { includeLyrics: true, preferThumb: false });
+                if (!meta) {
+                    if (typeof onFail === 'function') onFail();
+                    return;
+                }
+                let changed = false;
+                if (meta.title && (!track.name || track.name === track.rawName)) { track.name = meta.title; changed = true; }
+                if (meta.artist && (!track.artist || track.artist === 'UNKNOWN ARTIST')) { track.artist = meta.artist; changed = true; }
+                if (meta.album && (!track.album || track.album === 'Unknown Album')) { track.album = meta.album; changed = true; }
+                if (meta.year && !track.year) { track.year = meta.year; changed = true; }
+                if (meta.genre && !track.genre) { track.genre = meta.genre; changed = true; }
+                if (meta.composer && !track.composer) { track.composer = meta.composer; changed = true; }
+                if (meta.lyrics && !track.lyricsRaw) {
+                    track.lyricsRaw = meta.lyrics;
+                    track.lyrics = parseLRC(meta.lyrics);
                     changed = true;
                 }
-            } else if (!meta.hasPicture && !track._hasRealCover && track.cover) {
-                track.cover = null;
-                changed = true;
-            }
-            if (typeof window.__saveTrackMetaToCache === 'function') {
-                window.__saveTrackMetaToCache(track);
-            }
-            if (changed && playlist[currentIndex] === track) {
-                trackNameEl.innerText = track.name;
-                trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
-                if (track.cover) {
-                    artImg.src = track.cover;
-                    artImg.classList.remove('hidden');
-                    artPlaceholder.classList.add('hidden');
-                    bgPreview.style.backgroundImage = `url(${track.cover})`;
-                    refreshDynamicAccent(track);
+                if (meta.pictureDataUrl) {
+                    if (track.cover !== meta.pictureDataUrl || !track._hasRealCover) {
+                        track.cover = meta.pictureDataUrl;
+                        track._hasRealCover = true;
+                        changed = true;
+                    }
+                } else if (!meta.hasPicture && !track._hasRealCover && track.cover) {
+                    track.cover = null;
+                    changed = true;
                 }
-                renderLyrics();
-                updatePlaylistUI();
-                updateMediaSession();
-                updateFsUI();
-                if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+                track._fullTagsHydrated = true;
+                if (typeof window.__saveTrackMetaToCache === 'function') {
+                    window.__saveTrackMetaToCache(track);
+                }
+                if (changed && playlist[currentIndex] === track) {
+                    trackNameEl.innerText = track.name;
+                    trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
+                    if (track.cover) {
+                        artImg.src = track.cover;
+                        artImg.classList.remove('hidden');
+                        artPlaceholder.classList.add('hidden');
+                        bgPreview.style.backgroundImage = `url(${track.cover})`;
+                        refreshDynamicAccent(track);
+                    }
+                    renderLyrics();
+                    if (typeof syncLyrics === 'function') syncLyrics();
+                    updatePlaylistUI();
+                    updateMediaSession();
+                    updateFsUI();
+                    if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+                }
+            } finally {
+                window.__leavePriorityMeta();
             }
         }
 
@@ -1693,13 +1758,13 @@
                     hydrateAndPlayLibraryTrack(track, index, mySeq);
                 };
                 audio.addEventListener('error', onStreamErr, { once: true });
-                if (!track._tagsHydrated || !track._hasRealCover) {
+                if (!track._fullTagsHydrated) {
                     track._tagsHydrated = true;
-                    // Stream trực tiếp -> đọc đủ toàn bộ metadata + ảnh bìa gốc qua native/full file sau 200ms
+                    // Khi bài được chọn -> tạm nhường quét nền để dồn sức đọc full metadata (kể cả lyric embed + ảnh gốc) cho bài này trước
                     setTimeout(() => {
-                        if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track || track._prioDone) return;
+                        if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track) return;
                         hydrateTrackTags(track, index);
-                    }, 200);
+                    }, 0);
                 }
                 if (track.nativeLrcUrl && !track.lyricsRaw && !track._lrcTried) {
                     track._lrcTried = true;
