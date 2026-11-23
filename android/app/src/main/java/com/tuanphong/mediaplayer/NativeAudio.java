@@ -64,9 +64,13 @@ final class NativeAudio {
     static volatile long lastAck = 0;
 
     private static long sleepAt = 0;
+    private static long sleepDurationMin = 0;
     private static int sleepTracks = 0;
     private static int sleepTotalTracks = 0;
-    private static final Runnable sleepRun = () -> { sleepAt = 0; sleepTracks = 0; sleepTotalTracks = 0; pause(); emit("sleep"); };
+    private static volatile boolean sleepFiredPending = false;
+    private static volatile String sleepFiredType = "";
+    private static volatile long sleepFiredTotal = 0;
+    private static final Runnable sleepRun = () -> triggerSleepEnded();
     /** Hẹn giờ ngủ do app giữ để vẫn tạm dừng đúng giờ / đúng số bài khi WebView bị đóng băng. endAtMs = 0: không hẹn theo giờ; tracks = 0: không hẹn theo bài. */
     static void setSleep(long endAtMs, int tracks) {
         ph.removeCallbacks(sleepRun);
@@ -74,7 +78,97 @@ final class NativeAudio {
         int tr = Math.max(0, tracks);
         sleepTracks = tr;
         sleepTotalTracks = tr > 0 ? tr : 0;
-        if (endAtMs > 0) ph.postDelayed(sleepRun, Math.max(0, endAtMs - System.currentTimeMillis()));
+        if (endAtMs > 0L) {
+            long rem = Math.max(0L, endAtMs - System.currentTimeMillis());
+            sleepDurationMin = Math.max(1L, Math.round(rem / 60000.0));
+            ph.postDelayed(sleepRun, rem);
+        } else {
+            sleepDurationMin = 0L;
+        }
+        if (sleepAt > 0L || tr > 0) {
+            sleepFiredPending = false;
+            sleepFiredType = "";
+            sleepFiredTotal = 0L;
+        }
+    }
+
+    static void triggerSleepEnded() {
+        String type = sleepTracks > 0 ? "tracks" : "time";
+        long total = "tracks".equals(type) ? Math.max(1L, sleepTotalTracks) : Math.max(1L, sleepDurationMin);
+        sleepAt = 0L;
+        sleepDurationMin = 0L;
+        sleepTracks = 0;
+        sleepTotalTracks = 0;
+        ph.removeCallbacks(sleepRun);
+        sleepFiredPending = true;
+        sleepFiredType = type;
+        sleepFiredTotal = total;
+        pauseImpl();
+        emit("sleep");
+        if (app != null) {
+            showSleepEndedNotification(app, type, total);
+        }
+    }
+
+    static void consumeSleepEndedNotice() {
+        sleepFiredPending = false;
+        sleepFiredType = "";
+        sleepFiredTotal = 0L;
+        if (app != null) {
+            cancelSleepEndedNotification(app);
+        }
+    }
+
+    private static final String SLEEP_NOTIF_CHANNEL = "mp_sleep_timer";
+    private static final int SLEEP_NOTIF_ID = 2027;
+
+    static void cancelSleepEndedNotification(Context ctx) {
+        if (ctx == null) return;
+        try {
+            NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) nm.cancel(SLEEP_NOTIF_ID);
+        } catch (Throwable ignored) {}
+    }
+
+    private static void showSleepEndedNotification(Context ctx, String type, long total) {
+        try {
+            NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) return;
+            boolean isEn = "en".equalsIgnoreCase(ctx.getSharedPreferences("app", Context.MODE_PRIVATE).getString("lang", "vi"));
+            if (Build.VERSION.SDK_INT >= 26) {
+                NotificationChannel ch = new NotificationChannel(
+                        SLEEP_NOTIF_CHANNEL,
+                        isEn ? "Sleep timer" : "Hẹn giờ ngủ",
+                        NotificationManager.IMPORTANCE_DEFAULT
+                );
+                ch.setShowBadge(true);
+                nm.createNotificationChannel(ch);
+            }
+            String title = isEn ? "Paused by sleep timer" : "Đã tự tạm dừng do hết giờ ngủ";
+            String body = "tracks".equals(type)
+                    ? (isEn
+                        ? "Playback paused automatically because the timer for " + total + " tracks finished."
+                        : "Nhạc đã tự tạm dừng vì hẹn giờ sau " + total + " bài đã hoàn thành.")
+                    : (isEn
+                        ? "Playback paused automatically because the " + total + "-minute timer ran out."
+                        : "Nhạc đã tự tạm dừng vì hẹn giờ " + total + " phút đã hết.");
+            PendingIntent open = PendingIntent.getActivity(
+                    ctx,
+                    SLEEP_NOTIF_ID,
+                    new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+            );
+            Notification.Builder b = Build.VERSION.SDK_INT >= 26
+                    ? new Notification.Builder(ctx, SLEEP_NOTIF_CHANNEL)
+                    : new Notification.Builder(ctx);
+            b.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setContentIntent(open)
+                    .setAutoCancel(true)
+                    .setVisibility(Notification.VISIBILITY_PUBLIC);
+            nm.notify(SLEEP_NOTIF_ID, b.build());
+        } catch (Throwable ignored) {}
     }
 
     static void post(Runnable r) { ph.post(r); }
@@ -282,6 +376,9 @@ final class NativeAudio {
             o.put("curId", curId == null ? "" : curId);
             String curLoc = MainActivity.resolveLocation(curId);
             o.put("curLoc", curLoc == null ? "" : curLoc);
+            o.put("sleepFired", sleepFiredPending);
+            o.put("sleepFiredType", sleepFiredType);
+            o.put("sleepFiredTotal", sleepFiredTotal);
             return o.toString();
         } catch (Throwable t) {
             return "{\"count\":0,\"ids\":[],\"locations\":[],\"shuffle\":false,\"order\":[],\"repeat\":0,\"sleepActive\":false,\"sleepAt\":0,\"sleepRemainingMs\":0,\"sleepTracks\":0,\"sleepTotalTracks\":0,\"curId\":\"\",\"curLoc\":\"\"}";
@@ -295,7 +392,7 @@ final class NativeAudio {
         if (endedHandled) return;
         endedHandled = true;
         if (!webAlive()) {
-            if (sleepTracks > 0 && --sleepTracks == 0) { sleepTotalTracks = 0; emit("sleep"); return; }   // trang đang chết nên app tự đếm số bài hẹn giờ
+            if (sleepTracks > 0 && --sleepTracks == 0) { triggerSleepEnded(); return; }   // trang đang chết nên app tự đếm số bài hẹn giờ
             if (hasNext()) { advance(); return; }
         }
         emit("ended");
@@ -352,6 +449,9 @@ final class NativeAudio {
             o.put("sleepActive", remMs > 0L || sleepTracks > 0);
             o.put("sleepRemainingMs", remMs);
             o.put("sleepTracks", sleepTracks);
+            o.put("sleepFired", sleepFiredPending);
+            o.put("sleepFiredType", sleepFiredType);
+            o.put("sleepFiredTotal", sleepFiredTotal);
         } catch (Throwable ignored) {}
         return o;
     }
@@ -362,11 +462,7 @@ final class NativeAudio {
     private static void matchStateEveryHalfSec() {
         long nowMs = System.currentTimeMillis();
         if (sleepAt > 0L && nowMs >= sleepAt) {
-            sleepAt = 0L;
-            sleepTracks = 0;
-            sleepTotalTracks = 0;
-            pauseImpl();
-            emit("sleep");
+            triggerSleepEnded();
             return;
         }
         if (nowMs - lastMatchSyncAt < 2000L) return;
