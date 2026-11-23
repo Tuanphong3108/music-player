@@ -277,6 +277,18 @@ public class MainActivity extends Activity {
         web = new WebView(this);
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
         setContentView(root);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            if (customView != null) {
+                v.setPadding(0, 0, 0, 0);
+                return insets;
+            }
+            androidx.core.graphics.Insets bars = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars()
+                            | androidx.core.view.WindowInsetsCompat.Type.displayCutout()
+                            | androidx.core.view.WindowInsetsCompat.Type.ime());
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return insets;
+        });
         applyTheme(themeColor);
         NativeAudio.warmUp(this);
 
@@ -929,21 +941,50 @@ public class MainActivity extends Activity {
         return f;
     }
 
-    /** Khung app (thanh trạng thái, thanh điều hướng, nền WebView) ăn theo màu accent của trang. */
+    /** Khung app (thanh trạng thái, thanh điều hướng, nền WebView) ăn theo màu accent của trang, tương thích Edge-to-Edge SDK 35-37. */
     void applyTheme(int c) {
         themeColor = 0xFF000000 | c;
-        getWindow().setStatusBarColor(themeColor);
-        getWindow().setNavigationBarColor(themeColor);
+        if (Build.VERSION.SDK_INT < 35) {
+            getWindow().setStatusBarColor(themeColor);
+            getWindow().setNavigationBarColor(themeColor);
+        }
         if (root != null) root.setBackgroundColor(themeColor);
         if (web != null) web.setBackgroundColor(themeColor);
-        if (customView == null) getWindow().getDecorView().setSystemUiVisibility(barFlags());
+        double lum = (0.299 * ((themeColor >> 16) & 255) + 0.587 * ((themeColor >> 8) & 255) + 0.114 * (themeColor & 255)) / 255.0;
+        boolean lightBars = lum > 0.6;
+        try {
+            androidx.core.view.WindowInsetsControllerCompat ctrl =
+                    androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (ctrl != null) {
+                ctrl.setAppearanceLightStatusBars(lightBars);
+                ctrl.setAppearanceLightNavigationBars(lightBars);
+            }
+        } catch (Throwable ignored) {}
+        if (Build.VERSION.SDK_INT < 35 && customView == null) {
+            getWindow().getDecorView().setSystemUiVisibility(barFlags());
+        }
     }
 
     private void hideBars(boolean hide) {
-        getWindow().getDecorView().setSystemUiVisibility(hide
-                ? View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                  | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                : barFlags());
+        try {
+            androidx.core.view.WindowInsetsControllerCompat ctrl =
+                    androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (ctrl != null) {
+                ctrl.setSystemBarsBehavior(androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                if (hide) ctrl.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+                else ctrl.show(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            }
+        } catch (Throwable ignored) {}
+        if (Build.VERSION.SDK_INT < 35) {
+            getWindow().getDecorView().setSystemUiVisibility(hide
+                    ? View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                      | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    : barFlags());
+        }
+        if (root != null) {
+            if (hide) root.setPadding(0, 0, 0, 0);
+            else androidx.core.view.ViewCompat.requestApplyInsets(root);
+        }
     }
 
     private boolean isOnline() {
@@ -1587,30 +1628,47 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 101 && hasMediaPermissionInternal() && !hasAllFilesAccessInternal()) {
-            openAllFilesAccessSettings();   // đã cho đọc nhạc -> chuyển tiếp sang cấp quyền toàn bộ tệp
+        if (requestCode == 101 && hasMediaPermissionInternal() && hasImagesPermissionInternal() && !hasAllFilesAccessInternal()) {
+            openAllFilesAccessSettings();   // đã cho đọc nhạc & toàn bộ hình ảnh -> chuyển tiếp sang cấp quyền toàn bộ tệp
         }
         if (requestCode == 104) {
             callJs("window.__onNearbyPermResult&&window.__onNearbyPermResult(" + hasNearbyPermissionInternal() + ")");
         }
-        if (requestCode == 101 || requestCode == 102 || requestCode == 103) {
+        if (requestCode == 101 || requestCode == 102 || requestCode == 103 || requestCode == 105) {
             callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
         }
     }
 
     private String getPermissionsStatusJson() {
-        boolean media = hasFullMediaAccessInternal();
+        boolean audio = hasMediaPermissionInternal();
+        boolean images = hasImagesPermissionInternal();
+        boolean allFiles = hasAllFilesAccessInternal();
+        boolean media = audio && images && allFiles;
         boolean notif = hasNotificationPermissionInternal();
         boolean battery = isIgnoringBatteryOptimizationsInternal();
         try {
             JSONObject o = new JSONObject();
             o.put("media", media);
+            o.put("audio", audio);
+            o.put("images", images);
+            o.put("allFiles", allFiles);
             o.put("notifications", notif);
             o.put("battery", battery);
             return o.toString();
         } catch (Throwable ignored) {
-            return "{\"media\":" + media + ",\"notifications\":" + notif + ",\"battery\":" + battery + "}";
+            return "{\"media\":" + media + ",\"audio\":" + audio + ",\"images\":" + images + ",\"allFiles\":" + allFiles + ",\"notifications\":" + notif + ",\"battery\":" + battery + "}";
         }
+    }
+
+    /** Quyền "Truy cập tất cả hình ảnh" (Android 13+): kiểm tra đúng READ_MEDIA_IMAGES (chọn một phần READ_MEDIA_VISUAL_USER_SELECTED vẫn trả false). */
+    private boolean hasImagesPermissionInternal() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            return checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED;
+        }
+        if (Build.VERSION.SDK_INT >= 23) {
+            return checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
+        return true;
     }
 
     /** Quyền "Quản lý toàn bộ tệp" (Android 11+) - cần để Metadata Editor ghi trực tiếp vào tệp nhạc. */
@@ -1624,9 +1682,9 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    /** Đủ quyền để app dùng: đọc nhạc + truy cập toàn bộ tệp. */
+    /** Đủ quyền để app dùng: đọc nhạc + truy cập tất cả hình ảnh + truy cập toàn bộ tệp. */
     private boolean hasFullMediaAccessInternal() {
-        return hasMediaPermissionInternal() && hasAllFilesAccessInternal();
+        return hasMediaPermissionInternal() && hasImagesPermissionInternal() && hasAllFilesAccessInternal();
     }
 
     private void openAllFilesAccessSettings() {
@@ -2931,16 +2989,64 @@ public class MainActivity extends Activity {
                     callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
                     return;
                 }
-                if (!hasMediaPermissionInternal()) {
-                    // Bước 1: quyền đọc nhạc; xong sẽ tự chuyển sang bước 2 (toàn bộ tệp) trong onRequestPermissionsResult
+                if (!hasMediaPermissionInternal() || !hasImagesPermissionInternal()) {
                     if (Build.VERSION.SDK_INT >= 33) {
-                        requestPermissions(new String[]{Manifest.permission.READ_MEDIA_AUDIO}, 101);
+                        List<String> req = new ArrayList<>();
+                        if (!hasMediaPermissionInternal()) req.add(Manifest.permission.READ_MEDIA_AUDIO);
+                        if (!hasImagesPermissionInternal()) req.add(Manifest.permission.READ_MEDIA_IMAGES);
+                        requestPermissions(req.toArray(new String[0]), 101);
                     } else if (Build.VERSION.SDK_INT >= 23) {
                         requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
                     }
                 } else {
                     openAllFilesAccessSettings();
                 }
+            });
+        }
+
+        @JavascriptInterface
+        public void requestAudioPermission() {
+            runOnUiThread(() -> {
+                if (hasMediaPermissionInternal()) {
+                    callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 33) requestPermissions(new String[]{Manifest.permission.READ_MEDIA_AUDIO}, 105);
+                else if (Build.VERSION.SDK_INT >= 23) requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 105);
+            });
+        }
+
+        @JavascriptInterface
+        public void requestImagesPermission() {
+            runOnUiThread(() -> {
+                if (hasImagesPermissionInternal()) {
+                    callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
+                    return;
+                }
+                if (Build.VERSION.SDK_INT >= 33) requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, 105);
+                else if (Build.VERSION.SDK_INT >= 23) requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 105);
+            });
+        }
+
+        @JavascriptInterface
+        public void requestAllFilesPermission() {
+            runOnUiThread(() -> {
+                if (hasAllFilesAccessInternal()) {
+                    callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")");
+                    return;
+                }
+                openAllFilesAccessSettings();
+            });
+        }
+
+        @JavascriptInterface
+        public void openAppPermissionSettings() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    i.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(i);
+                } catch (Throwable ignored) {}
             });
         }
 
