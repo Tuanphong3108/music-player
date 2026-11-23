@@ -2289,7 +2289,9 @@ public class MainActivity extends Activity {
                     isEnglishLang() ? "Installer closed without completing update" : "Trình cài đặt đã đóng hoặc gặp lỗi khi cài") + ")");
         }
         appLeftHome = false;
-        NativeAudio.cancelSleepEndedNotification(this);
+        if (NativeAudio.hasPendingSleepEndedNotice()) {
+            NativeAudio.notifyWebSleepEndedIfReady();
+        }
         NativeAudio.post(() -> NativeAudio.setVolume(1f));
         try { if (web != null) { web.onResume(); web.resumeTimers(); } } catch (Throwable ignored) {}
         scheduleBlankCheck(5000L);
@@ -2311,7 +2313,10 @@ public class MainActivity extends Activity {
         callJs("window.__systemThemeChanged&&__systemThemeChanged()");
         callJs("window.__onAndroidPipModeChanged&&window.__onAndroidPipModeChanged(false)");
         callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(" + isIgnoringBatteryOptimizationsInternal() + ")");
-        if (pageReady) callJs("window.__onAndroidAppResume&&window.__onAndroidAppResume()");
+        if (pageReady) {
+            callJs("window.__onAndroidAppResume&&window.__onAndroidAppResume()");
+            NativeAudio.notifyWebSleepEndedIfReady();
+        }
     }
 
     @Override
