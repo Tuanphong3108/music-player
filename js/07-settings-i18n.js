@@ -176,8 +176,26 @@
         const gsDone = gsStore.get('getting_started_done') === 'true';
         const gsShouldShow = gsStore.get('getting_started_pending') === '1' ||
                              (!savedLanguage && !gsDone);
+        let gsPermGateOnly = false;
+        function needsAndroidPermGate() {
+            if (!window.IS_ANDROID_APP || !window.AndroidBridge || typeof window.AndroidBridge.getPermissionsStatus !== 'function') return false;
+            try {
+                const info = JSON.parse(window.AndroidBridge.getPermissionsStatus() || '{}');
+                return !info.media || info.audio === false || info.images === false || info.allFiles === false;
+            } catch (e) { return false; }
+        }
+        function openAndroidPermGateIfNeeded() {
+            if (gsShouldShow || !gsDone) return;
+            if (!needsAndroidPermGate()) return;
+            if (gettingStartedOverlay.style.display === 'block') return;
+            gsPermGateOnly = true;
+            gettingStartedIframe.src = 'getting_started.html';
+            gettingStartedOverlay.style.display = 'block';
+        }
+        window.__checkAndroidPermGate = openAndroidPermGateIfNeeded;
 
         function closeGettingStarted() {
+            gsPermGateOnly = false;
             gettingStartedOverlay.style.display = 'none';
             gettingStartedIframe.src = 'about:blank';
         }
@@ -234,6 +252,7 @@
                 accents: JSON.parse(JSON.stringify(accents)),
                 isAndroidDevice: !!window.IS_ANDROID_DEVICE,
                 isAndroidApp: !!window.IS_ANDROID_APP,
+                permGateOnly: !!gsPermGateOnly,
                 systemAccent: systemAccentHex || null,
                 font
             }, '*');
@@ -243,6 +262,8 @@
             gsStore.set('getting_started_pending', '1');
             gettingStartedIframe.src = 'getting_started.html';
             gettingStartedOverlay.style.display = 'block';
+        } else {
+            openAndroidPermGateIfNeeded();
         }
         settingLanguage.value = savedLanguage || 'vi';
         loadLanguage(savedLanguage || 'vi');
@@ -253,6 +274,12 @@
             if (d && typeof d === 'object' && fromGs) {
                 if (d.type === 'gs-ready') sendGsInit();
                 else if (d.type === 'gs-lang' && (d.lang === 'vi' || d.lang === 'en')) loadLanguage(d.lang);
+                else if (d.type === 'gs-perm-gate-done') {
+                    closeGettingStarted();
+                    if (window.AndroidBridge && typeof window.AndroidBridge.scanAllDeviceAudio === 'function') {
+                        try { window.AndroidBridge.scanAllDeviceAudio(false); } catch (err) {}
+                    }
+                }
                 else if (d.type === 'gs-done') {
                     applyGsSettings(d.settings);
                     gsStore.set('getting_started_done', 'true');
