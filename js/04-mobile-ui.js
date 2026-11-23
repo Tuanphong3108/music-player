@@ -158,6 +158,8 @@
                     year: tr.year || '',
                     genre: tr.genre || '',
                     composer: tr.composer || '',
+                    lyricsRaw: tr.lyricsRaw || '',
+                    fullTags: !!tr._fullTagsHydrated,
                     cover: coverVal,
                     size: (tr.file && tr.file.size) || 0,
                     modified: (tr.file && tr.file.lastModified) || 0,
@@ -270,6 +272,11 @@
                             if (cached.year) tr.year = cached.year;
                             if (cached.genre !== undefined) tr.genre = cached.genre;
                             if (cached.composer !== undefined) tr.composer = cached.composer;
+                            if (cached.lyricsRaw && !tr.lyricsRaw) {
+                                tr.lyricsRaw = cached.lyricsRaw;
+                                tr.lyrics = parseLRC(cached.lyricsRaw);
+                            }
+                            if (cached.fullTags) tr._fullTagsHydrated = true;
                             if (cached.cover && cached.cover.startsWith('data:')) {
                                 tr.cover = cached.cover;
                                 tr._hasRealCover = true;
@@ -322,6 +329,7 @@
                         let doneCount = 0;
                         pushScanNotif(0, totalCount, targets[0] ? (targets[0].name || '') : '', true);
                         const hydrateOne = async (tr) => {
+                            if (typeof window.__waitPriorityMeta === 'function') await window.__waitPriorityMeta();
                             if (tr._bgCoverChecked) return;
                             tr._bgCoverChecked = true;
                             try {
@@ -399,6 +407,7 @@
                         };
                         const runWorker = async () => {
                             while (cursor < targets.length) {
+                                if (typeof window.__waitPriorityMeta === 'function') await window.__waitPriorityMeta();
                                 const tr = targets[cursor++];
                                 if (!tr) continue;
                                 await hydrateOne(tr);
