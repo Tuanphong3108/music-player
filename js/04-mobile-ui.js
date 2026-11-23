@@ -506,30 +506,63 @@
             window.__renderMobileLibrary = function () { clearTimeout(mLibRenderT); mLibRenderT = setTimeout(renderMobileLibrary, 90); };
             window.__renderMobileLibraryNow = renderMobileLibrary;
 
+            const mMiniPlayIcon = mMiniPlay ? mMiniPlay.querySelector('.material-symbols-rounded') : null;
+            const mPlRepeatIcon = mPlRepeat ? mPlRepeat.querySelector('.material-symbols-rounded') : null;
+            const mMiniCache = { title: null, artist: null, scanning: null, loading: null, playIcon: null, shuffle: null, repeatOn: null, repeatIcon: null };
+
             function syncMobileMiniPlayer() {
                 if (!document.documentElement.classList.contains('m-ui')) return;
                 const tr = playlist[currentIndex];
                 if (tr) {
-                    if (mMiniTitle) mMiniTitle.textContent = tr.name || 'Media Player';
-                    if (mMiniArtist) mMiniArtist.textContent = tr.artist || 'UNKNOWN ARTIST';
+                    const nextTitle = tr.name || 'Media Player';
+                    const nextArtist = tr.artist || 'UNKNOWN ARTIST';
+                    if (mMiniTitle && mMiniCache.title !== nextTitle) {
+                        mMiniCache.title = nextTitle;
+                        mMiniTitle.textContent = nextTitle;
+                    }
+                    if (mMiniArtist && mMiniCache.artist !== nextArtist) {
+                        mMiniCache.artist = nextArtist;
+                        mMiniArtist.textContent = nextArtist;
+                    }
                     if (mMiniArt && !(mMiniArt._tr === tr && mMiniArt._cv === (tr.cover || ''))) {
                         mMiniArt._tr = tr; mMiniArt._cv = tr.cover || '';
                         mMiniArt.innerHTML = '<span class="material-symbols-rounded">music_note</span>'
                             + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '');
                     }
-                    if (mMiniArt) mMiniArt.classList.toggle('is-scanning', !!tr._metaLoading);
+                    const nextScan = !!tr._metaLoading;
+                    if (mMiniArt && mMiniCache.scanning !== nextScan) {
+                        mMiniCache.scanning = nextScan;
+                        mMiniArt.classList.toggle('is-scanning', nextScan);
+                    }
                 }
                 if (mMiniPlay) {
-                    const sp = mMiniPlay.querySelector('.material-symbols-rounded');
                     const isLoading = !!(tr && (tr._metaLoading || (audio.currentSrc && !audio.ended && (audio.seeking || (!audio.paused && audio.readyState < 3) || (tr.canOpen === false && !audio.paused)))));
-                    mMiniPlay.classList.toggle('is-loading', isLoading);
-                    if (sp) sp.textContent = (audio.paused || audio.ended) ? 'play_arrow' : 'pause';
+                    if (mMiniCache.loading !== isLoading) {
+                        mMiniCache.loading = isLoading;
+                        mMiniPlay.classList.toggle('is-loading', isLoading);
+                    }
+                    const nextPlayIcon = (audio.paused || audio.ended) ? 'play_arrow' : 'pause';
+                    if (mMiniPlayIcon && mMiniCache.playIcon !== nextPlayIcon) {
+                        mMiniCache.playIcon = nextPlayIcon;
+                        mMiniPlayIcon.textContent = nextPlayIcon;
+                    }
                 }
-                if (mPlShuffle) mPlShuffle.classList.toggle('active', !!isShuffle);
+                const nextShuffle = !!isShuffle;
+                if (mPlShuffle && mMiniCache.shuffle !== nextShuffle) {
+                    mMiniCache.shuffle = nextShuffle;
+                    mPlShuffle.classList.toggle('active', nextShuffle);
+                }
                 if (mPlRepeat) {
-                    mPlRepeat.classList.toggle('active', repeatMode > 0);
-                    const ic = mPlRepeat.querySelector('.material-symbols-rounded');
-                    if (ic) ic.textContent = repeatMode === 2 ? 'repeat_one' : 'repeat';
+                    const nextRepOn = repeatMode > 0;
+                    if (mMiniCache.repeatOn !== nextRepOn) {
+                        mMiniCache.repeatOn = nextRepOn;
+                        mPlRepeat.classList.toggle('active', nextRepOn);
+                    }
+                    const nextRepIcon = repeatMode === 2 ? 'repeat_one' : 'repeat';
+                    if (mPlRepeatIcon && mMiniCache.repeatIcon !== nextRepIcon) {
+                        mMiniCache.repeatIcon = nextRepIcon;
+                        mPlRepeatIcon.textContent = nextRepIcon;
+                    }
                 }
             }
             window.__syncMobileMiniPlayer = syncMobileMiniPlayer;
