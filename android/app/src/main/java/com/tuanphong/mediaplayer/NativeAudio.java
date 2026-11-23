@@ -55,6 +55,7 @@ final class NativeAudio {
     // Hàng đợi do trang gửi sang: id/tiêu đề/nghệ sĩ/đường dẫn theo thứ tự danh sách, order = thứ tự phát (shuffle) dạng chỉ số, repeat 0 tắt / 1 tất cả / 2 một bài
     private static volatile String[] qIds = new String[0], qTitles = new String[0], qArtists = new String[0], qLocs = new String[0];
     private static volatile int[] order = new int[0];
+    private static volatile boolean shuffled = false;
     private static volatile int repeat = 0;
     private static volatile boolean loaded = false;
     private static boolean endedHandled = false;
@@ -64,11 +65,15 @@ final class NativeAudio {
 
     private static long sleepAt = 0;
     private static int sleepTracks = 0;
-    private static final Runnable sleepRun = () -> { sleepAt = 0; pause(); emit("sleep"); };
+    private static int sleepTotalTracks = 0;
+    private static final Runnable sleepRun = () -> { sleepAt = 0; sleepTracks = 0; sleepTotalTracks = 0; pause(); emit("sleep"); };
     /** Hẹn giờ ngủ do app giữ để vẫn tạm dừng đúng giờ / đúng số bài khi WebView bị đóng băng. endAtMs = 0: không hẹn theo giờ; tracks = 0: không hẹn theo bài. */
     static void setSleep(long endAtMs, int tracks) {
         ph.removeCallbacks(sleepRun);
-        sleepAt = endAtMs; sleepTracks = Math.max(0, tracks);
+        sleepAt = endAtMs;
+        int tr = Math.max(0, tracks);
+        sleepTracks = tr;
+        sleepTotalTracks = tr > 0 ? tr : 0;
         if (endAtMs > 0) ph.postDelayed(sleepRun, Math.max(0, endAtMs - System.currentTimeMillis()));
     }
 
@@ -236,11 +241,12 @@ final class NativeAudio {
             }
             int[] ord = new int[od == null ? n : od.length()];
             for (int i = 0; i < ord.length; i++) ord[i] = od == null ? i : od.optInt(i, i);
-            qIds = a1; qTitles = a2; qArtists = a3; qLocs = a4; order = ord; repeat = o.optInt("repeat", 0);
+            boolean sh = o.optBoolean("shuffle", od != null && od.length() == n);
+            qIds = a1; qTitles = a2; qArtists = a3; qLocs = a4; order = ord; shuffled = sh; repeat = o.optInt("repeat", 0);
         } catch (Throwable ignored) {}
     }
 
-    /** Trả về hàng đợi hiện tại của trình phát native (kèm đường dẫn tệp + chế độ lặp/trộn) để WebView đồng bộ lại khi thoát ra vào lại. */
+    /** Trả về hàng đợi hiện tại của trình phát native (kèm đường dẫn tệp + trạng thái shuffle/repeat/sleep) để WebView đồng bộ lại khi thoát ra vào lại. */
     static String queueStateJson() {
         try {
             JSONObject o = new JSONObject();
@@ -259,16 +265,26 @@ final class NativeAudio {
             }
             org.json.JSONArray jOrd = new org.json.JSONArray();
             for (int v : ord) jOrd.put(v);
+            o.put("count", ids.length);
             o.put("ids", jIds);
             o.put("locations", jLocs);
+            o.put("shuffle", shuffled && ord.length == ids.length);
             o.put("order", jOrd);
             o.put("repeat", repeat);
+            long nowMs = System.currentTimeMillis();
+            long remMs = sleepAt > nowMs ? (sleepAt - nowMs) : 0L;
+            boolean sleepOn = (remMs > 0L) || (sleepTracks > 0);
+            o.put("sleepActive", sleepOn);
+            o.put("sleepAt", sleepAt);
+            o.put("sleepRemainingMs", remMs);
+            o.put("sleepTracks", sleepTracks);
+            o.put("sleepTotalTracks", sleepTotalTracks);
             o.put("curId", curId == null ? "" : curId);
             String curLoc = MainActivity.resolveLocation(curId);
             o.put("curLoc", curLoc == null ? "" : curLoc);
             return o.toString();
         } catch (Throwable t) {
-            return "{\"ids\":[],\"locations\":[],\"order\":[],\"repeat\":0,\"curId\":\"\",\"curLoc\":\"\"}";
+            return "{\"count\":0,\"ids\":[],\"locations\":[],\"shuffle\":false,\"order\":[],\"repeat\":0,\"sleepActive\":false,\"sleepAt\":0,\"sleepRemainingMs\":0,\"sleepTracks\":0,\"sleepTotalTracks\":0,\"curId\":\"\",\"curLoc\":\"\"}";
         }
     }
 
@@ -279,7 +295,7 @@ final class NativeAudio {
         if (endedHandled) return;
         endedHandled = true;
         if (!webAlive()) {
-            if (sleepTracks > 0 && --sleepTracks == 0) { emit("sleep"); return; }   // trang đang chết nên app tự đếm số bài hẹn giờ
+            if (sleepTracks > 0 && --sleepTracks == 0) { sleepTotalTracks = 0; emit("sleep"); return; }   // trang đang chết nên app tự đếm số bài hẹn giờ
             if (hasNext()) { advance(); return; }
         }
         emit("ended");
@@ -329,8 +345,36 @@ final class NativeAudio {
                 o.put("st", "idle"); o.put("pwr", false); o.put("pos", 0); o.put("dur", 0); o.put("buf", 0); o.put("rate", rate); o.put("err", false);
             }
             o.put("qn", qIds.length);
+            o.put("shuffle", shuffled && order.length == qIds.length);
+            o.put("repeat", repeat);
+            long nowMs = System.currentTimeMillis();
+            long remMs = sleepAt > nowMs ? (sleepAt - nowMs) : 0L;
+            o.put("sleepActive", remMs > 0L || sleepTracks > 0);
+            o.put("sleepRemainingMs", remMs);
+            o.put("sleepTracks", sleepTracks);
         } catch (Throwable ignored) {}
         return o;
+    }
+
+    private static long lastMatchSyncAt = 0;
+
+    /** Khớp trạng thái 0.5s: đồng bộ hàng đợi/shuffle/repeat/sleep nếu WebView gửi lệch hoặc lúc WebView đang chết ở nền. */
+    private static void matchStateEveryHalfSec() {
+        long nowMs = System.currentTimeMillis();
+        if (sleepAt > 0L && nowMs >= sleepAt) {
+            sleepAt = 0L;
+            sleepTracks = 0;
+            sleepTotalTracks = 0;
+            pauseImpl();
+            emit("sleep");
+            return;
+        }
+        if (nowMs - lastMatchSyncAt < 2000L) return;
+        lastMatchSyncAt = nowMs;
+        MainActivity a = MainActivity.instance;
+        if (a != null && webAlive()) {
+            a.evalAck("window.__matchNativeSession&&window.__matchNativeSession(" + queueStateJson() + ")");
+        }
     }
 
     private static volatile String lastSnap = "{\"loaded\":false,\"id\":\"\"}";
@@ -358,6 +402,7 @@ final class NativeAudio {
             lastSnap = json;
             lastSnapAt = now;
             final boolean isTick = "tick".equals(ev);
+            if (isTick) matchStateEveryHalfSec();
             // MediaSession tự nội suy vị trí theo tốc độ phát -> giãn tick xuống 1.5s để không spam IPC hệ thống
             if (!isTick || now - lastSvcTickAt >= 1500) {
                 lastSvcTickAt = now;
