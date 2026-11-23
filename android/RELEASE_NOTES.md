@@ -1,5 +1,6 @@
 <!-- Ghi nội dung cập nhật cho bản build APK tiếp theo tại đây (hỗ trợ Markdown). Mỗi lần cập nhật Android, nội dung mới sẽ được ghi vào file này trước khi push để GitHub Release hiển thị đúng changelog thật! -->
 ### Có gì mới trong bản cập nhật Android này
+- **Đồng bộ trạng thái phát mỗi giây (1s)**: trình phát native gửi lại đầy đủ trạng thái (bài đang phát, vị trí, trạng thái phát/tạm dừng/đệm/hết bài) sang trang web đều đặn mỗi 1 giây kể cả khi tạm dừng, giúp giao diện luôn khớp chuẩn và tự bắt kịp ngay nếu WebView bị lỡ sự kiện chuyển bài.
 - **Bấm phát là có tiếng nhanh hơn**: trình phát nhạc chạy trên luồng riêng (UI hay WebView bận cũng không làm chậm), ExoPlayer được khởi tạo sẵn khi mở app và chỉ đệm 0,25 giây là phát (trước đó phải chờ 2,5 giây dữ liệu).
 - **Mở app và nạp thư viện nhanh hơn nhiều**: thư viện được gửi sang trang theo từng đợt ~500 bài, không còn duyệt toàn bộ bộ nhớ mỗi lần mở app (chỉ duyệt khi quét lại thủ công hoặc MediaStore trống). Danh sách bài dựng dần, trang không còn bị đứng vài giây lúc nạp.
 - **Nút "Khởi động lại WebView"**: khi trang không phản hồi, nút này ngắt WebView treo rồi dựng WebView mới thay vì tắt cả app. Nhạc vẫn tiếp tục phát và trang mới tự vào lại đúng bài, đúng màn hình.
