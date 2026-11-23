@@ -47,8 +47,8 @@
     }
 
     let cfg = loadCfg();
-    let aiSettingsOpen = false;
     let labOpen = false;
+    let pendingOpenLabAfterSetup = false;
     let labState = {
         name: '', prompt: '', moods: new Set(), activities: new Set(),
         era: 'Any era', energy: 3, discovery: 3, minSongs: 12, maxSongs: 24,
@@ -66,39 +66,43 @@
           .ai-ico-box{width:40px;height:40px;border-radius:14px;background:color-mix(in srgb,var(--md-sys-color-primary) 16%,transparent);color:var(--md-sys-color-primary);display:grid;place-items:center;flex-shrink:0;}
           .ai-card-title{font-size:16px;font-weight:700;color:var(--md-sys-color-on-surface);}
           .ai-card-desc{font-size:12.5px;line-height:1.45;color:var(--md-sys-color-on-surface-variant,#aaa);margin-top:2px;}
-          .ai-pill-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1px solid var(--playlist-border,rgba(255,255,255,.14));font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:color-mix(in srgb,var(--md-sys-color-on-surface) 10%,transparent);color:var(--md-sys-color-on-surface);align-self:flex-start;}
+          .ai-pill-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1px solid var(--playlist-border,rgba(255,255,255,.14));font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:color-mix(in srgb,var(--md-sys-color-on-surface) 10%,transparent);color:var(--md-sys-color-on-surface);align-self:flex-start;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s;}
+          .ai-pill-btn:active,.ai-chip:active,.ai-reset-btn:active,.ai-gen-btn:active,.ai-save-btn:active{transform:scale(.96);}
           .ai-pill-btn.active,.ai-pill-btn.sel{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);border-color:var(--md-sys-color-primary);}
           .ai-sheet-trigger{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-primary) 45%,var(--md-sys-color-outline,#888));background:color-mix(in srgb,var(--md-sys-color-primary-container) 55%,var(--md-sys-color-surface));color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;align-self:flex-start;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s;}
-          .ai-sheet-trigger:active{transform:scale(.97);}
-          .ai-input,.ai-textarea{width:100%;box-sizing:border-box;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 40%,transparent);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13.5px;padding:12px 14px;outline:none;}
+          .ai-sheet-trigger:active{transform:scale(.96);}
+          .ai-input,.ai-textarea{width:100%;box-sizing:border-box;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 40%,transparent);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13.5px;padding:12px 14px;outline:none;transition:border-color .2s;}
           .ai-input:focus,.ai-textarea:focus{border-color:var(--md-sys-color-primary);}
           .ai-textarea{min-height:110px;resize:vertical;line-height:1.45;}
-          .ai-save-btn{align-self:flex-start;padding:10px 22px;border-radius:999px;border:none;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);}
+          .ai-save-btn{align-self:flex-start;padding:10px 22px;border-radius:999px;border:none;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .2s;}
           .ai-save-btn:disabled{opacity:.4;cursor:not-allowed;}
           .ai-switch{position:relative;display:inline-block;width:52px;height:30px;flex-shrink:0;}
           .ai-switch input{opacity:0;width:0;height:0;}
-          .ai-switch-track{position:absolute;inset:0;border-radius:999px;background:var(--md-sys-color-surface-variant);border:2px solid var(--md-sys-color-outline);transition:.25s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;padding:0 4px;cursor:pointer;}
-          .ai-switch-thumb{width:18px;height:18px;border-radius:50%;background:var(--md-sys-color-outline);transition:.25s cubic-bezier(.34,1.56,.64,1);display:grid;place-items:center;}
+          .ai-switch-track{position:absolute;inset:0;border-radius:999px;background:var(--md-sys-color-surface-variant);border:2px solid var(--md-sys-color-outline);transition:.28s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;padding:0 4px;cursor:pointer;}
+          .ai-switch-thumb{width:18px;height:18px;border-radius:50%;background:var(--md-sys-color-outline);transition:.28s cubic-bezier(.34,1.56,.64,1);display:grid;place-items:center;}
           .ai-switch input:checked + .ai-switch-track{background:var(--md-sys-color-primary);border-color:var(--md-sys-color-primary);}
           .ai-switch input:checked + .ai-switch-track .ai-switch-thumb{transform:translateX(22px);width:20px;height:20px;background:var(--md-sys-color-on-primary);color:var(--md-sys-color-primary);}
-          #ai-settings-modal,#ai-playlist-lab-modal{position:fixed;inset:0;z-index:9600;display:none;flex-direction:column;background:var(--md-sys-color-surface,#121118);color:var(--md-sys-color-on-surface,#f3eff7);font-family:var(--app-font,inherit);padding-top:env(safe-area-inset-top,0px);}
-          #ai-settings-modal.open,#ai-playlist-lab-modal.open{display:flex;}
+          #ai-playlist-lab-modal{position:fixed;inset:0;z-index:9600;display:none;flex-direction:column;background:var(--md-sys-color-surface,#121118);color:var(--md-sys-color-on-surface,#f3eff7);font-family:var(--app-font,inherit);padding-top:env(safe-area-inset-top,0px);opacity:0;transform:translateY(18px) scale(.985);transition:opacity .26s cubic-bezier(.2,0,0,1),transform .34s cubic-bezier(.2,0,0,1);}
+          #ai-playlist-lab-modal.open{display:flex;}
+          #ai-playlist-lab-modal.show{opacity:1;transform:translateY(0) scale(1);}
+          html.reduce-motion #ai-playlist-lab-modal{transition:none !important;transform:none !important;}
           .ai-modal-top{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--playlist-border,rgba(255,255,255,.08));flex-shrink:0;}
           .ai-modal-top h2{margin:0;font-size:21px;font-weight:800;flex:1;}
-          .ai-icon-btn{width:42px;height:42px;border-radius:50%;border:none;background:color-mix(in srgb,var(--md-sys-color-on-surface) 10%,transparent);color:var(--md-sys-color-on-surface);display:grid;place-items:center;cursor:pointer;flex-shrink:0;}
+          .ai-icon-btn{width:42px;height:42px;border-radius:50%;border:none;background:color-mix(in srgb,var(--md-sys-color-on-surface) 10%,transparent);color:var(--md-sys-color-on-surface);display:grid;place-items:center;cursor:pointer;flex-shrink:0;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s;}
+          .ai-icon-btn:active{transform:scale(.92);}
           .ai-modal-body{flex:1;overflow-y:auto;padding:16px 18px 110px;}
-          .ai-banner-info{background:color-mix(in srgb,var(--md-sys-color-primary-container) 78%,var(--md-sys-color-surface));color:var(--md-sys-color-on-primary-container);border-radius:20px;padding:16px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;}
+          .ai-banner-info{background:color-mix(in srgb,var(--md-sys-color-primary-container) 78%,var(--md-sys-color-surface));color:var(--md-sys-color-on-primary-container);border-radius:20px;padding:16px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;border:1px solid color-mix(in srgb,var(--md-sys-color-primary) 24%,transparent);}
           .ai-chip-wrap{display:flex;flex-wrap:wrap;gap:8px;}
-          .ai-chip{padding:9px 15px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 35%,transparent);background:color-mix(in srgb,var(--md-sys-color-surface-variant) 55%,transparent);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+          .ai-chip{padding:9px 15px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 35%,transparent);background:color-mix(in srgb,var(--md-sys-color-surface-variant) 55%,transparent);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s,border-color .2s;}
           .ai-chip.active{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);border-color:var(--md-sys-color-primary);}
           .ai-seg-5{display:grid;grid-template-columns:repeat(5,1fr);border-radius:14px;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 40%,transparent);}
-          .ai-seg-5 button{border:none;border-right:1px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 30%,transparent);background:transparent;color:var(--md-sys-color-on-surface);padding:10px 4px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;}
+          .ai-seg-5 button{border:none;border-right:1px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 30%,transparent);background:transparent;color:var(--md-sys-color-on-surface);padding:10px 4px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:background .2s,color .2s;}
           .ai-seg-5 button:last-child{border-right:none;}
           .ai-seg-5 button.active{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);}
           .ai-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
           .ai-lab-footer{position:fixed;left:0;right:0;bottom:0;z-index:9610;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px calc(14px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--md-sys-color-surface) 94%,#000);border-top:1px solid var(--playlist-border,rgba(255,255,255,.08));}
-          .ai-reset-btn{padding:12px 20px;border-radius:999px;border:none;background:color-mix(in srgb,var(--md-sys-color-on-surface) 12%,transparent);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
-          .ai-gen-btn{padding:14px 26px;border-radius:20px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
+          .ai-reset-btn{padding:12px 20px;border-radius:999px;border:none;background:color-mix(in srgb,var(--md-sys-color-on-surface) 12%,transparent);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
+          .ai-gen-btn{padding:14px 26px;border-radius:20px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .2s;}
           .ai-gen-btn:disabled{opacity:.5;cursor:wait;}
           #ai-local-sheet{position:fixed;inset:0;z-index:9700;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);opacity:0;transition:opacity .22s ease;}
           #ai-local-sheet.open{display:flex;}
@@ -129,6 +133,10 @@
         if (!sh) return;
         sh.classList.remove('show');
         setTimeout(() => sh.classList.remove('open'), 240);
+    }
+    function isLocalSheetOpen() {
+        const sh = document.getElementById('ai-local-sheet');
+        return !!(sh && (sh.classList.contains('open') || sh.classList.contains('show')));
     }
     function openChoiceSheet(title, options, currentVal, onPick) {
         if (typeof window.__openSheetItems === 'function') {
@@ -169,6 +177,10 @@
         if (!host) return;
         const usage = loadUsage();
         host.innerHTML = `
+          ${pendingOpenLabAfterSetup ? `<div class="ai-banner-info" style="margin-bottom:14px;">
+            <div style="font-size:15px;font-weight:800;">Thiết lập AI lần đầu để tạo danh sách phát</div>
+            <div style="font-size:12.5px;opacity:.9;">Nhập API Key của bạn rồi bấm Save — sau đó hệ thống sẽ mở thẳng AI Playlist Lab.</div>
+          </div>` : ''}
           <div class="ai-sec-lbl">AI Provider</div>
           <div class="ai-card">
             <div class="ai-row-flex">
@@ -272,12 +284,22 @@
                 syncAllSettingsHosts();
             });
         });
+        const maybeContinueToLab = () => {
+            if (pendingOpenLabAfterSetup && hasAiConfigured()) {
+                pendingOpenLabAfterSetup = false;
+                syncAllSettingsHosts();
+                const closeBtn = document.getElementById('settings-close-btn');
+                if (closeBtn) closeBtn.click();
+                setTimeout(() => openAiLab(true), 220);
+            }
+        };
         host.querySelector('[data-ai-action="save-key"]')?.addEventListener('click', () => {
             const inp = host.querySelector('[data-ai-field="apiKey"]');
             cfg.apiKey = (inp?.value || '').trim();
             saveCfg(cfg);
             if (typeof showToast === 'function') showToast('Đã lưu API Key!', 'check_circle', 2200);
             syncAllSettingsHosts();
+            maybeContinueToLab();
         });
         host.querySelector('[data-ai-action="save-prompt"]')?.addEventListener('click', () => {
             const ta = host.querySelector('[data-ai-field="systemPrompt"]');
@@ -287,29 +309,42 @@
             saveCfg(cfg);
             if (typeof showToast === 'function') showToast('Đã lưu cấu hình AI!', 'check_circle', 2200);
             syncAllSettingsHosts();
+            maybeContinueToLab();
         });
     }
 
     function syncAllSettingsHosts() {
         cfg = loadCfg();
         renderSettingsMarkup('ai-settings-host');
-        renderSettingsMarkup('ai-settings-modal-host');
+    }
+
+    function openAiSettingsInApp(fromLab) {
+        injectStyles();
+        ensureModals();
+        pendingOpenLabAfterSetup = !!(fromLab && !hasAiConfigured());
+        syncAllSettingsHosts();
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsOverlay = document.getElementById('settings-overlay');
+        if (settingsBtn && settingsOverlay && !settingsOverlay.classList.contains('open')) {
+            settingsBtn.click();
+        }
+        setTimeout(() => {
+            const dlg = document.getElementById('settings-dialog');
+            const tabBtn = document.querySelector('.st-tab[data-tab="ai"]');
+            const mCard = document.querySelector('#st-m-list .st-m-card[data-tab="ai"]');
+            if (document.documentElement.classList.contains('m-ui') && dlg && !dlg.classList.contains('st-m-detail') && mCard) {
+                mCard.click();
+            } else if (tabBtn) {
+                tabBtn.click();
+            }
+            const pane = document.querySelector('.st-pane[data-pane="ai"]');
+            if (pane) pane.scrollTop = 0;
+        }, 60);
     }
 
     function ensureModals() {
-        if (!document.getElementById('ai-settings-modal')) {
-            const m = document.createElement('div');
-            m.id = 'ai-settings-modal';
-            m.innerHTML = `
-              <div class="ai-modal-top">
-                <button type="button" class="ai-icon-btn" id="ai-settings-back"><span class="material-symbols-rounded">arrow_back</span></button>
-                <h2>AI Integration (β)</h2>
-              </div>
-              <div class="ai-modal-body" id="ai-settings-modal-host"></div>
-            `;
-            document.body.appendChild(m);
-            document.getElementById('ai-settings-back')?.addEventListener('click', closeAiSettings);
-        }
+        const oldModal = document.getElementById('ai-settings-modal');
+        if (oldModal) oldModal.remove();
 
         if (!document.getElementById('ai-playlist-lab-modal')) {
             const lab = document.createElement('div');
@@ -404,8 +439,8 @@
     }
 
     function bindLabEvents(lab) {
-        document.getElementById('ai-lab-close')?.addEventListener('click', closeAiLab);
-        document.getElementById('ai-lab-open-cfg')?.addEventListener('click', () => openAiSettings(true));
+        document.getElementById('ai-lab-close')?.addEventListener('click', () => closeAiLab());
+        document.getElementById('ai-lab-open-cfg')?.addEventListener('click', () => openAiSettingsInApp(false));
         document.getElementById('ai-mood-wrap')?.addEventListener('click', (e) => {
             const chip = e.target.closest('[data-mood]');
             if (!chip) return;
@@ -488,35 +523,59 @@
         return !!(cfg.apiKey && cfg.apiKey.trim());
     }
 
-    function openAiSettings() {
+    function openAiLab(forceOpenLab) {
         injectStyles();
         ensureModals();
         syncAllSettingsHosts();
-        aiSettingsOpen = true;
-        document.getElementById('ai-settings-modal')?.classList.add('open');
-    }
-    function closeAiSettings() {
-        aiSettingsOpen = false;
-        document.getElementById('ai-settings-modal')?.classList.remove('open');
-        if (labOpen && hasAiConfigured() && typeof showToast === 'function') {
-            showToast('Đã lưu cấu hình AI, sẵn sàng tạo danh sách phát!', 'auto_awesome', 2500);
-        }
-    }
-    function openAiLab() {
-        injectStyles();
-        ensureModals();
-        syncAllSettingsHosts();
-        if (!hasAiConfigured()) {
-            labOpen = true;
-            openAiSettings();
+        if (!forceOpenLab && !hasAiConfigured()) {
+            openAiSettingsInApp(true);
             return;
         }
+        const lab = document.getElementById('ai-playlist-lab-modal');
+        if (!lab) return;
         labOpen = true;
-        document.getElementById('ai-playlist-lab-modal')?.classList.add('open');
+        lab.classList.add('open');
+        if (document.documentElement.classList.contains('reduce-motion')) {
+            lab.classList.add('show');
+        } else {
+            requestAnimationFrame(() => requestAnimationFrame(() => lab.classList.add('show')));
+        }
     }
     function closeAiLab() {
+        const lab = document.getElementById('ai-playlist-lab-modal');
         labOpen = false;
-        document.getElementById('ai-playlist-lab-modal')?.classList.remove('open');
+        pendingOpenLabAfterSetup = false;
+        if (!lab) return;
+        lab.classList.remove('show');
+        if (document.documentElement.classList.contains('reduce-motion')) {
+            lab.classList.remove('open');
+        } else {
+            setTimeout(() => { if (!labOpen) lab.classList.remove('open'); }, 280);
+        }
+    }
+
+    function handleAndroidBackForAi() {
+        if (isLocalSheetOpen()) {
+            closeLocalSheet();
+            return true;
+        }
+        const stSheet = document.getElementById('st-sheet');
+        if (stSheet && (stSheet.classList.contains('show') || stSheet.classList.contains('open'))) {
+            if (typeof window.__closeSheet === 'function') window.__closeSheet();
+            return true;
+        }
+        const lab = document.getElementById('ai-playlist-lab-modal');
+        if (lab && (labOpen || lab.classList.contains('open'))) {
+            closeAiLab();
+            return true;
+        }
+        const settingsOverlay = document.getElementById('settings-overlay');
+        if (pendingOpenLabAfterSetup && settingsOverlay && settingsOverlay.classList.contains('open')) {
+            pendingOpenLabAfterSetup = false;
+            document.getElementById('settings-close-btn')?.click();
+            return true;
+        }
+        return false;
     }
 
     function collectLibraryMetadata() {
@@ -609,7 +668,7 @@
 
     async function handleGeneratePlaylist() {
         if (!hasAiConfigured()) {
-            openAiSettings();
+            openAiSettingsInApp(true);
             return;
         }
         const tracks = collectLibraryMetadata();
@@ -690,9 +749,10 @@
         injectStyles();
         ensureModals();
         syncAllSettingsHosts();
-        document.getElementById('m-pl-ai-btn')?.addEventListener('click', openAiLab);
+        document.getElementById('m-pl-ai-btn')?.addEventListener('click', () => openAiLab(false));
         document.querySelector('.st-tab[data-tab="ai"]')?.addEventListener('click', syncAllSettingsHosts);
     });
-    window.__openAiPlaylistLab = openAiLab;
-    window.__openAiSettings = openAiSettings;
+    window.__openAiPlaylistLab = () => openAiLab(false);
+    window.__openAiSettings = () => openAiSettingsInApp(false);
+    window.__handleAndroidBackAi = handleAndroidBackForAi;
 })();
