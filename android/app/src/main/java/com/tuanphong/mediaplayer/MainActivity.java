@@ -1047,6 +1047,13 @@ public class MainActivity extends Activity {
             if (gn != null && !gn.trim().isEmpty()) o.put("genre", gn.trim());
             if (cp != null && !cp.trim().isEmpty()) o.put("composer", cp.trim());
 
+            try {
+                String embeddedLyrics = EmbeddedLyricsReader.read(this, directPath, src);
+                if (embeddedLyrics != null && !embeddedLyrics.isEmpty()) {
+                    o.put("lyrics", embeddedLyrics);
+                }
+            } catch (Throwable ignored) {}
+
             byte[] pic = mmr.getEmbeddedPicture();
             if (pic != null && pic.length > 0) {
                 o.put("hasPicture", true);
