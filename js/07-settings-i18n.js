@@ -1175,8 +1175,18 @@
                     );
                     if (!ok) return;
                     try { localStorage.removeItem('settings_subs'); } catch (e) {}
+                    try { localStorage.removeItem('mp_last_card_v1'); } catch (e) {}
+                    if (typeof window.__clearMobileMetaCache === 'function') {
+                        await window.__clearMobileMetaCache();
+                    }
                     if (window.AndroidBridge && typeof window.AndroidBridge.scanAllDeviceAudio === 'function') {
                         window.AndroidBridge.scanAllDeviceAudio(true);
+                    } else {
+                        if (typeof window.__renderMobileLibraryNow === 'function') window.__renderMobileLibraryNow();
+                        if (typeof window.__hydrateMobileLibraryCovers === 'function') window.__hydrateMobileLibraryCovers();
+                    }
+                    if (typeof playlist !== 'undefined' && typeof currentIndex !== 'undefined' && currentIndex >= 0 && playlist[currentIndex] && typeof hydrateTrackTags === 'function') {
+                        setTimeout(() => { try { hydrateTrackTags(playlist[currentIndex], currentIndex); } catch (e) {} }, 150);
                     }
                     showToast(tr('lib.rebuilt_done', 'Đã tạo lại cơ sở dữ liệu và quét lại thư viện!'), 'check_circle', 3500);
                 });
