@@ -130,22 +130,26 @@
         const st = document.createElement('style');
         st.id = 'ai-playlist-lab-style';
         st.textContent = `
-          .ai-sec-lbl{font-size:12px;font-weight:700;letter-spacing:.4px;color:var(--md-sys-color-primary);margin:14px 0 8px;text-transform:uppercase;}
-          .ai-card{background:var(--md-sys-color-surface-variant,rgba(255,255,255,.06));border-radius:20px;padding:16px;margin-bottom:12px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--playlist-border,rgba(255,255,255,.08));}
-          .ai-row-flex{display:flex;align-items:center;gap:14px;justify-content:space-between;}
+          .ai-st-group{display:flex;flex-direction:column;gap:2px;margin-bottom:20px;}
+          .ai-st-sec{font-size:calc(12px * var(--font-scale-factor, 1));font-weight:700;letter-spacing:.4px;color:var(--md-sys-color-primary);margin:0 0 8px;padding:0 4px;text-transform:uppercase;}
+          .ai-st-card{background:var(--md-sys-color-surface-container, color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface)));border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:14px;border:none;}
+          .ai-st-group > .ai-st-card:first-of-type{border-radius:24px 24px 8px 8px;}
+          .ai-st-group > .ai-st-card:last-of-type{border-radius:8px 8px 24px 24px;}
+          .ai-st-group > .ai-st-card:only-of-type{border-radius:24px;}
+          .ai-row-flex{display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;}
           .ai-ico-box{width:40px;height:40px;border-radius:14px;background:color-mix(in srgb,var(--md-sys-color-primary) 16%,transparent);color:var(--md-sys-color-primary);display:grid;place-items:center;flex-shrink:0;}
-          .ai-card-title{font-size:16px;font-weight:700;color:var(--md-sys-color-on-surface);}
-          .ai-card-desc{font-size:12.5px;line-height:1.45;color:var(--md-sys-color-on-surface-variant,#aaa);margin-top:2px;}
-          .ai-pill-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1px solid var(--playlist-border,rgba(255,255,255,.14));font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;background:color-mix(in srgb,var(--md-sys-color-on-surface) 10%,transparent);color:var(--md-sys-color-on-surface);align-self:flex-start;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s;}
+          .ai-card-title{font-size:calc(16px * var(--font-scale-factor, 1));font-weight:700;color:var(--md-sys-color-on-surface);}
+          .ai-card-desc{font-size:calc(12.5px * var(--font-scale-factor, 1));line-height:1.45;color:var(--md-sys-color-on-surface-variant);opacity:.78;margin-top:2px;}
+          .ai-pill-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;border:1px solid var(--playlist-border);font-family:var(--app-font);font-size:calc(13px * var(--font-scale-factor, 1));font-weight:700;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s,border-color .2s;}
           .ai-pill-btn:active,.ai-chip:active,.ai-reset-btn:active,.ai-gen-btn:active,.ai-save-btn:active{transform:scale(.96);}
-          .ai-pill-btn.active,.ai-pill-btn.sel{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);border-color:var(--md-sys-color-primary);}
-          .ai-sheet-trigger{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-primary) 45%,var(--md-sys-color-outline,#888));background:color-mix(in srgb,var(--md-sys-color-primary-container) 55%,var(--md-sys-color-surface));color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;align-self:flex-start;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s,opacity .2s;}
+          .ai-pill-btn.active,.ai-pill-btn.sel{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);border-color:var(--md-sys-color-primary);}
+          .ai-sheet-trigger{display:inline-flex;align-items:center;gap:8px;padding:10px 14px 10px 18px;border-radius:999px;border:none;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-family:var(--app-font);font-size:calc(14px * var(--font-scale-factor, 1));font-weight:700;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .2s;}
           .ai-sheet-trigger:active:not(:disabled){transform:scale(.96);}
-          .ai-sheet-trigger:disabled{opacity:.55;cursor:default;}
-          .ai-input,.ai-textarea{width:100%;box-sizing:border-box;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 40%,transparent);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13.5px;padding:12px 14px;outline:none;transition:border-color .2s;}
+          .ai-sheet-trigger:disabled{opacity:.45;cursor:default;}
+          .ai-input,.ai-textarea{width:100%;box-sizing:border-box;border-radius:16px;border:1px solid var(--playlist-border);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:var(--app-font);font-size:calc(14px * var(--font-scale-factor, 1));padding:12px 16px;outline:none;transition:border-color .2s;}
           .ai-input:focus,.ai-textarea:focus{border-color:var(--md-sys-color-primary);}
           .ai-textarea{min-height:110px;resize:vertical;line-height:1.45;}
-          .ai-save-btn{align-self:flex-start;padding:10px 22px;border-radius:999px;border:none;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .2s;}
+          .ai-save-btn{align-self:flex-start;padding:10px 22px;border-radius:999px;border:none;font-family:var(--app-font);font-size:calc(14px * var(--font-scale-factor, 1));font-weight:700;cursor:pointer;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .2s;}
           .ai-save-btn:disabled{opacity:.4;cursor:not-allowed;}
           .ai-switch{position:relative;display:inline-block;width:52px;height:30px;flex-shrink:0;}
           .ai-switch input{opacity:0;width:0;height:0;}
@@ -153,40 +157,39 @@
           .ai-switch-thumb{width:18px;height:18px;border-radius:50%;background:var(--md-sys-color-outline);transition:.28s cubic-bezier(.34,1.56,.64,1);display:grid;place-items:center;}
           .ai-switch input:checked + .ai-switch-track{background:var(--md-sys-color-primary);border-color:var(--md-sys-color-primary);}
           .ai-switch input:checked + .ai-switch-track .ai-switch-thumb{transform:translateX(22px);width:20px;height:20px;background:var(--md-sys-color-on-primary);color:var(--md-sys-color-primary);}
-          #ai-playlist-lab-modal{position:fixed;inset:0;z-index:9600;display:none;flex-direction:column;background:var(--md-sys-color-surface,#121118);color:var(--md-sys-color-on-surface,#f3eff7);font-family:var(--app-font,inherit);padding-top:env(safe-area-inset-top,0px);opacity:0;transform:translateY(18px) scale(.985);transition:opacity .26s cubic-bezier(.2,0,0,1),transform .34s cubic-bezier(.2,0,0,1);}
+          #ai-playlist-lab-modal{position:fixed;inset:0;z-index:9600;display:none;flex-direction:column;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:var(--app-font);padding-top:env(safe-area-inset-top, 0px);opacity:0;transform:scale(.95);transition:opacity .28s cubic-bezier(.2,0,0,1),transform .36s cubic-bezier(.2,0,0,1);}
           #ai-playlist-lab-modal.open{display:flex;}
-          #ai-playlist-lab-modal.show{opacity:1;transform:translateY(0) scale(1);}
+          #ai-playlist-lab-modal.show{opacity:1;transform:scale(1);}
           html.reduce-motion #ai-playlist-lab-modal{transition:none !important;transform:none !important;}
-          .ai-modal-top{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--playlist-border,rgba(255,255,255,.08));flex-shrink:0;}
-          .ai-modal-top h2{margin:0;font-size:21px;font-weight:800;flex:1;}
-          .ai-icon-btn{width:42px;height:42px;border-radius:50%;border:none;background:color-mix(in srgb,var(--md-sys-color-on-surface) 10%,transparent);color:var(--md-sys-color-on-surface);display:grid;place-items:center;cursor:pointer;flex-shrink:0;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s;}
+          .ai-modal-top{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--playlist-border);background:var(--md-sys-color-surface-container, var(--md-sys-color-surface));flex-shrink:0;}
+          .ai-modal-top h2{margin:0;font-size:calc(22px * var(--font-scale-factor, 1));font-weight:700;flex:1;font-family:var(--app-font);}
+          .ai-icon-btn{width:48px;height:48px;border-radius:50%;border:none;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s;}
           .ai-icon-btn:active{transform:scale(.92);}
-          .ai-modal-body{flex:1;overflow-y:auto;padding:16px 18px 110px;}
-          .ai-banner-info{background:color-mix(in srgb,var(--md-sys-color-primary-container) 78%,var(--md-sys-color-surface));color:var(--md-sys-color-on-primary-container);border-radius:20px;padding:16px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;border:1px solid color-mix(in srgb,var(--md-sys-color-primary) 24%,transparent);}
+          .ai-modal-body{flex:1;overflow-y:auto;padding:18px 16px 112px;}
+          .ai-banner-info{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);border-radius:24px;padding:16px 20px;margin-bottom:20px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--playlist-border);}
           .ai-chip-wrap{display:flex;flex-wrap:wrap;gap:8px;}
-          .ai-chip{padding:9px 15px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 35%,transparent);background:color-mix(in srgb,var(--md-sys-color-surface-variant) 55%,transparent);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s,border-color .2s;}
-          .ai-chip.active{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);border-color:var(--md-sys-color-primary);}
-          .ai-seg-5{display:grid;grid-template-columns:repeat(5,1fr);border-radius:14px;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 40%,transparent);}
-          .ai-seg-5 button{border:none;border-right:1px solid color-mix(in srgb,var(--md-sys-color-outline,#888) 30%,transparent);background:transparent;color:var(--md-sys-color-on-surface);padding:10px 4px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:background .2s,color .2s;}
+          .ai-chip{padding:9px 15px;border-radius:999px;border:1px solid var(--playlist-border);background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:var(--app-font);font-size:calc(13px * var(--font-scale-factor, 1));font-weight:700;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .2s,border-color .2s;}
+          .ai-chip.active{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);border-color:var(--md-sys-color-primary);}
+          .ai-seg-5{display:grid;grid-template-columns:repeat(5,1fr);border-radius:18px;overflow:hidden;border:1px solid var(--playlist-border);background:var(--md-sys-color-surface);}
+          .ai-seg-5 button{border:none;border-right:1px solid var(--playlist-border);background:transparent;color:var(--md-sys-color-on-surface);padding:10px 4px;font-family:var(--app-font);font-size:calc(13.5px * var(--font-scale-factor, 1));font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:background .2s,color .2s;}
           .ai-seg-5 button:last-child{border-right:none;}
-          .ai-seg-5 button.active{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);}
+          .ai-seg-5 button.active{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);}
           .ai-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-          .ai-lab-footer{position:fixed;left:0;right:0;bottom:0;z-index:9610;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px calc(14px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--md-sys-color-surface) 94%,#000);border-top:1px solid var(--playlist-border,rgba(255,255,255,.08));}
-          .ai-reset-btn{padding:12px 20px;border-radius:999px;border:none;background:color-mix(in srgb,var(--md-sys-color-on-surface) 12%,transparent);color:var(--md-sys-color-on-surface);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
-          .ai-gen-btn{padding:14px 26px;border-radius:20px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .2s;}
+          .ai-lab-footer{position:fixed;left:0;right:0;bottom:0;z-index:9610;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px calc(14px + env(safe-area-inset-bottom, 0px));background:var(--md-sys-color-surface-container, var(--md-sys-color-surface));border-top:1px solid var(--playlist-border);}
+          .ai-reset-btn{padding:12px 22px;border-radius:999px;border:none;background:var(--md-sys-color-surface-variant);color:var(--md-sys-color-on-surface-variant);font-family:var(--app-font);font-size:calc(14px * var(--font-scale-factor, 1));font-weight:700;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
+          .ai-gen-btn{padding:13px 24px;border-radius:999px;border:none;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-family:var(--app-font);font-size:calc(15px * var(--font-scale-factor, 1));font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform .2s cubic-bezier(.34,1.56,.64,1),opacity .2s;}
           .ai-gen-btn:disabled{opacity:.5;cursor:wait;}
-          #ai-local-sheet{position:fixed;inset:0;z-index:9700;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);opacity:0;transition:opacity .22s ease;}
-          #ai-local-sheet.open{display:flex;}
-          #ai-local-sheet.show{opacity:1;}
-          #ai-local-sheet .ai-ls-box{width:100%;max-width:540px;max-height:72vh;overflow-y:auto;background:var(--md-sys-color-surface-variant,#222029);color:var(--md-sys-color-on-surface,#f3eff7);border-radius:28px 28px 0 0;padding:10px 16px calc(20px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .28s cubic-bezier(.2,0,0,1);}
+          #ai-local-sheet{position:fixed;inset:0;z-index:9700;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);transition:background .25s;}
+          #ai-local-sheet.open{display:flex;background:rgba(0,0,0,.5);}
+          #ai-local-sheet.show{background:rgba(0,0,0,.5);}
+          #ai-local-sheet .ai-ls-box{width:100%;max-width:560px;max-height:80%;overflow-y:auto;background:var(--md-sys-color-surface-container-high, var(--md-sys-color-surface));color:var(--md-sys-color-on-surface);border-radius:28px 28px 0 0;padding:12px 16px calc(20px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:4px;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);}
           #ai-local-sheet.show .ai-ls-box{transform:translateY(0);}
-          #ai-local-sheet .ai-ls-grip{width:36px;height:4px;border-radius:999px;background:color-mix(in srgb,currentColor 30%,transparent);margin:0 auto 12px;}
-          #ai-local-sheet .ai-ls-title{font-size:17px;font-weight:800;padding:0 6px 10px;}
-          #ai-local-sheet .ai-ls-opt{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border:none;border-radius:16px;background:transparent;color:inherit;font-family:inherit;font-size:14.5px;font-weight:600;text-align:left;cursor:pointer;margin-bottom:4px;}
-          #ai-local-sheet .ai-ls-opt:hover{background:color-mix(in srgb,currentColor 8%,transparent);}
-          #ai-local-sheet .ai-ls-opt.sel{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);font-weight:700;}
-          #ai-local-sheet .ai-ls-opt .st-chk{opacity:0;font-size:20px;}
-          #ai-local-sheet .ai-ls-opt.sel .st-chk{opacity:1;}
+          #ai-local-sheet .ai-ls-grip{width:36px;height:4px;border-radius:2px;background:currentColor;opacity:.3;margin:0 auto 8px;flex:0 0 auto;}
+          #ai-local-sheet .ai-ls-title{font-weight:700;font-size:calc(18px * var(--font-scale-factor, 1));padding:4px 8px 10px;font-family:var(--app-font);}
+          #ai-local-sheet .ai-ls-opt{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border:none;border-radius:18px;background:color-mix(in srgb, var(--md-sys-color-on-surface) 7%, transparent);color:inherit;font-family:var(--app-font);font-size:calc(16px * var(--font-scale-factor, 1));font-weight:600;text-align:left;cursor:pointer;}
+          #ai-local-sheet .ai-ls-opt.sel{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-weight:700;}
+          #ai-local-sheet .ai-ls-opt .st-chk{visibility:hidden;font-size:20px;}
+          #ai-local-sheet .ai-ls-opt.sel .st-chk{visibility:visible;}
         `;
         document.head.appendChild(st);
     }
@@ -203,7 +206,7 @@
         const sh = document.getElementById('ai-local-sheet');
         if (!sh) return;
         sh.classList.remove('show');
-        setTimeout(() => sh.classList.remove('open'), 240);
+        setTimeout(() => sh.classList.remove('open'), 260);
     }
     function isLocalSheetOpen() {
         const sh = document.getElementById('ai-local-sheet');
@@ -236,7 +239,7 @@
             btn.type = 'button';
             btn.className = 'ai-ls-opt' + (val === currentVal ? ' sel' : '');
             btn.innerHTML = `<span>${lbl}</span><span class="material-symbols-rounded st-chk">check</span>`;
-            btn.addEventListener('click', () => { closeLocalSheet(); setTimeout(() => onPick(val), 50); });
+            btn.addEventListener('click', () => { closeLocalSheet(); setTimeout(() => onPick(val), 60); });
             listEl.appendChild(btn);
         });
         sh.classList.add('open');
@@ -258,79 +261,91 @@
                 : (lastModelError ? ('Fetch error: ' + lastModelError) : (fetchedModels.length ? (fetchedModels.length + ' Gemini models loaded.') : 'Tap to fetch Gemini models.')));
 
         host.innerHTML = `
-          ${pendingOpenLabAfterSetup ? `<div class="ai-banner-info" style="margin-bottom:14px;">
-            <div style="font-size:15px;font-weight:800;">Thiết lập AI lần đầu để tạo danh sách phát</div>
-            <div style="font-size:12.5px;opacity:.9;">Nhập Gemini API Key rồi bấm Save — hệ thống sẽ tải danh sách mô hình và mở AI Playlist Lab.</div>
+          ${pendingOpenLabAfterSetup ? `<div class="ai-banner-info" style="margin-bottom:20px;">
+            <div style="font-size:calc(15px * var(--font-scale-factor, 1));font-weight:800;">Thiết lập AI lần đầu để tạo danh sách phát</div>
+            <div style="font-size:calc(12.5px * var(--font-scale-factor, 1));opacity:.9;">Nhập Gemini API Key rồi bấm Save — hệ thống sẽ tải danh sách mô hình và mở AI Playlist Lab.</div>
           </div>` : ''}
-          <div class="ai-sec-lbl">AI Provider</div>
-          <div class="ai-card">
-            <div class="ai-row-flex">
-              <div class="ai-ico-box"><span class="material-symbols-rounded">science</span></div>
-              <div style="flex:1;min-width:0;">
-                <div class="ai-card-title">Provider</div>
-                <div class="ai-card-desc">Google Gemini</div>
+          <div class="ai-st-sec">AI Provider</div>
+          <div class="ai-st-group">
+            <div class="ai-st-card">
+              <div class="ai-row-flex">
+                <div class="ai-ico-box"><span class="material-symbols-rounded">science</span></div>
+                <div style="flex:1;min-width:0;">
+                  <div class="ai-card-title">Provider</div>
+                  <div class="ai-card-desc">Google Gemini</div>
+                </div>
+                <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="provider">
+                  <span>Google Gemini</span>
+                  <span class="material-symbols-rounded" style="font-size:18px;">expand_more</span>
+                </button>
               </div>
-              <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="provider">
-                <span>Google Gemini</span>
-                <span class="material-symbols-rounded" style="font-size:18px;">expand_more</span>
-              </button>
             </div>
-            <div class="ai-row-flex" style="margin-top:2px;">
-              <div class="ai-ico-box"><span class="material-symbols-rounded">monitoring</span></div>
-              <div style="flex:1;min-width:0;">
-                <div class="ai-card-title">Safe Token Mode</div>
-                <div class="ai-card-desc">${cfg.safeToken ? 'ON — Fast & cheap. Sends compact track metadata to AI.' : 'OFF — Sends full track metadata & filters.'}</div>
+            <div class="ai-st-card">
+              <div class="ai-row-flex">
+                <div class="ai-ico-box"><span class="material-symbols-rounded">monitoring</span></div>
+                <div style="flex:1;min-width:0;">
+                  <div class="ai-card-title">Safe Token Mode</div>
+                  <div class="ai-card-desc">${cfg.safeToken ? 'ON — Fast & cheap. Sends compact track metadata to AI.' : 'OFF — Sends full track metadata & filters.'}</div>
+                </div>
+                <label class="ai-switch">
+                  <input type="checkbox" data-ai-field="safeToken"${cfg.safeToken ? ' checked' : ''}>
+                  <span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">${cfg.safeToken ? 'check' : 'close'}</span></span></span>
+                </label>
               </div>
-              <label class="ai-switch">
-                <input type="checkbox" data-ai-field="safeToken"${cfg.safeToken ? ' checked' : ''}>
-                <span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">${cfg.safeToken ? 'check' : 'close'}</span></span></span>
-              </label>
             </div>
           </div>
 
-          <div class="ai-sec-lbl">Credentials</div>
-          <div class="ai-card">
-            <div>
-              <div class="ai-card-title">Google Gemini API Key</div>
-              <div class="ai-card-desc">Get from Google AI Studio (aistudio.google.com)</div>
-            </div>
-            <input type="password" class="ai-input" data-ai-field="apiKey" placeholder="Paste Gemini API key..." value="${(cfg.apiKey || '').replace(/"/g, '&quot;')}">
-            <button type="button" class="ai-save-btn" data-ai-action="save-key">Save &amp; Fetch Models</button>
-          </div>
-
-          <div class="ai-sec-lbl">Model Selection</div>
-          <div class="ai-card">
-            <div class="ai-row-flex">
-              <div class="ai-ico-box"><span class="material-symbols-rounded">auto_awesome</span></div>
-              <div style="flex:1;min-width:0;">
-                <div class="ai-card-title">AI Model</div>
-                <div class="ai-card-desc">${modelDesc}</div>
+          <div class="ai-st-sec">Credentials</div>
+          <div class="ai-st-group">
+            <div class="ai-st-card">
+              <div>
+                <div class="ai-card-title">Google Gemini API Key</div>
+                <div class="ai-card-desc">Get from Google AI Studio (aistudio.google.com)</div>
               </div>
-              <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="model"${(!hasKey || fetchingModels) ? ' disabled' : ''}>
-                <span>${modelLabel}</span>
-                <span class="material-symbols-rounded" style="font-size:18px;">${fetchingModels ? 'sync' : 'expand_more'}</span>
-              </button>
+              <input type="password" class="ai-input" data-ai-field="apiKey" placeholder="Paste Gemini API key..." value="${(cfg.apiKey || '').replace(/"/g, '&quot;')}">
+              <button type="button" class="ai-save-btn" data-ai-action="save-key">Save &amp; Fetch Models</button>
             </div>
           </div>
 
-          <div class="ai-sec-lbl">Prompt Behavior</div>
-          <div class="ai-card">
-            <div>
-              <div class="ai-card-title">System Prompt</div>
-              <div class="ai-card-desc">Customize how the AI behaves &amp; returns JSON.</div>
+          <div class="ai-st-sec">Model Selection</div>
+          <div class="ai-st-group">
+            <div class="ai-st-card">
+              <div class="ai-row-flex">
+                <div class="ai-ico-box"><span class="material-symbols-rounded">auto_awesome</span></div>
+                <div style="flex:1;min-width:0;">
+                  <div class="ai-card-title">AI Model</div>
+                  <div class="ai-card-desc">${modelDesc}</div>
+                </div>
+                <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="model"${(!hasKey || fetchingModels) ? ' disabled' : ''}>
+                  <span>${modelLabel}</span>
+                  <span class="material-symbols-rounded" style="font-size:18px;">${fetchingModels ? 'sync' : 'expand_more'}</span>
+                </button>
+              </div>
             </div>
-            <div class="ai-chip-wrap">
-              <button type="button" class="ai-pill-btn${cfg.preset === 'curator' ? ' active' : ''}" data-ai-preset="curator">Professional Curator</button>
-              <button type="button" class="ai-pill-btn${cfg.preset === 'creative' ? ' active' : ''}" data-ai-preset="creative">Creative</button>
-            </div>
-            <textarea class="ai-textarea" data-ai-field="systemPrompt">${cfg.systemPrompt.replace(/</g, '&lt;')}</textarea>
-            <button type="button" class="ai-save-btn" data-ai-action="save-prompt">Save</button>
           </div>
 
-          <div class="ai-sec-lbl">AI Usage Report</div>
-          <div class="ai-card">
-            <div class="ai-card-title">Total Consumption</div>
-            <div class="ai-card-desc">Generated playlists: <b>${usage.runs}</b> • Est. tokens: <b>${usage.tokensEst}</b>${usage.lastPlaylist ? ' • Latest: <b>' + usage.lastPlaylist.replace(/</g, '&lt;') + '</b>' : ''}</div>
+          <div class="ai-st-sec">Prompt Behavior</div>
+          <div class="ai-st-group">
+            <div class="ai-st-card">
+              <div>
+                <div class="ai-card-title">System Prompt</div>
+                <div class="ai-card-desc">Customize how the AI behaves &amp; returns JSON.</div>
+              </div>
+              <div class="ai-chip-wrap">
+                <button type="button" class="ai-pill-btn${cfg.preset === 'curator' ? ' active' : ''}" data-ai-preset="curator">Professional Curator</button>
+                <button type="button" class="ai-pill-btn${cfg.preset === 'creative' ? ' active' : ''}" data-ai-preset="creative">Creative</button>
+              </div>
+              <textarea class="ai-textarea" data-ai-field="systemPrompt">${cfg.systemPrompt.replace(/</g, '&lt;')}</textarea>
+              <button type="button" class="ai-save-btn" data-ai-action="save-prompt">Save</button>
+            </div>
+          </div>
+
+          <div class="ai-st-sec">AI Usage Report</div>
+          <div class="ai-st-group">
+            <div class="ai-st-card">
+              <div class="ai-card-title">Total Consumption</div>
+              <div class="ai-card-desc">Generated playlists: <b>${usage.runs}</b> • Est. tokens: <b>${usage.tokensEst}</b>${usage.lastPlaylist ? ' • Latest: <b>' + usage.lastPlaylist.replace(/</g, '&lt;') + '</b>' : ''}</div>
+            </div>
           </div>
         `;
 
@@ -455,55 +470,75 @@
                   <div style="display:flex;align-items:center;gap:12px;">
                     <span class="material-symbols-rounded" style="font-size:28px;">auto_awesome</span>
                     <div>
-                      <div style="font-size:17px;font-weight:800;">Curate with precision</div>
-                      <div style="font-size:12.5px;opacity:.85;">Define mood, activity, constraints and depth.</div>
+                      <div style="font-size:calc(17px * var(--font-scale-factor, 1));font-weight:800;">Curate with precision</div>
+                      <div style="font-size:calc(12.5px * var(--font-scale-factor, 1));opacity:.85;">Define mood, activity, constraints and depth.</div>
                     </div>
                   </div>
-                  <div style="border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);padding-top:8px;font-size:12.5px;opacity:.9;">
+                  <div style="border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);padding-top:8px;font-size:calc(12.5px * var(--font-scale-factor, 1));opacity:.9;">
                     The AI will only use songs from your local library (sending track name, file type, artist, album, duration &amp; format metadata) and return JSON.
                   </div>
                 </div>
 
-                <div class="ai-sec-lbl">Intent</div>
-                <div class="ai-card">
-                  <input type="text" class="ai-input" id="ai-pl-name" placeholder="Playlist name (optional)">
-                  <textarea class="ai-textarea" id="ai-pl-feel" placeholder="What should this playlist feel like?"></textarea>
-                </div>
-
-                <div class="ai-sec-lbl">Direction</div>
-                <div class="ai-card">
-                  <div style="font-weight:700;">Mood</div>
-                  <div class="ai-chip-wrap" id="ai-mood-wrap">${moodChips}</div>
-                  <div style="font-weight:700;margin-top:4px;">Activity</div>
-                  <div class="ai-chip-wrap" id="ai-act-wrap">${actChips}</div>
-                  <div style="font-weight:700;margin-top:4px;">Era</div>
-                  <div class="ai-chip-wrap" id="ai-era-wrap">${eraChips}</div>
-                </div>
-
-                <div class="ai-sec-lbl">Curation engine</div>
-                <div class="ai-card">
-                  <div class="ai-row-flex"><span style="font-weight:700;">Energy</span><span id="ai-energy-lbl" style="font-weight:700;color:var(--md-sys-color-primary);">3/5</span></div>
-                  <div class="ai-seg-5" id="ai-energy-seg">${seg5('ai-e-btn')}</div>
-                  <div class="ai-row-flex" style="margin-top:4px;"><span style="font-weight:700;">Discovery</span><span id="ai-disc-lbl" style="font-weight:700;color:var(--md-sys-color-primary);">3/5</span></div>
-                  <div class="ai-seg-5" id="ai-disc-seg">${seg5('ai-d-btn')}</div>
-                  <div class="ai-two-col" style="margin-top:4px;">
-                    <div><div class="ai-card-desc" style="margin-bottom:4px;">Min songs</div><input type="number" class="ai-input" id="ai-min-songs" min="1" max="100" value="12"></div>
-                    <div><div class="ai-card-desc" style="margin-bottom:4px;">Max songs</div><input type="number" class="ai-input" id="ai-max-songs" min="1" max="200" value="24"></div>
+                <div class="ai-st-sec">Intent</div>
+                <div class="ai-st-group">
+                  <div class="ai-st-card">
+                    <input type="text" class="ai-input" id="ai-pl-name" placeholder="Playlist name (optional)">
+                    <textarea class="ai-textarea" id="ai-pl-feel" placeholder="What should this playlist feel like?"></textarea>
                   </div>
                 </div>
 
-                <div class="ai-sec-lbl">Filters</div>
-                <div class="ai-card">
-                  <input type="text" class="ai-input" id="ai-prio-genres" placeholder="Prioritize genres (optional)">
-                  <input type="text" class="ai-input" id="ai-avoid-genres" placeholder="Avoid genres (optional)">
-                  <input type="text" class="ai-input" id="ai-pref-lang" placeholder="Preferred language (optional)">
-                  <div class="ai-row-flex">
-                    <span style="font-weight:700;">Prioritize favorites</span>
-                    <label class="ai-switch"><input type="checkbox" id="ai-prio-favs" checked><span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">check</span></span></span></label>
+                <div class="ai-st-sec">Direction</div>
+                <div class="ai-st-group">
+                  <div class="ai-st-card">
+                    <div class="ai-card-title">Mood</div>
+                    <div class="ai-chip-wrap" id="ai-mood-wrap">${moodChips}</div>
                   </div>
-                  <div class="ai-row-flex">
-                    <span style="font-weight:700;">Avoid explicit lyrics</span>
-                    <label class="ai-switch"><input type="checkbox" id="ai-avoid-exp"><span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">close</span></span></span></label>
+                  <div class="ai-st-card">
+                    <div class="ai-card-title">Activity</div>
+                    <div class="ai-chip-wrap" id="ai-act-wrap">${actChips}</div>
+                  </div>
+                  <div class="ai-st-card">
+                    <div class="ai-card-title">Era</div>
+                    <div class="ai-chip-wrap" id="ai-era-wrap">${eraChips}</div>
+                  </div>
+                </div>
+
+                <div class="ai-st-sec">Curation engine</div>
+                <div class="ai-st-group">
+                  <div class="ai-st-card">
+                    <div class="ai-row-flex"><span class="ai-card-title">Energy</span><span id="ai-energy-lbl" style="font-weight:700;color:var(--md-sys-color-primary);">3/5</span></div>
+                    <div class="ai-seg-5" id="ai-energy-seg">${seg5('ai-e-btn')}</div>
+                  </div>
+                  <div class="ai-st-card">
+                    <div class="ai-row-flex"><span class="ai-card-title">Discovery</span><span id="ai-disc-lbl" style="font-weight:700;color:var(--md-sys-color-primary);">3/5</span></div>
+                    <div class="ai-seg-5" id="ai-disc-seg">${seg5('ai-d-btn')}</div>
+                  </div>
+                  <div class="ai-st-card">
+                    <div class="ai-two-col">
+                      <div><div class="ai-card-desc" style="margin-bottom:6px;">Min songs</div><input type="number" class="ai-input" id="ai-min-songs" min="1" max="100" value="12"></div>
+                      <div><div class="ai-card-desc" style="margin-bottom:6px;">Max songs</div><input type="number" class="ai-input" id="ai-max-songs" min="1" max="200" value="24"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ai-st-sec">Filters</div>
+                <div class="ai-st-group">
+                  <div class="ai-st-card">
+                    <input type="text" class="ai-input" id="ai-prio-genres" placeholder="Prioritize genres (optional)">
+                    <input type="text" class="ai-input" id="ai-avoid-genres" placeholder="Avoid genres (optional)">
+                    <input type="text" class="ai-input" id="ai-pref-lang" placeholder="Preferred language (optional)">
+                  </div>
+                  <div class="ai-st-card">
+                    <div class="ai-row-flex">
+                      <span class="ai-card-title">Prioritize favorites</span>
+                      <label class="ai-switch"><input type="checkbox" id="ai-prio-favs" checked><span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">check</span></span></span></label>
+                    </div>
+                  </div>
+                  <div class="ai-st-card">
+                    <div class="ai-row-flex">
+                      <span class="ai-card-title">Avoid explicit lyrics</span>
+                      <label class="ai-switch"><input type="checkbox" id="ai-avoid-exp"><span class="ai-switch-track"><span class="ai-switch-thumb"><span class="material-symbols-rounded" style="font-size:13px;">close</span></span></span></label>
+                    </div>
                   </div>
                 </div>
               </div>
