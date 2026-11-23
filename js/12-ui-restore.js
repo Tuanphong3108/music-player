@@ -350,6 +350,10 @@
         if (window.__externalOpenActive || trackDone) return false;
         return !!(window.__nativeBoot || (saved && saved.key) || (card && card.key));
     };
+    window.__hasPendingQueueRestore = function () {
+        if (window.__externalOpenActive || qDone) return false;
+        return !!(window.__nativeBootQueue || localStorage.getItem(QKEY));
+    };
     window.__tryRestoreNow = function (autoPlay) {
         if (autoPlay) window.__pendingMiniResume = true;
         return !!tryRestore();
