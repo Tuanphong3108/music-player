@@ -50,7 +50,7 @@
     document.addEventListener('click', soon, true);
     document.addEventListener('visibilitychange', save);
     window.addEventListener('pagehide', save);
-    setInterval(() => { if (!document.hidden) save(); }, 8000);
+    setInterval(() => { if (!document.hidden || (typeof audio !== 'undefined' && !audio.paused && !audio.ended)) save(); }, 1000);
 
     // ===== Hàng đợi tạm (playlist đang phát): lưu đúng thứ tự + thứ tự shuffle, khôi phục sau khi quét xong thư viện =====
     const QKEY = 'mp_queue_v1';
