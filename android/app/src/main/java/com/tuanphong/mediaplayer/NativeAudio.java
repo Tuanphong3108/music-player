@@ -588,6 +588,16 @@ final class NativeAudio {
 
             JSONObject snap = new JSONObject();
             snap.put("id", curId == null ? "" : curId);
+            String curLocNow = MainActivity.resolveLocation(curId);
+            if ((curLocNow == null || curLocNow.isEmpty()) && curId != null && !curId.isEmpty()) {
+                for (int i = 0; i < qIds.length; i++) {
+                    if (curId.equals(qIds[i]) && i < qLocs.length && qLocs[i] != null && !qLocs[i].isEmpty()) {
+                        curLocNow = qLocs[i];
+                        break;
+                    }
+                }
+            }
+            snap.put("curLoc", curLocNow == null ? "" : curLocNow);
             snap.put("title", title == null ? "" : title);
             snap.put("artist", artist == null ? "" : artist);
             snap.put("loaded", loaded);
@@ -670,7 +680,12 @@ final class NativeAudio {
         try {
             Context c = ctx != null ? ctx : app;
             if (c == null) return "";
-            return c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE).getString("session_json", "");
+            String raw = c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE).getString("session_json", "");
+            if (raw == null || raw.isEmpty()) return "";
+            JSONObject o = new JSONObject(raw);
+            o.put("fromBackup", true);
+            o.put("pwr", false); // Khôi phục từ bản lưu (sau crash/đóng app) luôn đặt trạng thái Pause
+            return o.toString();
         } catch (Throwable ignored) {
             return "";
         }
@@ -680,7 +695,11 @@ final class NativeAudio {
         try {
             Context c = ctx != null ? ctx : app;
             if (c == null) return "";
-            return c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE).getString("queue_json", "");
+            String raw = c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE).getString("queue_json", "");
+            if (raw == null || raw.isEmpty()) return "";
+            JSONObject o = new JSONObject(raw);
+            o.put("fromBackup", true);
+            return o.toString();
         } catch (Throwable ignored) {
             return "";
         }
