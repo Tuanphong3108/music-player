@@ -320,6 +320,27 @@
     }
     setInterval(() => { if (!document.hidden) syncSleep(); }, 3000);
     window.__syncNativeQueue = () => syncQueue(true);
+    window.__syncNativeShuffle = function (enabled) {
+        try {
+            const val = !!enabled;
+            if (typeof AB.nativeAudioSetShuffle === 'function') AB.nativeAudioSetShuffle(val);
+            syncQueue(true);
+        } catch (e) {}
+    };
+    (function hookShuffleFlag() {
+        const pushCurrent = () => {
+            try {
+                if (typeof isShuffle !== 'undefined' && typeof AB.nativeAudioSetShuffle === 'function') {
+                    AB.nativeAudioSetShuffle(!!isShuffle);
+                }
+            } catch (e) {}
+        };
+        ['shuffle-btn', 'm-pl-shuffle', 'reshuffle-btn'].forEach(id => {
+            const b = document.getElementById(id);
+            if (b) b.addEventListener('click', () => setTimeout(pushCurrent, 0));
+        });
+        setTimeout(pushCurrent, 300);
+    })();
     window.__matchNativeSession = function (qState) {
         try {
             if (!qState || typeof playlist === 'undefined') return;
