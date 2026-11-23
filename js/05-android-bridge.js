@@ -14,6 +14,13 @@
                     const files = [];
                     const disallowVideoOnAndroid = !!(window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || document.documentElement.classList.contains('is-android-app'));
                     const isLibraryBatch = Array.isArray(list) && list.length > 0 && list.every(x => x && x.fromLibrary);
+                    const isExternalBatch = Array.isArray(list) && list.length > 0 && !isLibraryBatch;
+                    if (isExternalBatch) {
+                        window.__externalOpenActive = true;
+                        window.__nativeBoot = null;
+                        window.__restoreOnce = null;
+                        if (typeof window.__cancelUiRestore === 'function') window.__cancelUiRestore();
+                    }
                     for (const it of list || []) {
                         const name = it.name || 'media';
                         const ext = (name.match(/\.([^.]+)$/) || ['', ''])[1].toLowerCase();
@@ -72,6 +79,10 @@
                             if (typeof window.__syncMobileLibraryFromPlaylist === 'function') window.__syncMobileLibraryFromPlaylist();
                             if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
                             if (typeof window.__hydrateMobileLibraryCovers === 'function') window.__hydrateMobileLibraryCovers();
+                        } else if (isExternalBatch && document.documentElement.classList.contains('m-ui')) {
+                            document.body.classList.remove('m-early-card');
+                            document.body.classList.add('m-mini-visible');
+                            if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
                         }
                     }
                 } catch (e) { console.log('native-open failed', e); }
@@ -105,7 +116,7 @@
                 try {
                     if (missingPerm) return;
                     // Sau khi quét xong toàn bộ danh sách, đồng bộ lại playlist tạm nếu chưa phát bài riêng lẻ để không bị thiếu bài
-                    if (!window.__queueRestored && Array.isArray(window.__mobileLibrary) && window.__mobileLibrary.length > 0 && playlist.length < window.__mobileLibrary.length) {
+                    if (!window.__queueRestored && !window.__externalOpenActive && Array.isArray(window.__mobileLibrary) && window.__mobileLibrary.length > 0 && playlist.length < window.__mobileLibrary.length) {
                         const curTr = playlist[currentIndex] || null;
                         playlist.length = 0;
                         window.__mobileLibrary.forEach(t => playlist.push(t));
