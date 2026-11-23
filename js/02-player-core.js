@@ -1423,46 +1423,66 @@
         }
         document.getElementById('locate-btn').addEventListener('click', (e) => { e.stopPropagation(); locateCurrentTrack(true); });
 
-        async function readCompleteTrackTags(track) {
+        let nativeMetaEndpointSupported = true;
+        async function readCompleteTrackTags(track, opts) {
             if (!track) return null;
-            // 1. Trên Android native: ưu tiên đọc trực tiếp toàn tệp bằng MediaMetadataRetriever (hỗ trợ đủ FLAC, M4A, OGG, OPUS, ID3v2.4, WAV...)
-            try {
-                if (track.nativeId && window.AndroidBridge && typeof window.AndroidBridge.readTrackMetadataJson === 'function') {
-                    const raw = window.AndroidBridge.readTrackMetadataJson(String(track.nativeId));
-                    if (raw) {
-                        const m = JSON.parse(raw);
-                        if (m && typeof m === 'object') {
-                            let coverDataUrl = null;
-                            if (m.hasPicture && m.artUrl) {
-                                try {
-                                    const r = await fetch(m.artUrl);
-                                    if (r && r.ok) {
-                                        const bl = await r.blob();
-                                        coverDataUrl = await new Promise((res) => {
-                                            const fr = new FileReader();
-                                            fr.onload = () => res(typeof fr.result === 'string' ? fr.result : null);
-                                            fr.onerror = () => res(null);
-                                            fr.readAsDataURL(bl);
-                                        });
-                                    }
-                                } catch (e) {}
-                            }
-                            return {
-                                title: m.title || '',
-                                artist: m.artist || '',
-                                album: m.album || '',
-                                year: m.year || '',
-                                genre: m.genre || '',
-                                composer: m.composer || '',
-                                lyrics: '',
-                                pictureDataUrl: coverDataUrl,
-                                hasPicture: !!m.hasPicture,
-                                source: 'native'
-                            };
+            const preferThumb = !!(opts && opts.preferThumb);
+            // 1. Trên Android native: ưu tiên gọi endpoint bất đồng bộ /meta/<id> (chạy trên luồng IO của WebView -> đọc song song 3 tệp cùng lúc không chặn UI)
+            if (track.nativeId && window.IS_ANDROID_APP) {
+                let m = null;
+                if (nativeMetaEndpointSupported) {
+                    try {
+                        const mr = await fetch('https://appassets.local/meta/' + encodeURIComponent(String(track.nativeId)));
+                        if (mr && mr.ok) {
+                            m = await mr.json();
+                        } else if (mr && mr.status === 404 && !track.nativeStreamUrl) {
+                            nativeMetaEndpointSupported = false;
+                        }
+                    } catch (e) {}
+                }
+                if (!m && window.AndroidBridge && typeof window.AndroidBridge.readTrackMetadataJson === 'function') {
+                    try {
+                        const raw = window.AndroidBridge.readTrackMetadataJson(String(track.nativeId));
+                        if (raw) m = JSON.parse(raw);
+                    } catch (e) {}
+                }
+                if (m && typeof m === 'object') {
+                    let coverDataUrl = null;
+                    if (m.hasPicture) {
+                        if (preferThumb && m.thumb && m.thumb.startsWith('data:')) {
+                            coverDataUrl = m.thumb;
+                        } else if (m.artUrl) {
+                            try {
+                                const r = await fetch(m.artUrl);
+                                if (r && r.ok) {
+                                    const bl = await r.blob();
+                                    coverDataUrl = await new Promise((res) => {
+                                        const fr = new FileReader();
+                                        fr.onload = () => res(typeof fr.result === 'string' ? fr.result : null);
+                                        fr.onerror = () => res(null);
+                                        fr.readAsDataURL(bl);
+                                    });
+                                }
+                            } catch (e) {}
+                        }
+                        if (!coverDataUrl && m.thumb && m.thumb.startsWith('data:')) {
+                            coverDataUrl = m.thumb;
                         }
                     }
+                    return {
+                        title: m.title || '',
+                        artist: m.artist || '',
+                        album: m.album || '',
+                        year: m.year || '',
+                        genre: m.genre || '',
+                        composer: m.composer || '',
+                        lyrics: '',
+                        pictureDataUrl: coverDataUrl,
+                        hasPicture: !!m.hasPicture,
+                        source: 'native'
+                    };
                 }
-            } catch (e) {}
+            }
 
             // 2. Đọc bằng jsmediatags trên TOÀN BỘ tệp (không cắt 2MB đầu để tránh mất ảnh bìa lớn hoặc tag cuối file ID3v1/APEv2/M4A)
             try {
