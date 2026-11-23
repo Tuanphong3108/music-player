@@ -239,16 +239,18 @@
                     renderMobileLibrary();
                     if (appliedAnyCache && typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
 
-                    // Bước 2: Kiểm tra ngầm toàn bộ bài (kể cả bài đã có cache) để phát hiện thay đổi tag/ảnh bìa và cập nhật lại cache
-                    // Nhường CPU/mạng cho lúc khởi động & phát nhạc: đợi 3 giây sau khi mở, và tạm dừng khi app chạy nền (màn hình tắt)
-                    await new Promise(r0 => setTimeout(r0, 3000));
-                    for (let i = 0; i < pool.length; i++) {
+                    // Bước 2: Chỉ quét bổ sung các bài chưa có cache (giới hạn mỗi lượt để không đè UI), bài đã có cache giữ nguyên tốc độ tức thì
+                    await new Promise(r0 => setTimeout(r0, 4500));
+                    let bgScanned = 0;
+                    const MAX_BG_PER_PASS = 24;
+                    for (let i = 0; i < pool.length && bgScanned < MAX_BG_PER_PASS; i++) {
                         const tr = pool[i];
-                        if (!tr || !tr.nativeStreamUrl || tr._bgCoverChecked) continue;
+                        if (!tr || !tr.nativeStreamUrl || tr._bgCoverChecked || tr._metaFromCache) continue;
                         if (document.hidden) {
                             await new Promise(rv => { const on = () => { if (!document.hidden) { document.removeEventListener('visibilitychange', on); rv(); } }; document.addEventListener('visibilitychange', on); });
                         }
                         tr._bgCoverChecked = true;
+                        bgScanned++;
                         try {
                             const r = await fetch(tr.nativeStreamUrl, { headers: { Range: 'bytes=0-2097151' } });
                             if (!r || !r.ok) {
