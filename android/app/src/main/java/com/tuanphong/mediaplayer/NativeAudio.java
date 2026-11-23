@@ -245,16 +245,23 @@ final class NativeAudio {
     }
     /** Chỉ số (trong danh sách) của bài cách bài hiện tại `dir` bước theo thứ tự phát; -1 nếu không có. Bỏ qua bài không mở được. */
     private static int stepQ(int dir) {
-        int c = curQ();
-        int total = qIds.length;
+        String[] ids = qIds;
+        int total = ids.length;
+        int c = -1;
+        String activeId = curId;
+        for (int i = 0; i < total; i++) {
+            if (activeId != null && activeId.equals(ids[i])) { c = i; break; }
+        }
         if (c < 0 || total == 0) return -1;
         if (dir > 0 && repeat == 2) return c;
-        int[] seq = null;
-        if (!shuffled || order.length != total) {
-            seq = new int[total];
-            for (int i = 0; i < total; i++) seq[i] = i;
+        boolean useShuffle = shuffled && order != null && order.length == total;
+        int[] ord;
+        if (useShuffle) {
+            ord = order;
+        } else {
+            ord = new int[total];
+            for (int i = 0; i < total; i++) ord[i] = i;
         }
-        int[] ord = seq != null ? seq : order;
         int pos = -1;
         for (int i = 0; i < ord.length; i++) if (ord[i] == c) { pos = i; break; }
         if (pos < 0) return -1;
@@ -267,7 +274,7 @@ final class NativeAudio {
             }
             int q = ord[np];
             if (q == c) return -1;
-            if (q >= 0 && q < qIds.length && !qIds[q].isEmpty() && MainActivity.resolveServed(qIds[q]) != null) return q;
+            if (q >= 0 && q < ids.length && !ids[q].isEmpty() && MainActivity.resolveServed(ids[q]) != null) return q;
         }
         return -1;
     }
@@ -403,16 +410,14 @@ final class NativeAudio {
                 }
                 a4[i] = l;
             }
-            int[] ord;
+            int[] ord = new int[n];
             boolean sh = o.optBoolean("shuffle", false) && od != null && od.length() == n;
-            if (sh) {
-                ord = new int[n];
-                for (int i = 0; i < n; i++) ord[i] = od.optInt(i, i);
-            } else {
-                ord = new int[n];
-                for (int i = 0; i < n; i++) ord[i] = i;
+            for (int i = 0; i < n; i++) {
+                ord[i] = sh ? od.optInt(i, i) : i;
             }
-            qIds = a1; qTitles = a2; qArtists = a3; qLocs = a4; order = ord; shuffled = sh; repeat = o.optInt("repeat", 0);
+            shuffled = sh;
+            order = ord;
+            qIds = a1; qTitles = a2; qArtists = a3; qLocs = a4; repeat = o.optInt("repeat", 0);
         } catch (Throwable ignored) {}
     }
 
@@ -463,16 +468,15 @@ final class NativeAudio {
 
     static int sessionId() { return sid; }
     static void setShuffleEnabled(boolean enabled) {
-        shuffled = enabled;
         int total = qIds.length;
+        int[] seq = new int[total];
+        for (int i = 0; i < total; i++) seq[i] = i;
         if (!enabled) {
-            int[] seq = new int[total];
-            for (int i = 0; i < total; i++) seq[i] = i;
             order = seq;
-        } else if (order.length != total) {
-            int[] seq = new int[total];
-            for (int i = 0; i < total; i++) seq[i] = i;
-            order = seq;
+            shuffled = false;
+        } else {
+            if (order == null || order.length != total) order = seq;
+            shuffled = true;
         }
     }
     static boolean isShuffleEnabled() { return shuffled; }
