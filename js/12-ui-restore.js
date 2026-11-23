@@ -14,7 +14,14 @@
     if (!hasExtLaunch && window.__nativeBoot) { saved = saved || { key: '', ts: 0 }; trackDone = false; }
     let navApplied = hasExtLaunch;
     let touched = hasExtLaunch;
-    window.addEventListener('pointerdown', () => { touched = true; armed = true; }, true);
+    window.addEventListener('pointerdown', (ev) => {
+        // Bấm nút Play trên thẻ Mini Player khôi phục sớm -> không hủy khôi phục mà kích hoạt phát tiếp từ đoạn cũ
+        if (ev && ev.target && ev.target.closest && ev.target.closest('#m-mini-play') && !trackDone) {
+            return;
+        }
+        touched = true;
+        armed = true;
+    }, true);
 
     function snapshot() {
         const cur = (typeof playlist !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
@@ -51,7 +58,9 @@
     function cancelRestoreForExternal() {
         window.__externalOpenActive = true;
         window.__nativeBoot = null;
+        window.__nativeBootQueue = null;
         window.__restoreOnce = null;
+        window.__pendingMiniResume = false;
         trackDone = true;
         qDone = true;
         qArmed = true;
@@ -75,24 +84,88 @@
     setInterval(() => { if (!document.hidden) saveQueue(); }, 10000);
     document.addEventListener('visibilitychange', () => { if (document.hidden) saveQueue(); });
     window.addEventListener('pagehide', saveQueue);
+
+    function buildPool() {
+        const byKey = new Map();
+        const byId = new Map();
+        const lib = Array.isArray(window.__mobileLibrary) ? window.__mobileLibrary : [];
+        const cur = (typeof playlist !== 'undefined' && currentIndex >= 0 && playlist[currentIndex]) ? playlist[currentIndex] : null;
+        lib.concat(typeof playlist !== 'undefined' ? playlist : []).concat(cur ? [cur] : []).forEach(tr => {
+            if (!tr) return;
+            const k = keyOf(tr);
+            if (k && !byKey.has(k)) byKey.set(k, tr);
+            if (tr.nativeId && !byId.has(String(tr.nativeId))) byId.set(String(tr.nativeId), tr);
+        });
+        return { byKey, byId };
+    }
+
+    function applyNativeQueue(nqData) {
+        if (!nqData || typeof playlist === 'undefined') return false;
+        const locs = Array.isArray(nqData.locations) ? nqData.locations : [];
+        const ids = Array.isArray(nqData.ids) ? nqData.ids : [];
+        const len = Math.max(locs.length, ids.length);
+        if (!len) return false;
+        const { byKey, byId } = buildPool();
+        const nq = [], oldIdx = [];
+        for (let i = 0; i < len; i++) {
+            const loc = String(locs[i] || '').toLowerCase();
+            const id = String(ids[i] || '');
+            const tr = (id && byId.get(id)) || (loc && byKey.get(loc)) || null;
+            if (tr) { nq.push(tr); oldIdx[i] = nq.length - 1; }
+            else oldIdx[i] = -1;
+        }
+        if (!nq.length) return false;
+        const cur = (currentIndex >= 0 && playlist[currentIndex]) || null;
+        const same = nq.length === playlist.length && nq.every((tr, i) => tr === playlist[i]);
+        if (!same) {
+            playlist.length = 0;
+            nq.forEach(tr => playlist.push(tr));
+            currentIndex = cur ? playlist.indexOf(cur) : -1;
+            window.__queueRestored = true;
+        }
+        if (typeof nqData.repeat === 'number' && typeof repeatMode !== 'undefined' && repeatMode !== nqData.repeat) {
+            repeatMode = nqData.repeat;
+            if (typeof applyRepeatUI === 'function') applyRepeatUI();
+        }
+        const ord = Array.isArray(nqData.order) ? nqData.order.map(i => oldIdx[i]).filter(i => i >= 0) : [];
+        if (ord.length === playlist.length && playlist.length > 0) {
+            if (!isShuffle && typeof isShuffle !== 'undefined') {
+                isShuffle = true;
+                document.getElementById('shuffle-btn')?.classList.add('active');
+            }
+            shuffleOrder = ord;
+            shuffleInitialized = true;
+        } else if (isShuffle && !same && typeof generateShuffleOrder === 'function') {
+            generateShuffleOrder();
+        }
+        qDone = true;
+        qArmed = true;
+        updatePlaylistUI();
+        if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+        return true;
+    }
+
     function restoreQueue() {
         if (qDone || window.__externalOpenActive) { qDone = true; qArmed = true; return; }
-        qDone = true;
+        if (window.__nativeBootQueue && applyNativeQueue(window.__nativeBootQueue)) return;
         try {
             let q = null;
             try { q = JSON.parse(localStorage.getItem(QKEY) || 'null'); } catch (e) {}
-            if (!q || !Array.isArray(q.keys) || !q.keys.length) return;
-            const pool = new Map();
-            (Array.isArray(window.__mobileLibrary) ? window.__mobileLibrary : []).concat(playlist).forEach(t => { const k = keyOf(t); if (k && !pool.has(k)) pool.set(k, t); });
+            if (!q || !Array.isArray(q.keys) || !q.keys.length) {
+                if (window.__ingestBusy <= 0) { qDone = true; qArmed = true; }
+                return;
+            }
+            const { byKey } = buildPool();
+            if (!byKey.size) return; // thư viện chưa có bài nào -> đợi đợt quét tới
             const cur = (currentIndex >= 0 && playlist[currentIndex]) || null;
-            if (cur) pool.set(keyOf(cur), cur);
             const nq = [], oldIdx = [];
-            q.keys.forEach((k, i) => { const t = pool.get(k); if (t) { nq.push(t); oldIdx[i] = nq.length - 1; } else oldIdx[i] = -1; });
+            q.keys.forEach((k, i) => { const tr = byKey.get(String(k || '').toLowerCase()); if (tr) { nq.push(tr); oldIdx[i] = nq.length - 1; } else oldIdx[i] = -1; });
             if (!nq.length) return;
-            const same = nq.length === playlist.length && nq.every((t, i) => t === playlist[i]);
+            qDone = true;
+            const same = nq.length === playlist.length && nq.every((tr, i) => tr === playlist[i]);
             if (!same) {
                 playlist.length = 0;
-                nq.forEach(t => playlist.push(t));
+                nq.forEach(tr => playlist.push(tr));
                 currentIndex = cur ? playlist.indexOf(cur) : -1;
                 window.__queueRestored = true;
             }
@@ -104,14 +177,24 @@
             updatePlaylistUI();
             if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
             if (typeof window.__syncNativeQueue === 'function') window.__syncNativeQueue();
-        } catch (e) {} finally { qArmed = true; }
+        } catch (e) {} finally {
+            if (qDone) qArmed = true;
+        }
     }
     (function () {
         const o = window.__onAndroidLibraryScanDone;
         window.__onAndroidLibraryScanDone = function (count, missingPerm) {
             if (!missingPerm && window.__ingestBusy > 0) { const args = arguments; setTimeout(() => window.__onAndroidLibraryScanDone.apply(null, args), 120); return; }
             let r; try { if (o) r = o.apply(this, arguments); } catch (e) {}
-            if (!missingPerm) setTimeout(restoreQueue, 0); else qArmed = true;
+            if (!missingPerm) {
+                setTimeout(() => {
+                    restoreQueue();
+                    if (!trackDone && !window.__externalOpenActive) tryRestore();
+                    if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
+                }, 0);
+            } else {
+                qArmed = true;
+            }
             return r;
         };
         setTimeout(() => { if (!qDone) { qArmed = true; } }, 60000);
@@ -170,10 +253,14 @@
     function applyNav() {
         if (navApplied || !saved || touched) return;
         navApplied = true;
-        if (window.__setMobileNav && (saved.tab && saved.tab !== 'songs' || saved.plId)) window.__setMobileNav(saved.tab, saved.plId);
+        if (window.__setMobileNav && ((saved.tab && saved.tab !== 'songs') || saved.plId)) {
+            window.__setMobileNav(saved.tab, saved.plId);
+            if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
+        }
     }
     function applyPanels() {
         try {
+            if (!saved) return;
             if (saved.expanded) { body.classList.add('m-player-expanded'); if (typeof updateFsUI === 'function') updateFsUI(); }
             if (saved.queue) body.classList.add('m-playlist-open');
             if (saved.lyrics && saved.expanded) { const lb = document.getElementById('lyric-btn'); if (lb && !body.classList.contains('lyrics-open')) lb.click(); }
@@ -198,17 +285,47 @@
     }
     function tryRestore() {
         if (window.__externalOpenActive) { trackDone = true; armed = true; return true; }
-        if (!saved) return true;
+        if (!saved && !(card && card.key) && !window.__nativeBoot) return true;
         if (!touched) applyNav();
         if (trackDone) return true;
         if (touched || (typeof currentIndex !== 'undefined' && currentIndex >= 0)) { trackDone = true; return true; }
         if (typeof playlist === 'undefined') return false;
-        const boot = window.__nativeBoot || null;   // app đang phát sẵn bài nào đó: ưu tiên nhận lại đúng bài đó
-        const idx = boot ? playlist.findIndex(x => x && x.nativeId === boot.id) : playlist.findIndex(x => keyOf(x) === saved.key);
+        const boot = window.__nativeBoot || null;   // app đang phát/giữ sẵn bài nào đó: ưu tiên nhận lại đúng bài & hàng đợi đó
+        const bootQ = window.__nativeBootQueue || null;
+        if (boot) {
+            if (bootQ) applyNativeQueue(bootQ);
+            else restoreQueue();
+        } else {
+            restoreQueue();
+        }
+        const targetKey = (saved && saved.key) || (card && card.key) || '';
+        const bootLoc = (bootQ && bootQ.curLoc) ? String(bootQ.curLoc).toLowerCase() : '';
+        let idx = -1;
+        if (boot) {
+            idx = playlist.findIndex(x => x && x.nativeId === boot.id);
+            if (idx < 0 && bootLoc) idx = playlist.findIndex(x => keyOf(x) === bootLoc);
+            if (idx < 0 && targetKey) idx = playlist.findIndex(x => keyOf(x) === targetKey);
+        } else if (targetKey) {
+            idx = playlist.findIndex(x => keyOf(x) === targetKey);
+            if (idx < 0 && Array.isArray(window.__mobileLibrary)) {
+                const libTr = window.__mobileLibrary.find(x => keyOf(x) === targetKey);
+                if (libTr) {
+                    playlist.unshift(libTr);
+                    idx = 0;
+                    if (shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
+                }
+            }
+        }
         if (idx < 0) return false;
         trackDone = true;
+        body.classList.remove('m-early-card');
         if (boot) {
-            window.__restoreOnce = { pos: 0, play: !!boot.pwr };
+            const matchedTrack = playlist[idx];
+            if (matchedTrack && matchedTrack.nativeId && window.__nativeAudioState) {
+                window.__nativeAudioState.adoptId = matchedTrack.nativeId;
+            }
+            window.__adoptNative = true;
+            window.__restoreOnce = { pos: (boot.pos || 0) / 1000, play: !!boot.pwr };
             playTrack(idx);
             prioritizeTrack(idx);
             applyPanels();
@@ -216,17 +333,60 @@
             armed = true;
             return true;
         }
-        // chỉ tự phát tiếp nếu lần lưu cuối còn mới (WebView vừa bị tải lại giữa chừng), còn không thì nạp sẵn ở trạng thái tạm dừng
-        const fresh = Date.now() - (saved.ts || 0) < 120000;
-        window.__restoreOnce = { pos: saved.pos || 0, play: !!(saved.playing && fresh) };
+        // Khung app không đang phát bài nào -> nạp sẵn bài cũ ở đoạn cũ (pos) ở trạng thái tạm dừng (chỉ tự phát nếu người dùng vừa bấm Play trên Mini Player)
+        const shouldAutoPlay = !!window.__pendingMiniResume;
+        window.__pendingMiniResume = false;
+        const resumePos = (saved && saved.pos > 0) ? saved.pos : 0;
+        window.__restoreOnce = { pos: resumePos, play: shouldAutoPlay };
         playTrack(idx);
         prioritizeTrack(idx);
         applyPanels();
-        // Mở lại danh sách/tab sau khi thư viện đã có bài (playlist chi tiết cần thư viện mới có nội dung)
         navApplied = false; applyNav();
         armed = true;
         return true;
     }
+
+    window.__hasPendingRestore = function () {
+        if (window.__externalOpenActive || trackDone) return false;
+        return !!(window.__nativeBoot || (saved && saved.key) || (card && card.key));
+    };
+    window.__tryRestoreNow = function (autoPlay) {
+        if (autoPlay) window.__pendingMiniResume = true;
+        return !!tryRestore();
+    };
+    // Đồng bộ lại ngay khi người dùng thoát app ra ngoài rồi quay lại (onResume / visibilitychange) mà WebView chưa bị tải lại
+    window.__adoptNativeSessionNow = function (s, q) {
+        try {
+            if (!s || !s.loaded || !s.id || window.__externalOpenActive) return;
+            if (typeof playlist === 'undefined' || !playlist.length) {
+                trackDone = false;
+                tryRestore();
+                return;
+            }
+            if (q) applyNativeQueue(q);
+            const curLoc = (q && q.curLoc) ? String(q.curLoc).toLowerCase() : '';
+            let idx = playlist.findIndex(x => x && x.nativeId === s.id);
+            if (idx < 0 && curLoc) idx = playlist.findIndex(x => keyOf(x) === curLoc);
+            if (idx < 0) return;
+            const tr = playlist[idx];
+            const curTimeMs = (audio.currentTime || 0) * 1000;
+            const diffTrack = idx !== currentIndex || !audio.currentSrc;
+            const diffPos = Math.abs(curTimeMs - (s.pos || 0)) > 1500;
+            const diffPlay = audio.paused !== !s.pwr;
+            if (diffTrack || diffPos || diffPlay) {
+                trackDone = true;
+                body.classList.remove('m-early-card');
+                if (tr && tr.nativeId && window.__nativeAudioState) {
+                    window.__nativeAudioState.adoptId = tr.nativeId;
+                }
+                window.__adoptNative = true;
+                window.__restoreOnce = { pos: (s.pos || 0) / 1000, play: !!s.pwr };
+                playTrack(idx);
+                if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+            }
+        } catch (e) {}
+    };
+
     (function () {
         const o = window.__nativeOpenFiles;
         if (typeof o !== 'function') return;
