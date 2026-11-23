@@ -856,6 +856,7 @@
                 lyrics: ['#e8a33d', 'settings.desc_lyrics', 'Cách hiển thị lời bài hát'],
                 mixer: ['#3fae86', 'settings.desc_mixer', 'Equalizer, preamp, cân bằng trái/phải'],
                 performance: ['#9b72e0', 'settings.desc_performance', 'Hiệu ứng và hiệu năng'],
+                ai: ['#8b5cf6', 'settings.desc_ai', 'Nhà cung cấp AI, API Key, model và prompt tạo playlist'],
                 android: ['#3ddc84', 'settings.desc_android', 'Tải ứng dụng Android'],
                 about: ['#7a8794', 'settings.desc_about', 'Thông tin về Media Player']
             };
