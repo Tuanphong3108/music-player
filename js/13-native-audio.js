@@ -85,10 +85,10 @@
         try { oPause.call(a); a.removeAttribute('src'); oLoad.call(a); } catch (e) {}
         N.mode = 'native'; N.id = m[1]; N.url = v; N.err = false; N.ended = false;
         if (adopting) {
-            // trình phát native đã đang phát đúng bài này: đồng bộ metadata, tua tới vị trí cũ rồi áp dụng Play/Pause theo trạng thái native
+            // trình phát native đã giữ sẵn thông tin bài & hàng đợi: đồng bộ metadata, đợi nạp xong rồi tua tới vị trí cũ và áp dụng Play/Pause
             N.loaded = false; N.pending = true; N.wasReady = false; N.isPlaying = false;
-            N.startMs = 0; N.pos = 0; N.dur = 0; N.buf = 0; N.st = 'buffering'; N.paused = false;
-            let wantPlay = true;
+            N.startMs = 0; N.pos = 0; N.dur = 0; N.buf = 0; N.st = 'buffering'; N.paused = true;
+            let wantPlay = false;
             let seekTargetMs = -1;
             try {
                 const ns = JSON.parse(AB.nativeAudioState() || 'null');
@@ -105,10 +105,14 @@
                     if (ns.pos > 0) seekTargetMs = ns.pos;
                 }
             } catch (e) {}
-            const ro = window.__pendingRestoreSession || null;
+            const ro = window.__restoreOnce || window.__pendingRestoreSession || null;
+            window.__restoreOnce = null;
             window.__pendingRestoreSession = null;
-            if (ro && ro.pos > 0 && seekTargetMs <= 0) seekTargetMs = Math.round(ro.pos * 1000);
+            if (ro && typeof ro.pos === 'number' && ro.pos >= 0 && seekTargetMs <= 0) {
+                seekTargetMs = Math.round(ro.pos * 1000);
+            }
             if (ro && typeof ro.play === 'boolean') wantPlay = ro.play;
+            if (window.__wasCrashOrClosed) wantPlay = false;
             if (seekTargetMs > 0 && !restoreMuteActive) setRestoreMute(true);
             fire('loadstart');
             N.loaded = true;
@@ -117,7 +121,7 @@
             N.hadMeta = true;
             setTimeout(() => {
                 ['loadedmetadata', 'durationchange', 'loadeddata', 'canplay'].forEach(fire);
-                if (seekTargetMs > 0) {
+                if (seekTargetMs >= 0) {
                     N.pos = seekTargetMs;
                     N.stamp = now();
                     try { AB.nativeAudioSeek(seekTargetMs); } catch (e) {}
