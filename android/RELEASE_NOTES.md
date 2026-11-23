@@ -1,3 +1,4 @@
 <!-- Ghi nội dung cập nhật cho bản build APK tiếp theo tại đây (hỗ trợ Markdown). Mỗi lần cập nhật Android, xóa nội dung cũ và chỉ ghi các thay đổi của BẢN HIỆN TẠI trước khi push! -->
 ### Có gì mới trong bản cập nhật Android này
 - **Chia sẻ tệp trực tiếp ở tầng native (`shareNativeFile`)**: khắc phục triệt để lỗi `TypeError: Failed to fetch` khi chia sẻ nhạc trên Android; sao chép trực tiếp từ tệp gốc trên máy vào bộ nhớ đệm chia sẻ trên luồng nền rồi mở Share Sheet qua `FileProvider`, nhanh tức thì và không tốn RAM encode Base64.
+- **EQ, preamp, mono, nén âm, cân bằng L/R và sóng nhạc cho bài do app phát**: xử lý ngay trong ExoPlayer (EQ 5 dải giống bộ trộn trên web, visualizer 128 dải lấy phổ tần từ chính luồng âm thanh), nên các thiết lập Mixer có tác dụng với mọi bài trong thư viện và sóng nhạc chạy đúng kể cả khi trang web bị treo.

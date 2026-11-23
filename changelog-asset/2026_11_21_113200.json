@@ -108,6 +108,10 @@
     {
       "content": "Bắt đầu phát nhạc nhanh hơn: trình phát chạy luồng riêng, khởi tạo sẵn khi mở app và đệm ít hơn trước khi phát",
       "icon": "play_circle"
+    },
+    {
+      "content": "EQ, preamp, mono, nén âm, cân bằng và sóng nhạc hoạt động với trình phát của app (xử lý trong ExoPlayer)",
+      "icon": "graphic_eq"
     }
   ],
   "en": [
@@ -218,6 +222,10 @@
     {
       "content": "Faster playback start: the player runs on its own thread, is pre-warmed on launch and buffers less before starting",
       "icon": "play_circle"
+    },
+    {
+      "content": "EQ, preamp, mono, compressor, balance and the music visualizer now work with the app's own player (processed inside ExoPlayer)",
+      "icon": "graphic_eq"
     }
   ]
 }

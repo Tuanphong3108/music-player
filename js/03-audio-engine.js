@@ -104,7 +104,8 @@
             // Đang xem video (canvas bị ẩn) / tab ẩn / không phát -> khỏi phân tích + vẽ; trên điện thoại chỉ vẽ ~30fps
             if (document.hidden || document.body.classList.contains('has-video') || audio.paused) return;
             if (document.documentElement.classList.contains('m-ui') && (vizFrame & 1)) { vizFrame++; return; }
-            analyser.getByteFrequencyData(dataArray);
+            // Bài do app phát (ExoPlayer): phổ tần lấy từ app; bài phát bằng thẻ audio thường vẫn dùng analyser của Web Audio
+            if (!(window.__nativeFft && window.__nativeFft(dataArray))) analyser.getByteFrequencyData(dataArray);
             const ctx = visualizer.getContext('2d');
             // Gán width/height mỗi khung hình sẽ cấp phát lại canvas -> chỉ đổi khi kích thước thật sự thay đổi
             if (visualizer.width !== visualizer.clientWidth) visualizer.width = visualizer.clientWidth;

@@ -230,6 +230,37 @@
     setInterval(() => { if (!document.hidden) syncSleep(); }, 3000);
     window.__syncNativeQueue = () => syncQueue(true);
 
+    // EQ / preamp / mono / nén / cân bằng + visualizer cho bài do app phát
+    let mixSig = '';
+    function syncMixer(force) {
+        try {
+            if (typeof mixer === 'undefined') return;
+            const sig = JSON.stringify(mixer);
+            if (!force && sig === mixSig) return;
+            mixSig = sig;
+            AB.nativeAudioMixer(JSON.stringify({ pre: mixer.preamp || 0, eqOn: !!mixer.eqOn, eq: mixer.eq, mono: !!mixer.mono, comp: !!mixer.comp, balance: mixer.balance || 0 }));
+        } catch (e) {}
+    }
+    setInterval(syncMixer, 400);
+    a.addEventListener('loadstart', () => { if (isNative()) syncMixer(true); });
+    let vizSent = null;
+    function vizWanted() {
+        try { return isNative() && !N.paused && !document.hidden && !!(settings && settings.perf && settings.perf.visualizer); } catch (e) { return false; }
+    }
+    window.__nativeFft = function (arr) {
+        if (!vizWanted()) { if (vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} } return false; }
+        if (!vizSent) { vizSent = true; try { AB.nativeAudioViz(true); } catch (e) {} }
+        try {
+            const s = AB.nativeAudioFft();
+            if (!s) return false;
+            const bin = atob(s);
+            for (let i = 0; i < arr.length; i++) arr[i] = bin.charCodeAt(i) || 0;
+            return true;
+        } catch (e) { return false; }
+    };
+    ['pause', 'ended'].forEach(ev => a.addEventListener(ev, () => { if (vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} } }));
+    document.addEventListener('visibilitychange', () => { if (document.hidden && vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} } });
+
     // Hỏi lại trạng thái khi trang vừa (tải lại) mở: nếu app đang phát bài nào thì cho khôi phục UI nhận lại đúng bài đó (trừ khi đang mở tệp từ nguồn ngoài)
     try {
         const hasExt = !!(window.__externalOpenActive || (typeof AB.hasPendingExternalOpen === 'function' && AB.hasPendingExternalOpen()));

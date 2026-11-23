@@ -23,6 +23,7 @@ import java.io.File;
  * và nhận lại sự kiện trạng thái; khi WebView chết rồi tải lại, trang hỏi lại trạng thái ở đây để vào đúng bài/vị trí.
  * Mọi thao tác với ExoPlayer đều chạy trên luồng chính.
  */
+@androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 final class NativeAudio {
     private NativeAudio() {}
 
@@ -31,6 +32,21 @@ final class NativeAudio {
     private static final Handler ph;
     private static final Handler uiH = new Handler(Looper.getMainLooper());
     static { pt.start(); ph = new Handler(pt.getLooper()); }
+    /** EQ/preamp/mono/nén/cân bằng + phân tích phổ chạy trong chuỗi âm thanh của ExoPlayer. */
+    static final MixerProcessor mixer = new MixerProcessor();
+    static void setMixer(String json) {
+        try {
+            JSONObject o = new JSONObject(json);
+            org.json.JSONArray e = o.optJSONArray("eq");
+            float[] eq = new float[5];
+            for (int i = 0; i < 5; i++) eq[i] = e == null ? 0f : (float) e.optDouble(i, 0);
+            mixer.set((float) o.optDouble("pre", 0), o.optBoolean("eqOn", true), eq, o.optBoolean("mono", false), o.optBoolean("comp", false), (float) (o.optDouble("balance", 0) / 100.0));
+        } catch (Throwable ignored) {}
+    }
+    static void setViz(boolean on) { mixer.vizOn = on; }
+    static String fftBase64() {
+        try { return android.util.Base64.encodeToString(mixer.fft, android.util.Base64.NO_WRAP); } catch (Throwable t) { return ""; }
+    }
     private static volatile Context app;
     private static volatile ExoPlayer p;
     private static volatile int sid = 0;
@@ -105,7 +121,17 @@ final class NativeAudio {
         // Nhạc trong máy: chỉ cần đệm rất ít là phát ngay (mặc định đợi 2,5 giây dữ liệu)
         androidx.media3.exoplayer.DefaultLoadControl lc = new androidx.media3.exoplayer.DefaultLoadControl.Builder()
                 .setBufferDurationsMs(15000, 30000, 250, 1000).build();
-        p = new ExoPlayer.Builder(app).setLooper(pt.getLooper()).setLoadControl(lc).build();
+        androidx.media3.exoplayer.DefaultRenderersFactory rf = new androidx.media3.exoplayer.DefaultRenderersFactory(app) {
+            @Override
+            protected androidx.media3.exoplayer.audio.AudioSink buildAudioSink(Context context, boolean enableFloatOutput, boolean enableAudioTrackPlaybackParams) {
+                return new androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
+                        .setEnableFloatOutput(false)
+                        .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                        .setAudioProcessors(new androidx.media3.common.audio.AudioProcessor[] { mixer })
+                        .build();
+            }
+        };
+        p = new ExoPlayer.Builder(app, rf).setLooper(pt.getLooper()).setLoadControl(lc).build();
         sid = p.getAudioSessionId();
         p.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true);
