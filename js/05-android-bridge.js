@@ -111,6 +111,7 @@
                 try {
                     const w = gettingStartedIframe && gettingStartedIframe.contentWindow;
                     if (w && w.__gsOnPermissionsUpdated) w.__gsOnPermissionsUpdated(info);
+                    if (typeof window.__checkAndroidPermGate === 'function') window.__checkAndroidPermGate();
                 } catch (e) {}
             };
             window.__onAndroidLibraryScanDone = function (count, missingPerm) {
