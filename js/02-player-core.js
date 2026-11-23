@@ -603,10 +603,13 @@
         async function handleFiles(files, opts) {
             const before = playlist.length;
             const hadFiles = files && files.length > 0;
-            if (!hadFiles) { if (window.addBtnArrow) addBtnCancel(); return; }
-            addBtnBusy();
+            if (!hadFiles) { if (window.addBtnArrow && typeof addBtnCancel === 'function') addBtnCancel(); return; }
+            if (typeof addBtnBusy === 'function') addBtnBusy();
             try { await handleFilesInner(files, opts); }
-            finally { if (playlist.length > before) addBtnDone(); else addBtnCancel(); }
+            finally {
+                if (playlist.length > before) { if (typeof addBtnDone === 'function') addBtnDone(); }
+                else { if (typeof addBtnCancel === 'function') addBtnCancel(); }
+            }
         }
         // Tệp phát được: nhạc hoặc video (mp4, webm, mkv, mov...). Trình duyệt giải mã được codec nào thì phát codec đó.
         const VIDEO_EXTS = ['mp4', 'm4v', 'webm', 'mkv', 'mov', 'ogv', '3gp', 'avi'];
