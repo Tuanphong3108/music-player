@@ -386,6 +386,11 @@ public class MainActivity extends Activity {
                 if (url.startsWith("https://tuanphong3108.github.io/")) {
                     pageReady = true;
                     flushPending();
+                    if (pendingWidgetCmd != null && !pendingWidgetCmd.isEmpty()) {
+                        final String wcmd = pendingWidgetCmd;
+                        pendingWidgetCmd = null;
+                        pingHandler.postDelayed(() -> handleWidgetCmd(wcmd), 150);
+                    }
                     scheduleBlankCheck(5000L);
                     if (!appLeftHome && !pageResponded) sendHandshakePing();
                 } else {
@@ -950,6 +955,7 @@ public class MainActivity extends Activity {
     }
 
     private volatile boolean pendingExternalOpen = false;
+    private volatile String pendingWidgetCmd = null;
 
     private void handleIntent(Intent i) {
         if (i == null) return;
@@ -967,7 +973,7 @@ public class MainActivity extends Activity {
             String widgetCmd = i.getStringExtra("widget_cmd");
             if (widgetCmd != null && !widgetCmd.isEmpty()) {
                 i.removeExtra("widget_cmd");
-                sendCmd(widgetCmd);
+                handleWidgetCmd(widgetCmd);
             }
             return;
         }
@@ -1523,6 +1529,55 @@ public class MainActivity extends Activity {
 
     void sendCmd(final String cmd) {
         runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__nativeCmd&&window.__nativeCmd('" + cmd + "')", null); });
+    }
+
+    /** Khi người dùng thao tác trên Widget: cố gắng đánh thức WebView (onResume/resumeTimers), gửi lệnh + ép đồng bộ UI & widget; nếu WebView bị đóng băng thì fallback sang trình phát native. */
+    void handleWidgetCmd(final String cmd) {
+        if (cmd == null || cmd.isEmpty()) return;
+        runOnUiThread(() -> {
+            if (web == null || !pageReady) {
+                pendingWidgetCmd = cmd;
+                if (NativeAudio.active()) runNativeWidgetFallback(cmd);
+                return;
+            }
+            try { web.onResume(); web.resumeTimers(); } catch (Throwable ignored) {}
+            final boolean[] acked = { false };
+            final String js = "(function(){try{"
+                    + "if(window.__nativeCmd)window.__nativeCmd(" + JSONObject.quote(cmd) + ");"
+                    + "if(window.__syncMobileMiniPlayer)window.__syncMobileMiniPlayer();"
+                    + "if(window.__reportMediaState)window.__reportMediaState();"
+                    + "if(window.__syncAndroidWidgets)window.__syncAndroidWidgets();"
+                    + "}catch(e){}return 1;})()";
+            pingHandler.postDelayed(() -> {
+                if (!acked[0]) {
+                    if (NativeAudio.active()) runNativeWidgetFallback(cmd);
+                    if (web != null) {
+                        try { web.onResume(); web.resumeTimers(); } catch (Throwable ignored) {}
+                    }
+                }
+            }, 900);
+            try {
+                web.evaluateJavascript(js, v -> {
+                    acked[0] = true;
+                    NativeAudio.lastAck = android.os.SystemClock.elapsedRealtime();
+                    pingHandler.postDelayed(() -> {
+                        if (web != null) {
+                            try {
+                                web.evaluateJavascript("try{window.__syncMobileMiniPlayer&&window.__syncMobileMiniPlayer();window.__reportMediaState&&window.__reportMediaState();window.__syncAndroidWidgets&&window.__syncAndroidWidgets();}catch(e){}", null);
+                            } catch (Throwable ignored) {}
+                        }
+                    }, 300);
+                });
+            } catch (Throwable ignored) {
+                if (NativeAudio.active()) runNativeWidgetFallback(cmd);
+            }
+        });
+    }
+
+    private void runNativeWidgetFallback(String cmd) {
+        if ("toggle".equals(cmd)) NativeAudio.toggle();
+        else if ("next".equals(cmd)) { if (!NativeAudio.advance()) NativeAudio.seek(0); }
+        else if ("prev".equals(cmd)) NativeAudio.previous();
     }
 
     @Override
@@ -2556,14 +2611,13 @@ public class MainActivity extends Activity {
                         getSharedPreferences(MediaWidgetProvider.PREFS, MODE_PRIVATE).getBoolean("playing", false),
                         null, null, null, fullColor);
                 QueueWidgetProvider.updateTheme(MainActivity.this, fullColor);
-                LyricsWidgetProvider.updateTheme(MainActivity.this, fullColor);
                 runOnUiThread(() -> applyTheme(c));
             } catch (Exception ignored) {}
         }
 
         @JavascriptInterface
         public void setWidgetLyric(String lyricLine) {
-            MediaWidgetProvider.saveLyricLine(MainActivity.this, lyricLine == null ? "" : lyricLine);
+            // Đã gỡ bỏ hiển thị lời bài hát khỏi Widget
         }
 
         @JavascriptInterface
@@ -2578,13 +2632,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void setWidgetLyricsData(String syncedLine, String staticBlock, String trackTitle, boolean hasLyrics) {
-            LyricsWidgetProvider.saveLyricsData(
-                    MainActivity.this,
-                    syncedLine == null ? "" : syncedLine,
-                    staticBlock == null ? "" : staticBlock,
-                    trackTitle == null ? "" : trackTitle,
-                    hasLyrics
-            );
+            // Đã gỡ bỏ Lyrics Widget
         }
 
         @JavascriptInterface
