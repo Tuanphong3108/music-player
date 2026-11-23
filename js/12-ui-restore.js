@@ -132,14 +132,24 @@
             repeatMode = nqData.repeat;
             if (typeof applyRepeatUI === 'function') applyRepeatUI();
         }
-        const ord = Array.isArray(nqData.order) ? nqData.order.map(i => oldIdx[i]).filter(i => i >= 0) : [];
-        if (ord.length === playlist.length && playlist.length > 0) {
+        const nativeShuffled = nqData.shuffle === true;
+        const ord = (nativeShuffled && Array.isArray(nqData.order)) ? nqData.order.map(i => oldIdx[i]).filter(i => i >= 0) : [];
+        if (nativeShuffled && ord.length === playlist.length && playlist.length > 0) {
             if (!isShuffle && typeof isShuffle !== 'undefined') {
                 isShuffle = true;
                 document.getElementById('shuffle-btn')?.classList.add('active');
+                document.getElementById('m-pl-shuffle')?.classList.add('active');
             }
             shuffleOrder = ord;
             shuffleInitialized = true;
+        } else if (nqData.shuffle === false) {
+            if (typeof isShuffle !== 'undefined' && isShuffle) {
+                isShuffle = false;
+                document.getElementById('shuffle-btn')?.classList.remove('active');
+                document.getElementById('m-pl-shuffle')?.classList.remove('active');
+            }
+            shuffleOrder = [];
+            shuffleInitialized = false;
         } else if (isShuffle && !same && typeof generateShuffleOrder === 'function') {
             generateShuffleOrder();
         }
