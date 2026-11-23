@@ -107,7 +107,7 @@
             }
 
             // --- CACHE METADATA + ALBUM ART VÀO INDEXEDDB (CHỈ MOBILE) ---
-            const META_DB_NAME = 'mp_mobile_meta_cache_v1';
+            const META_DB_NAME = 'mp_mobile_meta_cache_v2';
             const META_STORE = 'tracks';
             let metaDbPromise = null;
             function openMetaCacheDB() {
@@ -252,6 +252,9 @@
                             if (cached.cover && cached.cover.startsWith('data:')) {
                                 tr.cover = cached.cover;
                                 tr._hasRealCover = true;
+                            } else {
+                                tr.cover = null;
+                                tr._hasRealCover = false;
                             }
                             tr._metaFromCache = true;
                             tr._metaLoading = false;
@@ -318,13 +321,13 @@
                                         if (tag.tags.picture) {
                                             const { data, format } = tag.tags.picture;
                                             const picUrl = await pictureToThumbDataUrl(data, format);
-                                            if (picUrl && tr.cover !== picUrl) {
+                                            if (picUrl && (tr.cover !== picUrl || !tr._hasRealCover)) {
                                                 tr.cover = picUrl;
                                                 tr._hasRealCover = true;
                                                 changed = true;
                                             }
-                                        } else if (tr._metaFromCache && tr.cover && tr.cover.startsWith('data:')) {
-                                            // Ảnh bìa nhúng đã bị xóa ngoài app -> đồng bộ lại
+                                        } else if (tr.cover || tr._hasRealCover) {
+                                            // Tệp không có ảnh bìa nhúng -> xóa ảnh bìa cũ/sai nếu có
                                             tr.cover = null;
                                             tr._hasRealCover = false;
                                             changed = true;
@@ -457,6 +460,7 @@
                         mMiniArt.innerHTML = '<span class="material-symbols-rounded">music_note</span>'
                             + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '');
                     }
+                    if (mMiniArt) mMiniArt.classList.toggle('is-scanning', !!tr._metaLoading);
                 }
                 if (mMiniPlay) {
                     const sp = mMiniPlay.querySelector('.material-symbols-rounded');
