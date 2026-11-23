@@ -16,9 +16,32 @@
 
     // N = trạng thái phản chiếu của trình phát native
     let restoreDurHintMs = 0;
+    let restoreMuteActive = false;
+    let savedPreRestoreVol = null;
     const N = { mode: 'web', id: '', url: '', loaded: false, pending: false, startMs: 0, paused: true, pos: 0, stamp: 0, dur: 0, buf: 0,
         rate: 1, vol: 1, st: 'idle', ended: false, err: false, hadMeta: false, adopt: false };
     window.__nativeAudioState = N;
+    function setRestoreMute(mute) {
+        try {
+            if (mute) {
+                if (!restoreMuteActive) {
+                    savedPreRestoreVol = (savedPreRestoreVol != null) ? savedPreRestoreVol : N.vol;
+                    restoreMuteActive = true;
+                }
+                N.vol = 0;
+                orig.volume.set.call(a, 0);
+                try { if (N.loaded || N.pending) AB.nativeAudioVolume(0); } catch (e) {}
+            } else {
+                const targetVol = (savedPreRestoreVol != null && isFinite(savedPreRestoreVol)) ? Math.max(0, Math.min(1, Number(savedPreRestoreVol))) : 1;
+                restoreMuteActive = false;
+                savedPreRestoreVol = null;
+                N.vol = targetVol;
+                orig.volume.set.call(a, targetVol);
+                try { if (N.loaded || N.pending) AB.nativeAudioVolume(targetVol); } catch (e) {}
+            }
+        } catch (e) {}
+    }
+    window.__setNativeRestoreMute = setRestoreMute;
     window.__setRestoreDurationHint = function (url, durSec) {
         if (url && durSec > 0 && N.url === url && !(N.dur > 0)) {
             restoreDurHintMs = Math.round(durSec * 1000);
@@ -62,15 +85,55 @@
         try { oPause.call(a); a.removeAttribute('src'); oLoad.call(a); } catch (e) {}
         N.mode = 'native'; N.id = m[1]; N.url = v; N.err = false; N.ended = false;
         if (adopting) {
-            // trình phát native đã đang phát đúng bài này (WebView vừa tải lại): nhận lại, không nạp lại
+            // trình phát native đã đang phát đúng bài này: đồng bộ metadata, tua tới vị trí cũ rồi áp dụng Play/Pause theo trạng thái native
             N.loaded = true; N.pending = false;
+            let wantPlay = !N.paused;
+            let seekTargetMs = -1;
             try {
                 const ns = JSON.parse(AB.nativeAudioState() || 'null');
-                if (ns && ns.id === m[1]) { N.pos = ns.pos || 0; N.stamp = now(); N.dur = ns.dur || 0; N.buf = ns.buf || 0; N.st = ns.st; N.rate = ns.rate || 1; N.paused = !ns.pwr; N.ended = ns.st === 'ended'; }
+                if (ns && ns.id === m[1]) {
+                    N.pos = ns.pos || 0;
+                    N.stamp = now();
+                    N.dur = ns.dur || 0;
+                    N.buf = ns.buf || 0;
+                    N.st = ns.st;
+                    N.rate = ns.rate || 1;
+                    wantPlay = !!ns.pwr;
+                    N.paused = !wantPlay;
+                    N.ended = ns.st === 'ended';
+                    if (ns.pos > 0) seekTargetMs = ns.pos;
+                }
             } catch (e) {}
+            const ro = window.__pendingRestoreSession || null;
+            window.__pendingRestoreSession = null;
+            if (ro && ro.pos > 0 && seekTargetMs <= 0) seekTargetMs = Math.round(ro.pos * 1000);
+            if (ro && typeof ro.play === 'boolean') wantPlay = ro.play;
+            if (seekTargetMs > 0 && !restoreMuteActive) setRestoreMute(true);
             fire('loadstart');
-            N.wasReady = true; N.isPlaying = !N.paused;
-            setTimeout(() => { N.hadMeta = true; ['loadedmetadata', 'durationchange', 'loadeddata', 'canplay'].forEach(fire); if (!N.paused) { fire('play'); fire('playing'); } }, 0);
+            N.wasReady = true;
+            setTimeout(() => {
+                N.hadMeta = true;
+                ['loadedmetadata', 'durationchange', 'loadeddata', 'canplay'].forEach(fire);
+                if (seekTargetMs > 0) {
+                    N.pos = seekTargetMs;
+                    N.stamp = now();
+                    try { AB.nativeAudioSeek(seekTargetMs); } catch (e) {}
+                    fire('seeking');
+                    fire('seeked');
+                }
+                N.paused = !wantPlay;
+                N.isPlaying = wantPlay;
+                if (wantPlay) {
+                    try { AB.nativeAudioPlay(); } catch (e) {}
+                    fire('play');
+                    fire('playing');
+                } else {
+                    try { AB.nativeAudioPause(); } catch (e) {}
+                    fire('pause');
+                }
+                setRestoreMute(false);
+                if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
+            }, 0);
             return;
         }
         N.loaded = false; N.pending = true; N.wasReady = false; N.isPlaying = false;
@@ -110,7 +173,13 @@
         return { length: e > 0 ? 1 : 0, start: () => 0, end: () => e };
     });
     def('volume', function () { return isNative() ? N.vol : orig.volume.get.call(a); }, function (v) {
-        orig.volume.set.call(a, v); N.vol = Math.max(0, Math.min(1, Number(v) || 0));
+        const nv = Math.max(0, Math.min(1, Number(v) || 0));
+        if (restoreMuteActive) {
+            savedPreRestoreVol = nv;
+            return;
+        }
+        orig.volume.set.call(a, nv);
+        N.vol = nv;
         try { if (N.loaded || N.pending) AB.nativeAudioVolume(N.vol); } catch (e) {}
     });
     def('playbackRate', function () { return isNative() ? N.rate : orig.playbackRate.get.call(a); }, function (v) {
@@ -289,7 +358,27 @@
         } catch (e) { return false; }
     };
     ['pause', 'ended'].forEach(ev => a.addEventListener(ev, () => { if (vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} } }));
-    document.addEventListener('visibilitychange', () => { if (document.hidden && vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} } });
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} }
+            if (restoreMuteActive) setRestoreMute(false);
+            else {
+                N.vol = 1;
+                orig.volume.set.call(a, 1);
+                try { if (N.loaded || N.pending) AB.nativeAudioVolume(1); } catch (e) {}
+            }
+        } else {
+            queryNativeSession(true);
+        }
+    });
+    window.addEventListener('pagehide', () => {
+        if (restoreMuteActive) setRestoreMute(false);
+        else {
+            N.vol = 1;
+            orig.volume.set.call(a, 1);
+            try { if (N.loaded || N.pending) AB.nativeAudioVolume(1); } catch (e) {}
+        }
+    });
 
     // Hỏi lại trạng thái + hàng đợi từ khung app khi vừa mở trang hoặc khi quay lại app từ nền
     function queryNativeSession(fromResume) {
@@ -328,7 +417,4 @@
     queryNativeSession(false);
     window.__queryNativeSession = queryNativeSession;
     window.__onAndroidAppResume = function () { queryNativeSession(true); };
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) queryNativeSession(true);
-    });
 })();
