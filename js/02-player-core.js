@@ -854,6 +854,7 @@
         function renderLyrics() {
             lyricOverlay.innerHTML = '';
             updateLyricCredit();
+            if (typeof window.__syncAiTranslateBtn === 'function') window.__syncAiTranslateBtn();
             const track = playlist[currentIndex];
             if (!track || !track.lyrics || track.lyrics.length === 0) {
                 const noLyricText = currentLangDict['lyric.no_lyric'] || 'BÀI HÁT NÀY CHƯA CÓ LỜI (.LRC)';
@@ -862,6 +863,7 @@
                 return;
             }
 
+            const trInfo = (typeof window.__getAiLyricTranslation === 'function') ? window.__getAiLyricTranslation(track) : null;
             const isStatic = track.lyrics[0]?.time === -1;
             if (!isStatic) {
                 const spacerTop = document.createElement('div'); spacerTop.style.height = '40vh';
@@ -870,8 +872,17 @@
 
             track.lyrics.forEach((l, i) => {
                 const div = document.createElement('div');
-                div.className = `lyric-line ${isStatic ? 'static' : ''}`; 
-                div.innerHTML = formatLyricLine(l.text);
+                div.className = `lyric-line ${isStatic ? 'static' : ''}`;
+                const tLine = (trInfo && trInfo.active && Array.isArray(trInfo.lines)) ? (trInfo.lines[i] || '') : '';
+                if (tLine && l.text) {
+                    if (trInfo.bilingual) {
+                        div.innerHTML = formatLyricLine(l.text) + `<div class="lyric-trans-sub">${escHtml(tLine)}</div>`;
+                    } else {
+                        div.innerHTML = escHtml(tLine);
+                    }
+                } else {
+                    div.innerHTML = formatLyricLine(l.text);
+                }
                 if (!isStatic) {
                     div.onclick = () => { audio.currentTime = l.time; audio.play(); };
                 }
@@ -911,11 +922,20 @@
             }
             
             const creditKey = lyricCreditText(track);
-            const line = activeIdx !== -1 ? formatLyricLine(track.lyrics[activeIdx].text) : '';
+            const trInfo = (typeof window.__getAiLyricTranslation === 'function') ? window.__getAiLyricTranslation(track) : null;
+            const rawLine = activeIdx !== -1 ? track.lyrics[activeIdx].text : '';
+            const trLine = (activeIdx !== -1 && trInfo && trInfo.active && Array.isArray(trInfo.lines)) ? (trInfo.lines[activeIdx] || '') : '';
+            let line = activeIdx !== -1 ? formatLyricLine(rawLine) : '';
+            if (activeIdx !== -1 && trLine && rawLine) {
+                line = trInfo.bilingual
+                    ? (formatLyricLine(rawLine) + `<span class="lyric-trans-inline">${escHtml(trLine)}</span>`)
+                    : escHtml(trLine);
+            }
             const htmlTop = activeIdx !== -1 ? lyricHtml(line, track, document.documentElement.classList.contains('m-ui') ? 5 : 2) : '';
             const htmlPip = activeIdx !== -1 ? lyricHtml(line, track, 3) : '';
             const htmlFs = activeIdx !== -1 ? lyricHtml(line, track, 0) : '';
-            const idxStr = activeIdx.toString() + (creditKey ? '|' + creditKey : '');
+            const transKey = (trInfo && trInfo.active) ? ('|' + trInfo.lang + ':' + (trInfo.bilingual ? 'bi' : 'tr')) : '';
+            const idxStr = activeIdx.toString() + (creditKey ? '|' + creditKey : '') + transKey;
             
             if (customPipWindow) {
                 const pipLyricEl = customPipWindow.document.getElementById('pip-lyric');
