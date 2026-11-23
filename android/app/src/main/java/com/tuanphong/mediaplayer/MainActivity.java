@@ -2712,12 +2712,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void setArtwork(String b64) {
-            try {
-                Intent i = new Intent(MainActivity.this, MediaService.class);
-                i.setAction(MediaService.ACTION_ART);
-                i.putExtra("art", b64 == null || b64.isEmpty() ? new byte[0] : Base64.decode(b64, Base64.DEFAULT));
-                startSvc(i);
-            } catch (Exception ignored) {}
+            // Album art cho MediaSession/Notification do native tự trích xuất trực tiếp từ tệp nhạc
         }
 
         @JavascriptInterface
