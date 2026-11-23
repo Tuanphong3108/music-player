@@ -1550,13 +1550,13 @@
                         year: m.year || '',
                         genre: m.genre || '',
                         composer: m.composer || '',
-                        lyrics: '',
+                        lyrics: m.lyrics || '',
                         pictureDataUrl: coverDataUrl,
                         hasPicture: !!m.hasPicture,
                         source: 'native'
                     };
-                    // Nếu chỉ quét nhanh nền danh sách (không cần lyric embed) -> trả về ngay
-                    if (!includeLyrics) return nativeResult;
+                    // Nếu chỉ quét nhanh nền danh sách hoặc tầng native đã đọc xong lyric embed -> trả về ngay lập tức
+                    if (!includeLyrics || nativeResult.lyrics) return nativeResult;
                 }
             }
 
@@ -1584,7 +1584,7 @@
                     year: nativeResult.year || jsResult.year || '',
                     genre: nativeResult.genre || jsResult.genre || '',
                     composer: nativeResult.composer || jsResult.composer || '',
-                    lyrics: jsResult.lyrics || '',
+                    lyrics: nativeResult.lyrics || jsResult.lyrics || '',
                     pictureDataUrl: nativeResult.pictureDataUrl || jsResult.pictureDataUrl || null,
                     hasPicture: !!(nativeResult.hasPicture || jsResult.hasPicture),
                     source: 'native+jsmediatags'
@@ -1758,8 +1758,9 @@
                     hydrateAndPlayLibraryTrack(track, index, mySeq);
                 };
                 audio.addEventListener('error', onStreamErr, { once: true });
-                if (!track._fullTagsHydrated) {
+                if (!track._fullTagsHydrated || (!track.lyricsRaw && !track._lyricNativeTried)) {
                     track._tagsHydrated = true;
+                    track._lyricNativeTried = true;
                     // Khi bài được chọn -> tạm nhường quét nền để dồn sức đọc full metadata (kể cả lyric embed + ảnh gốc) cho bài này trước
                     setTimeout(() => {
                         if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track) return;
