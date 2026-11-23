@@ -423,6 +423,62 @@
     color: var(--on-primary);
   }
   .and-theme-card .tc-radio .ms { font-size: 16px; }
+  .and-perm-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin: 8px 0;
+  }
+  .and-perm-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 15px;
+    border-radius: 20px;
+    background: var(--surface-1);
+    border: 1.5px solid color-mix(in srgb, var(--outline) 35%, transparent);
+    text-align: left;
+    cursor: pointer;
+    color: var(--on-surface);
+    font-family: var(--font);
+    transition: background .2s, border-color .2s, transform .2s var(--spring);
+  }
+  .and-perm-item:active { transform: scale(.98); }
+  .and-perm-item.granted {
+    background: color-mix(in srgb, var(--primary-container) 55%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  }
+  .and-perm-item .pi-ico {
+    width: 40px; height: 40px;
+    border-radius: 14px;
+    background: var(--secondary-container);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .and-perm-item.granted .pi-ico {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .and-perm-item .pi-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .and-perm-item .pi-title { font-size: 14.5px; font-weight: 800; line-height: 1.25; }
+  .and-perm-item .pi-desc { font-size: 12px; line-height: 1.35; color: var(--on-surface-variant); }
+  .and-perm-item .pi-status {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    color: var(--on-surface-variant);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .and-perm-item.granted .pi-status {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .and-perm-item .pi-status .ms { font-size: 16px; }
 
   /* Android Floating Bottom Bar (PixelPlayer SetupBottomBar style) */
   html.is-android footer { display:none !important; }
@@ -672,21 +728,41 @@
       </div>
     </div></section>
 
-    <!-- Step 1: Media Permission -->
+    <!-- Step 1: Media Permission (Audio + All Images + All Files) -->
     <section class="slide android-only" data-and-step="1"><div class="slide-inner">
       <div class="and-step-head">
-        <h2 data-i="and_media_t">Quyền truy cập nhạc</h2>
-        <p data-i="and_media_d">Media Player cần quyền đọc nhạc và quyền truy cập toàn bộ tệp trên thiết bị để quét thư viện và để Metadata Editor ghi thẻ trực tiếp vào tệp nhạc. Bạn cần cấp cả hai để tiếp tục.</p>
+        <h2 data-i="and_media_t">Quyền truy cập nhạc &amp; hình ảnh</h2>
+        <p data-i="and_media_d">Media Player cần đủ 3 quyền bên dưới để quét thư viện nhạc, chọn ảnh bìa không giới hạn và ghi thẻ ID3 trực tiếp vào tệp. Bạn cần cấp đủ cả 3 để tiếp tục.</p>
       </div>
-      <div class="and-collage">
-        <div class="c-sat s1"><span class="ms">album</span></div>
-        <div class="c-sat s2"><span class="ms">library_music</span></div>
-        <div class="c-sat s3"><span class="ms">queue_music</span></div>
-        <div class="c-sat s4"><span class="ms">playlist_play</span></div>
-        <div class="c-center"><span class="ms">music_note</span></div>
+      <div class="and-perm-list" id="and-perm-list">
+        <button type="button" class="and-perm-item" id="and-perm-audio">
+          <div class="pi-ico"><span class="ms">library_music</span></div>
+          <div class="pi-body">
+            <div class="pi-title" data-i="and_perm_audio_t">Truy cập âm thanh &amp; nhạc</div>
+            <div class="pi-desc" data-i="and_perm_audio_d">Đọc và quét toàn bộ bài hát có trên thiết bị.</div>
+          </div>
+          <div class="pi-status"><span class="ms" id="and-perm-audio-ico">chevron_right</span></div>
+        </button>
+        <button type="button" class="and-perm-item" id="and-perm-images">
+          <div class="pi-ico"><span class="ms">photo_library</span></div>
+          <div class="pi-body">
+            <div class="pi-title" data-i="and_perm_images_t">Truy cập tất cả hình ảnh</div>
+            <div class="pi-desc" data-i="and_perm_images_d">Chọn “Cho phép tất cả” để đổi ảnh bìa bài hát &amp; danh sách phát.</div>
+          </div>
+          <div class="pi-status"><span class="ms" id="and-perm-images-ico">chevron_right</span></div>
+        </button>
+        <button type="button" class="and-perm-item" id="and-perm-allfiles">
+          <div class="pi-ico"><span class="ms">folder_managed</span></div>
+          <div class="pi-body">
+            <div class="pi-title" data-i="and_perm_allfiles_t">Truy cập toàn bộ tệp</div>
+            <div class="pi-desc" data-i="and_perm_allfiles_d">Cho phép Metadata Editor ghi đè thẻ ID3 &amp; ảnh bìa trực tiếp.</div>
+          </div>
+          <div class="pi-status"><span class="ms" id="and-perm-allfiles-ico">chevron_right</span></div>
+        </button>
       </div>
       <div class="and-step-actions">
-        <button class="and-action-btn" id="and-btn-media"><span class="ms" id="and-ico-media" style="display:none">check</span><span id="and-txt-media" data-i="and_media_btn">Cấp quyền truy cập tệp</span></button>
+        <button class="and-action-btn" id="and-btn-media"><span class="ms" id="and-ico-media" style="display:none">check</span><span id="and-txt-media" data-i="and_media_btn">Cấp các quyền còn thiếu</span></button>
+        <button class="and-skip-link" id="and-btn-perm-settings" data-i="and_perm_open_settings" style="display:none;">Mở cài đặt quyền ứng dụng</button>
       </div>
     </div></section>
 
@@ -881,9 +957,17 @@
       and_skip_now:'Bỏ qua lúc này',
       and_done_btn:'Xong',
       and_recommended:'Khuyên dùng',
-      and_media_t:'Quyền truy cập nhạc',
-      and_media_d:'Media Player cần quyền đọc nhạc và quyền truy cập toàn bộ tệp trên thiết bị để quét thư viện và để Metadata Editor ghi thẻ trực tiếp vào tệp nhạc. Bạn cần cấp cả hai để tiếp tục.',
-      and_media_btn:'Cấp quyền truy cập tệp',
+      and_media_t:'Quyền truy cập nhạc & hình ảnh',
+      and_media_d:'Media Player cần đủ 3 quyền bên dưới để quét thư viện nhạc, chọn ảnh bìa không giới hạn và ghi thẻ ID3 trực tiếp vào tệp. Bạn cần cấp đủ cả 3 để tiếp tục.',
+      and_media_btn:'Cấp các quyền còn thiếu',
+      and_perm_audio_t:'Truy cập âm thanh & nhạc',
+      and_perm_audio_d:'Đọc và quét toàn bộ bài hát có trên thiết bị.',
+      and_perm_images_t:'Truy cập tất cả hình ảnh',
+      and_perm_images_d:'Chọn “Cho phép tất cả” để đổi ảnh bìa bài hát & danh sách phát.',
+      and_perm_allfiles_t:'Truy cập toàn bộ tệp',
+      and_perm_allfiles_d:'Cho phép Metadata Editor ghi đè thẻ ID3 & ảnh bìa trực tiếp.',
+      and_perm_open_settings:'Mở cài đặt quyền ứng dụng',
+      and_perm_gate_label:'Cấp quyền để tiếp tục',
       and_notif_t:'Thông báo',
       and_notif_d:'Bật thông báo để điều khiển phát nhạc ngay từ màn hình khoá và thanh thông báo hệ thống.',
       and_notif_btn:'Bật thông báo',
@@ -944,9 +1028,17 @@
       and_skip_now:'Skip / Not now',
       and_done_btn:'Done',
       and_recommended:'Recommended',
-      and_media_t:'Media Permission',
-      and_media_d:'Media Player needs permission to read your music and access all files on the device, so it can scan your library and let the Metadata Editor write tags directly into music files. Both are required to continue.',
-      and_media_btn:'Grant File Access',
+      and_media_t:'Music, Photos & Files Access',
+      and_media_d:'Media Player needs all 3 permissions below to scan your music library, pick cover art freely, and write ID3 tags directly into files. All 3 are required to continue.',
+      and_media_btn:'Grant Missing Permissions',
+      and_perm_audio_t:'Music & Audio Access',
+      and_perm_audio_d:'Read and scan all audio tracks stored on your device.',
+      and_perm_images_t:'All Photos & Images Access',
+      and_perm_images_d:'Choose “Allow all” so you can change track & playlist cover art.',
+      and_perm_allfiles_t:'All Files Access',
+      and_perm_allfiles_d:'Lets the Metadata Editor overwrite ID3 tags & cover art directly.',
+      and_perm_open_settings:'Open App Permission Settings',
+      and_perm_gate_label:'Grant permissions to continue',
       and_notif_t:'Notifications',
       and_notif_d:'Enable notifications to control your music from the lock screen and notification shade.',
       and_notif_btn:'Enable Notifications',
@@ -979,7 +1071,8 @@
     parentScale: 1,
     accents: null,
     systemAccent: null,
-    perms: { media: !isAndroidApp, notifications: !isAndroidApp, battery: !isAndroidApp }
+    perms: { media: !isAndroidApp, audio: !isAndroidApp, images: !isAndroidApp, allFiles: !isAndroidApp, notifications: !isAndroidApp, battery: !isAndroidApp },
+    permGateOnly: false
   };
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
@@ -995,7 +1088,10 @@
     if (ab && typeof ab.getPermissionsStatus === 'function') {
       try {
         var info = JSON.parse(ab.getPermissionsStatus() || '{}');
-        st.perms.media = !!info.media;
+        st.perms.audio = typeof info.audio === 'boolean' ? info.audio : !!info.media;
+        st.perms.images = typeof info.images === 'boolean' ? info.images : !!info.media;
+        st.perms.allFiles = typeof info.allFiles === 'boolean' ? info.allFiles : !!info.media;
+        st.perms.media = !!(info.media && st.perms.audio && st.perms.images && st.perms.allFiles);
         st.perms.notifications = !!info.notifications;
         st.perms.battery = !!info.battery;
       } catch (e) {}
@@ -1012,6 +1108,16 @@
       if (mIco) mIco.style.display = st.perms.media ? '' : 'none';
       mTxt.textContent = st.perms.media ? d.and_granted : d.and_media_btn;
     }
+    var setRow = function (id, icoId, ok) {
+      var row = $(id), ico = $(icoId);
+      if (row) row.classList.toggle('granted', !!ok);
+      if (ico) ico.textContent = ok ? 'check' : 'chevron_right';
+    };
+    setRow('#and-perm-audio', '#and-perm-audio-ico', st.perms.audio);
+    setRow('#and-perm-images', '#and-perm-images-ico', st.perms.images);
+    setRow('#and-perm-allfiles', '#and-perm-allfiles-ico', st.perms.allFiles);
+    var pSet = $('#and-btn-perm-settings');
+    if (pSet) pSet.style.display = (!st.perms.media && isAndroidApp) ? '' : 'none';
     var nBtn = $('#and-btn-notif'), nIco = $('#and-ico-notif'), nTxt = $('#and-txt-notif');
     if (nBtn && nTxt) {
       nBtn.classList.toggle('granted', !!st.perms.notifications);
@@ -1187,7 +1293,10 @@
       var fab = $('#and-fab-next');
       var fabIco = $('#and-fab-ico');
       if (lbl) {
-        if (st.step === 0) {
+        if (st.permGateOnly) {
+          lbl.textContent = d.and_perm_gate_label;
+          lbl.classList.remove('is-welcome');
+        } else if (st.step === 0) {
           lbl.textContent = d.and_lets_go;
           lbl.classList.add('is-welcome');
         } else {
@@ -1201,7 +1310,7 @@
         var deg = st.step * 360;
         fab.style.transform = 'rotate(' + deg + 'deg)';
         fabIco.style.transform = 'rotate(' + (-deg) + 'deg)';
-        fabIco.textContent = (st.step === TOTAL - 1) ? 'check' : 'arrow_forward';
+        fabIco.textContent = (st.permGateOnly || st.step === TOTAL - 1) ? 'check' : 'arrow_forward';
         fab.disabled = !isAndroidStepGateOk(st.step);
       }
       return;
@@ -1259,13 +1368,37 @@
 
   /* ---------- Android Events & Native Hooks ---------- */
   $('#and-fab-next').addEventListener('click', function () {
+    if (st.permGateOnly) {
+      if (!isAndroidStepGateOk(1)) return;
+      toParent({ type: 'gs-perm-gate-done' });
+      return;
+    }
     if (st.step === TOTAL - 1) finish();
     else go(st.step + 1);
   });
   $('#and-btn-media').addEventListener('click', function () {
     var ab = getAB();
     if (ab && typeof ab.requestMediaPermission === 'function') ab.requestMediaPermission();
-    else { st.perms.media = true; syncAndroidPermButtons(); }
+    else { st.perms.audio = st.perms.images = st.perms.allFiles = st.perms.media = true; syncAndroidPermButtons(); }
+  });
+  $('#and-perm-audio').addEventListener('click', function () {
+    var ab = getAB();
+    if (ab && typeof ab.requestAudioPermission === 'function') ab.requestAudioPermission();
+    else if (ab && typeof ab.requestMediaPermission === 'function') ab.requestMediaPermission();
+  });
+  $('#and-perm-images').addEventListener('click', function () {
+    var ab = getAB();
+    if (ab && typeof ab.requestImagesPermission === 'function') ab.requestImagesPermission();
+    else if (ab && typeof ab.requestMediaPermission === 'function') ab.requestMediaPermission();
+  });
+  $('#and-perm-allfiles').addEventListener('click', function () {
+    var ab = getAB();
+    if (ab && typeof ab.requestAllFilesPermission === 'function') ab.requestAllFilesPermission();
+    else if (ab && typeof ab.requestMediaPermission === 'function') ab.requestMediaPermission();
+  });
+  $('#and-btn-perm-settings').addEventListener('click', function () {
+    var ab = getAB();
+    if (ab && typeof ab.openAppPermissionSettings === 'function') ab.openAppPermissionSettings();
   });
   $('#and-btn-notif').addEventListener('click', function () {
     var ab = getAB();
@@ -1359,6 +1492,7 @@
 
   window.__gsAndroidBack = function () {
     if (!isAndroid) return false;
+    if (st.permGateOnly) return true;
     if (dirModal && dirModal.classList.contains('open')) {
       closeAndroidDirModal(false);
       return true;
@@ -1372,7 +1506,11 @@
 
   window.__gsOnPermissionsUpdated = function (info) {
     if (info && typeof info === 'object') {
+      if (typeof info.audio === 'boolean') st.perms.audio = info.audio;
+      if (typeof info.images === 'boolean') st.perms.images = info.images;
+      if (typeof info.allFiles === 'boolean') st.perms.allFiles = info.allFiles;
       if (typeof info.media === 'boolean') st.perms.media = info.media;
+      else st.perms.media = !!(st.perms.audio && st.perms.images && st.perms.allFiles);
       if (typeof info.notifications === 'boolean') st.perms.notifications = info.notifications;
       if (typeof info.battery === 'boolean') st.perms.battery = info.battery;
       syncAndroidPermButtons();
@@ -1422,7 +1560,8 @@
       st.theme = (draft && draft.theme) || d.theme || 'dark';
       st.accent = (draft && draft.accent) || d.accent || (isAndroidApp ? 'system' : 'purple');
       st.scale = (draft && draft.scale) || d.scale || 100;
-      st.step = draft && typeof draft.step === 'number' ? Math.min(draft.step, TOTAL - 1) : 0;
+      st.permGateOnly = !!d.permGateOnly;
+      st.step = st.permGateOnly ? 1 : (draft && typeof draft.step === 'number' ? Math.min(draft.step, TOTAL - 1) : 0);
       refreshAndroidPerms();
       applyLang(); applyScale();
       if (!isAndroid) renderSwatches(); else applyPalette();
