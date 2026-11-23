@@ -114,8 +114,16 @@
                     }
                     if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
                     clearTimeout(window.__plDeferT);
-                    window.__plDefer = false; window.__plDirty = false;
-                    setTimeout(() => updatePlaylistUI(), 0);
+                    const isMobileHomeHiddenQueue = document.documentElement.classList.contains('m-ui')
+                        && !document.body.classList.contains('m-playlist-open')
+                        && !document.body.classList.contains('m-player-expanded');
+                    if (isMobileHomeHiddenQueue) {
+                        window.__plDefer = true;
+                        window.__plDirty = true;
+                    } else {
+                        window.__plDefer = false; window.__plDirty = false;
+                        setTimeout(() => updatePlaylistUI(), 0);
+                    }
                     // Tự động đọc ảnh bìa / tag nhúng ở nền cho các bài trên Mobile mà danh sách ngoài chưa có ảnh bìa
                     if (document.documentElement.classList.contains('m-ui') && Array.isArray(window.__mobileLibrary) && typeof window.__hydrateMobileLibraryCovers === 'function') {
                         window.__hydrateMobileLibraryCovers();
