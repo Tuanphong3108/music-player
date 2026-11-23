@@ -170,31 +170,57 @@
             }
             window.__saveTrackMetaToCache = saveTrackMetaToCache;
 
+            let mLibRowMap = new Map();
+            function pictureToThumbDataUrl(data, format) {
+                return new Promise((resolve) => {
+                    try {
+                        const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+                        const blob = new Blob([bytes], { type: format || 'image/jpeg' });
+                        const objUrl = URL.createObjectURL(blob);
+                        const img = new Image();
+                        img.onload = () => {
+                            try {
+                                const S = 144;
+                                const cv = document.createElement('canvas');
+                                cv.width = S; cv.height = S;
+                                const k = Math.max(S / (img.naturalWidth || S), S / (img.naturalHeight || S));
+                                const w = (img.naturalWidth || S) * k, h = (img.naturalHeight || S) * k;
+                                cv.getContext('2d').drawImage(img, (S - w) / 2, (S - h) / 2, w, h);
+                                const out = cv.toDataURL('image/jpeg', 0.78);
+                                URL.revokeObjectURL(objUrl);
+                                resolve(out);
+                            } catch (e) {
+                                URL.revokeObjectURL(objUrl);
+                                resolve(null);
+                            }
+                        };
+                        img.onerror = () => { URL.revokeObjectURL(objUrl); resolve(null); };
+                        img.src = objUrl;
+                    } catch (e) { resolve(null); }
+                });
+            }
+
             function patchMobileLibRowDom(tr) {
                 if (!mLibList || !tr) return;
                 const id = mLibTrackId(tr);
                 if (!id) return;
-                const rows = mLibList.querySelectorAll('.m-lib-item');
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (row.dataset.tid !== id) continue;
-                    row.classList.toggle('is-scanning', !!tr._metaLoading);
-                    const tEl = row.querySelector('.m-lib-title');
-                    const aEl = row.querySelector('.m-lib-artist');
-                    if (tEl && tEl.textContent !== (tr.name || '')) tEl.textContent = tr.name || '';
-                    if (aEl && aEl.textContent !== (tr.artist || '')) aEl.textContent = tr.artist || '';
-                    const artBox = row.querySelector('.m-lib-art');
-                    if (artBox) {
-                        const existingImg = artBox.querySelector('img');
-                        if (tr.cover) {
-                            if (!existingImg || existingImg.getAttribute('src') !== tr.cover) {
-                                artBox.innerHTML = '<span class="material-symbols-rounded">music_note</span><img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">';
-                            }
-                        } else if (existingImg) {
-                            existingImg.remove();
+                const row = mLibRowMap.get(id);
+                if (!row || !row.isConnected) return;
+                row.classList.toggle('is-scanning', !!tr._metaLoading);
+                const tEl = row.querySelector('.m-lib-title');
+                const aEl = row.querySelector('.m-lib-artist');
+                if (tEl && tEl.textContent !== (tr.name || '')) tEl.textContent = tr.name || '';
+                if (aEl && aEl.textContent !== (tr.artist || '')) aEl.textContent = tr.artist || '';
+                const artBox = row.querySelector('.m-lib-art');
+                if (artBox) {
+                    const existingImg = artBox.querySelector('img');
+                    if (tr.cover) {
+                        if (!existingImg || existingImg.getAttribute('src') !== tr.cover) {
+                            artBox.innerHTML = '<span class="material-symbols-rounded">music_note</span><img loading="lazy" decoding="async" src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">';
                         }
+                    } else if (existingImg) {
+                        existingImg.remove();
                     }
-                    break;
                 }
             }
 
@@ -230,6 +256,12 @@
                             tr._metaFromCache = true;
                             tr._metaLoading = false;
                             tr._metaLoaded = true;
+                            const fSize = (tr.file && tr.file.size) || 0;
+                            const fMod = (tr.file && tr.file.lastModified) || 0;
+                            if ((!fSize || !cached.size || cached.size === fSize) && (!fMod || !cached.modified || cached.modified === fMod)) {
+                                // File chưa thay đổi so với cache -> bỏ qua quét lại 2MB ở nền để giao diện siêu mượt
+                                tr._bgCoverChecked = true;
+                            }
                             appliedAnyCache = true;
                         } else if (tr.nativeStreamUrl && !tr._bgCoverChecked) {
                             // Chưa có cache trong app -> bật trạng thái xoay Album Art cho tới khi quét xong
@@ -263,7 +295,7 @@
                             const f = new File([bl], tr.nativeName || (tr.name + '.' + (tr.ext || 'mp3').toLowerCase()), { type: bl.type || 'audio/mpeg' });
                             await new Promise((res) => {
                                 window.jsmediatags.read(f, {
-                                    onSuccess: function (tag) {
+                                    onSuccess: async function (tag) {
                                         let changed = false;
                                         if (tag.tags.title && tag.tags.title !== tr.name && (!tr._metaFromCache || tag.tags.title !== tr.rawName)) {
                                             tr.name = tag.tags.title; changed = true;
@@ -285,10 +317,8 @@
                                         }
                                         if (tag.tags.picture) {
                                             const { data, format } = tag.tags.picture;
-                                            let bin = '';
-                                            for (let k = 0; k < data.length; k++) bin += String.fromCharCode(data[k]);
-                                            const picUrl = `data:${format};base64,${window.btoa(bin)}`;
-                                            if (tr.cover !== picUrl) {
+                                            const picUrl = await pictureToThumbDataUrl(data, format);
+                                            if (picUrl && tr.cover !== picUrl) {
                                                 tr.cover = picUrl;
                                                 tr._hasRealCover = true;
                                                 changed = true;
@@ -330,7 +360,7 @@
                                     }
                                 });
                             });
-                            await new Promise(r2 => setTimeout(r2, 35));
+                            await new Promise(r2 => setTimeout(r2, 120));
                         } catch (e) {
                             tr._metaLoading = false;
                             tr._metaLoaded = true;
@@ -351,6 +381,7 @@
                 if (!window.__mobileLibrary.length && playlist.length) syncMobileLibraryFromPlaylist();
                 sortMobileLib0Z(window.__mobileLibrary);
                 mLibList.innerHTML = '';
+                mLibRowMap.clear();
                 const q = mLibQuery;
                 const activeTrack = playlist[currentIndex] || null;
                 const activeId = activeTrack ? mLibTrackId(activeTrack) : '';
@@ -362,8 +393,9 @@
                     const row = document.createElement('div');
                     row.className = 'm-lib-item' + (isAct ? ' active' : '') + (tr._metaLoading ? ' is-scanning' : '');
                     row.dataset.tid = tid;
+                    if (tid) mLibRowMap.set(tid, row);
                     row.innerHTML =
-                        '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr.cover ? '<img src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>' +
+                        '<div class="m-lib-art"><span class="material-symbols-rounded">music_note</span>' + (tr.cover ? '<img loading="lazy" decoding="async" src="' + tr.cover + '" alt="" onload="this.classList.add(\'loaded\')" onerror="this.remove()">' : '') + '</div>' +
                         '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
                         '<button type="button" class="m-lib-more" aria-label="More"><span class="material-symbols-rounded" style="font-size:20px;">more_vert</span></button>';
                     row.querySelector('.m-lib-title').textContent = tr.name || '';
