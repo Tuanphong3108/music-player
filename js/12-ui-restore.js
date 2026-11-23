@@ -454,23 +454,33 @@
                         }
                     }
                 }
-                if (idx < 0 && isLiveBoot) {
-                    if (!bootSince) bootSince = Date.now();
-                    if (Date.now() - bootSince < 1500) return;
-                    idx = playlist.findIndex(x => x && x.nativeId === boot.id);
-                    if (idx < 0) {
-                        const stub = {
-                            name: boot.title || bootLoc.split('/').pop() || '...', artist: boot.artist || '', album: '', year: '', genre: '', composer: '',
-                            cover: null, url: 'https://appassets.local/f/' + boot.id, isVideo: false,
-                            ext: '', lyrics: null, lyricsRaw: '', file: null, fileHandle: null,
-                            nativeId: boot.id, nativeLocation: bootLoc, nativeName: boot.title || '',
-                            nativeStreamUrl: 'https://appassets.local/f/' + boot.id, nativeLrcUrl: '', fromLibrary: true,
-                            rawName: boot.title || '', _stub: true
-                        };
-                        playlist.push(stub);
-                        idx = playlist.length - 1;
-                        if (shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
-                        stubbed = true;
+                if (idx < 0 && (boot || bootQ)) {
+                    // Không tìm thấy trong thư viện: dựng bài tạm từ thông tin native (id lấy từ phiên hoặc từ hàng đợi) để vẫn mở được player
+                    let stubId = (boot && boot.id) || (bootQ && bootQ.curId) || '';
+                    if (!stubId && bootQ && Array.isArray(bootQ.ids) && Array.isArray(bootQ.locations) && bootLoc) {
+                        const li = bootQ.locations.findIndex(l => String(l || '').toLowerCase() === bootLoc);
+                        if (li >= 0) stubId = bootQ.ids[li] || '';
+                    }
+                    if (stubId) {
+                        stubId = String(stubId);
+                        idx = playlist.findIndex(x => x && String(x.nativeId) === stubId);
+                        if (idx < 0) {
+                            const nm = (boot && boot.title) || (card && card.name) || bootLoc.split('/').pop() || '...';
+                            const stub = {
+                                name: nm, artist: (boot && boot.artist) || (card && card.artist) || '', album: '', year: '', genre: '', composer: '',
+                                cover: null, url: 'https://appassets.local/f/' + stubId, isVideo: false,
+                                ext: '', lyrics: null, lyricsRaw: '', file: null, fileHandle: null,
+                                nativeId: stubId, nativeLocation: bootLoc, nativeName: nm,
+                                nativeStreamUrl: 'https://appassets.local/f/' + stubId, nativeLrcUrl: '', fromLibrary: true,
+                                rawName: nm, _stub: true
+                            };
+                            playlist.push(stub);
+                            idx = playlist.length - 1;
+                            if (shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
+                            if (typeof updatePlaylistUI === 'function') updatePlaylistUI();
+                            await waitFrames();
+                            stubbed = true;
+                        }
                     }
                 }
                 if (idx < 0) return;
@@ -526,6 +536,7 @@
                     try { audio.currentTime = seekSec; } catch (e) {}
                 }
                 try { if (!audio.paused) audio.pause(); } catch (e) {}
+                if (stubbed && bootQ) { try { applyNativeQueue(bootQ); } catch (e) {} }
                 prioritizeTrack(idx);
                 applyPanels();
                 navApplied = false; applyNav();
