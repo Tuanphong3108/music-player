@@ -1,5 +1,6 @@
 <!-- Ghi nội dung cập nhật cho bản build APK tiếp theo tại đây (hỗ trợ Markdown). Mỗi lần cập nhật Android, nội dung mới sẽ được ghi vào file này trước khi push để GitHub Release hiển thị đúng changelog thật! -->
 ### Có gì mới trong bản cập nhật Android này
+- **Nạp danh sách thần tốc + đọc nền song song 3 tệp cùng lúc**: thả toàn bộ bài hát vào danh sách ngay lập tức, sau đó quét bổ sung đầy đủ metadata + ảnh bìa nhúng song song 3 tệp cùng lúc qua endpoint `/meta/<id>` chạy trên luồng nền Android (không chặn UI, không bỏ sót bài).
 - **Sửa lỗi đọc nhầm Album Art của bài khác**: loại bỏ cơ chế lấy ảnh bìa theo thư mục/album chung của Android (`loadThumbnail` / `albumart`), chỉ đọc đúng ảnh bìa nhúng gốc bên trong chính tệp nhạc (`MediaMetadataRetriever.getEmbeddedPicture()`), đồng thời khắc phục lỗi lệch thông tin khi đọc thẻ nền hoặc trùng tên bài.
 - **Ưu tiên phát tệp âm thanh từ nguồn ngoài**: khi mở tệp nhạc từ trình quản lý tệp hoặc ứng dụng khác ("Mở bằng / Chia sẻ"), ứng dụng tự động hủy khôi phục bài cũ/hàng đợi cũ và mở phát thẳng tệp vừa nhận.
 - **Đồng bộ trạng thái phát mỗi giây (1s)**: trình phát native gửi lại đầy đủ trạng thái (bài đang phát, vị trí, trạng thái phát/tạm dừng/đệm/hết bài) sang trang web đều đặn mỗi 1 giây kể cả khi tạm dừng, giúp giao diện luôn khớp chuẩn và tự bắt kịp ngay nếu WebView bị lỡ sự kiện chuyển bài.
