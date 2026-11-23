@@ -193,13 +193,13 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         updateAllWidgets(context);
     }
 
-    static void saveModesAndProgress(Context context, boolean shuffle, int repeatMode, long posMs, long durMs) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+    static void saveModesAndProgress(Context context, boolean shuffle, int repeatMode, long unusedPosMs, long unusedDurMs) {
+        // Tiến độ phát lấy trực tiếp từ MediaSession, ở đây chỉ lưu chế độ shuffle/repeat từ WebView
+        SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (sp.getBoolean("shuffle", false) == shuffle && sp.getInt("repeat_mode", 0) == repeatMode) return;
+        sp.edit()
                 .putBoolean("shuffle", shuffle)
                 .putInt("repeat_mode", repeatMode)
-                .putLong("pos_ms", Math.max(0L, posMs))
-                .putLong("dur_ms", Math.max(0L, durMs))
-                .putLong("last_report_ms", System.currentTimeMillis())
                 .apply();
         updateAllWidgets(context);
     }
@@ -263,6 +263,11 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         int repeatMode = sp.getInt("repeat_mode", 0);
         long posMs = sp.getLong("pos_ms", 0L);
         long durMs = sp.getLong("dur_ms", 0L);
+        long[] sessionProg = MediaService.readSessionProgress();
+        if (sessionProg != null && sessionProg.length >= 2) {
+            posMs = sessionProg[0];
+            if (sessionProg[1] > 0L || durMs <= 0L) durMs = sessionProg[1];
+        }
         String title = sp.getString("title", "");
         String artist = sp.getString("artist", "");
         int theme = widgetBg(context, sp.getInt("theme", 0xFF1E1B24));
