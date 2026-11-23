@@ -1945,13 +1945,15 @@
                     ] : []
                 });
 
-                navigator.mediaSession.setActionHandler('play', () => playBtn.click());
-                navigator.mediaSession.setActionHandler('pause', () => playBtn.click());
-                navigator.mediaSession.setActionHandler('previoustrack', () => document.getElementById('prev-btn').click());
-                navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
-                navigator.mediaSession.setActionHandler('seekto', (details) => {
-                    if (details && typeof details.seekTime === 'number') { audio.currentTime = details.seekTime; syncMediaSessionState(); }
-                });
+                if (!(window.IS_ANDROID_APP && window.__nativeAudioState && window.__nativeAudioState.mode === 'native')) {
+                    navigator.mediaSession.setActionHandler('play', () => playBtn.click());
+                    navigator.mediaSession.setActionHandler('pause', () => playBtn.click());
+                    navigator.mediaSession.setActionHandler('previoustrack', () => document.getElementById('prev-btn').click());
+                    navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
+                    navigator.mediaSession.setActionHandler('seekto', (details) => {
+                        if (details && typeof details.seekTime === 'number') { audio.currentTime = details.seekTime; syncMediaSessionState(); }
+                    });
+                }
                 try {
                     navigator.mediaSession.setActionHandler('seekbackward', (d) => { audio.currentTime = Math.max(0, audio.currentTime - ((d && d.seekOffset) || 10)); });
                     navigator.mediaSession.setActionHandler('seekforward', (d) => { audio.currentTime = Math.min(audio.duration || 1e9, audio.currentTime + ((d && d.seekOffset) || 10)); });
