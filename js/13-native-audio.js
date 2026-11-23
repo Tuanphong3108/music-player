@@ -204,6 +204,7 @@
             qSig = sig;
             AB.nativeAudioSetQueue(JSON.stringify({
                 ids: ids,
+                locations: playlist.map(t => (t && t.nativeLocation) ? String(t.nativeLocation) : ''),
                 titles: playlist.map((t, i) => ids[i] ? (t.name || '') : ''),
                 artists: playlist.map((t, i) => ids[i] ? (t.artist || '') : ''),
                 order: useOrder ? shuffleOrder : null,
@@ -261,14 +262,38 @@
     ['pause', 'ended'].forEach(ev => a.addEventListener(ev, () => { if (vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} } }));
     document.addEventListener('visibilitychange', () => { if (document.hidden && vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} } });
 
-    // Hỏi lại trạng thái khi trang vừa (tải lại) mở: nếu app đang phát bài nào thì cho khôi phục UI nhận lại đúng bài đó (trừ khi đang mở tệp từ nguồn ngoài)
-    try {
-        const hasExt = !!(window.__externalOpenActive || (typeof AB.hasPendingExternalOpen === 'function' && AB.hasPendingExternalOpen()));
-        if (hasExt) {
-            window.__externalOpenActive = true;
-        } else {
+    // Hỏi lại trạng thái + hàng đợi từ khung app khi vừa mở trang hoặc khi quay lại app từ nền
+    function queryNativeSession(fromResume) {
+        try {
+            const hasExt = !!(window.__externalOpenActive || (typeof AB.hasPendingExternalOpen === 'function' && AB.hasPendingExternalOpen()));
+            if (hasExt) {
+                window.__externalOpenActive = true;
+                return;
+            }
             const s = JSON.parse(AB.nativeAudioState() || 'null');
-            if (s && s.loaded && s.id) { window.__nativeBoot = s; N.adoptId = s.id; N.paused = !s.pwr; N.vol = 1; }
-        }
-    } catch (e) {}
+            let q = null;
+            if (typeof AB.nativeAudioQueueState === 'function') {
+                try { q = JSON.parse(AB.nativeAudioQueueState() || 'null'); } catch (e) {}
+            }
+            if (s && s.loaded && s.id) {
+                window.__nativeBoot = s;
+                window.__nativeBootQueue = q;
+                N.adoptId = s.id;
+                N.paused = !s.pwr;
+                N.vol = 1;
+                if (fromResume && typeof window.__adoptNativeSessionNow === 'function') {
+                    window.__adoptNativeSessionNow(s, q);
+                }
+            } else if (!fromResume) {
+                window.__nativeBoot = null;
+                window.__nativeBootQueue = null;
+            }
+        } catch (e) {}
+    }
+    queryNativeSession(false);
+    window.__queryNativeSession = queryNativeSession;
+    window.__onAndroidAppResume = function () { queryNativeSession(true); };
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) queryNativeSession(true);
+    });
 })();
