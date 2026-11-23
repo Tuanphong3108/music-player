@@ -2316,6 +2316,116 @@ public class MainActivity extends Activity {
             }
         }
 
+        /** Chia sẻ trực tiếp tệp gốc trên thiết bị (không đi vòng qua WebView fetch/Base64) để tránh lỗi Failed to fetch và nhanh tức thì. */
+        @JavascriptInterface
+        public String shareNativeFile(final String nativeId, final String nativeLocation, final String name, final String mime) {
+            try {
+                String resolvedPath = (nativeId != null && !nativeId.isEmpty()) ? servedLocations.get(nativeId) : null;
+                if ((resolvedPath == null || resolvedPath.isEmpty()) && nativeLocation != null && !nativeLocation.trim().isEmpty()) {
+                    resolvedPath = nativeLocation.trim();
+                }
+                Uri resolvedUri = (nativeId != null && !nativeId.isEmpty()) ? served.get(nativeId) : null;
+                if (resolvedUri == null && resolvedPath != null && (resolvedPath.startsWith("content://") || resolvedPath.startsWith("file://"))) {
+                    try { resolvedUri = Uri.parse(resolvedPath); } catch (Throwable ignored) {}
+                }
+                File directFile = null;
+                if (resolvedPath != null && !resolvedPath.isEmpty() && !resolvedPath.startsWith("content://")) {
+                    try {
+                        File f = resolvedPath.startsWith("file://")
+                                ? new File(Uri.parse(resolvedPath).getPath())
+                                : new File(resolvedPath);
+                        if (f.exists() && f.isFile() && f.canRead() && f.length() > 0) {
+                            directFile = f;
+                        }
+                    } catch (Throwable ignored) {}
+                }
+                if (directFile == null && resolvedUri == null) {
+                    return "NOT_FOUND";
+                }
+
+                final File srcFile = directFile;
+                final Uri srcUri = resolvedUri;
+                final String rawName = (name != null && !name.trim().isEmpty())
+                        ? name.trim()
+                        : (srcFile != null ? srcFile.getName() : (srcUri != null ? displayName(srcUri) : "media.mp3"));
+                final String safeName = rawName.replaceAll("[\\\\/:*?\"<>|]", "_");
+                final String finalMime = (mime != null && !mime.trim().isEmpty())
+                        ? mime.trim()
+                        : guessAudioMime(safeName.toLowerCase());
+
+                callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('locating')");
+                new Thread(() -> {
+                    try {
+                        callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('preparing')");
+                        File dir = new File(getCacheDir(), "share");
+                        if (!dir.exists()) dir.mkdirs();
+                        File[] old = dir.listFiles();
+                        if (old != null) {
+                            for (File of : old) {
+                                try { of.delete(); } catch (Throwable ignored) {}
+                            }
+                        }
+                        File outFile = new File(dir, safeName.isEmpty() ? "media.mp3" : safeName);
+                        boolean copied = false;
+                        if (srcFile != null) {
+                            try (InputStream in = new java.io.FileInputStream(srcFile);
+                                 FileOutputStream out = new FileOutputStream(outFile)) {
+                                byte[] buf = new byte[65536];
+                                int r;
+                                while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
+                                out.flush();
+                                copied = outFile.exists() && outFile.length() > 0;
+                            } catch (Throwable ignored) {}
+                        }
+                        if (!copied && srcUri != null) {
+                            try (InputStream in = getContentResolver().openInputStream(srcUri);
+                                 FileOutputStream out = new FileOutputStream(outFile)) {
+                                if (in != null) {
+                                    byte[] buf = new byte[65536];
+                                    int r;
+                                    while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
+                                    out.flush();
+                                    copied = outFile.exists() && outFile.length() > 0;
+                                }
+                            } catch (Throwable ignored) {}
+                        }
+                        if (!copied) {
+                            callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
+                            callJs("window.showToast&&showToast(" + JSONObject.quote(
+                                    isEnglishLang() ? "Could not read file to share" : "Không đọc được tệp để chia sẻ") + ")");
+                            return;
+                        }
+                        callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('sharing')");
+                        final Uri u = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fp", outFile);
+                        final String m = (finalMime == null || finalMime.isEmpty()) ? "audio/*" : finalMime;
+                        runOnUiThread(() -> {
+                            try {
+                                Intent i = new Intent(Intent.ACTION_SEND);
+                                i.setType(m);
+                                i.putExtra(Intent.EXTRA_STREAM, u);
+                                i.setClipData(android.content.ClipData.newRawUri("", u));
+                                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                Intent ch = Intent.createChooser(i, null);
+                                ch.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('done')");
+                                startActivity(ch);
+                            } catch (Exception e) {
+                                callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
+                                callJs("window.showToast&&showToast(" + JSONObject.quote("Không mở được khung chia sẻ: " + e) + ")");
+                            }
+                        });
+                    } catch (Throwable t) {
+                        callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
+                        callJs("window.showToast&&showToast(" + JSONObject.quote("Chia sẻ lỗi: " + t) + ")");
+                    }
+                }).start();
+                return "";
+            } catch (Throwable e) {
+                callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
+                return String.valueOf(e);
+            }
+        }
+
         // ===== Trình phát native (ExoPlayer) =====
         @JavascriptInterface public boolean nativeAudioAvailable() { return true; }
         @JavascriptInterface public String nativeAudioState() { return NativeAudio.stateJson(); }
