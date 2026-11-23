@@ -653,6 +653,10 @@ final class NativeAudio {
             lastSnapAt = now;
             final boolean isTick = "tick".equals(ev);
             if (isTick) matchStateEveryHalfSec();
+            else persistSessionBackup(now, true);
+            if (isTick && (app == null || isAppInBackground(app))) {
+                persistSessionBackup(now, false);
+            }
             // MediaSession tự nội suy vị trí theo tốc độ phát -> giãn tick xuống 1.5s để không spam IPC hệ thống
             if (!isTick || now - lastSvcTickAt >= 1500) {
                 lastSvcTickAt = now;
