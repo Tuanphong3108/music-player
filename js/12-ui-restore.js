@@ -7,11 +7,13 @@
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
     const keyOf = (t) => (t && (t.nativeLocation || t.rawName || t.name || '') || '').toLowerCase();
-    let armed = false;          // chỉ ghi đè trạng thái đã lưu sau khi đã khôi phục xong / người dùng đã thao tác
-    let trackDone = !saved || !saved.key;
-    if (window.__nativeBoot) { saved = saved || { key: '', ts: 0 }; trackDone = false; }
-    let navApplied = false;
-    let touched = false;
+    const hasExtLaunch = !!(window.__externalOpenActive || (window.AndroidBridge && typeof window.AndroidBridge.hasPendingExternalOpen === 'function' && window.AndroidBridge.hasPendingExternalOpen()));
+    if (hasExtLaunch) window.__externalOpenActive = true;
+    let armed = hasExtLaunch;          // chỉ ghi đè trạng thái đã lưu sau khi đã khôi phục xong / người dùng đã thao tác
+    let trackDone = hasExtLaunch || !saved || !saved.key;
+    if (!hasExtLaunch && window.__nativeBoot) { saved = saved || { key: '', ts: 0 }; trackDone = false; }
+    let navApplied = hasExtLaunch;
+    let touched = hasExtLaunch;
     window.addEventListener('pointerdown', () => { touched = true; armed = true; }, true);
 
     function snapshot() {
@@ -45,7 +47,20 @@
 
     // ===== Hàng đợi tạm (playlist đang phát): lưu đúng thứ tự + thứ tự shuffle, khôi phục sau khi quét xong thư viện =====
     const QKEY = 'mp_queue_v1';
-    let qArmed = false, qDone = false, qSig = '';
+    let qArmed = hasExtLaunch, qDone = hasExtLaunch, qSig = '';
+    function cancelRestoreForExternal() {
+        window.__externalOpenActive = true;
+        window.__nativeBoot = null;
+        window.__restoreOnce = null;
+        trackDone = true;
+        qDone = true;
+        qArmed = true;
+        navApplied = true;
+        touched = true;
+        armed = true;
+        try { body.classList.remove('m-early-card'); } catch (e) {}
+    }
+    window.__cancelUiRestore = cancelRestoreForExternal;
     function saveQueue() {
         if (!qArmed || typeof playlist === 'undefined' || !playlist.length) return;
         try {
@@ -61,7 +76,7 @@
     document.addEventListener('visibilitychange', () => { if (document.hidden) saveQueue(); });
     window.addEventListener('pagehide', saveQueue);
     function restoreQueue() {
-        if (qDone) return;
+        if (qDone || window.__externalOpenActive) { qDone = true; qArmed = true; return; }
         qDone = true;
         try {
             let q = null;
@@ -108,6 +123,7 @@
     try { card = JSON.parse(localStorage.getItem(CKEY) || 'null'); } catch (e) {}
     function showEarlyCard() {
         try {
+            if (hasExtLaunch || window.__externalOpenActive) return;
             if (!card || !card.name || !document.documentElement.classList.contains('m-ui')) return;
             const t = document.getElementById('m-mini-title'), ar = document.getElementById('m-mini-artist'), art = document.getElementById('m-mini-art');
             if (t) t.textContent = card.name;
@@ -181,6 +197,7 @@
         } catch (e) {}
     }
     function tryRestore() {
+        if (window.__externalOpenActive) { trackDone = true; armed = true; return true; }
         if (!saved) return true;
         if (!touched) applyNav();
         if (trackDone) return true;
@@ -213,9 +230,12 @@
     (function () {
         const o = window.__nativeOpenFiles;
         if (typeof o !== 'function') return;
-        window.__nativeOpenFiles = async function () {
+        window.__nativeOpenFiles = async function (list) {
+            if (Array.isArray(list) && list.some(x => x && (x.fromExternal || !x.fromLibrary))) {
+                cancelRestoreForExternal();
+            }
             const r = await o.apply(this, arguments);
-            try { if (!trackDone) tryRestore(); } catch (e) {}
+            try { if (!trackDone && !window.__externalOpenActive) tryRestore(); } catch (e) {}
             return r;
         };
     })();
