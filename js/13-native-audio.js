@@ -299,6 +299,12 @@
             if (typeof AB.nativeAudioQueueState === 'function') {
                 try { q = JSON.parse(AB.nativeAudioQueueState() || 'null'); } catch (e) {}
             }
+            const sleepInfo = (q && q.sleepFired) ? q : (s && s.sleepFired ? s : null);
+            if (sleepInfo && sleepInfo.sleepFired && typeof window.__showNativeSleepEndedNotice === 'function') {
+                setTimeout(() => {
+                    try { window.__showNativeSleepEndedNotice(sleepInfo.sleepFiredType, sleepInfo.sleepFiredTotal); } catch (e) {}
+                }, 120);
+            }
             if (s && s.loaded && s.id) {
                 window.__nativeBoot = s;
                 window.__nativeBootQueue = q;
