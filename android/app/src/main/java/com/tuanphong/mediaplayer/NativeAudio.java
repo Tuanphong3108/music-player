@@ -237,7 +237,7 @@ final class NativeAudio {
 
     static boolean active() { return loaded && p != null; }
     static boolean webAlive() { return MainActivity.instance != null && SystemClock.elapsedRealtime() - lastAck < 4000; }
-    static boolean hasNext() { return stepQ(1) >= 0; }
+    static boolean hasNext() { return stepQ(1, true) >= 0; }
 
     private static int curQ() {
         for (int i = 0; i < qIds.length; i++) if (qIds[i].equals(curId)) return i;
@@ -245,6 +245,9 @@ final class NativeAudio {
     }
     /** Chỉ số (trong danh sách) của bài cách bài hiện tại `dir` bước theo thứ tự phát; -1 nếu không có. Bỏ qua bài không mở được. */
     private static int stepQ(int dir) {
+        return stepQ(dir, false);
+    }
+    private static int stepQ(int dir, boolean respectRepeatOne) {
         String[] ids = qIds;
         int total = ids.length;
         int c = -1;
@@ -253,7 +256,7 @@ final class NativeAudio {
             if (activeId != null && activeId.equals(ids[i])) { c = i; break; }
         }
         if (c < 0 || total == 0) return -1;
-        if (dir > 0 && repeat == 2) return c;
+        if (dir > 0 && respectRepeatOne && repeat == 2) return c;
         boolean useShuffle = shuffled && order != null && order.length == total;
         int[] ord;
         if (useShuffle) {
@@ -496,18 +499,18 @@ final class NativeAudio {
         emit("ended");
     }
 
-    /** Sang bài kế (dùng khi trang đang chết / điều khiển từ thông báo). */
+    /** Sang bài kế (dùng khi trang đang chết / điều khiển từ thông báo). Bấm Next luôn sang bài kế ngay cả khi lặp 1 bài. */
     static boolean advance() {
-        final int q = stepQ(1);
+        final int q = stepQ(1, false);
         if (q < 0) return false;
         ph.post(() -> go(q));
         return true;
     }
-    /** Bài trước: đã phát quá 3 giây thì tua về đầu bài, không thì lùi một bài theo thứ tự phát. */
+    /** Bài trước: khi bật Shuffle và đã phát quá 5s thì về 0:00, dưới/bằng 5s thì về bài trước; khi tắt Shuffle thì luôn lùi về bài trước. */
     static boolean previous() {
         ph.post(() -> {
-            if (p != null && loaded && p.getCurrentPosition() > 3000) { p.seekTo(0); endedHandled = false; return; }
-            if (!go(stepQ(-1)) && p != null && loaded) { p.seekTo(0); endedHandled = false; }
+            if (p != null && loaded && shuffled && p.getCurrentPosition() > 5000) { p.seekTo(0); endedHandled = false; return; }
+            if (!go(stepQ(-1, false)) && p != null && loaded) { p.seekTo(0); endedHandled = false; }
         });
         return true;
     }
