@@ -844,7 +844,7 @@
                         + `<span class="material-symbols-rounded" style="position:absolute;font-size:${Math.round(S * 0.36)}px;color:#111;font-variation-settings:'FILL' 1;">${iconName || 'music_note'}</span>`;
                 }
 
-                function renderPlCoverHtml(pl, size) {
+                function renderPlCoverHtml(pl, size, tracks) {
                     const S = size || 56;
                     if (pl.coverType === 'image' && pl.coverImage) {
                         return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;"><img src="${pl.coverImage}" style="width:100%;height:100%;object-fit:cover;"></div>`;
@@ -860,7 +860,38 @@
                         const tf = sh === 'oval' ? 'transform:scaleY(0.76) rotate(-25deg);' : '';
                         return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;background:transparent;"><div style="width:100%;height:100%;border-radius:${rad};background:${bg};display:grid;place-items:center;${tf}"></div><span class="material-symbols-rounded" style="position:absolute;font-size:${Math.round(S * 0.46)}px;color:#111;font-variation-settings:'FILL' 1;">${ico}</span></div>`;
                     }
-                    return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;"><span class="material-symbols-rounded" style="font-size:${Math.round(S * 0.5)}px;opacity:.75;">grid_view</span></div>`;
+                    return renderAutoCollage(pl, S, tracks);
+                }
+
+                // Ảnh ghép tự động: ≥4 bài → 4 ảnh; 3/2/1 bài → bố cục riêng; 0 → icon lưới. Chọn ngẫu nhiên (cố định theo playlist cho đến khi số bài đổi)
+                const __collagePick = new Map();
+                function renderAutoCollage(pl, S, tracks) {
+                    const list = Array.isArray(tracks) ? tracks : [];
+                    if (!list.length) {
+                        return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;"><span class="material-symbols-rounded" style="font-size:${Math.round(S * 0.5)}px;opacity:.75;">grid_view</span></div>`;
+                    }
+                    const withArt = list.filter(t => t && t.cover);
+                    const sigKey = pl.id + '|' + list.length;
+                    let picked = __collagePick.get(sigKey);
+                    // chọn lại nếu lần trước chưa có ảnh mà giờ đã có
+                    if (!picked || (picked.some(t => !t.cover) && withArt.length > picked.filter(t => t.cover).length)) {
+                        const pool = (withArt.length >= Math.min(4, list.length) ? withArt : list).slice();
+                        for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+                        picked = pool.slice(0, 4);
+                        if (__collagePick.size > 200) __collagePick.clear();
+                        __collagePick.set(sigKey, picked);
+                    }
+                    const n = picked.length;
+                    const cell = (t, x, y, d, round) => {
+                        const img = t.cover ? `<img src="${t.cover}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">` : `<span class="material-symbols-rounded" style="font-size:${Math.round(S * d * 0.5)}px;opacity:.7;">music_note</span>`;
+                        return `<div style="position:absolute;left:${x}%;top:${y}%;width:${d}%;height:${d}%;border-radius:${round};overflow:hidden;display:grid;place-items:center;background:color-mix(in srgb, var(--md-sys-color-on-secondary-container) 14%, transparent);">${img}</div>`;
+                    };
+                    let inner = '';
+                    if (n === 1) inner = cell(picked[0], 0, 0, 100, '0');
+                    else if (n === 2) inner = cell(picked[0], 4, 4, 58, '50%') + cell(picked[1], 38, 38, 58, '50%');
+                    else if (n === 3) inner = cell(picked[0], 26, 2, 48, '50%') + cell(picked[1], 2, 50, 48, '50%') + cell(picked[2], 50, 50, 48, '50%');
+                    else inner = cell(picked[0], 2, 6, 44, '50%') + cell(picked[1], 54, 0, 44, '50%') + cell(picked[2], 2, 54, 44, '50%') + cell(picked[3], 54, 48, 44, '50%');
+                    return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;display:block;">${inner}</div>`;
                 }
 
                 function getLibPool() {
@@ -994,7 +1025,7 @@
                         const card = document.createElement('div');
                         card.className = 'm-pl-card';
                         card.innerHTML =
-                            renderPlCoverHtml(pl, 56) +
+                            renderPlCoverHtml(pl, 56, plTracks) +
                             '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
                             '<button type="button" class="m-lib-more" aria-label="Delete"><span class="material-symbols-rounded" style="font-size:20px;">delete</span></button>';
                         card.querySelector('.m-lib-title').textContent = pl.name;

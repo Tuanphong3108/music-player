@@ -116,6 +116,10 @@
     {
       "content": "Tối ưu giao diện cho máy tính bảng: thư viện chia nhiều cột, mini player và danh sách phát có độ rộng hợp lý, màn hình phát nhạc căn giữa (dọc) hoặc chia đôi ảnh bìa/điều khiển (ngang)",
       "icon": "tablet_android"
+    },
+    {
+      "content": "Danh sách phát dùng ảnh ghép tự động: ghép 4 ảnh bìa ngẫu nhiên từ các bài trong playlist; dưới 4 bài sẽ tự đổi bố cục (3, 2, 1 ảnh)",
+      "icon": "grid_view"
     }
   ],
   "en": [
@@ -234,6 +238,10 @@
     {
       "content": "Tablet-optimized layout: multi-column library, sensibly sized mini player and playlist sheet, centered player in portrait and art/controls split in landscape",
       "icon": "tablet_android"
+    },
+    {
+      "content": "Auto-generated playlist covers now collage 4 random track covers; with fewer than 4 tracks the layout adapts (3, 2 or 1 cover)",
+      "icon": "grid_view"
     }
   ]
 }
