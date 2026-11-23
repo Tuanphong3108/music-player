@@ -596,15 +596,51 @@ final class NativeAudio {
             snap.put("pos", posNow);
             snap.put("dur", durNow);
             snap.put("rate", rate);
-            snap.put("shuffle", shuffled && order != null && order.length == qIds.length);
+            boolean isShuf = shuffled && order != null && order.length == qIds.length;
+            snap.put("shuffle", isShuf);
             snap.put("repeat", repeat);
             snap.put("savedAtElapsed", nowElapsed);
             snap.put("savedAtWall", System.currentTimeMillis());
 
+            String qJsonStr = queueStateJson();
+            JSONObject qObj = new JSONObject(qJsonStr);
+            if (isShuf) {
+                org.json.JSONArray jOrd = new org.json.JSONArray();
+                org.json.JSONArray jShufIds = new org.json.JSONArray();
+                org.json.JSONArray jShufTitles = new org.json.JSONArray();
+                org.json.JSONArray jShufArtists = new org.json.JSONArray();
+                org.json.JSONArray jShufLocs = new org.json.JSONArray();
+                int curShufflePos = -1;
+                for (int i = 0; i < order.length; i++) {
+                    int qIdx = order[i];
+                    jOrd.put(qIdx);
+                    String tid = (qIdx >= 0 && qIdx < qIds.length && qIds[qIdx] != null) ? qIds[qIdx] : "";
+                    String tt = (qIdx >= 0 && qIdx < qTitles.length && qTitles[qIdx] != null) ? qTitles[qIdx] : "";
+                    String ta = (qIdx >= 0 && qIdx < qArtists.length && qArtists[qIdx] != null) ? qArtists[qIdx] : "";
+                    String tl = (qIdx >= 0 && qIdx < qLocs.length && qLocs[qIdx] != null) ? qLocs[qIdx] : "";
+                    if (curId != null && !curId.isEmpty() && curId.equals(tid)) curShufflePos = i;
+                    jShufIds.put(tid);
+                    jShufTitles.put(tt);
+                    jShufArtists.put(ta);
+                    jShufLocs.put(tl);
+                }
+                snap.put("shuffleOrder", jOrd);
+                snap.put("shufflePos", curShufflePos);
+                qObj.put("shuffle", true);
+                qObj.put("order", jOrd);
+                qObj.put("shuffleOrder", jOrd);
+                qObj.put("shufflePos", curShufflePos);
+                qObj.put("shuffleIds", jShufIds);
+                qObj.put("shuffleTitles", jShufTitles);
+                qObj.put("shuffleArtists", jShufArtists);
+                qObj.put("shuffleLocations", jShufLocs);
+                qJsonStr = qObj.toString();
+            }
+
             c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE)
                     .edit()
                     .putString("session_json", snap.toString())
-                    .putString("queue_json", queueStateJson())
+                    .putString("queue_json", qJsonStr)
                     .putLong("updated_at", System.currentTimeMillis())
                     .apply();
         } catch (Throwable ignored) {}
