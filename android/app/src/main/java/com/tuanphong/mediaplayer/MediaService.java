@@ -167,7 +167,6 @@ public class MediaService extends Service {
         holdWake(false);
         MediaWidgetProvider.savePlaybackState(this, false, "", "", "", 0);
         QueueWidgetProvider.clearQueue(this);
-        LyricsWidgetProvider.clearLyrics(this);
         if (session != null) {
             try {
                 session.setPlaybackState(new PlaybackState.Builder()
