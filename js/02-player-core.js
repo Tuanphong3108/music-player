@@ -260,9 +260,20 @@
                 window.__placeMenu(menu, x, y);
             };
 
+            let lastTouchStartAt = 0;
+            doc.addEventListener('touchstart', () => { lastTouchStartAt = performance.now(); }, { passive: true, capture: true });
+            doc.addEventListener('touchmove', () => { if (lastTouchStartAt) lastTouchStartAt = 0; }, { passive: true, capture: true });
             doc.addEventListener('contextmenu', (e) => {
                 const el = findEditable(e);
                 if (el) { close(); return; }
+                // Khi máy/WebView hơi khựng lag, chạm nhanh trên màn hình cảm ứng dễ bị trình duyệt hiểu nhầm thành nhấn giữ -> mở menu chuột phải
+                if (lastTouchStartAt > 0 && (performance.now() - lastTouchStartAt) < 1200) {
+                    lastTouchStartAt = 0;
+                    e.preventDefault();
+                    close();
+                    return;
+                }
+                lastTouchStartAt = 0;
                 e.preventDefault();                       // luôn chặn menu mặc định
                 if (e.target.closest && e.target.closest('.song-item')) { close(); return; }   // bài trong playlist có menu riêng
                 const items = [];
