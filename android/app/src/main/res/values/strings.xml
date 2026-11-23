@@ -5,6 +5,4 @@
     <string name="widget_full_desc">Đầy đủ nút điều khiển, kèm trộn bài và lặp lại</string>
     <string name="queue_widget_label">Media Player - Hàng đợi</string>
     <string name="queue_widget_desc">Xem nhanh danh sách bài tiếp theo và chạm để phát ngay trên màn hình chính</string>
-    <string name="lyrics_widget_label">Media Player - Lời bài hát</string>
-    <string name="lyrics_widget_desc">Hiển thị lời bài hát đang phát (Synced / Static) trực tiếp trên màn hình chính</string>
 </resources>

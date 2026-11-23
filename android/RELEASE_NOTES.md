@@ -1,4 +1,4 @@
-<!-- Ghi nội dung cập nhật cho bản build APK tiếp theo tại đây (hỗ trợ Markdown). Mỗi lần cập nhật Android, xóa nội dung cũ và chỉ ghi các thay đổi của BẢN HIỆN TẠI trước khi push! -->
+<!-- Chỉ ghi nội dung thay đổi của BẢN CẬP NHẬT HIỆN TẠI tại đây (xóa sạch ghi chú của các bản cũ trước khi push). -->
 ### Có gì mới trong bản cập nhật Android này
-- **Chia sẻ tệp trực tiếp ở tầng native (`shareNativeFile`)**: khắc phục triệt để lỗi `TypeError: Failed to fetch` khi chia sẻ nhạc trên Android; sao chép trực tiếp từ tệp gốc trên máy vào bộ nhớ đệm chia sẻ trên luồng nền rồi mở Share Sheet qua `FileProvider`, nhanh tức thì và không tốn RAM encode Base64.
-- **EQ, preamp, mono, nén âm, cân bằng L/R và sóng nhạc cho bài do app phát**: xử lý ngay trong ExoPlayer (EQ 5 dải giống bộ trộn trên web, visualizer 128 dải lấy phổ tần từ chính luồng âm thanh), nên các thiết lập Mixer có tác dụng với mọi bài trong thư viện và sóng nhạc chạy đúng kể cả khi trang web bị treo.
+- **Gỡ lời bài hát khỏi toàn bộ Widget & bỏ Lyrics Widget**: loại bỏ hoàn toàn widget Lời bài hát (`LyricsWidgetProvider`) và ẩn dòng lyric khỏi các widget trình phát để gọn gàng và tiết kiệm pin hơn.
+- **Tự động đánh thức WebView khi thao tác trên Widget**: mỗi khi bấm nút điều khiển hoặc chọn bài trên Widget, khung app chủ động gọi `onResume` / `resumeTimers` để đánh thức WebView và ép đồng bộ ngay trạng thái giao diện lẫn widget (vẫn có dự phòng trình phát native nếu WebView bị đóng băng).
