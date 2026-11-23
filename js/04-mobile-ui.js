@@ -171,6 +171,27 @@
             window.__saveTrackMetaToCache = saveTrackMetaToCache;
 
             let mLibRowMap = new Map();
+            function dataUrlToThumb(dataUrl) {
+                return new Promise((resolve) => {
+                    if (!dataUrl || typeof dataUrl !== 'string') { resolve(null); return; }
+                    try {
+                        const img = new Image();
+                        img.onload = () => {
+                            try {
+                                const S = 144;
+                                const cv = document.createElement('canvas');
+                                cv.width = S; cv.height = S;
+                                const k = Math.max(S / (img.naturalWidth || S), S / (img.naturalHeight || S));
+                                const w = (img.naturalWidth || S) * k, h = (img.naturalHeight || S) * k;
+                                cv.getContext('2d').drawImage(img, (S - w) / 2, (S - h) / 2, w, h);
+                                resolve(cv.toDataURL('image/jpeg', 0.78));
+                            } catch (e) { resolve(dataUrl); }
+                        };
+                        img.onerror = () => resolve(dataUrl);
+                        img.src = dataUrl;
+                    } catch (e) { resolve(dataUrl); }
+                });
+            }
             function pictureToThumbDataUrl(data, format) {
                 return new Promise((resolve) => {
                     try {
