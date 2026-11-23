@@ -92,9 +92,9 @@ final class NativeAudio {
 
     private static final Runnable ticker = new Runnable() {
         @Override public void run() {
-            if (p != null && p.getPlayWhenReady() && loaded) {
+            if (p != null && loaded) {
                 emit("tick");
-                ph.postDelayed(this, 500);
+                ph.postDelayed(this, 1000);
             }
         }
     };
@@ -117,7 +117,7 @@ final class NativeAudio {
             }
             @Override public void onPlayWhenReadyChanged(boolean pwr, int reason) {
                 ph.removeCallbacks(ticker);
-                if (pwr) ph.postDelayed(ticker, 500);
+                if (loaded) ph.postDelayed(ticker, 1000);
                 emit("state");
             }
             @Override public void onPositionDiscontinuity(Player.PositionInfo o, Player.PositionInfo n, int reason) {
@@ -158,6 +158,8 @@ final class NativeAudio {
         p.prepare();
         p.setPlayWhenReady(play);
         emit("load");
+        ph.removeCallbacks(ticker);
+        ph.postDelayed(ticker, 1000);
     }
 
     static void play() { ph.post(NativeAudio::playImpl); }
@@ -210,7 +212,6 @@ final class NativeAudio {
     private static void onEnded() {
         if (endedHandled) return;
         endedHandled = true;
-        ph.removeCallbacks(ticker);
         if (!webAlive()) {
             if (sleepTracks > 0 && --sleepTracks == 0) { emit("sleep"); return; }   // trang đang chết nên app tự đếm số bài hẹn giờ
             if (hasNext()) { advance(); return; }
