@@ -111,9 +111,34 @@ final class NativeAudio {
         sleepFiredTotal = total;
         pauseImpl();
         emit("sleep");
-        if (app != null) {
+        if (app != null && isAppInBackground(app)) {
             showSleepEndedNotification(app, type, total);
         }
+    }
+
+    /** Kiểm tra thật ở tầng hệ thống xem app đang chạy ở nền / tắt màn hình hay đang mở trên màn hình. */
+    private static boolean isAppInBackground(Context ctx) {
+        MainActivity act = MainActivity.instance;
+        if (act == null || act.isInBackgroundForMedia()) return true;
+        try {
+            android.os.PowerManager pm = (android.os.PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
+            if (pm != null && !pm.isInteractive()) return true;
+        } catch (Throwable ignored) {}
+        try {
+            android.app.ActivityManager am = (android.app.ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
+            if (am != null) {
+                java.util.List<android.app.ActivityManager.RunningAppProcessInfo> procs = am.getRunningAppProcesses();
+                if (procs != null) {
+                    int myPid = android.os.Process.myPid();
+                    for (android.app.ActivityManager.RunningAppProcessInfo pi : procs) {
+                        if (pi.pid == myPid) {
+                            return pi.importance != android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+        return false;
     }
 
     static void checkTrackSleepOnEnd() {
@@ -151,7 +176,7 @@ final class NativeAudio {
                 NotificationChannel ch = new NotificationChannel(
                         SLEEP_NOTIF_CHANNEL,
                         isEn ? "Sleep timer" : "Hẹn giờ ngủ",
-                        NotificationManager.IMPORTANCE_DEFAULT
+                        NotificationManager.IMPORTANCE_HIGH
                 );
                 ch.setShowBadge(true);
                 nm.createNotificationChannel(ch);
@@ -176,6 +201,8 @@ final class NativeAudio {
             b.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                     .setContentTitle(title)
                     .setContentText(body)
+                    .setStyle(new Notification.BigTextStyle().bigText(body))
+                    .setPriority(Notification.PRIORITY_HIGH)
                     .setContentIntent(open)
                     .setAutoCancel(true)
                     .setVisibility(Notification.VISIBILITY_PUBLIC);
