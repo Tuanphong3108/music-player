@@ -416,6 +416,22 @@
             document.getElementById('sleep-fired-dialog').show();
         }
         document.getElementById('sleep-fired-ok').addEventListener('click', () => document.getElementById('sleep-fired-dialog').close());
+        window.__showNativeSleepEndedNotice = function (type, total) {
+            try {
+                clearSleep(true);
+                const val = Math.max(1, Number(total) || 1);
+                const txt = type === 'tracks'
+                    ? slT('sleep.fired_tracks', 'Nhạc đã tự tạm dừng vì hẹn giờ sau {n} bài đã hoàn thành.').replace('{n}', val)
+                    : slT('sleep.fired_time', 'Nhạc đã tự tạm dừng vì hẹn giờ {n} phút đã hết.').replace('{n}', fmtN(val));
+                const el = document.getElementById('sleep-fired-text');
+                const dlg = document.getElementById('sleep-fired-dialog');
+                if (el) el.textContent = txt;
+                if (dlg && !dlg.open) dlg.show();
+                if (window.AndroidBridge && typeof window.AndroidBridge.consumeSleepEndedNotice === 'function') {
+                    window.AndroidBridge.consumeSleepEndedNotice();
+                }
+            } catch (e) {}
+        };
         function setSleepTime(min, preset) {
             clearSleep(true);
             sleepState = { type: 'time', endAt: Date.now() + min * 60000, preset: preset || 'custom', total: min };
