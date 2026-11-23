@@ -100,6 +100,10 @@
     {
       "content": "Vào app hiện ngay thẻ bài đang phát (tên, nghệ sĩ, ảnh bìa) và ưu tiên đọc metadata của bài đó trước",
       "icon": "bolt"
+    },
+    {
+      "content": "Nạp thư viện nhạc nhanh hơn nhiều: gửi theo đợt, dựng danh sách dần, bỏ duyệt toàn bộ bộ nhớ khi mở app, so trùng bài nhanh hơn",
+      "icon": "speed"
     }
   ],
   "en": [
@@ -202,6 +206,10 @@
     {
       "content": "Opening the app now shows the current track card (title, artist, cover) instantly and reads that track's metadata first",
       "icon": "bolt"
+    },
+    {
+      "content": "Much faster library loading: batched delivery, progressive list rendering, no full-storage walk on launch, faster duplicate detection",
+      "icon": "speed"
     }
   ]
 }

@@ -601,6 +601,10 @@
                 else if (file.__fromLibrary || file.type.startsWith('audio/') || isVideoFile(file) || /\.(mp3|m4a|aac|flac|ogg|oga|opus|wav|wma|amr|m4b|alac)$/i.test(file.name)) audioFiles.push(file);
             });
 
+            // Bảng tra bài trùng (tên + nghệ sĩ) dựng một lần thay vì quét cả playlist cho từng tệp (O(n²))
+            const dupMap = new Map();
+            const dupKey = (n, a) => String(n || '').toLowerCase() + '\u0001' + String(a || '').toLowerCase();
+            playlist.forEach((t, i) => { const k = dupKey(t.name, t.artist); if (!dupMap.has(k)) dupMap.set(k, i); });
             for (const file of audioFiles) {
                 let title = file.__metaTitle || file.name.replace(/\.[^/.]+$/, "");
                 let artist = file.__metaArtist || "UNKNOWN ARTIST";
@@ -651,10 +655,7 @@
                 if (videoFile && !lyricsRaw) lyricsRaw = loadVideoSubtitle(file);
                 if (!lyricsRaw && file.__nativeLrcText) lyricsRaw = file.__nativeLrcText;
 
-                const existingIndex = playlist.findIndex(t => 
-                    t.name.toLowerCase() === title.toLowerCase() && 
-                    t.artist.toLowerCase() === artist.toLowerCase()
-                );
+                const existingIndex = dupMap.has(dupKey(title, artist)) ? dupMap.get(dupKey(title, artist)) : -1;
 
                 if (existingIndex !== -1) {
                     lastAutoPlayIndex = existingIndex;
@@ -684,6 +685,7 @@
                     };
                     playlist.push(newTrack);
                     lastAutoPlayIndex = playlist.length - 1;
+                    dupMap.set(dupKey(title, artist), lastAutoPlayIndex);
 
                     // Bài mới thêm: ném xuống cuối trong tab Playlist (đã đúng do .push ở
                     // trên), còn trong tab Shuffle thì chèn vào 1 vị trí NGẪU NHIÊN trong
@@ -1246,7 +1248,20 @@
             item.addEventListener('pointercancel', onCancel);
         }
 
+        // Đang nạp hàng loạt thư viện: hoãn dựng danh sách (dựng một lần khi nạp xong hoặc khi người dùng mở danh sách)
+        window.__plDefer = false; window.__plDirty = false;
+        window.__plFlush = function () {
+            window.__plDefer = false;
+            if (window.__plDirty) { window.__plDirty = false; updatePlaylistUI(); }
+        };
+        const plNorm = (track) => {
+            const n = track.name || '', a = track.artist || '', g = track.genre || '', c = track.composer || '';
+            const c0 = track._pn;
+            if (c0 && c0[0] === n && c0[1] === a && c0[2] === g && c0[3] === c) return c0;
+            return (track._pn = [n, a, g, c, removeVietnameseTones(n).toLowerCase(), removeVietnameseTones(a).toLowerCase(), removeVietnameseTones(g).toLowerCase(), removeVietnameseTones(c).toLowerCase()]);
+        };
         function updatePlaylistUI() {
+            if (window.__plDefer) { window.__plDirty = true; return; }
             playlistContainer.innerHTML = '';
             let count = 0;
 
@@ -1267,10 +1282,8 @@
             renderOrder.forEach((index) => {
                 const track = playlist[index];
                 if (!track) return; // an toàn, phòng lệch dữ liệu nhất thời
-                const normalizedName = removeVietnameseTones(track.name).toLowerCase();
-                const normalizedArtist = removeVietnameseTones(track.artist).toLowerCase();
-                const normalizedGenre = removeVietnameseTones(track.genre || '').toLowerCase();
-                const normalizedComposer = removeVietnameseTones(track.composer || '').toLowerCase();
+                const pn = plNorm(track);
+                const normalizedName = pn[4], normalizedArtist = pn[5], normalizedGenre = pn[6], normalizedComposer = pn[7];
                 const matches = isReorderMode || normalizedName.includes(searchQuery) || normalizedArtist.includes(searchQuery)
                     || normalizedGenre.includes(searchQuery) || normalizedComposer.includes(searchQuery);
                 if (matches) matched.push(index);

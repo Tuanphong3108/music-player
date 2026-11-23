@@ -1783,16 +1783,21 @@ public class MainActivity extends Activity {
                     if (clearedInPhase1) {
                         callJs("window.__clearLibraryTracksBeforeScan&&window.__clearLibraryTracksBeforeScan()");
                     }
-                    pending.addAll(batch1);
-                    flushPending();
+                    // Chia đợt ~500 bài: những bài đầu hiện sớm, trang không phải xử lý một cục JSON khổng lồ
+                    final int CH = 500;
+                    for (int from = 0; from < batch1.size(); from += CH) {
+                        final List<JSONObject> part = new ArrayList<>(batch1.subList(from, Math.min(batch1.size(), from + CH)));
+                        pingHandler.postDelayed(() -> { pending.addAll(part); flushPending(); }, from == 0 ? 0 : (from / CH) * 60L);
+                    }
                 });
             }
 
             // PHA 2 (Chạy nền siêu nhanh): Quét bổ sung các file trên bộ nhớ bị MediaStore bỏ sót (không dùng MediaMetadataRetriever chặn luồng)
             List<File> fsAudioFiles = new ArrayList<>();
+            // Mở app bình thường: MediaStore đã đủ -> bỏ qua việc duyệt cả bộ nhớ (rất chậm). Chỉ duyệt khi quét lại thủ công hoặc MediaStore trống.
             try {
                 File extRoot = android.os.Environment.getExternalStorageDirectory();
-                if (extRoot != null && extRoot.exists() && extRoot.canRead()) {
+                if ((clearExisting || phase1.isEmpty()) && extRoot != null && extRoot.exists() && extRoot.canRead()) {
                     walkStorageForAudio(extRoot, 0, excluded, autoScanLrc, lrcByStem, fsAudioFiles);
                 }
             } catch (Throwable ignored) {}
@@ -1837,6 +1842,7 @@ public class MainActivity extends Activity {
                 } catch (Throwable ignored) {}
             }
 
+            final long doneDelay = phase1.isEmpty() ? 0L : ((phase1.size() - 1) / 500) * 60L + 150L;   // sau đợt bài cuối đã được gửi
             final int totalCount = phase1.size() + phase2.size();
             final boolean needClearHere = clearedInPhase1 && phase1.isEmpty();
             final List<JSONObject> batch2 = phase2;
@@ -1848,7 +1854,7 @@ public class MainActivity extends Activity {
                     pending.addAll(batch2);
                     flushPending();
                 }
-                callJs("window.__onAndroidLibraryScanDone&&window.__onAndroidLibraryScanDone(" + totalCount + ", false)");
+                pingHandler.postDelayed(() -> callJs("window.__onAndroidLibraryScanDone&&window.__onAndroidLibraryScanDone(" + totalCount + ", false)"), doneDelay);
             });
         }).start();
     }

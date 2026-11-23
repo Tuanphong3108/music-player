@@ -94,6 +94,7 @@
     (function () {
         const o = window.__onAndroidLibraryScanDone;
         window.__onAndroidLibraryScanDone = function (count, missingPerm) {
+            if (!missingPerm && window.__ingestBusy > 0) { const args = arguments; setTimeout(() => window.__onAndroidLibraryScanDone.apply(null, args), 120); return; }
             let r; try { if (o) r = o.apply(this, arguments); } catch (e) {}
             if (!missingPerm) setTimeout(restoreQueue, 0); else qArmed = true;
             return r;
@@ -144,6 +145,11 @@
     audio.addEventListener('loadedmetadata', () => setTimeout(saveCard, 800));
     const artEl = document.getElementById('art-img');
     if (artEl) artEl.addEventListener('load', () => setTimeout(saveCard, 100));
+
+    // Mở danh sách phát trong lúc đang nạp thư viện -> dựng ngay
+    new MutationObserver(() => {
+        if (window.__plDefer && window.__plDirty && (body.classList.contains('m-playlist-open') || body.classList.contains('m-player-expanded'))) window.__plFlush();
+    }).observe(body, { attributes: true, attributeFilter: ['class'] });
 
     function applyNav() {
         if (navApplied || !saved || touched) return;

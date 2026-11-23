@@ -75,8 +75,9 @@
             // Thư viện gốc trên Mobile (luôn giữ đủ bài, sắp xếp 0–Z, không bị xoá khi chỉnh hàng đợi tạm)
             window.__mobileLibrary = window.__mobileLibrary || [];
             const mLibTrackId = (t) => (t && (t.nativeLocation || t.rawName || t.name || '')).toLowerCase();
+            const mLibCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
             const sortMobileLib0Z = (arr) => arr.sort((a, b) =>
-                String((a && a.name) || '').localeCompare(String((b && b.name) || ''), undefined, { numeric: true, sensitivity: 'base' })
+                mLibCollator.compare(String((a && a.name) || ''), String((b && b.name) || ''))
             );
 
             function syncMobileLibraryFromPlaylist() {
@@ -351,13 +352,9 @@
                 const q = mLibQuery;
                 const activeTrack = playlist[currentIndex] || null;
                 const activeId = activeTrack ? mLibTrackId(activeTrack) : '';
-                for (let idx = 0; idx < window.__mobileLibrary.length; idx++) {
-                    const tr = window.__mobileLibrary[idx];
-                    if (!tr) continue;
-                    if (q) {
-                        const hay = removeVietnameseTones((tr.name || '') + ' ' + (tr.artist || '')).toLowerCase();
-                        if (!hay.includes(q)) continue;
-                    }
+                const lib = window.__mobileLibrary.slice();
+                const seq = (renderMobileLibrary._seq = (renderMobileLibrary._seq || 0) + 1);
+                const makeRow = (tr) => {
                     const tid = mLibTrackId(tr);
                     const isAct = !!(activeId && tid === activeId);
                     const row = document.createElement('div');
@@ -388,10 +385,32 @@
                         const r = mb.getBoundingClientRect();
                         window.__placeMenu(contextMenu, r.right, r.bottom + 4);
                     });
-                    mLibList.appendChild(row);
-                }
+                    return row;
+                };
+                // Hàng đầu hiện ngay, phần còn lại dựng dần theo từng đợt để không đứng khựng khi thư viện lớn
+                let idx = 0;
+                const step = (limit) => {
+                    if (seq !== renderMobileLibrary._seq) return;
+                    const frag = document.createDocumentFragment();
+                    let n = 0;
+                    while (idx < lib.length && n < limit) {
+                        const tr = lib[idx++];
+                        if (!tr) continue;
+                        if (q) {
+                            const hay = removeVietnameseTones((tr.name || '') + ' ' + (tr.artist || '')).toLowerCase();
+                            if (!hay.includes(q)) continue;
+                        }
+                        frag.appendChild(makeRow(tr)); n++;
+                    }
+                    mLibList.appendChild(frag);
+                    if (idx < lib.length) requestAnimationFrame(() => step(100));
+                };
+                step(40);
             }
-            window.__renderMobileLibrary = renderMobileLibrary;
+            // Nhiều nơi gọi dồn dập khi nạp thư viện -> gộp thành một lần dựng
+            let mLibRenderT = null;
+            window.__renderMobileLibrary = function () { clearTimeout(mLibRenderT); mLibRenderT = setTimeout(renderMobileLibrary, 90); };
+            window.__renderMobileLibraryNow = renderMobileLibrary;
 
             function syncMobileMiniPlayer() {
                 if (!document.documentElement.classList.contains('m-ui')) return;

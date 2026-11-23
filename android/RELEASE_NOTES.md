@@ -1,5 +1,6 @@
 <!-- Ghi nội dung cập nhật cho bản build APK tiếp theo tại đây (hỗ trợ Markdown). Mỗi lần cập nhật Android, nội dung mới sẽ được ghi vào file này trước khi push để GitHub Release hiển thị đúng changelog thật! -->
 ### Có gì mới trong bản cập nhật Android này
+- **Mở app và nạp thư viện nhanh hơn nhiều**: thư viện được gửi sang trang theo từng đợt ~500 bài, không còn duyệt toàn bộ bộ nhớ mỗi lần mở app (chỉ duyệt khi quét lại thủ công hoặc MediaStore trống). Danh sách bài dựng dần, trang không còn bị đứng vài giây lúc nạp.
 - **Nút "Khởi động lại WebView"**: khi trang không phản hồi, nút này ngắt WebView treo rồi dựng WebView mới thay vì tắt cả app. Nhạc vẫn tiếp tục phát và trang mới tự vào lại đúng bài, đúng màn hình.
 - **Hàng đợi, shuffle, lặp và hẹn giờ ngủ do app nắm**: danh sách đang phát (đúng thứ tự, kể cả thứ tự shuffle) được lưu và khôi phục y hệt khi vào lại app. App biết cả danh sách, chế độ lặp, shuffle nên tự sang bài kế/trước và tự tạm dừng khi hết giờ hẹn dù trang không phản hồi.
 - **Nút hẹn giờ trong playlist**: khi bật sẽ sáng lên và hiện số phút hoặc số bài còn lại.

@@ -9,6 +9,7 @@
                 document.documentElement.classList.add('is-android-app');
             }
             window.__nativeOpenFiles = async function (list) {
+                window.__ingestBusy = (window.__ingestBusy || 0) + 1;
                 try {
                     const files = [];
                     const disallowVideoOnAndroid = !!(window.IS_ANDROID_APP || /[?&]android=true/.test(location.search) || document.documentElement.classList.contains('is-android-app'));
@@ -60,6 +61,11 @@
                         f.__nativeName = name;
                         files.push(f);
                     }
+                    if (isLibraryBatch) {
+                        window.__plDefer = true;
+                        clearTimeout(window.__plDeferT);
+                        window.__plDeferT = setTimeout(() => { if (window.__plFlush) window.__plFlush(); }, 30000);   // phòng khi không nhận được tín hiệu quét xong
+                    }
                     if (files.length) {
                         await handleFiles(files, isLibraryBatch ? { noPlay: true } : undefined);
                         if (isLibraryBatch && document.documentElement.classList.contains('m-ui')) {
@@ -69,6 +75,7 @@
                         }
                     }
                 } catch (e) { console.log('native-open failed', e); }
+                finally { window.__ingestBusy = Math.max(0, (window.__ingestBusy || 1) - 1); }
             };
             window.__clearLibraryTracksBeforeScan = function () {
                 try {
@@ -106,7 +113,9 @@
                         if (shuffleInitialized) generateShuffleOrder();
                     }
                     if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
-                    updatePlaylistUI();
+                    clearTimeout(window.__plDeferT);
+                    window.__plDefer = false; window.__plDirty = false;
+                    setTimeout(() => updatePlaylistUI(), 0);
                     // Tự động đọc ảnh bìa / tag nhúng ở nền cho các bài trên Mobile mà danh sách ngoài chưa có ảnh bìa
                     if (document.documentElement.classList.contains('m-ui') && Array.isArray(window.__mobileLibrary) && typeof window.__hydrateMobileLibraryCovers === 'function') {
                         window.__hydrateMobileLibraryCovers();
