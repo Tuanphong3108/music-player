@@ -143,8 +143,10 @@
             }, 0);
             return;
         }
+        const restoreStartMs = Number(window.__restoreStartMs) || 0;
+        window.__restoreStartMs = 0;
         N.loaded = false; N.pending = true; N.wasReady = false; N.isPlaying = false;
-        N.startMs = 0; N.paused = true; N.pos = 0; N.dur = 0; N.stamp = now(); N.st = 'buffering';
+        N.startMs = restoreStartMs > 0 ? restoreStartMs : 0; N.paused = true; N.pos = N.startMs; N.dur = 0; N.stamp = now(); N.st = 'buffering';
         fire('loadstart');
         // nếu không ai gọi play() ngay sau đó (vd. khôi phục ở trạng thái tạm dừng) thì vẫn nạp để có thời lượng/vị trí
         const id = N.id;
