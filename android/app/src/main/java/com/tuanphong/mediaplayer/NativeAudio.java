@@ -461,7 +461,21 @@ final class NativeAudio {
         }
     }
 
-    static boolean sessionId() { return false; } // placeholder replaced below
+    static int sessionId() { return sid; }
+    static void setShuffleEnabled(boolean enabled) {
+        shuffled = enabled;
+        int total = qIds.length;
+        if (!enabled) {
+            int[] seq = new int[total];
+            for (int i = 0; i < total; i++) seq[i] = i;
+            order = seq;
+        } else if (order.length != total) {
+            int[] seq = new int[total];
+            for (int i = 0; i < total; i++) seq[i] = i;
+            order = seq;
+        }
+    }
+    static boolean isShuffleEnabled() { return shuffled; }
 
     /** Hết bài: kiểm tra hẹn giờ theo số bài trước; nếu trang chết thì app tự sang bài kế đã được báo trước. */
     private static void onEnded() {
