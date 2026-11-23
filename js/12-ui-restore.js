@@ -41,7 +41,7 @@
     document.addEventListener('click', soon, true);
     document.addEventListener('visibilitychange', save);
     window.addEventListener('pagehide', save);
-    setInterval(() => { if (!document.hidden) save(); }, 3000);
+    setInterval(() => { if (!document.hidden) save(); }, 8000);
 
     // ===== Hàng đợi tạm (playlist đang phát): lưu đúng thứ tự + thứ tự shuffle, khôi phục sau khi quét xong thư viện =====
     const QKEY = 'mp_queue_v1';
@@ -57,7 +57,7 @@
             localStorage.setItem(QKEY, JSON.stringify({ keys: keys, order: useOrder ? shuffleOrder.slice() : null }));
         } catch (e) {}
     }
-    setInterval(() => { if (!document.hidden) saveQueue(); }, 3000);
+    setInterval(() => { if (!document.hidden) saveQueue(); }, 10000);
     document.addEventListener('visibilitychange', () => { if (document.hidden) saveQueue(); });
     window.addEventListener('pagehide', saveQueue);
     function restoreQueue() {
@@ -141,7 +141,7 @@
             localStorage.setItem(CKEY, JSON.stringify(card));
         } catch (e) {}
     }
-    setInterval(saveCard, 2500);
+    setInterval(() => { if (!document.hidden) saveCard(); }, 6000);
     audio.addEventListener('loadedmetadata', () => setTimeout(saveCard, 800));
     const artEl = document.getElementById('art-img');
     if (artEl) artEl.addEventListener('load', () => setTimeout(saveCard, 100));
