@@ -222,6 +222,7 @@
                 locations: playlist.map(t => (t && t.nativeLocation) ? String(t.nativeLocation) : ''),
                 titles: playlist.map((t, i) => ids[i] ? (t.name || '') : ''),
                 artists: playlist.map((t, i) => ids[i] ? (t.artist || '') : ''),
+                shuffle: useOrder,
                 order: useOrder ? shuffleOrder : null,
                 repeat: Number(repeatMode) || 0
             }));
@@ -245,6 +246,14 @@
     }
     setInterval(() => { if (!document.hidden) syncSleep(); }, 3000);
     window.__syncNativeQueue = () => syncQueue(true);
+    window.__matchNativeSession = function (qState) {
+        try {
+            if (!qState || typeof playlist === 'undefined') return;
+            if (typeof window.__hasPendingQueueRestore === 'function' && window.__hasPendingQueueRestore()) return;
+            syncQueue(false);
+            syncSleep();
+        } catch (e) {}
+    };
 
     // EQ / preamp / mono / nén / cân bằng + visualizer cho bài do app phát
     let mixSig = '';
