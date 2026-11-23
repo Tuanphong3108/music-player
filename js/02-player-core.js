@@ -357,15 +357,39 @@
 
         async function shareCurrentFile() {
             const track = playlist[currentIndex];
-            if (!track || !track.file) { showToast(tr2('share.no_file', 'Chưa có tệp nào đang phát để chia sẻ'), 'share'); return; }
+            if (!track || (!track.file && !track.nativeId && !track.nativeLocation)) { showToast(tr2('share.no_file', 'Chưa có tệp nào đang phát để chia sẻ'), 'share'); return; }
             const isMobileUI = document.documentElement.classList.contains('m-ui');
             try {
-                const data = { files: [track.file], title: track.name || track.file.name };
+                const fileName = track.nativeName || (track.file && track.file.name) || ((track.name || 'media') + '.' + (track.ext || 'mp3').toLowerCase());
+                const fileMime = (track.file && track.file.type) || '';
+                if (window.AndroidBridge && typeof AndroidBridge.shareNativeFile === 'function' && (track.nativeId || track.nativeLocation) && !track._unsavedLocalEdit) {
+                    if (isMobileUI) openShareSheet('locating');
+                    const err = AndroidBridge.shareNativeFile(
+                        String(track.nativeId || ''),
+                        String(track.nativeLocation || ''),
+                        String(fileName),
+                        String(fileMime)
+                    );
+                    if (!err) return;
+                    if (err !== 'NOT_FOUND') {
+                        if (isMobileUI) closeShareSheet();
+                        showToast('Chia sẻ lỗi: ' + err, 'error');
+                        return;
+                    }
+                }
                 if (window.AndroidBridge && AndroidBridge.shareChunk) {
                     if (isMobileUI) openShareSheet('locating');
                     await new Promise(r => setTimeout(r, 80));
-                    // WebView không có navigator.share cho file → gửi từng khúc base64 sang app native rồi mở khung chia sẻ Android
-                    const f = track.file, CH = 768 * 1024;
+                    // Dự phòng cho bản APK cũ hoặc tệp mới sửa trong RAM chưa ghi đè xuống máy
+                    let f = track.file;
+                    if (f && f.__fromLibrary && track.nativeStreamUrl) {
+                        const r = await fetch(track.nativeStreamUrl);
+                        if (!r || !r.ok) throw new Error('HTTP ' + (r ? r.status : 0));
+                        const bl = await r.blob();
+                        f = new File([bl], fileName, { type: fileMime || bl.type || 'audio/mpeg' });
+                    }
+                    if (!f) throw new Error('File unavailable');
+                    const CH = 768 * 1024;
                     const sid = String(Date.now());
                     if (isMobileUI) setShareSheetStep('preparing');
                     for (let o = 0; o < f.size || o === 0; o += CH) {
@@ -381,6 +405,7 @@
                     }
                     return;
                 }
+                const data = { files: [track.file], title: track.name || fileName };
                 if (navigator.canShare && navigator.canShare(data)) {
                     if (isMobileUI) openShareSheet('preparing');
                     try {
