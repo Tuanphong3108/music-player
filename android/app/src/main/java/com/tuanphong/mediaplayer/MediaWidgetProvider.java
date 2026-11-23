@@ -59,8 +59,13 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             String cmd = intent.getStringExtra(EXTRA_CMD);
             if (cmd == null || cmd.isEmpty()) return;
             if (MainActivity.instance != null) {
-                MainActivity.instance.sendCmd(cmd);
+                MainActivity.instance.handleWidgetCmd(cmd);
             } else {
+                if (NativeAudio.active()) {
+                    if ("toggle".equals(cmd)) NativeAudio.toggle();
+                    else if ("next".equals(cmd)) { if (!NativeAudio.advance()) NativeAudio.seek(0); }
+                    else if ("prev".equals(cmd)) NativeAudio.previous();
+                }
                 Intent launch = new Intent(context, MainActivity.class);
                 launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 launch.putExtra("widget_cmd", cmd);
@@ -77,7 +82,6 @@ public class MediaWidgetProvider extends AppWidgetProvider {
                 .putInt("widget_bg", 0xFF000000 | bg).putInt("widget_accent", 0xFF000000 | accent).apply();
         updateAllWidgets(context);
         QueueWidgetProvider.updateAllWidgets(context);
-        LyricsWidgetProvider.updateAllWidgets(context);
     }
 
     static int widgetBg(Context context, int fallback) {
@@ -117,12 +121,8 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             context.getSharedPreferences(QueueWidgetProvider.PREFS, Context.MODE_PRIVATE).edit()
                     .remove("theme")
                     .commit();
-            context.getSharedPreferences(LyricsWidgetProvider.PREFS, Context.MODE_PRIVATE).edit()
-                    .remove("theme")
-                    .commit();
             updateAllWidgets(context);
             QueueWidgetProvider.updateAllWidgets(context);
-            LyricsWidgetProvider.updateAllWidgets(context);
         } catch (Throwable ignored) {}
     }
 
@@ -137,7 +137,6 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             File artFile = new File(context.getCacheDir(), "widget_art.png");
             if (artFile.exists()) artFile.delete();
             QueueWidgetProvider.clearQueue(context);
-            LyricsWidgetProvider.clearLyrics(context);
             updateAllWidgets(context);
         } catch (Throwable ignored) {}
     }
@@ -171,13 +170,12 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         else scheduleStaleCheck(context);
     }
 
-    static void savePlaybackState(Context context, boolean playing, String title, String artist, String lyric, int themeColor) {
+    static void savePlaybackState(Context context, boolean playing, String title, String artist, String unusedLyric, int themeColor) {
         SharedPreferences.Editor ed = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
         ed.putBoolean("playing", playing);
         ed.putLong("last_report_ms", System.currentTimeMillis());
         if (title != null) ed.putString("title", title);
         if (artist != null) ed.putString("artist", artist);
-        if (lyric != null) ed.putString("lyric", lyric);
         if (themeColor != 0) ed.putInt("theme", themeColor);
         ed.apply();
         updateAllWidgets(context);
@@ -203,15 +201,6 @@ public class MediaWidgetProvider extends AppWidgetProvider {
                 .putLong("dur_ms", Math.max(0L, durMs))
                 .putLong("last_report_ms", System.currentTimeMillis())
                 .apply();
-        updateAllWidgets(context);
-    }
-
-    static void saveLyricLine(Context context, String lyric) {
-        SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        String old = sp.getString("lyric", "");
-        String next = LyricsWidgetProvider.stripLyricCredit(lyric);
-        if (next.equals(old)) return;
-        sp.edit().putString("lyric", next).apply();
         updateAllWidgets(context);
     }
 
@@ -276,7 +265,6 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         long durMs = sp.getLong("dur_ms", 0L);
         String title = sp.getString("title", "");
         String artist = sp.getString("artist", "");
-        String lyric = sp.getString("lyric", "");
         int theme = widgetBg(context, sp.getInt("theme", 0xFF1E1B24));
         boolean idle = title.isEmpty();
 
@@ -293,12 +281,6 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             views.setTextViewText(R.id.widget_artist, artist.isEmpty()
                     ? (isEn ? "Tap to open player" : "Chạm để mở trình phát")
                     : artist);
-            if (lyric != null && !lyric.trim().isEmpty()) {
-                views.setViewVisibility(R.id.widget_lyric, View.VISIBLE);
-                views.setTextViewText(R.id.widget_lyric, lyric.trim());
-            } else {
-                views.setViewVisibility(R.id.widget_lyric, View.GONE);
-            }
         }
 
         views.setImageViewResource(R.id.widget_play,
@@ -322,7 +304,6 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         if (hasText) {
             views.setTextColor(R.id.widget_title, primaryText);
             views.setTextColor(R.id.widget_artist, secondaryText);
-            views.setTextColor(R.id.widget_lyric, accentText);
         }
         views.setInt(R.id.widget_prev, "setColorFilter", primaryText);
         views.setInt(R.id.widget_next, "setColorFilter", primaryText);
