@@ -9,6 +9,7 @@
     const keyOf = (t) => (t && (t.nativeLocation || t.rawName || t.name || '') || '').toLowerCase();
     let armed = false;          // chỉ ghi đè trạng thái đã lưu sau khi đã khôi phục xong / người dùng đã thao tác
     let trackDone = !saved || !saved.key;
+    if (window.__nativeBoot) { saved = saved || { key: '', ts: 0 }; trackDone = false; }
     let navApplied = false;
     let touched = false;
     window.addEventListener('pointerdown', () => { touched = true; armed = true; }, true);
@@ -60,9 +61,18 @@
         if (trackDone) return true;
         if (touched || (typeof currentIndex !== 'undefined' && currentIndex >= 0)) { trackDone = true; return true; }
         if (typeof playlist === 'undefined') return false;
-        const idx = playlist.findIndex(x => keyOf(x) === saved.key);
+        const boot = window.__nativeBoot || null;   // app đang phát sẵn bài nào đó: ưu tiên nhận lại đúng bài đó
+        const idx = boot ? playlist.findIndex(x => x && x.nativeId === boot.id) : playlist.findIndex(x => keyOf(x) === saved.key);
         if (idx < 0) return false;
         trackDone = true;
+        if (boot) {
+            window.__restoreOnce = { pos: 0, play: !!boot.pwr };
+            playTrack(idx);
+            applyPanels();
+            navApplied = false; applyNav();
+            armed = true;
+            return true;
+        }
         // chỉ tự phát tiếp nếu lần lưu cuối còn mới (WebView vừa bị tải lại giữa chừng), còn không thì nạp sẵn ở trạng thái tạm dừng
         const fresh = Date.now() - (saved.ts || 0) < 120000;
         window.__restoreOnce = { pos: saved.pos || 0, play: !!(saved.playing && fresh) };

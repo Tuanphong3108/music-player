@@ -21,6 +21,7 @@ public class MediaService extends Service {
     static final String ACTION_UPDATE = "update";
     static final String ACTION_ART = "art";
     static final String CH = "playback";
+    static MediaService inst;
     private MediaSession session;
     private boolean playing = false;
     private PowerManager.WakeLock wake;
@@ -55,16 +56,59 @@ public class MediaService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        inst = this;
         session = new MediaSession(this, "MediaPlayer");
         session.setCallback(new MediaSession.Callback() {
-            @Override public void onPlay() { if (!playing) cmd("toggle"); }
-            @Override public void onPause() { if (playing) cmd("toggle"); }
-            @Override public void onSkipToNext() { cmd("next"); }
-            @Override public void onSkipToPrevious() { cmd("prev"); }
-            @Override public void onSeekTo(long p) { cmd("seek:" + p); }
-            @Override public void onStop() { clearSession(); stopSelf(); }
+            @Override public void onPlay() { if (NativeAudio.active()) NativeAudio.play(); else if (!playing) cmd("toggle"); }
+            @Override public void onPause() { if (NativeAudio.active()) NativeAudio.pause(); else if (playing) cmd("toggle"); }
+            @Override public void onSkipToNext() { skip(true); }
+            @Override public void onSkipToPrevious() { skip(false); }
+            @Override public void onSeekTo(long p) { if (NativeAudio.active()) NativeAudio.seek(p); else cmd("seek:" + p); }
+            @Override public void onStop() { NativeAudio.release(); clearSession(); stopSelf(); }
         });
         session.setActive(false);
+    }
+
+    /** Bài kế/trước: trang còn sống thì để trang quyết (shuffle/lặp); trang đang chết thì app tự làm bằng trình phát native. */
+    private void skip(final boolean next) {
+        final String c = next ? "next" : "prev";
+        MainActivity m = MainActivity.instance;
+        if (!NativeAudio.active() || m == null) {
+            if (NativeAudio.active()) { if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.seek(0); return; }
+            cmd(c); return;
+        }
+        m.probeWeb(() -> cmd(c), () -> {
+            if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.seek(0);
+        });
+    }
+
+    /** Sự kiện từ trình phát native -> cập nhật phiên phát/thông báo ngay cả khi trang web không phản hồi. */
+    static void onNative(org.json.JSONObject o) {
+        MediaService s = inst;
+        if (s == null) return;
+        try { s.applyNative(o); } catch (Throwable ignored) {}
+    }
+
+    private void applyNative(org.json.JSONObject o) {
+        if (!NativeAudio.active()) return;
+        String st = o.optString("st");
+        boolean pwr = o.optBoolean("pwr");
+        String ns = o.optBoolean("err") ? "error" : "ended".equals(st) ? "ended"
+                : (pwr ? ("buffering".equals(st) ? "buffering" : "playing") : "paused");
+        String t = o.optString("title"), ar = o.optString("artist");
+        long d = o.optLong("dur", 0);
+        boolean metaChanged = (!t.isEmpty() && !t.equals(title)) || !ns.equals(state) || (d > 0 && d != dur);
+        if (!t.isEmpty() && !t.equals(title)) { art = null; MediaWidgetProvider.saveArtwork(this, null); }
+        if (!t.isEmpty()) { title = t; artist = ar; }
+        if (d > 0) dur = d;
+        state = ns;
+        playing = "playing".equals(ns) || "buffering".equals(ns);
+        holdWake(playing);
+        pos = o.optLong("pos", 0);
+        buffered = o.optLong("buf", 0);
+        stamp = SystemClock.elapsedRealtime();
+        speed = playing ? (float) o.optDouble("rate", 1.0) : 0f;
+        if (!metaChanged && session != null && session.isActive()) publishPlaybackOnly(); else publish();
     }
 
     private void cmd(String c) { if (MainActivity.instance != null) MainActivity.instance.sendCmd(c); }
@@ -80,7 +124,17 @@ public class MediaService extends Service {
 
     private int handleCommand(Intent i) {
         String a = i == null ? null : i.getAction();
-        if (a != null && a.startsWith("cmd:")) { cmd(a.substring(4)); return START_NOT_STICKY; }
+        if (a != null && a.startsWith("cmd:")) {
+            String c = a.substring(4);
+            if (NativeAudio.active()) {
+                if ("toggle".equals(c)) { NativeAudio.toggle(); return START_NOT_STICKY; }
+                if ("next".equals(c)) { skip(true); return START_NOT_STICKY; }
+                if ("prev".equals(c)) { skip(false); return START_NOT_STICKY; }
+                if (c.startsWith("seek:")) { try { NativeAudio.seek(Long.parseLong(c.substring(5))); } catch (Throwable ignored) {} return START_NOT_STICKY; }
+            }
+            cmd(c);
+            return START_NOT_STICKY;
+        }
         if (i != null && ACTION_ART.equals(a)) {
             byte[] b = i.getByteArrayExtra("art");
             art = (b == null || b.length == 0) ? null : BitmapFactory.decodeByteArray(b, 0, b.length);
@@ -92,6 +146,7 @@ public class MediaService extends Service {
             String t = nz(i.getStringExtra("title")), ar = nz(i.getStringExtra("artist"));
             long d = i.getLongExtra("dur", 0);
             if (ns.isEmpty()) ns = i.getBooleanExtra("playing", false) ? "playing" : "paused";   // APK/bản trang cũ chỉ gửi playing
+            if (NativeAudio.active() && ("none".equals(ns) || t.isEmpty())) return START_NOT_STICKY;   // trang vừa tải lại chưa biết gì: trình phát native mới là nguồn đúng
             metaChanged = !t.equals(title) || !ar.equals(artist) || d != dur || !ns.equals(state);
             state = ns;
             playing = "playing".equals(ns) || "buffering".equals(ns);
@@ -218,6 +273,7 @@ public class MediaService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         // Người dùng vuốt lên đóng app khỏi đa nhiệm: đánh dấu thoát chủ động, dọn widget/màu sạch sẽ và KHÔNG ghi mã lỗi
+        NativeAudio.release();
         clearSession();
         try {
             getSharedPreferences("crash_report", MODE_PRIVATE).edit()
@@ -233,6 +289,8 @@ public class MediaService extends Service {
 
     @Override
     public void onDestroy() {
+        inst = null;
+        NativeAudio.release();
         clearSession();
         if (session != null) { session.release(); session = null; }
         super.onDestroy();

@@ -21,4 +21,5 @@ android {
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 }
 dependencies { implementation("androidx.webkit:webkit:1.11.0")
-    implementation("androidx.core:core:1.13.1") }
+    implementation("androidx.core:core:1.13.1")
+    implementation("androidx.media3:media3-exoplayer:1.4.1") }

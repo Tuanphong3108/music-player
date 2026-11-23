@@ -41,8 +41,10 @@ public class MainActivity extends Activity {
     private View customView;
     private WebChromeClient.CustomViewCallback customCb;
     private ValueCallback<Uri[]> filePathCb;
-    private final Map<String, Uri> served = new java.util.concurrent.ConcurrentHashMap<>();
-    private final Map<String, String> servedLocations = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String, Uri> served = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String, String> servedLocations = new java.util.concurrent.ConcurrentHashMap<>();
+    static Uri resolveServed(String id) { return id == null ? null : served.get(id); }
+    static String resolveLocation(String id) { return id == null ? null : servedLocations.get(id); }
     private final Map<String, Long> servedAlbumIds = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<String, File> cachedMediaFiles = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.concurrent.atomic.AtomicInteger nextId = new java.util.concurrent.atomic.AtomicInteger(1);
@@ -1231,6 +1233,22 @@ public class MainActivity extends Activity {
         try { if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i); } catch (Exception ignored) {}
     }
 
+    /** Chạy JS và ghi nhận trang còn phản hồi (callback chỉ chạy khi renderer xử lý xong) — dùng để biết WebView còn sống cho trình phát native. */
+    void evalAck(final String js) {
+        runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, v -> NativeAudio.lastAck = android.os.SystemClock.elapsedRealtime()); });
+    }
+
+    /** Thăm dò WebView: còn phản hồi trong ~900ms thì alive, không thì dead (chỉ gọi một trong hai, một lần). */
+    void probeWeb(final Runnable alive, final Runnable dead) {
+        final boolean[] done = { false };
+        final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+        runOnUiThread(() -> {
+            if (web == null) { dead.run(); return; }
+            h.postDelayed(() -> { if (!done[0]) { done[0] = true; dead.run(); } }, 900);
+            web.evaluateJavascript("1", v -> { if (!done[0]) { done[0] = true; NativeAudio.lastAck = android.os.SystemClock.elapsedRealtime(); alive.run(); } });
+        });
+    }
+
     void callJs(final String js) {
         runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, null); });
     }
@@ -2163,6 +2181,22 @@ public class MainActivity extends Activity {
                 return String.valueOf(e);
             }
         }
+
+        // ===== Trình phát native (ExoPlayer) =====
+        @JavascriptInterface public boolean nativeAudioAvailable() { return true; }
+        @JavascriptInterface public String nativeAudioState() { return NativeAudio.stateJson(); }
+        @JavascriptInterface public int nativeAudioSessionId() { return NativeAudio.sessionId(); }
+        @JavascriptInterface public void nativeAudioLoad(final String id, final String title, final String artist, final long startMs, final boolean play, final float vol, final float rate) {
+            NativeAudio.lastAck = android.os.SystemClock.elapsedRealtime();
+            NativeAudio.post(() -> NativeAudio.load(MainActivity.this, id, title, artist, startMs, play, vol, rate));
+        }
+        @JavascriptInterface public void nativeAudioPlay() { NativeAudio.post(NativeAudio::play); }
+        @JavascriptInterface public void nativeAudioPause() { NativeAudio.post(NativeAudio::pause); }
+        @JavascriptInterface public void nativeAudioSeek(final long ms) { NativeAudio.post(() -> NativeAudio.seek(ms)); }
+        @JavascriptInterface public void nativeAudioVolume(final float v) { NativeAudio.post(() -> NativeAudio.setVolume(v)); }
+        @JavascriptInterface public void nativeAudioRate(final float r) { NativeAudio.post(() -> NativeAudio.setRate(r)); }
+        @JavascriptInterface public void nativeAudioStop() { NativeAudio.post(NativeAudio::stop); }
+        @JavascriptInterface public void nativeAudioSetNext(String id, String title, String artist) { NativeAudio.setNext(id, title, artist); }
 
         /** Bản đầy đủ: state = playing | paused | buffering | ended | error | none; bufMs = vị trí đã đệm. Chụp elapsedRealtime ngay khi nhận để vị trí không bị trễ theo IPC. */
         @JavascriptInterface

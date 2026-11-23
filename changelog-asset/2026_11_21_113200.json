@@ -84,6 +84,10 @@
     {
       "content": "App nhớ màn hình đang mở (tab, playlist, trình phát, lời bài hát) cùng bài và vị trí đang nghe; khi trang bị tải lại sẽ quay về đúng chỗ cũ",
       "icon": "restore"
+    },
+    {
+      "content": "Trình phát nhạc chuyển sang khung app (ExoPlayer): WebView treo hay tải lại không còn làm ngắt nhạc, mở lại vào đúng bài và vị trí",
+      "icon": "music_note"
     }
   ],
   "en": [
@@ -170,6 +174,10 @@
     {
       "content": "The app now remembers the open screen (tab, playlist, player, lyrics) plus the current track and position, and returns to exactly that place when the page reloads",
       "icon": "restore"
+    },
+    {
+      "content": "Playback moved into the app shell (ExoPlayer): a frozen or reloaded WebView no longer interrupts music, and reopening resumes at the exact track and position",
+      "icon": "music_note"
     }
   ]
 }
