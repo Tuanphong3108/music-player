@@ -403,9 +403,15 @@ final class NativeAudio {
                 }
                 a4[i] = l;
             }
-            int[] ord = new int[od == null ? n : od.length()];
-            for (int i = 0; i < ord.length; i++) ord[i] = od == null ? i : od.optInt(i, i);
-            boolean sh = o.optBoolean("shuffle", od != null && od.length() == n);
+            int[] ord;
+            boolean sh = o.optBoolean("shuffle", false) && od != null && od.length() == n;
+            if (sh) {
+                ord = new int[n];
+                for (int i = 0; i < n; i++) ord[i] = od.optInt(i, i);
+            } else {
+                ord = new int[n];
+                for (int i = 0; i < n; i++) ord[i] = i;
+            }
             qIds = a1; qTitles = a2; qArtists = a3; qLocs = a4; order = ord; shuffled = sh; repeat = o.optInt("repeat", 0);
         } catch (Throwable ignored) {}
     }
