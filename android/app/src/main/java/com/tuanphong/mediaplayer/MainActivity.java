@@ -168,7 +168,9 @@ public class MainActivity extends Activity {
         Runnable tearDown = () -> {
             try { w.stopLoading(); } catch (Throwable ignored) {}
             try { w.onPause(); } catch (Throwable ignored) {}
-            try { w.pauseTimers(); } catch (Throwable ignored) {}
+            if (!keepPlaybackOnRecreate) {
+                try { w.pauseTimers(); } catch (Throwable ignored) {}
+            }
             try { w.loadUrl("about:blank"); } catch (Throwable ignored) {}
             try { if (root != null) root.removeView(w); } catch (Throwable ignored) {}
             try { w.removeAllViews(); } catch (Throwable ignored) {}
@@ -480,8 +482,13 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (b != null) web.restoreState(b);
-        else web.loadUrl(isOnline() ? APP_URL : APP_URL); // SW của trang tự phục vụ offline; lỗi thì rơi về offline.html
+        try { web.onResume(); web.resumeTimers(); } catch (Throwable ignored) {}
+        boolean restored = false;
+        if (b != null && !keepPlaybackOnRecreate) {
+            try { restored = (web.restoreState(b) != null); } catch (Throwable ignored) {}
+        }
+        keepPlaybackOnRecreate = false;
+        if (!restored) web.loadUrl(APP_URL); // SW của trang tự phục vụ offline; lỗi thì rơi về offline.html
         appLang = getSharedPreferences("app", MODE_PRIVATE).getString("lang", "vi");
         pingHandler.post(this::ensureGoogleSansFlexLoaded);   // không chặn luồng giao diện lúc khởi động
         armLoadWatchdog();
