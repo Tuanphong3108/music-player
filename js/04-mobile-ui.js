@@ -345,6 +345,7 @@
                         }
                     }
                     renderMobileLibrary();
+                    if (appliedAnyCache && typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
                     if (appliedAnyCache && typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
 
                     // Bước 2: Thả xong toàn bộ danh sách thần tốc -> đọc bổ sung toàn bộ bài chưa có cache song song 3 tệp cùng lúc (chạy cả ở nền + thông báo tiến trình)
@@ -1463,6 +1464,14 @@
                 });
 
                 window.__getMobileNav = function () { return { tab: activeTab, plId: openedPlId }; };
+                window.__refreshMobileLibraryViews = function () {
+                    try {
+                        renderMobilePlaylists();
+                        if (activeTab === 'artists') renderMobileArtists();
+                        if (activeTab === 'liked') renderMobileLiked();
+                        if (openedPlId) openPlaylistDetail(openedPlId, true);
+                    } catch (e) {}
+                };
                 window.__setMobileNav = function (tab, plId) {
                     try {
                         setMobileLibTab(tab || 'songs');
