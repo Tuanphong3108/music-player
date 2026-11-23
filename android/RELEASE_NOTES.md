@@ -1,3 +1,3 @@
 <!-- Chỉ ghi nội dung thay đổi của BẢN CẬP NHẬT HIỆN TẠI tại đây (xóa sạch ghi chú của các bản cũ trước khi push). -->
 ### Có gì mới trong bản cập nhật Android này
-- **Sửa nút Previous / chuyển bài trên MediaSession khi tắt Shuffle**: khi `shuffled` đang tắt, `stepQ()` giờ luôn bước theo đúng thứ tự danh sách gốc `0..n-1` thay vì đọc mảng `order` đã xáo trộn từ trước, giúp bấm Previous từ thông báo/màn hình khóa/tai nghe lùi đúng bài liền trước.
+- **Album art MediaSession tự đọc trực tiếp từ tệp nhạc**: bỏ hoàn toàn việc nhận ảnh bìa từ WebView (`setArtwork` / `ACTION_ART`), để `MediaService` tự trích xuất ảnh nhúng qua `MediaMetadataRetriever` từ tệp gốc cho `MediaSession` và thông báo phát nhạc, tránh lệch ảnh hoặc trễ khi chuyển bài.
