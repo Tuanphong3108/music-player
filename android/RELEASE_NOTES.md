@@ -1,4 +1,3 @@
 <!-- Chỉ ghi nội dung thay đổi của BẢN CẬP NHẬT HIỆN TẠI tại đây (xóa sạch ghi chú của các bản cũ trước khi push). -->
 ### Có gì mới trong bản cập nhật Android này
-- **Nâng cấp Target SDK lên 36 (`minSdk 24` – `targetSdk 36`, Android 16)**: hỗ trợ Edge-to-Edge chuẩn `WindowInsets` (`systemBars` + `displayCutout` + bàn phím) để giao diện không bị lẹm vào tai thỏ/thanh cử chỉ, đồng thời gia cố `MediaService` khi chạy nền (`STOP_FOREGROUND_DETACH` + giữ foreground 120s khi tạm dừng).
-- **Chặn đường cấp đủ 3 quyền thiết yếu khi vào app & màn hình Getting Started**: bổ sung quyền **Truy cập tất cả hình ảnh** (`READ_MEDIA_IMAGES`, yêu cầu "Cho phép tất cả") bên cạnh **Truy cập âm thanh & nhạc** và **Truy cập toàn bộ tệp**; người dùng nâng cấp từ bản cũ nếu thiếu quyền sẽ được chặn ngay đầu app để cấp đủ trước khi vào.
+- **Sửa nút Previous / chuyển bài trên MediaSession khi tắt Shuffle**: khi `shuffled` đang tắt, `stepQ()` giờ luôn bước theo đúng thứ tự danh sách gốc `0..n-1` thay vì đọc mảng `order` đã xáo trộn từ trước, giúp bấm Previous từ thông báo/màn hình khóa/tai nghe lùi đúng bài liền trước.
