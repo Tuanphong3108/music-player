@@ -272,6 +272,7 @@ public class MainActivity extends Activity {
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
         setContentView(root);
         applyTheme(themeColor);
+        NativeAudio.warmUp(this);
 
         if (Build.VERSION.SDK_INT >= 33 &&
                 getSharedPreferences("app", MODE_PRIVATE).getBoolean("gs_done", false) &&

@@ -104,6 +104,10 @@
     {
       "content": "Nạp thư viện nhạc nhanh hơn nhiều: gửi theo đợt, dựng danh sách dần, bỏ duyệt toàn bộ bộ nhớ khi mở app, so trùng bài nhanh hơn",
       "icon": "speed"
+    },
+    {
+      "content": "Bắt đầu phát nhạc nhanh hơn: trình phát chạy luồng riêng, khởi tạo sẵn khi mở app và đệm ít hơn trước khi phát",
+      "icon": "play_circle"
     }
   ],
   "en": [
@@ -210,6 +214,10 @@
     {
       "content": "Much faster library loading: batched delivery, progressive list rendering, no full-storage walk on launch, faster duplicate detection",
       "icon": "speed"
+    },
+    {
+      "content": "Faster playback start: the player runs on its own thread, is pre-warmed on launch and buffers less before starting",
+      "icon": "play_circle"
     }
   ]
 }

@@ -26,15 +26,22 @@ import java.io.File;
 final class NativeAudio {
     private NativeAudio() {}
 
-    private static final Handler main = new Handler(Looper.getMainLooper());
-    private static Context app;
-    private static ExoPlayer p;
-    private static String curId = "", title = "", artist = "";
+    /** ExoPlayer chạy trên luồng riêng: UI/WebView bận (nạp thư viện, dựng danh sách) cũng không làm chậm lúc bắt đầu phát. */
+    private static final android.os.HandlerThread pt = new android.os.HandlerThread("native-audio", android.os.Process.THREAD_PRIORITY_AUDIO);
+    private static final Handler ph;
+    private static final Handler uiH = new Handler(Looper.getMainLooper());
+    static { pt.start(); ph = new Handler(pt.getLooper()); }
+    private static volatile Context app;
+    private static volatile ExoPlayer p;
+    private static volatile int sid = 0;
+    private static volatile String curId = "";
+    private static String title = "", artist = "";
     // Hàng đợi do trang gửi sang: id/tiêu đề/nghệ sĩ theo thứ tự danh sách, order = thứ tự phát (shuffle) dạng chỉ số, repeat 0 tắt / 1 tất cả / 2 một bài
-    private static String[] qIds = new String[0], qTitles = new String[0], qArtists = new String[0];
-    private static int[] order = new int[0];
+    private static volatile String[] qIds = new String[0], qTitles = new String[0], qArtists = new String[0];
+    private static volatile int[] order = new int[0];
     private static int repeat = 0;
-    private static boolean loaded = false, endedHandled = false;
+    private static volatile boolean loaded = false;
+    private static boolean endedHandled = false;
     private static float rate = 1f, vol = 1f;
     /** elapsedRealtime của lần trang web phản hồi gần nhất (evaluateJavascript trả về = renderer còn sống). */
     static volatile long lastAck = 0;
@@ -44,12 +51,14 @@ final class NativeAudio {
     private static final Runnable sleepRun = () -> { sleepAt = 0; pause(); emit("sleep"); };
     /** Hẹn giờ ngủ do app giữ để vẫn tạm dừng đúng giờ / đúng số bài khi WebView bị đóng băng. endAtMs = 0: không hẹn theo giờ; tracks = 0: không hẹn theo bài. */
     static void setSleep(long endAtMs, int tracks) {
-        main.removeCallbacks(sleepRun);
+        ph.removeCallbacks(sleepRun);
         sleepAt = endAtMs; sleepTracks = Math.max(0, tracks);
-        if (endAtMs > 0) main.postDelayed(sleepRun, Math.max(0, endAtMs - System.currentTimeMillis()));
+        if (endAtMs > 0) ph.postDelayed(sleepRun, Math.max(0, endAtMs - System.currentTimeMillis()));
     }
 
-    static void post(Runnable r) { main.post(r); }
+    static void post(Runnable r) { ph.post(r); }
+    /** Khởi tạo sẵn trình phát lúc mở app để lần phát đầu tiên không phải chờ dựng ExoPlayer. */
+    static void warmUp(final Context c) { ph.post(() -> ensure(c)); }
 
     static boolean active() { return loaded && p != null; }
     static boolean webAlive() { return MainActivity.instance != null && SystemClock.elapsedRealtime() - lastAck < 4000; }
@@ -85,7 +94,7 @@ final class NativeAudio {
         @Override public void run() {
             if (p != null && p.getPlayWhenReady() && loaded) {
                 emit("tick");
-                main.postDelayed(this, 500);
+                ph.postDelayed(this, 500);
             }
         }
     };
@@ -93,7 +102,11 @@ final class NativeAudio {
     private static void ensure(Context c) {
         if (p != null) return;
         app = c.getApplicationContext();
-        p = new ExoPlayer.Builder(app).build();
+        // Nhạc trong máy: chỉ cần đệm rất ít là phát ngay (mặc định đợi 2,5 giây dữ liệu)
+        androidx.media3.exoplayer.DefaultLoadControl lc = new androidx.media3.exoplayer.DefaultLoadControl.Builder()
+                .setBufferDurationsMs(15000, 30000, 250, 1000).build();
+        p = new ExoPlayer.Builder(app).setLooper(pt.getLooper()).setLoadControl(lc).build();
+        sid = p.getAudioSessionId();
         p.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true);
         p.setHandleAudioBecomingNoisy(true);
@@ -103,8 +116,8 @@ final class NativeAudio {
                 emit("state");
             }
             @Override public void onPlayWhenReadyChanged(boolean pwr, int reason) {
-                main.removeCallbacks(ticker);
-                if (pwr) main.postDelayed(ticker, 500);
+                ph.removeCallbacks(ticker);
+                if (pwr) ph.postDelayed(ticker, 500);
                 emit("state");
             }
             @Override public void onPositionDiscontinuity(Player.PositionInfo o, Player.PositionInfo n, int reason) {
@@ -128,7 +141,10 @@ final class NativeAudio {
         return u;
     }
 
-    static void load(Context c, String id, String t, String a, long startMs, boolean play, float volume, float speed) {
+    static void load(final Context c, final String id, final String t, final String a, final long startMs, final boolean play, final float volume, final float speed) {
+        ph.post(() -> loadImpl(c, id, t, a, startMs, play, volume, speed));
+    }
+    private static void loadImpl(Context c, String id, String t, String a, long startMs, boolean play, float volume, float speed) {
         ensure(c);
         Uri u = uriFor(id);
         curId = id; title = t == null ? "" : t; artist = a == null ? "" : a;
@@ -144,27 +160,33 @@ final class NativeAudio {
         emit("load");
     }
 
-    static void play() {
+    static void play() { ph.post(NativeAudio::playImpl); }
+    private static void playImpl() {
         if (p == null || !loaded) return;
         if (p.getPlaybackState() == Player.STATE_ENDED) { p.seekTo(0); endedHandled = false; }
         p.setPlayWhenReady(true);
     }
-    static void pause() { if (p != null && loaded) p.setPlayWhenReady(false); }
-    static void toggle() { if (p != null && loaded) { if (p.getPlayWhenReady() && p.getPlaybackState() != Player.STATE_ENDED) pause(); else play(); } }
-    static void seek(long ms) { if (p != null && loaded) { endedHandled = false; p.seekTo(Math.max(0, ms)); } }
-    static void setVolume(float v) { vol = v; if (p != null) p.setVolume(v); }
-    static void setRate(float r) { rate = r <= 0 ? 1f : r; if (p != null) p.setPlaybackParameters(new PlaybackParameters(rate)); }
+    static void pause() { ph.post(NativeAudio::pauseImpl); }
+    private static void pauseImpl() { if (p != null && loaded) p.setPlayWhenReady(false); }
+    static void toggle() { ph.post(() -> { if (p != null && loaded) { if (p.getPlayWhenReady() && p.getPlaybackState() != Player.STATE_ENDED) pauseImpl(); else playImpl(); } }); }
+    static void seek(final long ms) { ph.post(() -> { if (p != null && loaded) { endedHandled = false; p.seekTo(Math.max(0, ms)); } }); }
+    static void setVolume(final float v) { ph.post(() -> { vol = v; if (p != null) p.setVolume(v); }); }
+    static void setRate(final float r) { ph.post(() -> { rate = r <= 0 ? 1f : r; if (p != null) p.setPlaybackParameters(new PlaybackParameters(rate)); }); }
 
     /** Dừng hẳn (trang chuyển sang phát bằng thẻ audio thường, hoặc app thoát). */
-    static void stop() {
+    static void stop() { ph.post(NativeAudio::stopImpl); }
+    private static void stopImpl() {
         loaded = false; curId = "";
-        main.removeCallbacks(ticker);
+        ph.removeCallbacks(ticker);
         if (p != null) { try { p.stop(); p.clearMediaItems(); } catch (Throwable ignored) {} }
     }
     static void release() {
-        main.removeCallbacks(sleepRun); sleepAt = 0; sleepTracks = 0;
-        stop();
-        if (p != null) { try { p.release(); } catch (Throwable ignored) {} p = null; }
+        loaded = false;
+        ph.post(() -> {
+            ph.removeCallbacks(sleepRun); sleepAt = 0; sleepTracks = 0;
+            stopImpl();
+            if (p != null) { try { p.release(); } catch (Throwable ignored) {} p = null; }
+        });
     }
 
     static void setQueue(String json) {
@@ -182,13 +204,13 @@ final class NativeAudio {
         } catch (Throwable ignored) {}
     }
 
-    static int sessionId() { return p == null ? 0 : p.getAudioSessionId(); }
+    static int sessionId() { return sid; }
 
     /** Hết bài: nếu trang còn sống thì để trang tự quyết (shuffle/lặp/…); nếu trang chết thì app tự sang bài kế đã được báo trước. */
     private static void onEnded() {
         if (endedHandled) return;
         endedHandled = true;
-        main.removeCallbacks(ticker);
+        ph.removeCallbacks(ticker);
         if (!webAlive()) {
             if (sleepTracks > 0 && --sleepTracks == 0) { emit("sleep"); return; }   // trang đang chết nên app tự đếm số bài hẹn giờ
             if (hasNext()) { advance(); return; }
@@ -197,16 +219,23 @@ final class NativeAudio {
     }
 
     /** Sang bài kế (dùng khi trang đang chết / điều khiển từ thông báo). */
-    static boolean advance() { return go(stepQ(1)); }
+    static boolean advance() {
+        final int q = stepQ(1);
+        if (q < 0) return false;
+        ph.post(() -> go(q));
+        return true;
+    }
     /** Bài trước: đã phát quá 3 giây thì tua về đầu bài, không thì lùi một bài theo thứ tự phát. */
     static boolean previous() {
-        if (p != null && loaded && p.getCurrentPosition() > 3000) { seek(0); return true; }
-        if (!go(stepQ(-1))) { seek(0); }
+        ph.post(() -> {
+            if (p != null && loaded && p.getCurrentPosition() > 3000) { p.seekTo(0); endedHandled = false; return; }
+            if (!go(stepQ(-1)) && p != null && loaded) { p.seekTo(0); endedHandled = false; }
+        });
         return true;
     }
     private static boolean go(int q) {
         if (p == null || q < 0 || q >= qIds.length) return false;
-        load(app, qIds[q], qTitles[q], qArtists[q], 0, true, vol, rate);
+        loadImpl(app, qIds[q], qTitles[q], qArtists[q], 0, true, vol, rate);
         emit("advanced");
         return true;
     }
@@ -237,12 +266,25 @@ final class NativeAudio {
         return o;
     }
 
-    static String stateJson() { return snapshot("get").toString(); }
+    private static volatile String lastSnap = "{\"loaded\":false,\"id\":\"\"}";
+    private static volatile long lastSnapAt = 0;
+    /** Trạng thái gần nhất (đọc được từ mọi luồng); vị trí được ngoại suy theo thời gian đã trôi nếu đang phát. */
+    static String stateJson() {
+        try {
+            JSONObject o = new JSONObject(lastSnap);
+            if (o.optBoolean("pwr") && "ready".equals(o.optString("st"))) {
+                long el = SystemClock.elapsedRealtime() - lastSnapAt;
+                o.put("pos", o.optLong("pos") + (long) (el * o.optDouble("rate", 1.0)));
+            }
+            return o.toString();
+        } catch (Throwable t) { return lastSnap; }
+    }
 
     private static void emit(String ev) {
         try {
-            JSONObject o = snapshot(ev);
-            MediaService.onNative(o);
+            final JSONObject o = snapshot(ev);
+            lastSnap = o.toString(); lastSnapAt = SystemClock.elapsedRealtime();
+            uiH.post(() -> MediaService.onNative(o));
             MainActivity a = MainActivity.instance;
             if (a != null) a.evalAck("window.__nativeAudioEv&&window.__nativeAudioEv(" + o.toString() + ")");
         } catch (Throwable ignored) {}
