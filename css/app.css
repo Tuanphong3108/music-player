@@ -1563,7 +1563,7 @@
             --md-slider-active-track-height: 16px; --md-slider-inactive-track-height: 16px;
             --md-slider-active-track-shape: 10px; --md-slider-inactive-track-shape: 10px;
             --md-slider-handle-width: 5px; --md-slider-handle-height: 44px; --md-slider-handle-shape: 3px;
-            --md-slider-with-tick-marks-container-size: 4px; --md-slider-with-tick-marks-container-shape: 2px;
+            --md-slider-with-tick-marks-container-size: 4px; --md-slider-with-tick-marks-container-shape: 9999px;
             --md-slider-with-tick-marks-active-container-color: color-mix(in srgb, var(--md-sys-color-on-primary) 80%, transparent);
             --md-slider-with-tick-marks-inactive-container-color: color-mix(in srgb, var(--md-sys-color-primary) 70%, transparent);
             --md-slider-handle-focus-color: var(--md-sys-color-primary); --md-slider-handle-hover-color: var(--md-sys-color-primary);
