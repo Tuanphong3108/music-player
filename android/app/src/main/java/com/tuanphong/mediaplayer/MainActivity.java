@@ -2260,7 +2260,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        try { NativeAudio.saveBackupNow(this); } catch (Throwable ignored) {}
+        try { NativeAudio.saveBackupSync(this); } catch (Throwable ignored) {}
         cancelWatchdogOnLeave();
         if (Build.VERSION.SDK_INT >= 26 && !isInPictureInPictureMode()) {
             callJs("window.__onAndroidLeaveApp&&window.__onAndroidLeaveApp()");
@@ -2407,6 +2407,7 @@ public class MainActivity extends Activity {
         pingHandler.removeCallbacks(pingTimeoutRunnable);
         pingHandler.removeCallbacks(blankCheckRunnable);
         if (!keepPlaybackOnRecreate) {
+            try { NativeAudio.saveBackupSync(this); } catch (Exception ignored) {}
             try { NativeAudio.release(); } catch (Exception ignored) {}
             try { stopService(new Intent(this, MediaService.class)); } catch (Exception ignored) {}
         }
@@ -2578,6 +2579,109 @@ public class MainActivity extends Activity {
         @JavascriptInterface public String nativeAudioQueueState() { return NativeAudio.queueStateJson(); }
         @JavascriptInterface public String nativeAudioSavedState() { return NativeAudio.persistedSessionJson(MainActivity.this); }
         @JavascriptInterface public String nativeAudioSavedQueue() { return NativeAudio.persistedQueueJson(MainActivity.this); }
+
+        /** Nạp trực tiếp danh sách đường dẫn tệp (/storage/... hoặc content://...) khi khôi phục phiên để không bỏ sót các bài ngoài MediaStore hoặc thêm thủ công. */
+        @JavascriptInterface
+        public String importLocationsForRestore(String locationsJson) {
+            JSONArray out = new JSONArray();
+            try {
+                JSONArray arr = new JSONArray(locationsJson == null ? "[]" : locationsJson);
+                java.util.Set<String> seen = new java.util.HashSet<>();
+                for (int i = 0; i < arr.length(); i++) {
+                    String raw = arr.optString(i, "").trim();
+                    if (raw.isEmpty()) continue;
+                    String low = raw.toLowerCase();
+                    if (seen.contains(low)) continue;
+                    seen.add(low);
+
+                    String existingId = idForLocation(raw);
+                    if (existingId != null && served.containsKey(existingId)) {
+                        Uri eu = served.get(existingId);
+                        String eloc = servedLocations.get(existingId);
+                        String ename = (eloc != null && !eloc.startsWith("content://")) ? new File(eloc).getName() : displayName(eu);
+                        JSONObject o = new JSONObject();
+                        o.put("id", existingId);
+                        o.put("location", eloc != null ? eloc : raw);
+                        o.put("uri", eu.toString());
+                        o.put("url", "https://" + ASSET_HOST + "/f/" + existingId);
+                        o.put("artUrl", "https://" + ASSET_HOST + "/art/" + existingId);
+                        o.put("name", ename);
+                        o.put("type", guessAudioMime(ename.toLowerCase()));
+                        o.put("size", querySize(eu));
+                        o.put("modified", queryModified(eu));
+                        o.put("fromLibrary", true);
+                        out.put(o);
+                        continue;
+                    }
+
+                    if (raw.startsWith("content://")) {
+                        try {
+                            Uri u = Uri.parse(raw);
+                            try (android.content.res.AssetFileDescriptor afd = getContentResolver().openAssetFileDescriptor(u, "r")) {
+                                if (afd == null) continue;
+                            }
+                            if (isDisallowedVideoUri(u)) continue;
+                            String id = String.valueOf(nextId.getAndIncrement());
+                            String resolvedLoc = resolveUriLocation(u);
+                            String locToStore = (resolvedLoc != null && !resolvedLoc.isEmpty()) ? resolvedLoc : raw;
+                            served.put(id, u);
+                            servedLocations.put(id, locToStore);
+                            String dispName = displayName(u);
+                            String mime = getContentResolver().getType(u);
+                            JSONObject o = new JSONObject();
+                            o.put("id", id);
+                            o.put("location", locToStore);
+                            o.put("uri", u.toString());
+                            o.put("url", "https://" + ASSET_HOST + "/f/" + id);
+                            o.put("artUrl", "https://" + ASSET_HOST + "/art/" + id);
+                            o.put("name", dispName);
+                            o.put("type", (mime == null || mime.isEmpty()) ? guessAudioMime(dispName.toLowerCase()) : mime);
+                            o.put("size", querySize(u));
+                            o.put("modified", queryModified(u));
+                            o.put("fromLibrary", true);
+                            out.put(o);
+                        } catch (Throwable ignored) {}
+                    } else {
+                        try {
+                            File f = raw.startsWith("file://") ? new File(Uri.parse(raw).getPath()) : new File(raw);
+                            if (!f.exists() || !f.isFile() || !f.canRead() || f.length() <= 0) continue;
+                            String dispName = f.getName();
+                            String ln = dispName.toLowerCase();
+                            if (ln.endsWith(".mp4") || ln.endsWith(".m4v") || ln.endsWith(".webm")
+                                    || ln.endsWith(".mkv") || ln.endsWith(".mov") || ln.endsWith(".ogv")
+                                    || ln.endsWith(".3gp") || ln.endsWith(".avi")) continue;
+                            Uri itemUri = Uri.fromFile(f);
+                            String absPath = f.getAbsolutePath();
+                            String id = String.valueOf(nextId.getAndIncrement());
+                            served.put(id, itemUri);
+                            servedLocations.put(id, absPath);
+                            JSONObject o = new JSONObject();
+                            o.put("id", id);
+                            o.put("location", absPath);
+                            o.put("uri", itemUri.toString());
+                            o.put("url", "https://" + ASSET_HOST + "/f/" + id);
+                            o.put("artUrl", "https://" + ASSET_HOST + "/art/" + id);
+                            o.put("name", dispName);
+                            o.put("type", guessAudioMime(ln));
+                            o.put("size", f.length());
+                            o.put("modified", f.lastModified());
+                            o.put("fromLibrary", true);
+                            int dot = dispName.lastIndexOf('.');
+                            if (dot > 0 && f.getParentFile() != null) {
+                                File lrcFile = new File(f.getParentFile(), dispName.substring(0, dot) + ".lrc");
+                                if (lrcFile.exists() && lrcFile.isFile() && lrcFile.canRead()) {
+                                    String lrcId = String.valueOf(nextId.getAndIncrement());
+                                    served.put(lrcId, Uri.fromFile(lrcFile));
+                                    o.put("lrcUrl", "https://" + ASSET_HOST + "/f/" + lrcId);
+                                }
+                            }
+                            out.put(o);
+                        } catch (Throwable ignored) {}
+                    }
+                }
+            } catch (Throwable ignored) {}
+            return out.toString();
+        }
         /** Nạp trực tiếp các tệp nhạc từ đường dẫn/URI đã lưu (dùng khi khôi phục bài nằm ngoài thư viện quét hoặc chưa kịp có trong danh sách). */
         @JavascriptInterface
         public String importFilesByPaths(String pathsJson) {
@@ -3012,7 +3116,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void exitAppCompletely() {
             runOnUiThread(() -> {
-                try { NativeAudio.saveBackupNow(MainActivity.this); } catch (Throwable ignored) {}
+                try { NativeAudio.saveBackupSync(MainActivity.this); } catch (Throwable ignored) {}
                 try {
                     getSharedPreferences(CRASH_PREFS, MODE_PRIVATE).edit()
                             .putBoolean("clean_exit", true)
