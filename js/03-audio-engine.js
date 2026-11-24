@@ -127,13 +127,16 @@
             });
         }
 
+        let seekDragging = false;
         audio.addEventListener('timeupdate', () => {
             if (audio.currentTime > 0.5) window.__lastPos = audio.currentTime;
             // Chạy nền (màn hình tắt / app ẩn): chỉ giữ đồng bộ lyric (cho widget/thông báo), bỏ việc vẽ thanh seek & chữ thời gian
             if (document.hidden && !customPipWindow) { syncLyrics(); return; }
-            seekSlider.value = (audio.currentTime / audio.duration) * 100 || 0;
-            updateSliderFill(seekSlider);
-            document.getElementById('current-time').innerText = formatTime(audio.currentTime, audio.duration);
+            if (!seekDragging) {
+                seekSlider.value = (audio.currentTime / audio.duration) * 100 || 0;
+                updateSliderFill(seekSlider);
+                document.getElementById('current-time').innerText = formatTime(audio.currentTime, audio.duration);
+            }
             document.getElementById('duration').innerText = formatTime(audio.duration, audio.duration);
             updatePipSeek();
             syncLyrics();
@@ -154,7 +157,67 @@
             return `${m}:${sec < 10 ? '0' : ''}${sec}`;
         }
 
-        seekSlider.addEventListener('input', (e) => audio.currentTime = (e.target.value / 100) * audio.duration);
+        (function bindMainSeekScrub() {
+            const host = seekSlider.parentElement || seekSlider;
+            let activePtr = null;
+            let lastPct = 0;
+            const pctFromClientX = (clientX) => {
+                const r = seekSlider.getBoundingClientRect();
+                if (!r.width) return 0;
+                return Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100));
+            };
+            const applyPreview = (pct) => {
+                lastPct = pct;
+                seekSlider.value = pct;
+                updateSliderFill(seekSlider);
+                if (isFinite(audio.duration) && audio.duration > 0) {
+                    document.getElementById('current-time').innerText = formatTime((pct / 100) * audio.duration, audio.duration);
+                }
+                seekSlider.dispatchEvent(new Event('input', { bubbles: false }));
+            };
+            const commitSeek = (pct) => {
+                if (isFinite(audio.duration) && audio.duration > 0) {
+                    audio.currentTime = (pct / 100) * audio.duration;
+                }
+            };
+            const endDrag = (shouldCommit) => {
+                if (!seekDragging) return;
+                const pid = activePtr;
+                seekDragging = false;
+                activePtr = null;
+                if (pid != null) {
+                    try { if (host.hasPointerCapture && host.hasPointerCapture(pid)) host.releasePointerCapture(pid); } catch (e) {}
+                }
+                if (shouldCommit) commitSeek(lastPct);
+            };
+            host.addEventListener('pointerdown', (e) => {
+                if (e.button !== undefined && e.button !== 0) return;
+                if (!isFinite(audio.duration) || audio.duration <= 0) return;
+                e.preventDefault();
+                seekDragging = true;
+                activePtr = e.pointerId;
+                try { if (host.setPointerCapture) host.setPointerCapture(e.pointerId); } catch (err) {}
+                applyPreview(pctFromClientX(e.clientX));
+            });
+            host.addEventListener('pointermove', (e) => {
+                if (!seekDragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                applyPreview(pctFromClientX(e.clientX));
+            });
+            host.addEventListener('pointerup', (e) => {
+                if (!seekDragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                applyPreview(pctFromClientX(e.clientX));
+                endDrag(true);
+            });
+            host.addEventListener('pointercancel', () => endDrag(true));
+            host.addEventListener('lostpointercapture', () => endDrag(true));
+            window.addEventListener('blur', () => endDrag(false));
+            seekSlider.addEventListener('input', (e) => {
+                if (seekDragging) return;
+                if (isFinite(audio.duration) && audio.duration > 0) {
+                    audio.currentTime = (e.target.value / 100) * audio.duration;
+                }
+            });
+        })();
 
         // --- HỆ THỐNG CHỌN THIẾT BỊ PHÁT ÂM THANH (Audio Output Device) ---
         const outputDeviceBtn = document.getElementById('output-device-btn');
