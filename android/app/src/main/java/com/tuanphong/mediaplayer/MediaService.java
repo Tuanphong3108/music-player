@@ -82,7 +82,7 @@ public class MediaService extends Service {
     private void skip(final boolean next) {
         // Hàng đợi/shuffle/repeat do native giữ: luôn để native chuyển bài, trang chỉ nhận lại qua sự kiện "advanced"
         if (NativeAudio.active()) {
-            if (next) { if (!NativeAudio.advance()) NativeAudio.seek(0); } else NativeAudio.previous();
+            if (next) { if (!NativeAudio.advanceManual()) NativeAudio.seek(0); } else NativeAudio.previous();
             return;
         }
         cmd(next ? "next" : "prev");

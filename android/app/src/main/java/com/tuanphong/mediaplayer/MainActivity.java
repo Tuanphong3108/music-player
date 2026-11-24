@@ -1636,7 +1636,7 @@ public class MainActivity extends Activity {
 
     private void runNativeWidgetFallback(String cmd) {
         if ("toggle".equals(cmd)) NativeAudio.toggle();
-        else if ("next".equals(cmd)) { if (!NativeAudio.advance()) NativeAudio.seek(0); }
+        else if ("next".equals(cmd)) { if (!NativeAudio.advanceManual()) NativeAudio.seek(0); }
         else if ("prev".equals(cmd)) NativeAudio.previous();
     }
 

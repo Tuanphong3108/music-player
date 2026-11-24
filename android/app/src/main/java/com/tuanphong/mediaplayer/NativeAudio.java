@@ -271,6 +271,7 @@ final class NativeAudio {
     private static int stepQ(int dir) {
         return stepQ(dir, false);
     }
+    private static volatile boolean forceWrap = false;
     private static int stepQ(int dir, boolean respectRepeatOne) {
         String[] ids = qIds;
         int total = ids.length;
@@ -296,7 +297,7 @@ final class NativeAudio {
         for (int k = 1; k <= n; k++) {
             int np = pos + dir * k;
             if (np >= n || np < 0) {
-                if (dir > 0 && repeat != 1) return -1;
+                if (dir > 0 && repeat == 0 && !forceWrap) return -1;
                 np = ((np % n) + n) % n;
             }
             int q = ord[np];
@@ -578,6 +579,16 @@ final class NativeAudio {
         } catch (Throwable t) { return false; }
     }
 
+    /** Người dùng bấm Next (MediaSession/thông báo/widget): luôn sang bài kế, kể cả Repeat One hoặc đang ở bài cuối (quay vòng như nút Next trong app). */
+    static boolean advanceManual() {
+        forceWrap = true;
+        final int q;
+        try { q = stepQ(1, false); } finally { forceWrap = false; }
+        if (q < 0) return false;
+        ph.post(() -> go(q));
+        return true;
+    }
+
     static boolean advance() {
         final int q = stepQ(1, false);
         if (q < 0) return false;
@@ -594,6 +605,8 @@ final class NativeAudio {
     }
     private static boolean go(int q) {
         if (p == null || q < 0 || q >= qIds.length) return false;
+        // Đang ở nền: nếu âm lượng còn kẹt ở 0 (do bước tắt tiếng tạm lúc khôi phục mà trang chưa kịp trả về) thì trả về 100% để bài kế không bị mất tiếng
+        if (vol < 0.01f && isAppInBackground(app)) vol = 1f;
         loadImpl(app, qIds[q], qTitles[q], qArtists[q], 0, true, vol, rate);
         emit("advanced");
         return true;
