@@ -578,6 +578,9 @@ final class NativeAudio {
         try {
             o.put("ev", ev);
             o.put("id", curId);
+            String curLoc = MainActivity.resolveLocation(curId);
+            if (curLoc == null || curLoc.isEmpty()) curLoc = locForId(curId);
+            o.put("curLoc", curLoc == null ? "" : curLoc);
             o.put("title", title);
             o.put("artist", artist);
             o.put("loaded", loaded);
