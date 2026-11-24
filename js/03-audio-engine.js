@@ -403,7 +403,13 @@
             sleepAnimating = false;
             updateSleepUI();
         }
-        function clearSleep(silent) { sleepState = null; clearInterval(sleepTick); sleepTick = null; if (!silent) updateSleepUI(); }
+        function clearSleep(silent, skipNativeSync) {
+            sleepState = null;
+            clearInterval(sleepTick);
+            sleepTick = null;
+            if (!silent) updateSleepUI();
+            if (!skipNativeSync && typeof window.__syncNativeSleep === 'function') window.__syncNativeSleep(true);
+        }
         function fireSleep() {
             const st = sleepState;
             clearSleep();
@@ -418,7 +424,7 @@
         document.getElementById('sleep-fired-ok').addEventListener('click', () => document.getElementById('sleep-fired-dialog').close());
         window.__showNativeSleepEndedNotice = function (type, total) {
             try {
-                clearSleep(true);
+                clearSleep(false, true);
                 const val = Math.max(1, Number(total) || 1);
                 const txt = type === 'tracks'
                     ? slT('sleep.fired_tracks', 'Nhạc đã tự tạm dừng vì hẹn giờ sau {n} bài đã hoàn thành.').replace('{n}', val)
@@ -433,19 +439,21 @@
             } catch (e) {}
         };
         function setSleepTime(min, preset) {
-            clearSleep(true);
+            clearSleep(true, true);
             sleepState = { type: 'time', endAt: Date.now() + min * 60000, preset: preset || 'custom', total: min };
             sleepTick = setInterval(() => {
                 if (!sleepState) return;
                 if (Date.now() >= sleepState.endAt) fireSleep(); else updateSleepUI();
             }, 1000);
+            if (typeof window.__syncNativeSleep === 'function') window.__syncNativeSleep(true);
             sleepAnimate('set');
             updateSleepUI();
             showToast(slT('toast.sleep_time_set', 'Sẽ tạm dừng sau {n} phút').replace('{n}', fmtN(min)), 'timer', 4000);
         }
         function setSleepTracks(n) {
-            clearSleep(true);
+            clearSleep(true, true);
             sleepState = { type: 'tracks', remaining: n, preset: 'custom', total: n };
+            if (typeof window.__syncNativeSleep === 'function') window.__syncNativeSleep(true);
             sleepAnimate('set');
             updateSleepUI();
             showToast(slT('toast.sleep_tracks_set', 'Sẽ tạm dừng sau {n} bài').replace('{n}', n), 'timer', 4000);
