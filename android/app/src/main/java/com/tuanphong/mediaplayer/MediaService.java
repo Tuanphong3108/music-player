@@ -20,8 +20,10 @@ import android.os.SystemClock;
 public class MediaService extends Service {
     static final String ACTION_UPDATE = "update";
     static final String ACTION_ART = "art";
+    static final String ACTION_NATIVE_SYNC = "native_sync";
     static final String CH = "playback";
     static MediaService inst;
+    private static volatile org.json.JSONObject pendingNative;
     private MediaSession session;
     private boolean playing = false;
     private PowerManager.WakeLock wake;
@@ -86,10 +88,25 @@ public class MediaService extends Service {
         cmd(next ? "next" : "prev");
     }
 
-    /** Sự kiện từ trình phát native -> cập nhật phiên phát/thông báo ngay cả khi trang web không phản hồi. */
+    /** Sự kiện từ trình phát native -> cập nhật phiên phát/thông báo ngay cả khi trang web không phản hồi; tự khởi chạy MediaService nếu chưa chạy. */
     static void onNative(org.json.JSONObject o) {
+        if (o == null) return;
         MediaService s = inst;
-        if (s == null) return;
+        if (s == null) {
+            if (!NativeAudio.active()) return;
+            pendingNative = o;
+            try {
+                android.content.Context ctx = MainActivity.instance != null
+                        ? MainActivity.instance.getApplicationContext()
+                        : NativeAudio.appContext();
+                if (ctx != null) {
+                    Intent si = new Intent(ctx, MediaService.class).setAction(ACTION_NATIVE_SYNC);
+                    if (Build.VERSION.SDK_INT >= 26) ctx.startForegroundService(si);
+                    else ctx.startService(si);
+                }
+            } catch (Throwable ignored) {}
+            return;
+        }
         try { s.applyNative(o); } catch (Throwable ignored) {}
     }
 
@@ -246,12 +263,25 @@ public class MediaService extends Service {
             cmd(c);
             return START_NOT_STICKY;
         }
+        if (i != null && ACTION_NATIVE_SYNC.equals(a)) {
+            org.json.JSONObject snap = pendingNative != null ? pendingNative : (NativeAudio.active() ? NativeAudio.snapshot("sync") : null);
+            pendingNative = null;
+            if (snap != null && NativeAudio.active()) {
+                applyNative(snap);
+            } else {
+                clearSession();
+            }
+            return START_NOT_STICKY;
+        }
         if (i != null && ACTION_ART.equals(a)) {
             // Album art cho MediaSession/Notification do native tự đọc trực tiếp từ tệp nhạc
             return START_NOT_STICKY;
         } else if (i != null) {
-            // Khi trình phát native (ExoPlayer) đang hoạt động thì NativeAudio là nguồn duy nhất cập nhật MediaSession -> bỏ qua gói từ WebView để tránh giật --:-- / 0:00
-            if (NativeAudio.active()) return START_NOT_STICKY;
+            // Khi trình phát native (ExoPlayer) đang hoạt động thì dùng trực tiếp snapshot từ NativeAudio (vẫn đảm bảo startForeground) -> không để WebView ghi đè --:-- / 0:00
+            if (NativeAudio.active()) {
+                applyNative(NativeAudio.snapshot("sync"));
+                return START_NOT_STICKY;
+            }
             String ns = nz(i.getStringExtra("state"));
             boolean metaChanged;
             String t = nz(i.getStringExtra("title")), ar = nz(i.getStringExtra("artist"));
