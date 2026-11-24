@@ -1021,6 +1021,16 @@ public class MainActivity extends Activity {
             ArrayList<Uri> l = i.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
             if (l != null) uris.addAll(l);
         }
+        if (uris.isEmpty() && (Intent.ACTION_VIEW.equals(a) || Intent.ACTION_SEND.equals(a) || Intent.ACTION_SEND_MULTIPLE.equals(a) || Intent.ACTION_EDIT.equals(a))) {
+            // Một số trình quản lý tệp (vd. Files của ChromeOS) gửi tệp qua ClipData thay vì data/EXTRA_STREAM
+            android.content.ClipData cd = i.getClipData();
+            if (cd != null) {
+                for (int k = 0; k < cd.getItemCount(); k++) {
+                    Uri cu = cd.getItemAt(k).getUri();
+                    if (cu != null) uris.add(cu);
+                }
+            }
+        }
         if (uris.isEmpty()) {
             String widgetCmd = i.getStringExtra("widget_cmd");
             if (widgetCmd != null && !widgetCmd.isEmpty()) {

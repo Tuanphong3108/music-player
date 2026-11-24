@@ -60,8 +60,17 @@
                             files.push(f);
                             continue;
                         }
-                        const r = await fetch(it.url);
-                        const b = await r.blob();
+                        let b;
+                        try {
+                            const r = await fetch(it.url);
+                            if (!r.ok) throw new Error('HTTP ' + r.status);
+                            b = await r.blob();
+                        } catch (err) {
+                            // Một tệp lỗi không được làm mất cả lượt mở: báo rồi bỏ qua tệp đó
+                            console.log('native-open fetch failed', name, err);
+                            try { if (typeof showToast === 'function') showToast((document.documentElement.lang === 'vi' ? 'Không đọc được tệp: ' : 'Could not read file: ') + name, 'error'); } catch (e2) {}
+                            continue;
+                        }
                         const f = new File([b], name, { type: it.type || b.type || '' });
                         f.__nativeId = it.id || ((it.url || '').match(/\/f\/([^/?#]+)/) || [])[1] || null;
                         f.__nativeLocation = it.location || it.uri || '';

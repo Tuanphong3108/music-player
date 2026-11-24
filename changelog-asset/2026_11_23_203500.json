@@ -52,6 +52,10 @@
     {
       "content": "Dịch lời bài hát bằng AI (PC & Mobile): thêm nút Dịch ngay trong Lyric View, chọn ngôn ngữ đích (có tùy chỉnh) và bật/tắt hiển thị song ngữ đồng bộ trên Lyric View, Top Lyric, Fullscreen và PiP; bản dịch được lưu trong ứng dụng và tự xóa khi Đặt lại cài đặt gốc hoặc Tạo lại cơ sở dữ liệu.",
       "icon": "translate"
+    },
+    {
+      "content": "Mở nhạc từ app Files ổn định hơn: nhận tệp gửi qua ClipData, thêm định dạng ogg/flac, một tệp lỗi không làm mất cả lượt mở",
+      "icon": "folder_open"
     }
   ],
   "en": [
@@ -106,6 +110,10 @@
     {
       "content": "AI Lyric Translation (PC & Mobile): translate lyrics right inside Lyric View into any chosen or custom language with bilingual display synced across Lyric View, Top Lyric, Fullscreen, and PiP; translations are cached in-app and cleared on Factory Reset or Rebuild Database.",
       "icon": "translate"
+    },
+    {
+      "content": "More reliable opening from the Files app: supports ClipData hand-off, extra ogg/flac types, and one bad file no longer cancels the whole open",
+      "icon": "folder_open"
     }
   ]
 }
