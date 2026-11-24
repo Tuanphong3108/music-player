@@ -297,7 +297,7 @@
             const ids = new Array(playlist.length);
             for (let i = 0; i < playlist.length; i++) {
                 const t = playlist[i];
-                const id = t && t.nativeId && t.fromLibrary ? String(t.nativeId) : '';
+                const id = t && t.nativeId ? String(t.nativeId) : '';
                 ids[i] = id;
                 for (let k = 0; k < id.length; k++) h = (h * 31 + id.charCodeAt(k)) | 0;
                 h = (h * 31 + 7) | 0;
