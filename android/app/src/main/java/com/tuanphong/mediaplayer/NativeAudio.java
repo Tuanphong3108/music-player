@@ -332,6 +332,7 @@ final class NativeAudio {
         p.setHandleAudioBecomingNoisy(true);
         p.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int st) {
+                if (st == Player.STATE_READY) errStreak = 0;
                 if (st == Player.STATE_ENDED) { onEnded(); return; }
                 emit("state");
             }
@@ -344,6 +345,7 @@ final class NativeAudio {
                 if (reason == Player.DISCONTINUITY_REASON_SEEK) emit("seeked");
             }
             @Override public void onPlayerError(PlaybackException e) {
+                if (skipBadTrack()) return;
                 emit("error");
             }
         });
@@ -369,7 +371,7 @@ final class NativeAudio {
         Uri u = uriFor(id);
         curId = id; title = t == null ? "" : t; artist = a == null ? "" : a;
         endedHandled = false;
-        if (u == null) { loaded = true; emit("error"); return; }
+        if (u == null) { loaded = true; if (skipBadTrack()) return; emit("error"); return; }
         loaded = true;
         vol = volume; rate = speed <= 0 ? 1f : speed;
         p.setVolume(vol);
@@ -515,11 +517,24 @@ final class NativeAudio {
         if (sleepTracks > 0 && checkTrackSleepOnEnd()) {
             return;
         }
-        if (!webAlive() && hasNext()) {
-            advance();
-            return;
+        // Người dùng không ở trong app (nền / tắt màn hình / trang chết): native tự chuyển bài, không chờ WebView (có thể đang bị đóng băng).
+        if (!webAlive() || isAppInBackground(app)) {
+            if (repeat == 2 && p != null) {   // lặp 1 bài
+                p.seekTo(0); endedHandled = false; p.setPlayWhenReady(true);
+                return;
+            }
+            if (advance()) return;
         }
         emit("ended");
+    }
+
+    private static int errStreak = 0;
+    /** Bài không đọc được: nếu người dùng không ở trong app thì tự sang bài kế (tối đa hết một vòng hàng đợi để khỏi lặp vô hạn). */
+    private static boolean skipBadTrack() {
+        if (webAlive() && !isAppInBackground(app)) return false;
+        if (errStreak >= Math.max(1, qIds.length)) return false;
+        errStreak++;
+        return advance();
     }
 
     /** Sang bài kế (dùng khi trang đang chết / điều khiển từ thông báo). Bấm Next luôn sang bài kế ngay cả khi lặp 1 bài. */
