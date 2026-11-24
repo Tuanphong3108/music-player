@@ -1211,7 +1211,7 @@
         });
         if (!items.length) throw new Error(tr('ai.err_no_lyric_content', 'Lời bài hát không có nội dung để dịch.'));
 
-        const sysMsg = `You are an expert song lyric translator. Translate every lyric line naturally into "${targetLang}" preserving poetic tone, emotion, and line-by-line alignment. Return ONLY a valid JSON object with exact schema: {"lines":[{"i":0,"t":"translated line"}]}. Keep the exact "i" indices from the input. Do not merge or skip lines.`;
+        const sysMsg = `You are an expert song lyric translator. First detect the primary language of the lyrics. If the lyrics are ALREADY predominantly written in "${targetLang}" (same language, ignoring occasional loanwords, names, or short foreign phrases), return ONLY {"sameLanguage":true,"detectedLanguage":"<detected language>","lines":[]} and do NOT translate. Otherwise, translate every lyric line naturally into "${targetLang}" preserving poetic tone, emotion, and line-by-line alignment, and return ONLY a valid JSON object with exact schema: {"sameLanguage":false,"detectedLanguage":"<detected language>","lines":[{"i":0,"t":"translated line"}]}. Keep the exact "i" indices from the input. Do not merge or skip lines.`;
         const userPayload = JSON.stringify({
             title: String(track.name || ''),
             artist: String(track.artist || ''),
@@ -1232,6 +1232,10 @@
         if (!res.ok) throw new Error((data && data.error && data.error.message) || ('HTTP ' + res.status));
         const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const parsed = parseJsonResponse(txt);
+        const estTokens = Number(data?.usageMetadata?.totalTokenCount) || Math.round((sysMsg.length + userPayload.length + txt.length) / 4);
+        if (parsed && parsed.sameLanguage === true) {
+            return { sameLanguage: true, detectedLanguage: String(parsed.detectedLanguage || targetLang), lines: [], tokensEst: estTokens };
+        }
         const out = new Array(track.lyrics.length).fill('');
         if (Array.isArray(parsed && parsed.lines)) {
             parsed.lines.forEach((row, pos) => {
@@ -1242,8 +1246,7 @@
                 }
             });
         }
-        const estTokens = Number(data?.usageMetadata?.totalTokenCount) || Math.round((sysMsg.length + userPayload.length + txt.length) / 4);
-        return { lines: out, tokensEst: estTokens };
+        return { sameLanguage: false, detectedLanguage: String((parsed && parsed.detectedLanguage) || ''), lines: out, tokensEst: estTokens };
     }
     async function translateCurrentTrackLyrics(forceRetranslate) {
         if (lyricTranslating) return;
@@ -1276,7 +1279,15 @@
         syncAiTranslateBtn();
         try {
             if (typeof showToast === 'function') showToast(tr('ai.toast_translating', 'Đang dịch lời sang {lang}...', { lang: cfg.translateLang }), 'translate', 2400);
-            const { lines, tokensEst } = await callAiForLyricTranslation(track, cfg.translateLang);
+            const { sameLanguage, lines, tokensEst } = await callAiForLyricTranslation(track, cfg.translateLang);
+            if (sameLanguage) {
+                addUsage(tokensEst, 'Kiểm tra ngôn ngữ: ' + (track.name || 'Lyric'));
+                syncAllSettingsHosts();
+                if (typeof showToast === 'function') {
+                    showToast(tr('ai.toast_same_lang', 'Lời bài hát đã ở ngôn ngữ {lang} rồi, không cần dịch!', { lang: cfg.translateLang }), 'info', 3200);
+                }
+                return;
+            }
             if (!lines.some(Boolean)) throw new Error(tr('ai.err_no_valid_trans', 'AI không trả về dòng dịch hợp lệ.'));
             const map = loadTransMap();
             const storageKey = lyricTrackStorageKey(track);
