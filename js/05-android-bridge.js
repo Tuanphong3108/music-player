@@ -726,10 +726,29 @@
                 } catch (e) {}
                 return 0;
             };
+            let nativeSvcBootedId = '';
             const report = () => {
                 try {
-                    // Khi phát bằng trình phát native (ExoPlayer), NativeAudio tự đẩy trực tiếp pos/dur/state sang MediaService -> không gửi đè từ WebView kẻo MediaSession giật --:-- / 0:00
-                    if (window.__nativeAudioState && window.__nativeAudioState.mode === 'native') return;
+                    const ns = window.__nativeAudioState;
+                    if (ns && ns.mode === 'native') {
+                        // Vẫn cần gọi setMediaState lúc nạp/đổi bài (khi đã có duration thật) để đánh thức MediaService trên mọi bản APK,
+                        // nhưng không gửi đè khi dur = 0 (tránh --:--) và không spam định kỳ mỗi giây (NativeAudio tự cập nhật MediaService).
+                        const curDur = (isFinite(audio.duration) && audio.duration > 0) ? Math.round(audio.duration * 1000) : (ns.dur > 0 ? Math.round(ns.dur) : 0);
+                        if (!ns.loaded || curDur <= 0) return;
+                        if (nativeSvcBootedId === String(ns.id || '') && !ns.paused) return;
+                        nativeSvcBootedId = String(ns.id || '');
+                        const t = document.getElementById('track-name'), ar = document.getElementById('track-artist');
+                        const artist = ((ar && ar.textContent) || '').split('|')[0].trim();
+                        const st = mediaState();
+                        if (st === 'none') return;
+                        const title = (t && t.textContent) || '';
+                        const pos = Math.round((audio.currentTime || 0) * 1000);
+                        const rate = audio.playbackRate || 1;
+                        if (AB.setMediaState) AB.setMediaState(st, title, artist, pos, curDur, rate, bufferedMs());
+                        else AB.setState(st === 'playing' || st === 'buffering', title, artist, pos, curDur, rate);
+                        return;
+                    }
+                    nativeSvcBootedId = '';
                     const t = document.getElementById('track-name'), ar = document.getElementById('track-artist');
                     const artist = ((ar && ar.textContent) || '').split('|')[0].trim();
                     const st = mediaState(), active = st !== 'none';
@@ -799,7 +818,8 @@
             };
             window.__syncAndroidWidgets = syncWidgetsExtra;
             setInterval(() => {
-                if (!audio.paused && !audio.ended) report();
+                const isNat = !!(window.__nativeAudioState && window.__nativeAudioState.mode === 'native');
+                if (!isNat && !audio.paused && !audio.ended) report();
                 syncWidgetsExtra();
             }, 1000);
             ['play', 'pause', 'ended', 'loadedmetadata', 'seeked'].forEach(ev => audio.addEventListener(ev, syncWidgetsExtra));
@@ -1181,7 +1201,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_24_1708_fix_native_timer_mediasession', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_24_1720_restore_mediasession_native', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
