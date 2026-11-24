@@ -848,10 +848,34 @@
             const content = document.querySelector('.st-content');
             const mTitle = document.querySelector('.st-title-m');
             const tr = (k, f) => { try { return (window.__tr && window.__tr(k)) || f; } catch (e) { return f; } };
-            // Thanh kéo: thêm vạch chấm khi số bước vừa phải
-            document.querySelectorAll('.st-pane md-slider').forEach(sl => {
-                const mn = +sl.getAttribute('min') || 0, mx = +sl.getAttribute('max') || 100, st = +sl.getAttribute('step') || 1;
-                if ((mx - mn) / st <= 60) sl.setAttribute('ticks', '');
+            // Thanh kéo: thêm vạch chấm tròn & tự thu nhỏ chấm khi bị chèn ép để không bị xén thành hình vuông
+            const updateSliderTicks = (sl) => {
+                if (!sl) return;
+                const mn = parseFloat(sl.getAttribute('min'));
+                const mx = parseFloat(sl.getAttribute('max'));
+                const st = parseFloat(sl.getAttribute('step')) || 1;
+                const minV = Number.isFinite(mn) ? mn : 0;
+                const maxV = Number.isFinite(mx) ? mx : 100;
+                const steps = Math.max(1, Math.round((maxV - minV) / st));
+                if (steps > 60) {
+                    sl.removeAttribute('ticks');
+                    return;
+                }
+                if (!sl.hasAttribute('ticks')) sl.setAttribute('ticks', '');
+                const rawW = sl.clientWidth || parseFloat(sl.style.width) || 200;
+                const trackW = Math.max(40, rawW - 32);
+                const pitch = trackW / steps;
+                // radial-gradient của md-slider đặt tâm tại x=size nên cần size <= pitch * 0.42 để luôn tròn xoe, thoáng và không bị xén cạnh
+                const dotSize = Math.max(1.5, Math.min(4, Math.round(pitch * 0.42 * 4) / 4));
+                sl.style.setProperty('--md-slider-with-tick-marks-container-size', dotSize + 'px');
+                sl.style.setProperty('--md-slider-with-tick-marks-container-shape', '9999px');
+            };
+            const sliderTickRo = typeof ResizeObserver === 'function'
+                ? new ResizeObserver(entries => entries.forEach(e => updateSliderTicks(e.target)))
+                : null;
+            document.querySelectorAll('.st-pane md-slider, .m3-expressive-slider').forEach(sl => {
+                updateSliderTicks(sl);
+                if (sliderTickRo) sliderTickRo.observe(sl);
             });
             const META = {
                 general: ['#5b8def', 'settings.desc_general', 'Ngôn ngữ, màn hình luôn sáng, đặt lại'],
