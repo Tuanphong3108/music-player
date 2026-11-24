@@ -353,6 +353,7 @@ final class NativeAudio {
                 emit("state");
             }
             @Override public void onPositionDiscontinuity(Player.PositionInfo o, Player.PositionInfo n, int reason) {
+                android.util.Log.d("MPSeek", "discontinuity reason=" + reason + " old=" + o.positionMs + " new=" + n.positionMs);
                 if (reason == Player.DISCONTINUITY_REASON_SEEK) emit("seeked");
             }
             @Override public void onPlayerError(PlaybackException e) {
@@ -413,6 +414,7 @@ final class NativeAudio {
             long d = p.getDuration();
             // Không để một lệnh tua (vd. từ thông báo) vượt/chạm cuối bài: sẽ bị coi là hết bài rồi lặp/nhảy lại từ đầu
             if (d != C.TIME_UNSET && d > 2000 && t > d - 800) t = d - 800;
+            android.util.Log.d("MPSeek", "seek req=" + ms + " clamped=" + t + " dur=" + d + " cur=" + p.getCurrentPosition() + " st=" + p.getPlaybackState() + " bg=" + isAppInBackground(app));
             p.seekTo(t);
         });
     }
@@ -534,6 +536,7 @@ final class NativeAudio {
 
     /** Hết bài: kiểm tra hẹn giờ theo số bài trước; nếu trang chết thì app tự sang bài kế đã được báo trước. */
     private static void onEnded() {
+        android.util.Log.d("MPSeek", "onEnded handled=" + endedHandled + " repeat=" + repeat + " bg=" + isAppInBackground(app));
         if (endedHandled) return;
         endedHandled = true;
         if (sleepTracks > 0 && checkTrackSleepOnEnd()) {
