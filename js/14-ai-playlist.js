@@ -5,15 +5,26 @@
     const MODELS_CACHE_KEY = 'mp_gemini_models_v1';
     const LYRIC_TRANS_KEY = 'mp_ai_lyric_trans_v1';
     const LYRIC_SHOW_KEY = 'mp_ai_lyric_show_v1';
-    const TRANSLATE_LANGS = ['Tiếng Việt', 'English', '日本語', '한국어', '中文 (简体)', 'Français', 'Español', 'Deutsch', 'Tùy chỉnh...'];
+    const CUSTOM_LANG_VAL = '__custom__';
+    const TRANSLATE_LANGS = ['Tiếng Việt', 'English', '日本語', '한국어', '中文 (简体)', 'Français', 'Español', 'Deutsch', CUSTOM_LANG_VAL];
     const DEFAULT_PROMPTS = {
         curator: "You are 'Vibe-Engine', a professional music curator. Analyze the user's request and listening profile to provide smart music recommendations from the local library. Always prioritize flow, emotional coherence, and exact metadata matching. Respond strictly in valid JSON.",
         creative: "You are 'Vibe-Engine' in creative discovery mode. Craft adventurous, mood-rich local playlists with unexpected transitions while honoring every constraint. Respond strictly in valid JSON."
     };
     const MOODS = ['Chill', 'Energetic', 'Happy', 'Dark', 'Romantic', 'Melancholic'];
+    const MOOD_KEYS = { Chill: 'ai.mood_chill', Energetic: 'ai.mood_energetic', Happy: 'ai.mood_happy', Dark: 'ai.mood_dark', Romantic: 'ai.mood_romantic', Melancholic: 'ai.mood_melancholic' };
     const ACTIVITIES = ['Workout', 'Focus', 'Road trip', 'Party', 'Study', 'Late night'];
+    const ACT_KEYS = { Workout: 'ai.act_workout', Focus: 'ai.act_focus', 'Road trip': 'ai.act_road_trip', Party: 'ai.act_party', Study: 'ai.act_study', 'Late night': 'ai.act_late_night' };
     const ERAS = ['Any era', '70s', '80s', '90s', '2000s', '2010s', '2020s'];
     const PROVIDERS = ['Google Gemini'];
+
+    function tr(key, fallback, vars) {
+        let s = (typeof window.__tr === 'function' && window.__tr(key)) || fallback || key;
+        if (vars && typeof vars === 'object') {
+            Object.keys(vars).forEach(k => { s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), String(vars[k])); });
+        }
+        return s;
+    }
 
     function loadModelsCache(apiKey) {
         if (!apiKey) return [];
@@ -117,7 +128,7 @@
             fetchingModels = false;
             syncAllSettingsHosts();
             if (!silent && typeof showToast === 'function') {
-                showToast('Đã tải ' + fetchedModels.length + ' mô hình Gemini!', 'check_circle', 2200);
+                showToast(tr('ai.toast_models_loaded', 'Đã tải {n} mô hình Gemini!', { n: fetchedModels.length }), 'check_circle', 2200);
             }
             return fetchedModels;
         } catch (err) {
@@ -125,7 +136,7 @@
             lastModelError = (err && err.message) ? err.message : String(err);
             syncAllSettingsHosts();
             if (!silent && typeof showToast === 'function') {
-                showToast('Không tải được danh sách mô hình: ' + lastModelError, 'error', 3500);
+                showToast(tr('ai.toast_models_err', 'Không tải được danh sách mô hình: {err}', { err: lastModelError }), 'error', 3500);
             }
             return [];
         }
@@ -363,13 +374,17 @@
         const usage = loadUsage();
         const hasKey = !!(cfg.apiKey && cfg.apiKey.trim());
         const modelLabel = fetchingModels
-            ? 'Loading models...'
-            : (!hasKey ? 'Enter API key first' : (cfg.model || 'No model selected'));
+            ? tr('ai.model_loading', 'Đang tải mô hình...')
+            : (!hasKey ? tr('ai.model_enter_key', 'Nhập API key trước') : (cfg.model || tr('ai.model_none', 'Chưa chọn mô hình')));
         const modelDesc = fetchingModels
-            ? 'Fetching available Gemini models from Google AI Studio...'
+            ? tr('ai.model_desc_loading', 'Đang tải danh sách mô hình Gemini từ Google AI Studio...')
             : (!hasKey
-                ? 'Model list stays empty until you enter a Gemini API key.'
-                : (lastModelError ? ('Fetch error: ' + lastModelError) : (fetchedModels.length ? (fetchedModels.length + ' Gemini models loaded.') : 'Tap to fetch Gemini models.')));
+                ? tr('ai.model_desc_empty', 'Danh sách mô hình sẽ trống cho đến khi bạn nhập Gemini API key.')
+                : (lastModelError
+                    ? tr('ai.model_desc_error', 'Lỗi tải mô hình: {err}', { err: lastModelError })
+                    : (fetchedModels.length
+                        ? tr('ai.model_desc_loaded', 'Đã tải {n} mô hình Gemini.', { n: fetchedModels.length })
+                        : tr('ai.model_desc_tap', 'Chạm để tải danh sách mô hình Gemini.'))));
 
         const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
         const isMobileUi = document.documentElement.classList.contains('m-ui');
@@ -378,72 +393,76 @@
             : fetchedModels.map(m => `<md-select-option value="${esc(m)}"${m === cfg.model ? ' selected' : ''}><div slot="headline">${esc(m)}</div></md-select-option>`).join('');
         const langList = TRANSLATE_LANGS.slice();
         if (cfg.translateLang && !langList.includes(cfg.translateLang)) langList.unshift(cfg.translateLang);
-        const langOptionsHtml = langList.map(l => `<md-select-option value="${esc(l)}"${l === cfg.translateLang ? ' selected' : ''}><div slot="headline">${esc(l)}</div></md-select-option>`).join('');
+        const langOptionsHtml = langList.map(l => {
+            const lbl = l === CUSTOM_LANG_VAL ? tr('ai.translate_custom', 'Tùy chỉnh...') : l;
+            return `<md-select-option value="${esc(l)}"${l === cfg.translateLang ? ' selected' : ''}><div slot="headline">${esc(lbl)}</div></md-select-option>`;
+        }).join('');
         const savedTransCount = countSavedTranslations();
         const usageDescHtml = isMobileUi
-            ? `Đã tạo <b>${usage.runs}</b> danh sách phát • Đã lưu <b>${savedTransCount}</b> bản dịch lời • Ước tính <b>${usage.tokensEst}</b> token${usage.lastPlaylist ? ' • Gần nhất: <b>' + esc(usage.lastPlaylist) + '</b>' : ''}`
-            : `Đã lưu <b>${savedTransCount}</b> bản dịch lời bài hát trong ứng dụng • Ước tính <b>${usage.tokensEst}</b> token`;
+            ? (esc(tr('ai.usage_mobile', 'Đã tạo {runs} danh sách phát • Đã lưu {trans} bản dịch lời • Ước tính {tokens} token', { runs: usage.runs, trans: savedTransCount, tokens: usage.tokensEst }))
+                + (usage.lastPlaylist ? esc(tr('ai.usage_mobile_latest', ' • Gần nhất: {name}', { name: usage.lastPlaylist })) : ''))
+            : esc(tr('ai.usage_pc', 'Đã lưu {trans} bản dịch lời bài hát trong ứng dụng • Ước tính {tokens} token', { trans: savedTransCount, tokens: usage.tokensEst }));
 
         host.innerHTML = `
           ${pendingOpenLabAfterSetup ? `<div class="ai-sr ai-sr-banner ai-mobile-only">
-            <div class="ai-sr-t">Thiết lập AI lần đầu để tạo danh sách phát</div>
-            <div class="ai-sr-d">Nhập Gemini API Key rồi bấm Save — hệ thống sẽ tải danh sách mô hình và mở AI Playlist Lab.</div>
+            <div class="ai-sr-t">${esc(tr('ai.setup_banner_title', 'Thiết lập AI lần đầu để tạo danh sách phát'))}</div>
+            <div class="ai-sr-d">${esc(tr('ai.setup_banner_desc', 'Nhập Gemini API Key rồi bấm Lưu — hệ thống sẽ tải danh sách mô hình và mở AI Playlist Lab.'))}</div>
           </div>` : ''}
           <div class="ai-sr ai-sr-col ai-sr-select-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">Provider</span><span class="ai-sr-d">${isMobileUi ? 'Nhà cung cấp AI dùng để tạo danh sách phát và dịch lời bài hát' : 'Nhà cung cấp AI dùng cho các tính năng thông minh (dịch lời bài hát)'}</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.provider', 'Nhà cung cấp'))}</span><span class="ai-sr-d">${esc(isMobileUi ? tr('ai.provider_desc_mobile', 'Nhà cung cấp AI dùng để tạo danh sách phát và dịch lời bài hát') : tr('ai.provider_desc_pc', 'Nhà cung cấp AI dùng cho các tính năng thông minh (dịch lời bài hát)'))}</span></div>
             <md-outlined-select class="m3-select" data-ai-select="provider" value="Google Gemini">
               <md-select-option value="Google Gemini" selected><div slot="headline">Google Gemini</div></md-select-option>
             </md-outlined-select>
             <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="provider"><span>Google Gemini</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
           </div>
           <div class="ai-sr ai-sr-row ai-mobile-only">
-            <div class="ai-sr-text"><span class="ai-sr-t">Safe Token Mode</span><span class="ai-sr-d" data-ai-desc="safeToken">${cfg.safeToken ? 'Bật — nhanh &amp; tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.' : 'Tắt — gửi đầy đủ metadata và bộ lọc.'}</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.safe_token', 'Chế độ tiết kiệm token'))}</span><span class="ai-sr-d" data-ai-desc="safeToken">${esc(cfg.safeToken ? tr('ai.safe_token_on', 'Bật — nhanh & tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.') : tr('ai.safe_token_off', 'Tắt — gửi đầy đủ metadata và bộ lọc.'))}</span></div>
             <md-switch icons data-ai-field="safeToken"${cfg.safeToken ? ' selected' : ''}>
               <span class="material-symbols-rounded" slot="on-icon">check</span>
               <span class="material-symbols-rounded" slot="off-icon">close</span>
             </md-switch>
           </div>
           <div class="ai-sr ai-sr-col ai-sr-key-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">Google Gemini API Key</span><span class="ai-sr-d">Lấy tại Google AI Studio (aistudio.google.com)</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.api_key', 'Google Gemini API Key'))}</span><span class="ai-sr-d">${esc(tr('ai.api_key_desc', 'Lấy tại Google AI Studio (aistudio.google.com)'))}</span></div>
             <div class="ai-key-ctrl">
-              <input type="password" class="ai-input" data-ai-field="apiKey" placeholder="Dán Gemini API key..." value="${esc(cfg.apiKey || '')}">
-              <md-filled-tonal-button class="ai-pc-only" type="button" data-ai-action="save-key">Lưu &amp; tải mô hình</md-filled-tonal-button>
-              <button type="button" class="ai-save-btn ai-mobile-only" data-ai-action="save-key">Lưu &amp; tải mô hình</button>
+              <input type="password" class="ai-input" data-ai-field="apiKey" placeholder="${esc(tr('ai.api_key_placeholder', 'Dán Gemini API key...'))}" value="${esc(cfg.apiKey || '')}">
+              <md-filled-tonal-button class="ai-pc-only" type="button" data-ai-action="save-key">${esc(tr('ai.save_fetch', 'Lưu & tải mô hình'))}</md-filled-tonal-button>
+              <button type="button" class="ai-save-btn ai-mobile-only" data-ai-action="save-key">${esc(tr('ai.save_fetch', 'Lưu & tải mô hình'))}</button>
             </div>
           </div>
           <div class="ai-sr ai-sr-col ai-sr-select-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">AI Model</span><span class="ai-sr-d">${esc(modelDesc)}</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.model', 'Mô hình AI'))}</span><span class="ai-sr-d">${esc(modelDesc)}</span></div>
             <md-outlined-select class="m3-select" data-ai-select="model"${(!hasKey || fetchingModels || !fetchedModels.length) ? ' disabled' : ''}>
               ${modelOptionsHtml}
             </md-outlined-select>
             <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="model"${(!hasKey || fetchingModels) ? ' disabled' : ''}><span>${esc(modelLabel)}</span><span class="material-symbols-rounded" style="font-size:20px;">${fetchingModels ? 'sync' : 'expand_more'}</span></button>
           </div>
           <div class="ai-sr ai-sr-col ai-mobile-only">
-            <div class="ai-sr-text"><span class="ai-sr-t">System Prompt</span><span class="ai-sr-d">Tùy chỉnh cách AI hành xử và trả về JSON.</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.system_prompt', 'System Prompt'))}</span><span class="ai-sr-d">${esc(tr('ai.system_prompt_desc', 'Tùy chỉnh cách AI hành xử và trả về JSON.'))}</span></div>
             <div class="ai-chip-wrap">
-              <button type="button" class="ai-pill-btn${cfg.preset === 'curator' ? ' active' : ''}" data-ai-preset="curator">Professional Curator</button>
-              <button type="button" class="ai-pill-btn${cfg.preset === 'creative' ? ' active' : ''}" data-ai-preset="creative">Creative</button>
+              <button type="button" class="ai-pill-btn${cfg.preset === 'curator' ? ' active' : ''}" data-ai-preset="curator">${esc(tr('ai.preset_curator', 'Giám tuyển chuyên nghiệp'))}</button>
+              <button type="button" class="ai-pill-btn${cfg.preset === 'creative' ? ' active' : ''}" data-ai-preset="creative">${esc(tr('ai.preset_creative', 'Sáng tạo'))}</button>
             </div>
             <textarea class="ai-textarea" data-ai-field="systemPrompt">${esc(cfg.systemPrompt)}</textarea>
-            <button type="button" class="ai-save-btn" data-ai-action="save-prompt">Lưu</button>
+            <button type="button" class="ai-save-btn" data-ai-action="save-prompt">${esc(tr('ai.save', 'Lưu'))}</button>
           </div>
           <div class="ai-sr ai-sr-col ai-sr-select-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">Ngôn ngữ dịch lời bài hát</span><span class="ai-sr-d">Bản dịch được lưu trực tiếp trong ứng dụng (tự xóa khi đặt lại cài đặt gốc hoặc tạo lại cơ sở dữ liệu).</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.translate_lang', 'Ngôn ngữ dịch lời bài hát'))}</span><span class="ai-sr-d">${esc(tr('ai.translate_lang_desc', 'Bản dịch được lưu trực tiếp trong ứng dụng (tự xóa khi đặt lại cài đặt gốc hoặc tạo lại cơ sở dữ liệu).'))}</span></div>
             <md-outlined-select class="m3-select" data-ai-select="translateLang">
               ${langOptionsHtml}
             </md-outlined-select>
             <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="translateLang"><span>${esc(cfg.translateLang)}</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
           </div>
           <div class="ai-sr ai-sr-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">Hiển thị lời song ngữ</span><span class="ai-sr-d" data-ai-desc="bilingualLyrics">${cfg.bilingualLyrics ? 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.' : 'Tắt — chỉ hiển thị lời đã dịch.'}</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.bilingual', 'Hiển thị lời song ngữ'))}</span><span class="ai-sr-d" data-ai-desc="bilingualLyrics">${esc(cfg.bilingualLyrics ? tr('ai.bilingual_on', 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.') : tr('ai.bilingual_off', 'Tắt — chỉ hiển thị lời đã dịch.'))}</span></div>
             <md-switch icons data-ai-field="bilingualLyrics"${cfg.bilingualLyrics ? ' selected' : ''}>
               <span class="material-symbols-rounded" slot="on-icon">check</span>
               <span class="material-symbols-rounded" slot="off-icon">close</span>
             </md-switch>
           </div>
           <div class="ai-sr ai-sr-col ai-sr-usage-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">Mức sử dụng AI</span><span class="ai-sr-d">${usageDescHtml}</span></div>
-            ${savedTransCount > 0 ? '<md-text-button class="ai-pc-only" type="button" data-ai-action="clear-trans">Xóa bản dịch đã lưu</md-text-button><button type="button" class="ai-pill-btn ai-mobile-only" data-ai-action="clear-trans"><span class="material-symbols-rounded" style="font-size:17px;">delete_sweep</span><span>Xóa bản dịch đã lưu</span></button>' : ''}
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.usage', 'Mức sử dụng AI'))}</span><span class="ai-sr-d">${usageDescHtml}</span></div>
+            ${savedTransCount > 0 ? `<md-text-button class="ai-pc-only" type="button" data-ai-action="clear-trans">${esc(tr('ai.clear_trans', 'Xóa bản dịch đã lưu'))}</md-text-button><button type="button" class="ai-pill-btn ai-mobile-only" data-ai-action="clear-trans"><span class="material-symbols-rounded" style="font-size:17px;">delete_sweep</span><span>${esc(tr('ai.clear_trans', 'Xóa bản dịch đã lưu'))}</span></button>` : ''}
           </div>
         `;
 
@@ -466,8 +485,8 @@
             pcLangSel.addEventListener('change', async () => {
                 const val = pcLangSel.value;
                 let chosen = val;
-                if (val === 'Tùy chỉnh...') {
-                    const custom = await askText('Ngôn ngữ dịch tùy chỉnh', 'Ví dụ: Tiếng Việt, English, Thai...');
+                if (val === CUSTOM_LANG_VAL) {
+                    const custom = await askText(tr('ai.translate_custom_title', 'Ngôn ngữ dịch tùy chỉnh'), tr('ai.translate_custom_label', 'Ví dụ: Tiếng Việt, English, Thai...'));
                     if (!custom || !custom.trim()) { syncAllSettingsHosts(); return; }
                     chosen = custom.trim();
                 }
@@ -481,7 +500,7 @@
         }
 
         host.querySelector('[data-ai-open-sheet="provider"]')?.addEventListener('click', () => {
-            openChoiceSheet('Provider', PROVIDERS, 'Google Gemini', () => {
+            openChoiceSheet(tr('ai.provider', 'Nhà cung cấp'), PROVIDERS, 'Google Gemini', () => {
                 cfg.provider = 'Google Gemini';
                 saveCfg(cfg);
                 syncAllSettingsHosts();
@@ -491,7 +510,7 @@
             if (!cfg.apiKey) return;
             const list = fetchedModels.length ? fetchedModels : await fetchGeminiModels(cfg.apiKey, false);
             if (!list.length) return;
-            openChoiceSheet('AI Model', list, cfg.model, (val) => {
+            openChoiceSheet(tr('ai.model', 'Mô hình AI'), list, cfg.model, (val) => {
                 cfg.model = val;
                 saveCfg(cfg);
                 syncAllSettingsHosts();
@@ -506,8 +525,8 @@
             const descEl = host.querySelector('[data-ai-desc="bilingualLyrics"]');
             if (descEl) {
                 descEl.textContent = cfg.bilingualLyrics
-                    ? 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.'
-                    : 'Tắt — chỉ hiển thị lời đã dịch.';
+                    ? tr('ai.bilingual_on', 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.')
+                    : tr('ai.bilingual_off', 'Tắt — chỉ hiển thị lời đã dịch.');
             }
             if (typeof renderLyrics === 'function') renderLyrics();
             if (typeof syncLyrics === 'function') syncLyrics();
@@ -524,8 +543,8 @@
             const descEl = host.querySelector('[data-ai-desc="safeToken"]');
             if (descEl) {
                 descEl.textContent = cfg.safeToken
-                    ? 'Bật — nhanh & tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.'
-                    : 'Tắt — gửi đầy đủ metadata và bộ lọc.';
+                    ? tr('ai.safe_token_on', 'Bật — nhanh & tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.')
+                    : tr('ai.safe_token_off', 'Tắt — gửi đầy đủ metadata và bộ lọc.');
             }
         });
         host.querySelectorAll('[data-ai-preset]').forEach(btn => {
@@ -558,7 +577,7 @@
                     return;
                 }
                 saveCfg(cfg);
-                if (typeof showToast === 'function') showToast('Đang lưu API Key & tải danh sách mô hình Gemini...', 'sync', 2000);
+                if (typeof showToast === 'function') showToast(tr('ai.toast_saving_key', 'Đang lưu API Key & tải danh sách mô hình Gemini...'), 'sync', 2000);
                 await fetchGeminiModels(cfg.apiKey, false);
                 maybeContinueToLab();
             });
@@ -569,7 +588,7 @@
             if (ta) cfg.systemPrompt = ta.value;
             if (sp) cfg.safeToken = !!sp.selected;
             saveCfg(cfg);
-            if (typeof showToast === 'function') showToast('Đã lưu cấu hình AI!', 'check_circle', 2200);
+            if (typeof showToast === 'function') showToast(tr('ai.toast_saved_cfg', 'Đã lưu cấu hình AI!'), 'check_circle', 2200);
             syncAllSettingsHosts();
             maybeContinueToLab();
         });
@@ -611,99 +630,101 @@
         if (!document.getElementById('ai-playlist-lab-modal')) {
             const lab = document.createElement('div');
             lab.id = 'ai-playlist-lab-modal';
-            const moodChips = MOODS.map(x => `<button type="button" class="ai-chip" data-mood="${x}">${x}</button>`).join('') +
-                `<button type="button" class="ai-chip" id="ai-add-custom-mood">+ Custom...</button>`;
-            const actChips = ACTIVITIES.map(x => `<button type="button" class="ai-chip" data-act="${x}">${x}</button>`).join('') +
-                `<button type="button" class="ai-chip" id="ai-add-custom-act">+ Custom...</button>`;
-            const eraChips = ERAS.map(x => `<button type="button" class="ai-chip${x === 'Any era' ? ' active' : ''}" data-era="${x}">${x}</button>`).join('');
+            const moodChips = MOODS.map(x => `<button type="button" class="ai-chip" data-mood="${x}" data-i18n="${MOOD_KEYS[x]}">${tr(MOOD_KEYS[x], x)}</button>`).join('') +
+                `<button type="button" class="ai-chip" id="ai-add-custom-mood" data-i18n="ai.add_custom">${tr('ai.add_custom', '+ Tùy chỉnh...')}</button>`;
+            const actChips = ACTIVITIES.map(x => `<button type="button" class="ai-chip" data-act="${x}" data-i18n="${ACT_KEYS[x]}">${tr(ACT_KEYS[x], x)}</button>`).join('') +
+                `<button type="button" class="ai-chip" id="ai-add-custom-act" data-i18n="ai.add_custom">${tr('ai.add_custom', '+ Tùy chỉnh...')}</button>`;
+            const eraChips = ERAS.map(x => x === 'Any era'
+                ? `<button type="button" class="ai-chip active" data-era="${x}" data-i18n="ai.era_any">${tr('ai.era_any', 'Mọi thời kỳ')}</button>`
+                : `<button type="button" class="ai-chip" data-era="${x}">${x}</button>`).join('');
             const seg5 = (cls) => [1, 2, 3, 4, 5].map(n => `<button type="button" class="${cls}${n === 3 ? ' active' : ''}" data-val="${n}">${n === 3 ? '<span class="material-symbols-rounded" style="font-size:18px;">check</span>3' : n}</button>`).join('');
 
             lab.innerHTML = `
               <div class="ai-modal-top">
                 <button type="button" class="ai-icon-btn" id="ai-lab-close"><span class="material-symbols-rounded">close</span></button>
-                <h2>AI Playlist Lab</h2>
-                <button type="button" class="ai-icon-btn" id="ai-lab-open-cfg" title="AI Settings"><span class="material-symbols-rounded">tune</span></button>
+                <h2 data-i18n="ai.lab_title">${tr('ai.lab_title', 'AI Playlist Lab')}</h2>
+                <button type="button" class="ai-icon-btn" id="ai-lab-open-cfg" title="${tr('ai.lab_settings_title', 'Cài đặt AI')}" data-i18n-title="ai.lab_settings_title"><span class="material-symbols-rounded">tune</span></button>
               </div>
               <div class="ai-modal-body">
                 <div class="ai-banner-info">
                   <div style="display:flex;align-items:center;gap:12px;">
                     <span class="material-symbols-rounded" style="font-size:28px;">auto_awesome</span>
                     <div>
-                      <div style="font-size:calc(17px * var(--font-scale-factor, 1));font-weight:800;">Curate with precision</div>
-                      <div style="font-size:calc(12.5px * var(--font-scale-factor, 1));opacity:.85;">Define mood, activity, constraints and depth.</div>
+                      <div style="font-size:calc(17px * var(--font-scale-factor, 1));font-weight:800;" data-i18n="ai.lab_banner_title">${tr('ai.lab_banner_title', 'Tuyển chọn chuẩn gu')}</div>
+                      <div style="font-size:calc(12.5px * var(--font-scale-factor, 1));opacity:.85;" data-i18n="ai.lab_banner_sub">${tr('ai.lab_banner_sub', 'Chọn tâm trạng, hoạt động, bộ lọc và độ khám phá.')}</div>
                     </div>
                   </div>
-                  <div style="border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);padding-top:8px;font-size:calc(12.5px * var(--font-scale-factor, 1));opacity:.9;">
-                    The AI will only use songs from your local library (sending track name, file type, artist, album, duration &amp; format metadata) and return JSON.
+                  <div style="border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);padding-top:8px;font-size:calc(12.5px * var(--font-scale-factor, 1));opacity:.9;" data-i18n="ai.lab_banner_note">
+                    ${tr('ai.lab_banner_note', 'AI chỉ chọn bài từ thư viện trên máy của bạn (gửi tên bài, loại tệp, nghệ sĩ, album, thời lượng & định dạng) và trả về JSON.')}
                   </div>
                 </div>
 
-                <div class="ai-st-sec">Intent</div>
+                <div class="ai-st-sec" data-i18n="ai.sec_intent">${tr('ai.sec_intent', 'Ý tưởng')}</div>
                 <div class="ai-st-group">
                   <div class="ai-st-card">
-                    <input type="text" class="ai-input" id="ai-pl-name" placeholder="Playlist name (optional)">
-                    <textarea class="ai-textarea" id="ai-pl-feel" placeholder="What should this playlist feel like?"></textarea>
+                    <input type="text" class="ai-input" id="ai-pl-name" placeholder="${tr('ai.pl_name_placeholder', 'Tên danh sách phát (tùy chọn)')}" data-i18n-placeholder="ai.pl_name_placeholder">
+                    <textarea class="ai-textarea" id="ai-pl-feel" placeholder="${tr('ai.pl_feel_placeholder', 'Bạn muốn danh sách phát này mang cảm giác như thế nào?')}" data-i18n-placeholder="ai.pl_feel_placeholder"></textarea>
                   </div>
                 </div>
 
-                <div class="ai-st-sec">Direction</div>
+                <div class="ai-st-sec" data-i18n="ai.sec_direction">${tr('ai.sec_direction', 'Định hướng')}</div>
                 <div class="ai-st-group">
                   <div class="ai-st-card">
-                    <div class="ai-card-title">Mood</div>
+                    <div class="ai-card-title" data-i18n="ai.mood">${tr('ai.mood', 'Tâm trạng')}</div>
                     <div class="ai-chip-wrap" id="ai-mood-wrap">${moodChips}</div>
                   </div>
                   <div class="ai-st-card">
-                    <div class="ai-card-title">Activity</div>
+                    <div class="ai-card-title" data-i18n="ai.activity">${tr('ai.activity', 'Hoạt động')}</div>
                     <div class="ai-chip-wrap" id="ai-act-wrap">${actChips}</div>
                   </div>
                   <div class="ai-st-card">
-                    <div class="ai-card-title">Era</div>
+                    <div class="ai-card-title" data-i18n="ai.era">${tr('ai.era', 'Thập niên')}</div>
                     <div class="ai-chip-wrap" id="ai-era-wrap">${eraChips}</div>
                   </div>
                 </div>
 
-                <div class="ai-st-sec">Curation engine</div>
+                <div class="ai-st-sec" data-i18n="ai.sec_engine">${tr('ai.sec_engine', 'Bộ máy tuyển chọn')}</div>
                 <div class="ai-st-group">
                   <div class="ai-st-card">
-                    <div class="ai-row-flex"><span class="ai-card-title">Energy</span><span id="ai-energy-lbl" style="font-weight:700;color:var(--md-sys-color-primary);">3/5</span></div>
+                    <div class="ai-row-flex"><span class="ai-card-title" data-i18n="ai.energy">${tr('ai.energy', 'Năng lượng')}</span><span id="ai-energy-lbl" style="font-weight:700;color:var(--md-sys-color-primary);">3/5</span></div>
                     <div class="ai-seg-5" id="ai-energy-seg">${seg5('ai-e-btn')}</div>
                   </div>
                   <div class="ai-st-card">
-                    <div class="ai-row-flex"><span class="ai-card-title">Discovery</span><span id="ai-disc-lbl" style="font-weight:700;color:var(--md-sys-color-primary);">3/5</span></div>
+                    <div class="ai-row-flex"><span class="ai-card-title" data-i18n="ai.discovery">${tr('ai.discovery', 'Độ khám phá')}</span><span id="ai-disc-lbl" style="font-weight:700;color:var(--md-sys-color-primary);">3/5</span></div>
                     <div class="ai-seg-5" id="ai-disc-seg">${seg5('ai-d-btn')}</div>
                   </div>
                   <div class="ai-st-card">
                     <div class="ai-two-col">
-                      <div><div class="ai-card-desc" style="margin-bottom:6px;">Min songs</div><input type="number" class="ai-input" id="ai-min-songs" min="1" max="100" value="12"></div>
-                      <div><div class="ai-card-desc" style="margin-bottom:6px;">Max songs</div><input type="number" class="ai-input" id="ai-max-songs" min="1" max="200" value="24"></div>
+                      <div><div class="ai-card-desc" style="margin-bottom:6px;" data-i18n="ai.min_songs">${tr('ai.min_songs', 'Số bài tối thiểu')}</div><input type="number" class="ai-input" id="ai-min-songs" min="1" max="100" value="12"></div>
+                      <div><div class="ai-card-desc" style="margin-bottom:6px;" data-i18n="ai.max_songs">${tr('ai.max_songs', 'Số bài tối đa')}</div><input type="number" class="ai-input" id="ai-max-songs" min="1" max="200" value="24"></div>
                     </div>
                   </div>
                 </div>
 
-                <div class="ai-st-sec">Filters</div>
+                <div class="ai-st-sec" data-i18n="ai.sec_filters">${tr('ai.sec_filters', 'Bộ lọc')}</div>
                 <div class="ai-st-group">
                   <div class="ai-st-card">
-                    <input type="text" class="ai-input" id="ai-prio-genres" placeholder="Prioritize genres (optional)">
-                    <input type="text" class="ai-input" id="ai-avoid-genres" placeholder="Avoid genres (optional)">
-                    <input type="text" class="ai-input" id="ai-pref-lang" placeholder="Preferred language (optional)">
+                    <input type="text" class="ai-input" id="ai-prio-genres" placeholder="${tr('ai.prio_genres_placeholder', 'Ưu tiên thể loại (tùy chọn)')}" data-i18n-placeholder="ai.prio_genres_placeholder">
+                    <input type="text" class="ai-input" id="ai-avoid-genres" placeholder="${tr('ai.avoid_genres_placeholder', 'Tránh thể loại (tùy chọn)')}" data-i18n-placeholder="ai.avoid_genres_placeholder">
+                    <input type="text" class="ai-input" id="ai-pref-lang" placeholder="${tr('ai.pref_lang_placeholder', 'Ngôn ngữ ưu tiên (tùy chọn)')}" data-i18n-placeholder="ai.pref_lang_placeholder">
                   </div>
                   <div class="ai-st-card">
                     <div class="ai-row-flex">
-                      <span class="ai-card-title">Prioritize favorites</span>
+                      <span class="ai-card-title" data-i18n="ai.prio_favs">${tr('ai.prio_favs', 'Ưu tiên bài yêu thích')}</span>
                       <md-switch icons id="ai-prio-favs" selected><span class="material-symbols-rounded" slot="on-icon">check</span><span class="material-symbols-rounded" slot="off-icon">close</span></md-switch>
                     </div>
                   </div>
                   <div class="ai-st-card">
                     <div class="ai-row-flex">
-                      <span class="ai-card-title">Avoid explicit lyrics</span>
+                      <span class="ai-card-title" data-i18n="ai.avoid_explicit">${tr('ai.avoid_explicit', 'Tránh lời nhạy cảm')}</span>
                       <md-switch icons id="ai-avoid-exp"><span class="material-symbols-rounded" slot="on-icon">check</span><span class="material-symbols-rounded" slot="off-icon">close</span></md-switch>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="ai-lab-footer">
-                <button type="button" class="ai-reset-btn" id="ai-lab-reset">Reset</button>
-                <button type="button" class="ai-gen-btn" id="ai-lab-generate"><span class="material-symbols-rounded">auto_awesome</span><span>Generate</span></button>
+                <button type="button" class="ai-reset-btn" id="ai-lab-reset" data-i18n="ai.reset">${tr('ai.reset', 'Đặt lại')}</button>
+                <button type="button" class="ai-gen-btn" id="ai-lab-generate"><span class="material-symbols-rounded">auto_awesome</span><span data-i18n="ai.generate">${tr('ai.generate', 'Tạo playlist')}</span></button>
               </div>
             `;
             document.body.appendChild(lab);
