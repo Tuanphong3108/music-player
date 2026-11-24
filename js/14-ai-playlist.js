@@ -57,7 +57,7 @@
         const model = apiKey && savedModel && (!cachedModels.length || cachedModels.includes(savedModel))
             ? savedModel
             : (apiKey && cachedModels.length ? cachedModels[0] : '');
-        const defaultLang = /^en/i.test(localStorage.getItem('settings_language') || '') ? 'English' : 'Tiếng Việt';
+        const defaultLang = 'Tiếng Việt';
         return {
             provider: 'Google Gemini',
             safeToken: saved.safeToken !== false,
@@ -415,9 +415,16 @@
             </md-outlined-select>
             <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="provider"><span>Google Gemini</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
           </div>
-          <div class="ai-sr ai-sr-row ai-mobile-only">
-            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.safe_token', 'Chế độ tiết kiệm token'))}</span><span class="ai-sr-d" data-ai-desc="safeToken">${esc(cfg.safeToken ? tr('ai.safe_token_on', 'Bật — nhanh & tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.') : tr('ai.safe_token_off', 'Tắt — gửi đầy đủ metadata và bộ lọc.'))}</span></div>
-            <md-switch icons data-ai-field="safeToken"${cfg.safeToken ? ' selected' : ''}>
+          <div class="ai-sr ai-sr-col ai-sr-select-row">
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.translate_lang', 'Ngôn ngữ dịch lời bài hát'))}</span><span class="ai-sr-d">${esc(tr('ai.translate_lang_desc', 'Bản dịch được lưu trực tiếp trong ứng dụng (tự xóa khi đặt lại cài đặt gốc hoặc tạo lại cơ sở dữ liệu).'))}</span></div>
+            <md-outlined-select class="m3-select" data-ai-select="translateLang">
+              ${langOptionsHtml}
+            </md-outlined-select>
+            <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="translateLang"><span>${esc(cfg.translateLang)}</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
+          </div>
+          <div class="ai-sr ai-sr-row">
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.bilingual', 'Hiển thị lời song ngữ'))}</span><span class="ai-sr-d" data-ai-desc="bilingualLyrics">${esc(cfg.bilingualLyrics ? tr('ai.bilingual_on', 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.') : tr('ai.bilingual_off', 'Tắt — chỉ hiển thị lời đã dịch.'))}</span></div>
+            <md-switch icons data-ai-field="bilingualLyrics"${cfg.bilingualLyrics ? ' selected' : ''}>
               <span class="material-symbols-rounded" slot="on-icon">check</span>
               <span class="material-symbols-rounded" slot="off-icon">close</span>
             </md-switch>
@@ -437,6 +444,13 @@
             </md-outlined-select>
             <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="model"${(!hasKey || fetchingModels) ? ' disabled' : ''}><span>${esc(modelLabel)}</span><span class="material-symbols-rounded" style="font-size:20px;">${fetchingModels ? 'sync' : 'expand_more'}</span></button>
           </div>
+          <div class="ai-sr ai-sr-row ai-mobile-only">
+            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.safe_token', 'Chế độ tiết kiệm token'))}</span><span class="ai-sr-d" data-ai-desc="safeToken">${esc(cfg.safeToken ? tr('ai.safe_token_on', 'Bật — nhanh & tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.') : tr('ai.safe_token_off', 'Tắt — gửi đầy đủ metadata và bộ lọc.'))}</span></div>
+            <md-switch icons data-ai-field="safeToken"${cfg.safeToken ? ' selected' : ''}>
+              <span class="material-symbols-rounded" slot="on-icon">check</span>
+              <span class="material-symbols-rounded" slot="off-icon">close</span>
+            </md-switch>
+          </div>
           <div class="ai-sr ai-sr-col ai-mobile-only">
             <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.system_prompt', 'System Prompt'))}</span><span class="ai-sr-d">${esc(tr('ai.system_prompt_desc', 'Tùy chỉnh cách AI hành xử và trả về JSON.'))}</span></div>
             <div class="ai-chip-wrap">
@@ -445,20 +459,6 @@
             </div>
             <textarea class="ai-textarea" data-ai-field="systemPrompt">${esc(cfg.systemPrompt)}</textarea>
             <button type="button" class="ai-save-btn" data-ai-action="save-prompt">${esc(tr('ai.save', 'Lưu'))}</button>
-          </div>
-          <div class="ai-sr ai-sr-col ai-sr-select-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.translate_lang', 'Ngôn ngữ dịch lời bài hát'))}</span><span class="ai-sr-d">${esc(tr('ai.translate_lang_desc', 'Bản dịch được lưu trực tiếp trong ứng dụng (tự xóa khi đặt lại cài đặt gốc hoặc tạo lại cơ sở dữ liệu).'))}</span></div>
-            <md-outlined-select class="m3-select" data-ai-select="translateLang">
-              ${langOptionsHtml}
-            </md-outlined-select>
-            <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="translateLang"><span>${esc(cfg.translateLang)}</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
-          </div>
-          <div class="ai-sr ai-sr-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.bilingual', 'Hiển thị lời song ngữ'))}</span><span class="ai-sr-d" data-ai-desc="bilingualLyrics">${esc(cfg.bilingualLyrics ? tr('ai.bilingual_on', 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.') : tr('ai.bilingual_off', 'Tắt — chỉ hiển thị lời đã dịch.'))}</span></div>
-            <md-switch icons data-ai-field="bilingualLyrics"${cfg.bilingualLyrics ? ' selected' : ''}>
-              <span class="material-symbols-rounded" slot="on-icon">check</span>
-              <span class="material-symbols-rounded" slot="off-icon">close</span>
-            </md-switch>
           </div>
           <div class="ai-sr ai-sr-col ai-sr-usage-row">
             <div class="ai-sr-text"><span class="ai-sr-t">${esc(tr('ai.usage', 'Mức sử dụng AI'))}</span><span class="ai-sr-d">${usageDescHtml}</span></div>
