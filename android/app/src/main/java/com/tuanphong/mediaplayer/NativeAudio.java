@@ -119,15 +119,18 @@ final class NativeAudio {
         sleepTracks = 0;
         sleepTotalTracks = 0;
         ph.removeCallbacks(sleepRun);
+        ph.removeCallbacks(ticker);
         sleepFiredPending = true;
         sleepFiredType = type;
         sleepFiredTotal = total;
         pauseImpl();
+        final JSONObject snap = snapshot("sleep");
         emit("sleep");
-        if (app != null && isAppInBackground(app)) {
-            showSleepEndedNotification(app, type, total);
+        Context ctx = app != null ? app : (MainActivity.instance != null ? MainActivity.instance.getApplicationContext() : null);
+        if (ctx != null && (isAppInBackground(ctx) || !webAlive())) {
+            showSleepEndedNotification(ctx, type, total);
         }
-        uiH.post(() -> MediaService.onNative(snapshot("sleep")));
+        uiH.post(() -> MediaService.onNative(snap));
     }
 
     static boolean hasPendingSleepEndedNotice() {
@@ -338,6 +341,10 @@ final class NativeAudio {
             }
             @Override public void onPlayWhenReadyChanged(boolean pwr, int reason) {
                 ph.removeCallbacks(ticker);
+                // Sau khi hết bài & dừng theo hẹn giờ ngủ, không bắn lại state/tick với STATE_ENDED kẻo WebView tưởng hết bài thường rồi tự nhảy bài kế
+                if (!pwr && endedHandled && p != null && p.getPlaybackState() == Player.STATE_ENDED) {
+                    return;
+                }
                 if (loaded) ph.postDelayed(ticker, 500);
                 emit("state");
             }
