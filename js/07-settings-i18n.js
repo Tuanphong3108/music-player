@@ -50,6 +50,9 @@
         function applyTranslationsEverywhere() {
             applyTranslations(currentLangDict, document);
             if (typeof renderLyrics === 'function') renderLyrics();
+            if (typeof window.__onAiLanguageChanged === 'function') {
+                try { window.__onAiLanguageChanged(); } catch (e) {}
+            }
             try {
                 if (typeof customPipWindow !== 'undefined' && customPipWindow) {
                     applyTranslations(currentLangDict, customPipWindow.document);
