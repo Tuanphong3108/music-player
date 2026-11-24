@@ -605,9 +605,14 @@
             const hadFiles = files && files.length > 0;
             if (!hadFiles) { if (window.addBtnArrow && typeof addBtnCancel === 'function') addBtnCancel(); return; }
             if (typeof addBtnBusy === 'function') addBtnBusy();
-            try { await handleFilesInner(files, opts); }
-            finally {
-                if (playlist.length > before) { if (typeof addBtnDone === 'function') addBtnDone(); }
+            let upgradedFs = false;
+            try {
+                upgradedFs = !!(await handleFilesInner(files, opts));
+            } catch (err) {
+                console.error('Lỗi nạp tệp trong handleFiles:', err);
+                if (typeof showToast === 'function') showToast('Không nạp được tệp: ' + (err && err.message ? err.message : String(err)), 'error', 4000);
+            } finally {
+                if (playlist.length > before || upgradedFs) { if (typeof addBtnDone === 'function') addBtnDone(); }
                 else { if (typeof addBtnCancel === 'function') addBtnCancel(); }
             }
         }
@@ -653,6 +658,7 @@
             const dupMap = new Map();
             const dupKey = (n, a, loc) => loc ? ('loc:' + String(loc).toLowerCase()) : (String(n || '').toLowerCase() + '\u0001' + String(a || '').toLowerCase());
             playlist.forEach((t, i) => { const k = dupKey(t.name, t.artist, t.nativeLocation); if (!dupMap.has(k)) dupMap.set(k, i); });
+            let upgradedFs = false;
             for (const file of audioFiles) {
                 let title = file.__metaTitle || file.name.replace(/\.[^/.]+$/, "");
                 let artist = file.__metaArtist || "UNKNOWN ARTIST";
@@ -665,38 +671,46 @@
                 
                 await new Promise((resolve) => {
                     if (file.__nativeUrl || file.__fromLibrary || !window.jsmediatags) return resolve();   // tệp thư viện (virtual File) hoặc stream URL: bỏ qua jsmediatags ở bước nạp danh sách, metadata đầy đủ sẽ đọc qua native/hydrate
+                    let settled = false;
+                    const done = () => { if (!settled) { settled = true; clearTimeout(timer); resolve(); } };
+                    const timer = setTimeout(done, 4000);
                     try {
                         window.jsmediatags.read(file, {
                             onSuccess: function(tag) {
-                                if (tag.tags.title) title = tag.tags.title;
-                                if (tag.tags.artist) artist = tag.tags.artist;
-                                if (tag.tags.album) album = tag.tags.album;
-                                if (tag.tags.year) year = tag.tags.year;
-                                if (tag.tags.genre) genre = tag.tags.genre;
-                                {
-                                    // jsmediatags không có shortcut "composer": ID3 nằm ở frame TCOM, MP4 ở ©wrt
-                                    const c = tag.tags.composer || tag.tags.TCOM || tag.tags['©wrt'] || tag.tags.COMPOSER;
-                                    if (c) composer = (typeof c === 'object' ? (c.data != null ? c.data : '') : c);
-                                    if (Array.isArray(composer)) composer = composer.join(', ');
-                                    composer = String(composer || '');
-                                }
-                                // Hỗ trợ Lyric Embed cho các tệp nhạc phổ biến
-                                if (tag.tags.USLT) {
-                                    lyricsRaw = typeof tag.tags.USLT.data === 'object' ? tag.tags.USLT.data.lyrics : tag.tags.USLT.data;
-                                }
-                                if (tag.tags.picture) {
-                                    const { data, format } = tag.tags.picture;
-                                    let base64String = "";
-                                    for (let i = 0; i < data.length; i++) {
-                                        base64String += String.fromCharCode(data[i]);
+                                try {
+                                    const tags = (tag && tag.tags) || {};
+                                    if (tags.title) title = tags.title;
+                                    if (tags.artist) artist = tags.artist;
+                                    if (tags.album) album = tags.album;
+                                    if (tags.year) year = tags.year;
+                                    if (tags.genre) genre = tags.genre;
+                                    {
+                                        // jsmediatags không có shortcut "composer": ID3 nằm ở frame TCOM, MP4 ở ©wrt
+                                        const c = tags.composer || tags.TCOM || tags['©wrt'] || tags.COMPOSER;
+                                        if (c) composer = (typeof c === 'object' ? (c.data != null ? c.data : '') : c);
+                                        if (Array.isArray(composer)) composer = composer.join(', ');
+                                        composer = String(composer || '');
                                     }
-                                    cover = `data:${format};base64,${window.btoa(base64String)}`;
-                                }
-                                resolve();
+                                    // Hỗ trợ Lyric Embed cho các tệp nhạc phổ biến
+                                    if (tags.USLT) {
+                                        lyricsRaw = typeof tags.USLT.data === 'object' ? tags.USLT.data.lyrics : tags.USLT.data;
+                                    }
+                                    if (tags.picture && tags.picture.data && tags.picture.data.length) {
+                                        const { data, format } = tags.picture;
+                                        const bytes = new Uint8Array(data);
+                                        let base64String = "";
+                                        const CHUNK = 8192;
+                                        for (let i = 0; i < bytes.length; i += CHUNK) {
+                                            base64String += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+                                        }
+                                        cover = `data:${format || 'image/jpeg'};base64,${window.btoa(base64String)}`;
+                                    }
+                                } catch (e) { console.warn('Lỗi phân tích tag bài hát:', e); }
+                                done();
                             },
-                            onError: function() { resolve(); }
+                            onError: function() { done(); }
                         });
-                    } catch (e) { resolve(); }
+                    } catch (e) { done(); }
                 });
 
                 const url = file.__nativeUrl || URL.createObjectURL(file);
@@ -708,6 +722,12 @@
                 const existingIndex = dupMap.has(dupKey(title, artist, file.__nativeLocation)) ? dupMap.get(dupKey(title, artist, file.__nativeLocation)) : -1;
 
                 if (existingIndex !== -1) {
+                    const ex = playlist[existingIndex];
+                    if (ex && file.fileHandle && !ex.fileHandle) {
+                        ex.fileHandle = file.fileHandle;
+                        ex.file = file;
+                        upgradedFs = true;
+                    }
                     lastAutoPlayIndex = existingIndex;
                 } else {
                     const newTrack = { 
@@ -776,6 +796,7 @@
             bgPreview.classList.add('visible');
             initVisualizer();
             if (currentIndex !== -1) renderLyrics();
+            return upgradedFs;
         }
 
         const LRC_HEADER_TAG = /^\s*\[(?:audioplayer:LRCLIB|(?:ti|ar|al|au|by|la|ve|length|offset|re|tool):[^\]]*)\]\s*$/i;
