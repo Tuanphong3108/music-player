@@ -405,7 +405,17 @@ final class NativeAudio {
     static void pause() { ph.post(NativeAudio::pauseImpl); }
     private static void pauseImpl() { if (p != null && loaded) p.setPlayWhenReady(false); }
     static void toggle() { ph.post(() -> { if (p != null && loaded) { if (p.getPlayWhenReady() && p.getPlaybackState() != Player.STATE_ENDED) pauseImpl(); else playImpl(); } }); }
-    static void seek(final long ms) { ph.post(() -> { if (p != null && loaded) { endedHandled = false; p.seekTo(Math.max(0, ms)); emit("seek"); } }); }
+    static void seek(final long ms) {
+        ph.post(() -> {
+            if (p == null || !loaded) return;
+            endedHandled = false;
+            long t = Math.max(0, ms);
+            long d = p.getDuration();
+            // Không để một lệnh tua (vd. từ thông báo) vượt/chạm cuối bài: sẽ bị coi là hết bài rồi lặp/nhảy lại từ đầu
+            if (d != C.TIME_UNSET && d > 2000 && t > d - 800) t = d - 800;
+            p.seekTo(t);
+        });
+    }
     static void setVolume(final float v) { ph.post(() -> { vol = (v < 1f && isAppInBackground(app)) ? 1f : v; if (p != null) p.setVolume(vol); }); }
     static void setRate(final float r) { ph.post(() -> { rate = r <= 0 ? 1f : r; if (p != null) p.setPlaybackParameters(new PlaybackParameters(rate)); }); }
 
