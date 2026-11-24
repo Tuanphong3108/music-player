@@ -189,11 +189,14 @@ final class NativeAudio {
     }
 
     static void consumeSleepEndedNotice() {
+        Context ctx = app != null ? app : (MainActivity.instance != null ? MainActivity.instance.getApplicationContext() : null);
+        // Không cho WebView chạy nền tự hủy thông báo khi người dùng chưa quay lại màn hình app
+        if (ctx != null && isAppInBackground(ctx)) return;
         sleepFiredPending = false;
         sleepFiredType = "";
         sleepFiredTotal = 0L;
-        if (app != null) {
-            cancelSleepEndedNotification(app);
+        if (ctx != null) {
+            cancelSleepEndedNotification(ctx);
         }
     }
 
