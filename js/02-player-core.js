@@ -1034,12 +1034,54 @@
         (function () {
             const body = document.body, panel = document.getElementById('m-lyric-panel');
             const playB = document.getElementById('m-lyric-play'), seek = document.getElementById('m-lyric-seek');
-            let dragging = false;
+            let dragging = false, activePtr = null, lastPct = 0;
+            const seekHost = seek.parentElement || seek;
             const show = () => { body.classList.add('m-lyric-ui'); };
             lyricOverlay.addEventListener('click', () => { if (document.documentElement.classList.contains('m-ui')) show(); });
-            seek.addEventListener('pointerdown', () => { dragging = true; });
-            window.addEventListener('pointerup', () => { if (dragging) { dragging = false; } });
-            seek.addEventListener('input', () => { if (isFinite(audio.duration)) audio.currentTime = seek.value / 100 * audio.duration; });
+            const pctFromX = (clientX) => {
+                const r = seek.getBoundingClientRect();
+                if (!r.width) return 0;
+                return Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100));
+            };
+            const applyLyricPreview = (pct) => {
+                lastPct = pct;
+                seek.value = pct;
+                seek.dispatchEvent(new Event('input', { bubbles: false }));
+            };
+            const endLyricDrag = (shouldCommit) => {
+                if (!dragging) return;
+                const pid = activePtr;
+                dragging = false;
+                activePtr = null;
+                if (pid != null) {
+                    try { if (seekHost.hasPointerCapture && seekHost.hasPointerCapture(pid)) seekHost.releasePointerCapture(pid); } catch (e) {}
+                }
+                if (shouldCommit && isFinite(audio.duration) && audio.duration > 0) {
+                    audio.currentTime = (lastPct / 100) * audio.duration;
+                }
+            };
+            seekHost.addEventListener('pointerdown', (e) => {
+                if (e.button !== undefined && e.button !== 0) return;
+                if (!isFinite(audio.duration) || audio.duration <= 0) return;
+                e.preventDefault();
+                dragging = true;
+                activePtr = e.pointerId;
+                try { if (seekHost.setPointerCapture) seekHost.setPointerCapture(e.pointerId); } catch (err) {}
+                applyLyricPreview(pctFromX(e.clientX));
+            });
+            seekHost.addEventListener('pointermove', (e) => {
+                if (!dragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                applyLyricPreview(pctFromX(e.clientX));
+            });
+            seekHost.addEventListener('pointerup', (e) => {
+                if (!dragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                applyLyricPreview(pctFromX(e.clientX));
+                endLyricDrag(true);
+            });
+            seekHost.addEventListener('pointercancel', () => endLyricDrag(true));
+            seekHost.addEventListener('lostpointercapture', () => endLyricDrag(true));
+            window.addEventListener('blur', () => endLyricDrag(false));
+            seek.addEventListener('input', () => { if (!dragging && isFinite(audio.duration) && audio.duration > 0) audio.currentTime = seek.value / 100 * audio.duration; });
             audio.addEventListener('timeupdate', () => { if (!dragging && isFinite(audio.duration) && audio.duration > 0) seek.value = audio.currentTime / audio.duration * 100; });
             const icon = () => { playB.firstElementChild.textContent = audio.paused ? 'play_arrow' : 'pause'; };
             audio.addEventListener('play', icon); audio.addEventListener('pause', icon); icon();
