@@ -349,6 +349,27 @@ public class MediaService extends Service {
     }
 
 
+    /** Album art hiện có trong MediaSession của Media Player (không phải của app khác); null nếu chưa có phiên/ảnh. */
+    static Bitmap sessionArt() {
+        MediaService s = inst;
+        if (s == null || s.session == null) return null;
+        try {
+            android.media.session.MediaController c = s.session.getController();
+            MediaMetadata md = c == null ? null : c.getMetadata();
+            return md == null ? null : md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
+        } catch (Throwable ignored) { return null; }
+    }
+
+    private Bitmap lastWidgetArt;
+    /** Đồng bộ ảnh bìa từ MediaSession sang widget (lưu tệp để vẫn còn khi tiến trình bị kill) và làm mới widget khi ảnh đổi. */
+    private void syncWidgetArt() {
+        try {
+            if (art == lastWidgetArt) return;
+            lastWidgetArt = art;
+            MediaWidgetProvider.saveArtwork(this, art);
+        } catch (Throwable ignored) {}
+    }
+
     /** Đọc trực tiếp vị trí và thời lượng từ MediaSession (tự nội suy theo tốc độ phát khi đang phát) để Widget không phụ thuộc WebView. */
     static long[] readSessionProgress() {
         MediaService s = inst;
@@ -414,6 +435,7 @@ public class MediaService extends Service {
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, dur);
         if (art != null) mb.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, art);
         session.setMetadata(mb.build());
+        syncWidgetArt();
         publishPlaybackOnly();
         MediaWidgetProvider.savePlaybackState(this, playing, title, artist, null, 0);
         MediaWidgetProvider.saveProgress(this, pos, dur);

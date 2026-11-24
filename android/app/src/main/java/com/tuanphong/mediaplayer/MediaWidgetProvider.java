@@ -204,6 +204,31 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         updateAllWidgets(context);
     }
 
+    private static Bitmap lastSrcArt, lastRoundedArt;
+    /** Album art của widget: ưu tiên lấy thẳng từ MediaSession của Media Player (metadata ALBUM_ART), rồi mới tới tệp đã lưu. */
+    static Bitmap currentArt(Context context) {
+        try {
+            Bitmap src = MediaService.sessionArt();
+            if (src != null && !src.isRecycled()) {
+                synchronized (MediaWidgetProvider.class) {
+                    if (src != lastSrcArt || lastRoundedArt == null) {
+                        Bitmap sc = src;
+                        int m = Math.max(src.getWidth(), src.getHeight());
+                        if (m > 512) { float f = 512f / m; sc = Bitmap.createScaledBitmap(src, Math.max(1, Math.round(src.getWidth() * f)), Math.max(1, Math.round(src.getHeight() * f)), true); }
+                        lastRoundedArt = getRoundedCornerBitmap(sc, 28);
+                        lastSrcArt = src;
+                    }
+                    return lastRoundedArt;
+                }
+            }
+        } catch (Throwable ignored) {}
+        try {
+            File f = new File(context.getCacheDir(), "widget_art.png");
+            if (f.exists() && f.length() > 0) return BitmapFactory.decodeFile(f.getAbsolutePath());
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
     static void saveArtwork(Context context, Bitmap raw) {
         try {
             File artFile = new File(context.getCacheDir(), "widget_art.png");
@@ -340,14 +365,9 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             views.setInt(R.id.widget_repeat, "setColorFilter", repeatMode > 0 ? accentText : primaryText);
         }
 
-        File artFile = new File(context.getCacheDir(), "widget_art.png");
-        if (artFile.exists() && artFile.length() > 0) {
-            Bitmap bmp = BitmapFactory.decodeFile(artFile.getAbsolutePath());
-            if (bmp != null) {
-                views.setImageViewBitmap(R.id.widget_art, bmp);
-            } else {
-                views.setImageViewResource(R.id.widget_art, R.drawable.ic_launcher);
-            }
+        Bitmap artBmp = currentArt(context);
+        if (artBmp != null) {
+            views.setImageViewBitmap(R.id.widget_art, artBmp);
         } else if (idle) {
             views.setImageViewBitmap(R.id.widget_art, null);   // chưa mở bài nào: album art trống
         } else {

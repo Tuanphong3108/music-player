@@ -7,3 +7,5 @@
 - **Chỉ tạm dừng khi người dùng bấm hoặc hết danh sách (không lặp)**: khi không ở trong app (nền/tắt màn hình), native tự chuyển bài lúc hết bài thay vì chờ WebView (vốn có thể bị đóng băng nên gây tạm dừng giữa hai bài), có xử lý lặp 1 bài; bài không đọc được sẽ tự nhảy sang bài kế (tối đa một vòng hàng đợi).
 - **Thông báo giữ app chạy nền**: thông báo phát nhạc luôn được ghim (foreground) suốt phiên, kể cả khi tạm dừng, không còn tự gỡ sau 2 phút và không vuốt tắt được; chỉ biến mất khi đóng app hoặc dọn phiên.
 - **Danh mục thông báo “Keep in Background”**: thông báo giữ app chạy nền chuyển sang kênh riêng tên “Keep in Background”, mức Im lặng (không âm thanh, không rung, không popup); kênh “Phát nhạc” cũ được xoá.
+- **Widget lấy ảnh bìa từ MediaSession của Media Player**: ảnh bìa (metadata `ALBUM_ART`) được đồng bộ sang cả 3 widget nhạc và widget hàng đợi (thu nhỏ ≤512px, bo góc, lưu tệp dự phòng), tự đổi khi sang bài mới.
+- **Vào lại app nhanh hơn**: đánh thức WebView ngay ở `onStart` (trước `onResume`) và không còn tự huỷ tiến trình khi hệ thống báo thiếu RAM trong lúc đang có phiên nhạc, nên quay lại không phải khởi động nguội.

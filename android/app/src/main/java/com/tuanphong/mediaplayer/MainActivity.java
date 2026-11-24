@@ -2251,10 +2251,24 @@ public class MainActivity extends Activity {
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
         // Khi app đang ở nền và hệ thống báo sắp bị kill vì cạn RAM (TRIM_MEMORY_COMPLETE): chủ động kích hoạt combo tự hủy sạch sẽ
-        if (appLeftHome && level >= TRIM_MEMORY_COMPLETE) {
+        // Đang có phiên nhạc (dịch vụ foreground giữ app): không tự huỷ — giữ nguyên tiến trình/WebView để quay lại app là hiện ngay thay vì khởi động nguội.
+        if (appLeftHome && level >= TRIM_MEMORY_COMPLETE && !NativeAudio.active()) {
             triggerBackgroundSelfDestruct(this, "BG_LOW_MEMORY_KILL",
                     "System triggered TRIM_MEMORY_COMPLETE (level=" + level + ") while app was in background");
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Đánh thức WebView sớm nhất có thể (trước onResume) để khung hình/JS chạy lại ngay khi quay về app
+        try {
+            if (web != null) {
+                web.onResume(); web.resumeTimers();
+                web.setVisibility(View.VISIBLE);
+                web.postInvalidateOnAnimation();
+            }
+        } catch (Throwable ignored) {}
     }
 
     @Override

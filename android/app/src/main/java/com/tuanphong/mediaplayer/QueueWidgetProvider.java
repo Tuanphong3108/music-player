@@ -109,11 +109,9 @@ public class QueueWidgetProvider extends AppWidgetProvider {
         views.setTextColor(R.id.queue_widget_subtitle, accentText);
         views.setTextColor(R.id.queue_widget_empty, secondaryText);
 
-        File artFile = new File(context.getCacheDir(), "widget_art.png");
-        if (artFile.exists() && artFile.length() > 0) {
-            Bitmap bmp = BitmapFactory.decodeFile(artFile.getAbsolutePath());
-            if (bmp != null) views.setImageViewBitmap(R.id.queue_widget_art, bmp);
-            else views.setImageViewResource(R.id.queue_widget_art, R.drawable.ic_launcher);
+        Bitmap artBmp = MediaWidgetProvider.currentArt(context);
+        if (artBmp != null) {
+            views.setImageViewBitmap(R.id.queue_widget_art, artBmp);
         } else if (nowTitle.isEmpty()) {
             views.setImageViewBitmap(R.id.queue_widget_art, null);   // chưa mở bài nào: album art trống
         } else {
