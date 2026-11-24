@@ -397,7 +397,7 @@
             <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="provider"><span>Google Gemini</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
           </div>
           <div class="ai-sr ai-sr-row ai-mobile-only">
-            <div class="ai-sr-text"><span class="ai-sr-t">Safe Token Mode</span><span class="ai-sr-d">${cfg.safeToken ? 'Bật — nhanh &amp; tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.' : 'Tắt — gửi đầy đủ metadata và bộ lọc.'}</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">Safe Token Mode</span><span class="ai-sr-d" data-ai-desc="safeToken">${cfg.safeToken ? 'Bật — nhanh &amp; tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.' : 'Tắt — gửi đầy đủ metadata và bộ lọc.'}</span></div>
             <md-switch icons data-ai-field="safeToken"${cfg.safeToken ? ' selected' : ''}>
               <span class="material-symbols-rounded" slot="on-icon">check</span>
               <span class="material-symbols-rounded" slot="off-icon">close</span>
@@ -435,7 +435,7 @@
             <button type="button" class="ai-sheet-trigger" data-ai-open-sheet="translateLang"><span>${esc(cfg.translateLang)}</span><span class="material-symbols-rounded" style="font-size:20px;">expand_more</span></button>
           </div>
           <div class="ai-sr ai-sr-row">
-            <div class="ai-sr-text"><span class="ai-sr-t">Hiển thị lời song ngữ</span><span class="ai-sr-d">${cfg.bilingualLyrics ? 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.' : 'Tắt — chỉ hiển thị lời đã dịch.'}</span></div>
+            <div class="ai-sr-text"><span class="ai-sr-t">Hiển thị lời song ngữ</span><span class="ai-sr-d" data-ai-desc="bilingualLyrics">${cfg.bilingualLyrics ? 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.' : 'Tắt — chỉ hiển thị lời đã dịch.'}</span></div>
             <md-switch icons data-ai-field="bilingualLyrics"${cfg.bilingualLyrics ? ' selected' : ''}>
               <span class="material-symbols-rounded" slot="on-icon">check</span>
               <span class="material-symbols-rounded" slot="off-icon">close</span>
@@ -503,7 +503,12 @@
         host.querySelector('[data-ai-field="bilingualLyrics"]')?.addEventListener('change', (e) => {
             cfg.bilingualLyrics = !!e.target.selected;
             saveCfg(cfg);
-            syncAllSettingsHosts();
+            const descEl = host.querySelector('[data-ai-desc="bilingualLyrics"]');
+            if (descEl) {
+                descEl.textContent = cfg.bilingualLyrics
+                    ? 'Bật — hiện lời gốc kèm bản dịch ngay bên dưới.'
+                    : 'Tắt — chỉ hiển thị lời đã dịch.';
+            }
             if (typeof renderLyrics === 'function') renderLyrics();
             if (typeof syncLyrics === 'function') syncLyrics();
         });
@@ -516,7 +521,12 @@
         host.querySelector('[data-ai-field="safeToken"]')?.addEventListener('change', (e) => {
             cfg.safeToken = !!e.target.selected;
             saveCfg(cfg);
-            syncAllSettingsHosts();
+            const descEl = host.querySelector('[data-ai-desc="safeToken"]');
+            if (descEl) {
+                descEl.textContent = cfg.safeToken
+                    ? 'Bật — nhanh & tiết kiệm, chỉ gửi metadata rút gọn của bài hát cho AI.'
+                    : 'Tắt — gửi đầy đủ metadata và bộ lọc.';
+            }
         });
         host.querySelectorAll('[data-ai-preset]').forEach(btn => {
             btn.addEventListener('click', () => {
