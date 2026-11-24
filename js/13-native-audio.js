@@ -224,6 +224,7 @@
     // Sự kiện từ app native
     let tickRaf = 0;
     let lastTickUiPos = -1;
+    let lastNativeEvAt = 0;
     let tickNeedTimeupdate = false;
     function scheduleTickUi(needTimeupdate) {
         if (document.hidden) return;
@@ -239,9 +240,29 @@
         });
     }
 
+    function matchTrackIdxForNativeEv(e) {
+        if (typeof playlist === 'undefined' || !Array.isArray(playlist) || !playlist.length) return -1;
+        const eid = String((e && e.id) || '');
+        if (eid) {
+            const byId = playlist.findIndex(t => t && String(t.nativeId || '') === eid);
+            if (byId >= 0) return byId;
+        }
+        const eLoc = String((e && e.curLoc) || '').toLowerCase();
+        if (eLoc) {
+            const byLoc = playlist.findIndex(t => t && String(t.nativeLocation || '').toLowerCase() === eLoc);
+            if (byLoc >= 0) return byLoc;
+        }
+        const cur = (typeof currentIndex !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
+        if (cur && e && e.title && String(cur.name || '').trim() === String(e.title).trim()) {
+            return currentIndex;
+        }
+        return -1;
+    }
+
     window.__nativeAudioEv = function (e) {
         try {
             if (!e) return;
+            lastNativeEvAt = now();
             if (e.ev === 'sleep') {
                 if (isNative()) {
                     N.paused = true;
@@ -260,15 +281,31 @@
                 sleepState.remaining = e.sleepTracks;
                 if (typeof updateSleepUI === 'function') updateSleepUI();
             }
-            if (e.ev === 'advanced' || (e.ev === 'tick' && e.loaded && e.id && e.id !== N.id && !N.pending)) {
-                // app tự sang bài kế (hoặc trang lỡ sự kiện chuyển bài): nhận lại đúng bài đang phát
-                if (N.adoptId === e.id && window.__adoptNative) return;
-                N.adoptId = e.id;
-                const i = (typeof playlist !== 'undefined') ? playlist.findIndex(t => t && t.nativeId === e.id) : -1;
-                if (i >= 0 && i !== currentIndex) { window.__adoptNative = true; playTrack(i); }
-                return;
+            const eid = String(e.id || '');
+            const nid = String(N.id || '');
+            const mismatch = !isNative() || !N.loaded || (eid && eid !== nid);
+            if (e.ev === 'advanced' || ((e.ev === 'tick' || e.ev === 'state' || e.ev === 'load') && e.loaded && eid && mismatch && !N.pending)) {
+                const i = matchTrackIdxForNativeEv(e);
+                if (i >= 0 && i !== currentIndex) {
+                    if (N.adoptId === eid && window.__adoptNative) return;
+                    N.adoptId = eid;
+                    window.__adoptNative = true;
+                    playTrack(i);
+                    return;
+                }
+                // Cùng bài đang mở trên UI nhưng lệch nativeId / chưa gắn cờ loaded (vd. sau rescan hoặc resume): tự khóa lại ID native để tiếp tục đồng bộ thanh tua & thời gian
+                if (i >= 0 && i === currentIndex) {
+                    N.mode = 'native';
+                    N.id = eid;
+                    N.url = 'https://appassets.local/f/' + eid;
+                    N.loaded = true;
+                    N.pending = false;
+                    if (playlist[i]) playlist[i].nativeId = eid;
+                } else {
+                    return;
+                }
             }
-            if (!isNative() || e.id !== N.id || !N.loaded) return;
+            if (!isNative() || String(e.id || '') !== String(N.id || '') || !N.loaded) return;
             const wasPaused = N.paused, hadDur = N.dur > 0, wasEnded = N.ended;
             N.pos = e.pos || 0; N.stamp = now(); N.dur = e.dur || N.dur; N.buf = e.buf || 0; N.st = e.st; N.rate = e.rate || 1;
             N.paused = !e.pwr;
@@ -282,16 +319,30 @@
             N.wasReady = nowReady; N.isPlaying = nowPlaying;
             if (wasPaused && !N.paused) fire('play');
             if (!wasPaused && N.paused && e.st !== 'ended') fire('pause');
-            if (e.ev === 'seeked') { lastTickUiPos = N.pos; fire('seeked'); }
+            if (e.ev === 'seeked') { lastTickUiPos = N.pos; fire('seeked'); scheduleTickUi(true); }
             if (e.st === 'ended' && !wasEnded) { N.ended = true; N.paused = true; fire('pause'); fire('ended'); return; }
-            if (e.ev === 'tick') {
+            if (e.ev === 'tick' || e.ev === 'state' || e.ev === 'load') {
                 const posChanged = Math.abs(N.pos - lastTickUiPos) >= 15;
-                const needTime = (!N.paused && !N.ended) || posChanged;
+                const needTime = (!N.paused && !N.ended) || posChanged || (!hadDur && N.dur > 0);
                 if (posChanged) lastTickUiPos = N.pos;
                 scheduleTickUi(needTime);
             }
         } catch (err) {}
     };
+
+    // Dự phòng khi ở foreground: nếu WebView bị lỡ sự kiện tick từ native quá 1.2s -> chủ động kéo lại nativeAudioState() để thanh tua & 0:00 không bao giờ bị đóng băng
+    setInterval(() => {
+        try {
+            if (document.hidden) return;
+            if (now() - lastNativeEvAt < 1200) return;
+            if (typeof AB.nativeAudioState !== 'function') return;
+            const s = JSON.parse(AB.nativeAudioState() || 'null');
+            if (s && s.loaded && s.id) {
+                s.ev = 'tick';
+                window.__nativeAudioEv(s);
+            }
+        } catch (e) {}
+    }, 1000);
 
     // Gửi cả hàng đợi + thứ tự shuffle + chế độ lặp sang app native để app tự điều khiển bài kế/trước khi trang không phản hồi
     let qSig = '';
