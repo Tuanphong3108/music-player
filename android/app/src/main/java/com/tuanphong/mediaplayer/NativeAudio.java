@@ -380,12 +380,18 @@ final class NativeAudio {
     /** Dừng hẳn (trang chuyển sang phát bằng thẻ audio thường, hoặc app thoát). */
     static void stop() { ph.post(NativeAudio::stopImpl); }
     private static void stopImpl() {
+        if (loaded && curId != null && !curId.isEmpty()) {
+            persistSessionBackup(SystemClock.elapsedRealtime(), true, true);
+        }
         loaded = false; curId = "";
         ph.removeCallbacks(ticker);
         if (p != null) { try { p.stop(); p.clearMediaItems(); } catch (Throwable ignored) {} }
         emit("stop");
     }
     static void release() {
+        if (loaded && curId != null && !curId.isEmpty()) {
+            saveBackupSync(app);
+        }
         loaded = false;
         lastSnap = "{\"loaded\":false,\"id\":\"\",\"st\":\"idle\",\"pwr\":false}";
         lastSnapAt = SystemClock.elapsedRealtime();
@@ -593,6 +599,10 @@ final class NativeAudio {
 
     /** Ghi trạng thái hàng đợi, shuffle/repeat, hẹn giờ ngủ và vị trí bài hiện tại xuống SharedPreferences để khôi phục nếu WebView chết hoặc app sập. */
     private static void persistSessionBackup(long nowElapsed, boolean force) {
+        persistSessionBackup(nowElapsed, force, false);
+    }
+
+    private static void persistSessionBackup(long nowElapsed, boolean force, boolean syncCommit) {
         try {
             Context c = app;
             if (c == null) {
@@ -601,88 +611,118 @@ final class NativeAudio {
             }
             if (c == null) return;
             if (!force && nowElapsed - lastBgPersistAt < 1000L) return;
+
+            final boolean hasCurTrack = loaded && curId != null && !curId.isEmpty();
+            final boolean hasQueue = qIds != null && qIds.length > 0;
+            // Tuyệt đối KHÔNG ghi đè bản lưu khi ExoPlayer đã bị dừng/trống (vd. lúc stopImpl/release/đóng app)
+            if (!hasCurTrack && !hasQueue) return;
             lastBgPersistAt = nowElapsed;
 
-            long posNow = 0L;
-            long durNow = 0L;
-            boolean pwrNow = false;
-            String stNow = "idle";
-            if (p != null && loaded) {
-                int st = p.getPlaybackState();
-                stNow = st == Player.STATE_ENDED ? "ended" : st == Player.STATE_BUFFERING ? "buffering" : st == Player.STATE_READY ? "ready" : "idle";
-                pwrNow = p.getPlayWhenReady();
-                posNow = Math.max(0L, p.getCurrentPosition());
-                long d = p.getDuration();
-                durNow = d == C.TIME_UNSET ? 0L : Math.max(0L, d);
-            }
+            android.content.SharedPreferences.Editor ed = c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE).edit();
 
-            JSONObject snap = new JSONObject();
-            snap.put("id", curId == null ? "" : curId);
-            String curLocNow = MainActivity.resolveLocation(curId);
-            if ((curLocNow == null || curLocNow.isEmpty()) && curId != null && !curId.isEmpty()) {
-                for (int i = 0; i < qIds.length; i++) {
-                    if (curId.equals(qIds[i]) && i < qLocs.length && qLocs[i] != null && !qLocs[i].isEmpty()) {
-                        curLocNow = qLocs[i];
-                        break;
+            if (hasCurTrack) {
+                long posNow = 0L;
+                long durNow = 0L;
+                boolean pwrNow = false;
+                String stNow = "idle";
+                if (p != null && loaded) {
+                    try {
+                        int st = p.getPlaybackState();
+                        stNow = st == Player.STATE_ENDED ? "ended" : st == Player.STATE_BUFFERING ? "buffering" : st == Player.STATE_READY ? "ready" : "idle";
+                        pwrNow = p.getPlayWhenReady();
+                        posNow = Math.max(0L, p.getCurrentPosition());
+                        long d = p.getDuration();
+                        durNow = d == C.TIME_UNSET ? 0L : Math.max(0L, d);
+                    } catch (Throwable ignored) {
+                        // Nếu gọi từ luồng UI (onStop/onDestroy/exitAppCompletely) -> dùng vị trí mới nhất trong lastSnap
+                        try {
+                            JSONObject ls = new JSONObject(lastSnap);
+                            stNow = ls.optString("st", "idle");
+                            pwrNow = ls.optBoolean("pwr", false);
+                            posNow = Math.max(0L, ls.optLong("pos", 0L));
+                            durNow = Math.max(0L, ls.optLong("dur", 0L));
+                        } catch (Throwable ignored2) {}
                     }
                 }
-            }
-            snap.put("curLoc", curLocNow == null ? "" : curLocNow);
-            snap.put("title", title == null ? "" : title);
-            snap.put("artist", artist == null ? "" : artist);
-            snap.put("loaded", loaded);
-            snap.put("st", stNow);
-            snap.put("pwr", pwrNow);
-            snap.put("pos", posNow);
-            snap.put("dur", durNow);
-            snap.put("rate", rate);
-            boolean isShuf = shuffled && order != null && order.length == qIds.length;
-            snap.put("shuffle", isShuf);
-            snap.put("repeat", repeat);
-            snap.put("savedAtElapsed", nowElapsed);
-            snap.put("savedAtWall", System.currentTimeMillis());
 
-            String qJsonStr = queueStateJson();
-            JSONObject qObj = new JSONObject(qJsonStr);
-            if (isShuf) {
-                org.json.JSONArray jOrd = new org.json.JSONArray();
-                org.json.JSONArray jShufIds = new org.json.JSONArray();
-                org.json.JSONArray jShufTitles = new org.json.JSONArray();
-                org.json.JSONArray jShufArtists = new org.json.JSONArray();
-                org.json.JSONArray jShufLocs = new org.json.JSONArray();
-                int curShufflePos = -1;
-                for (int i = 0; i < order.length; i++) {
-                    int qIdx = order[i];
-                    jOrd.put(qIdx);
-                    String tid = (qIdx >= 0 && qIdx < qIds.length && qIds[qIdx] != null) ? qIds[qIdx] : "";
-                    String tt = (qIdx >= 0 && qIdx < qTitles.length && qTitles[qIdx] != null) ? qTitles[qIdx] : "";
-                    String ta = (qIdx >= 0 && qIdx < qArtists.length && qArtists[qIdx] != null) ? qArtists[qIdx] : "";
-                    String tl = (qIdx >= 0 && qIdx < qLocs.length && qLocs[qIdx] != null) ? qLocs[qIdx] : "";
-                    if (curId != null && !curId.isEmpty() && curId.equals(tid)) curShufflePos = i;
-                    jShufIds.put(tid);
-                    jShufTitles.put(tt);
-                    jShufArtists.put(ta);
-                    jShufLocs.put(tl);
+                JSONObject snap = new JSONObject();
+                snap.put("id", curId);
+                String curLocNow = MainActivity.resolveLocation(curId);
+                if (curLocNow == null || curLocNow.isEmpty()) {
+                    curLocNow = locForId(curId);
                 }
-                snap.put("shuffleOrder", jOrd);
-                snap.put("shufflePos", curShufflePos);
-                qObj.put("shuffle", true);
-                qObj.put("order", jOrd);
-                qObj.put("shuffleOrder", jOrd);
-                qObj.put("shufflePos", curShufflePos);
-                qObj.put("shuffleIds", jShufIds);
-                qObj.put("shuffleTitles", jShufTitles);
-                qObj.put("shuffleArtists", jShufArtists);
-                qObj.put("shuffleLocations", jShufLocs);
-                qJsonStr = qObj.toString();
+                if (curLocNow == null) curLocNow = "";
+                snap.put("curLoc", curLocNow);
+                snap.put("curPath", curLocNow);
+                snap.put("title", title == null ? "" : title);
+                snap.put("artist", artist == null ? "" : artist);
+                snap.put("loaded", true);
+                snap.put("st", stNow);
+                snap.put("pwr", pwrNow);
+                snap.put("pos", posNow);
+                snap.put("dur", durNow);
+                snap.put("rate", rate);
+                boolean isShuf = shuffled && order != null && order.length == qIds.length;
+                snap.put("shuffle", isShuf);
+                snap.put("repeat", repeat);
+                snap.put("savedAtElapsed", nowElapsed);
+                snap.put("savedAtWall", System.currentTimeMillis());
+
+                if (isShuf) {
+                    org.json.JSONArray jOrd = new org.json.JSONArray();
+                    int curShufflePos = -1;
+                    for (int i = 0; i < order.length; i++) {
+                        int qIdx = order[i];
+                        jOrd.put(qIdx);
+                        String tid = (qIdx >= 0 && qIdx < qIds.length && qIds[qIdx] != null) ? qIds[qIdx] : "";
+                        if (curId.equals(tid)) curShufflePos = i;
+                    }
+                    snap.put("shuffleOrder", jOrd);
+                    snap.put("shufflePos", curShufflePos);
+                }
+                ed.putString("session_json", snap.toString());
             }
 
-            c.getSharedPreferences(PREFS_NATIVE_SESSION, Context.MODE_PRIVATE)
-                    .edit()
-                    .putString("session_json", snap.toString())
-                    .putString("queue_json", qJsonStr)
-                    .putLong("updated_at", System.currentTimeMillis())
-                    .apply();
+            if (hasQueue) {
+                boolean isShuf = shuffled && order != null && order.length == qIds.length;
+                String qJsonStr = queueStateJson();
+                JSONObject qObj = new JSONObject(qJsonStr);
+                if (isShuf) {
+                    org.json.JSONArray jOrd = new org.json.JSONArray();
+                    org.json.JSONArray jShufIds = new org.json.JSONArray();
+                    org.json.JSONArray jShufTitles = new org.json.JSONArray();
+                    org.json.JSONArray jShufArtists = new org.json.JSONArray();
+                    org.json.JSONArray jShufLocs = new org.json.JSONArray();
+                    int curShufflePos = -1;
+                    for (int i = 0; i < order.length; i++) {
+                        int qIdx = order[i];
+                        jOrd.put(qIdx);
+                        String tid = (qIdx >= 0 && qIdx < qIds.length && qIds[qIdx] != null) ? qIds[qIdx] : "";
+                        String tt = (qIdx >= 0 && qIdx < qTitles.length && qTitles[qIdx] != null) ? qTitles[qIdx] : "";
+                        String ta = (qIdx >= 0 && qIdx < qArtists.length && qArtists[qIdx] != null) ? qArtists[qIdx] : "";
+                        String tl = (qIdx >= 0 && qIdx < qLocs.length && qLocs[qIdx] != null) ? qLocs[qIdx] : "";
+                        if (curId != null && !curId.isEmpty() && curId.equals(tid)) curShufflePos = i;
+                        jShufIds.put(tid);
+                        jShufTitles.put(tt);
+                        jShufArtists.put(ta);
+                        jShufLocs.put(tl);
+                    }
+                    qObj.put("shuffle", true);
+                    qObj.put("order", jOrd);
+                    qObj.put("shuffleOrder", jOrd);
+                    qObj.put("shufflePos", curShufflePos);
+                    qObj.put("shuffleIds", jShufIds);
+                    qObj.put("shuffleTitles", jShufTitles);
+                    qObj.put("shuffleArtists", jShufArtists);
+                    qObj.put("shuffleLocations", jShufLocs);
+                    qJsonStr = qObj.toString();
+                }
+                ed.putString("queue_json", qJsonStr);
+            }
+
+            ed.putLong("updated_at", System.currentTimeMillis());
+            if (syncCommit) ed.commit();
+            else ed.apply();
         } catch (Throwable ignored) {}
     }
 
@@ -737,7 +777,12 @@ final class NativeAudio {
 
     static void saveBackupNow(Context ctx) {
         if (ctx != null && app == null) app = ctx.getApplicationContext();
-        persistSessionBackup(SystemClock.elapsedRealtime(), true);
+        persistSessionBackup(SystemClock.elapsedRealtime(), true, false);
+    }
+
+    static void saveBackupSync(Context ctx) {
+        if (ctx != null && app == null) app = ctx.getApplicationContext();
+        persistSessionBackup(SystemClock.elapsedRealtime(), true, true);
     }
 
     static String stateJson() {
@@ -763,7 +808,7 @@ final class NativeAudio {
             lastSnapAt = now;
             final boolean isTick = "tick".equals(ev);
             if (isTick) matchStateEveryHalfSec();
-            else persistSessionBackup(now, true);
+            else if (!"stop".equals(ev)) persistSessionBackup(now, true, false);
             if (isTick && (app == null || isAppInBackground(app))) {
                 persistSessionBackup(now, false);
             }
