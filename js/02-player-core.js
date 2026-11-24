@@ -1069,17 +1069,19 @@
                 try { if (seekHost.setPointerCapture) seekHost.setPointerCapture(e.pointerId); } catch (err) {}
                 applyLyricPreview(pctFromX(e.clientX));
             });
-            seekHost.addEventListener('pointermove', (e) => {
+            window.addEventListener('pointermove', (e) => {
                 if (!dragging || (activePtr != null && e.pointerId !== activePtr)) return;
                 applyLyricPreview(pctFromX(e.clientX));
             });
-            seekHost.addEventListener('pointerup', (e) => {
+            window.addEventListener('pointerup', (e) => {
                 if (!dragging || (activePtr != null && e.pointerId !== activePtr)) return;
                 applyLyricPreview(pctFromX(e.clientX));
                 endLyricDrag(true);
             });
-            seekHost.addEventListener('pointercancel', () => endLyricDrag(true));
-            seekHost.addEventListener('lostpointercapture', () => endLyricDrag(true));
+            window.addEventListener('pointercancel', (e) => {
+                if (!dragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                endLyricDrag(true);
+            });
             window.addEventListener('blur', () => endLyricDrag(false));
             seek.addEventListener('input', () => { if (!dragging && isFinite(audio.duration) && audio.duration > 0) audio.currentTime = seek.value / 100 * audio.duration; });
             audio.addEventListener('timeupdate', () => { if (!dragging && isFinite(audio.duration) && audio.duration > 0) seek.value = audio.currentTime / audio.duration * 100; });
