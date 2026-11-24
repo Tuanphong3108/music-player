@@ -200,7 +200,7 @@
             // Bắt trực tiếp touchstart/touchmove/touchend (passive: false) để trên Android WebView chạm/kéo ở MỌI vị trí trên thanh tua đều ăn ngay
             host.addEventListener('touchstart', (e) => {
                 if (!e.changedTouches || !e.changedTouches.length) return;
-                if (!isFinite(audio.duration) || audio.duration <= 0) return;
+                // Dù duration chưa có (native chưa báo) vẫn giữ lấy cử chỉ để không bị lớp khác cướp; commit chỉ chạy khi đã có duration
                 e.preventDefault();
                 const t = e.changedTouches[0];
                 seekDragging = true;
