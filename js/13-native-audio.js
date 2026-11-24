@@ -243,14 +243,22 @@
         try {
             if (!e) return;
             if (e.ev === 'sleep') {
+                if (isNative()) {
+                    N.paused = true;
+                    N.isPlaying = false;
+                    fire('pause');
+                }
+                sleepSig = '';
                 if (typeof window.__showNativeSleepEndedNotice === 'function') {
                     window.__showNativeSleepEndedNotice(e.sleepFiredType || (typeof sleepState !== 'undefined' && sleepState && sleepState.type) || 'time', e.sleepFiredTotal || (typeof sleepState !== 'undefined' && sleepState && sleepState.total) || 1);
                 } else if (typeof sleepState !== 'undefined' && sleepState) {
                     fireSleep();
-                } else if (isNative()) {
-                    N.paused = true; fire('pause');
                 }
                 return;
+            }
+            if (typeof e.sleepTracks === 'number' && typeof sleepState !== 'undefined' && sleepState && sleepState.type === 'tracks' && e.sleepTracks > 0 && e.sleepTracks < sleepState.remaining) {
+                sleepState.remaining = e.sleepTracks;
+                if (typeof updateSleepUI === 'function') updateSleepUI();
             }
             if (e.ev === 'advanced' || (e.ev === 'tick' && e.loaded && e.id && e.id !== N.id && !N.pending)) {
                 // app tự sang bài kế (hoặc trang lỡ sự kiện chuyển bài): nhận lại đúng bài đang phát
@@ -324,16 +332,17 @@
     setInterval(() => { if (!document.hidden && isNative()) syncQueue(false); }, 8000);
     // Hẹn giờ ngủ: báo cho app giữ để vẫn dừng đúng lúc dù WebView bị đóng băng
     let sleepSig = '';
-    function syncSleep() {
+    function syncSleep(force) {
         try {
             const st = (typeof sleepState !== 'undefined') ? sleepState : null;
             const key = st ? st.type + ':' + (st.endAt || st.remaining || st.total || 0) : '';
-            if (key === sleepSig) return;
+            if (!force && key === sleepSig) return;
             sleepSig = key;
             AB.nativeAudioSetSleep(st && st.type === 'time' ? st.endAt : 0, st && st.type === 'tracks' ? Math.max(1, Number(st.remaining || st.total || 0)) : 0);
         } catch (e) {}
     }
-    setInterval(() => { if (!document.hidden) syncSleep(); }, 3000);
+    setInterval(() => { if (!document.hidden) syncSleep(false); }, 3000);
+    window.__syncNativeSleep = (force) => syncSleep(force !== false);
     window.__syncNativeQueue = () => syncQueue(true);
     window.__syncNativeShuffle = function (enabled) {
         try {
@@ -396,6 +405,7 @@
     ['pause', 'ended'].forEach(ev => a.addEventListener(ev, () => { if (vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} } }));
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
+            syncSleep(true);
             if (vizSent) { vizSent = false; try { AB.nativeAudioViz(false); } catch (e) {} }
             if (restoreMuteActive) setRestoreMute(false);
             else {
@@ -408,6 +418,7 @@
         }
     });
     window.addEventListener('pagehide', () => {
+        syncSleep(true);
         if (restoreMuteActive) setRestoreMute(false);
         else {
             N.vol = 1;
