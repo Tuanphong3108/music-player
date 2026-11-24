@@ -60,6 +60,10 @@
     {
       "content": "Danh sách phát tạo bằng AI dùng ảnh ghép mặc định và có icon Gemini cạnh tên",
       "icon": "auto_awesome"
+    },
+    {
+      "content": "Ảnh bìa tải lên tự cắt vuông, phủ kín khung (không lộ nền đen); dialog chỉnh ảnh bìa theo MD3E",
+      "icon": "crop"
     }
   ],
   "en": [
@@ -122,6 +126,10 @@
     {
       "content": "AI-created playlists use the default collage cover and show a Gemini icon next to the name",
       "icon": "auto_awesome"
+    },
+    {
+      "content": "Uploaded cover art is auto-cropped to a square that fully covers the frame (no black bars); cover dialogs restyled to MD3E",
+      "icon": "crop"
     }
   ]
 }

@@ -791,42 +791,57 @@
             thumbFileInput.value = ''; 
         });
 
+        // Khung cắt vuông FRAME (px preview) nằm giữa canvas 300x300. Ảnh luôn được phủ kín khung (kiểu "cover"), không lộ nền.
+        const CROP_SIZE = 300, CROP_MARGIN = 20, CROP_FRAME = CROP_SIZE - CROP_MARGIN * 2;
+        // Tỉ lệ phủ kín khung (ảnh xoay 90° vẫn có cạnh nhỏ nhất như cũ)
+        function cropBaseScale() {
+            const w = cropImg.naturalWidth || cropImg.width, h = cropImg.naturalHeight || cropImg.height;
+            return CROP_FRAME / Math.min(w, h);
+        }
+        // Giữ ảnh luôn phủ kín khung sau khi kéo/phóng/xoay
+        function clampCropPan() {
+            const w = cropImg.naturalWidth || cropImg.width, h = cropImg.naturalHeight || cropImg.height;
+            const sc = cropBaseScale() * zoomValue;
+            const swap = rotationDegrees % 180 !== 0;
+            const rw = (swap ? h : w) * sc, rh = (swap ? w : h) * sc;
+            const mx = Math.max(0, (rw - CROP_FRAME) / 2), my = Math.max(0, (rh - CROP_FRAME) / 2);
+            panX = Math.min(mx, Math.max(-mx, panX));
+            panY = Math.min(my, Math.max(-my, panY));
+        }
         function drawCropCanvas() {
             const ctx = cropCanvas.getContext('2d');
-            const cw = cropCanvas.width = 300;
-            const ch = cropCanvas.height = 300;
+            const cw = cropCanvas.width = CROP_SIZE;
+            const ch = cropCanvas.height = CROP_SIZE;
+            clampCropPan();
 
             ctx.clearRect(0, 0, cw, ch);
             ctx.save();
-            ctx.translate(cw / 2, ch / 2);
+            ctx.translate(cw / 2 + panX, ch / 2 + panY);
             ctx.rotate((rotationDegrees * Math.PI) / 180);
-            ctx.scale(zoomValue, zoomValue);
-
-            const imgRatio = cropImg.width / cropImg.height;
-            let drawW = cw;
-            let drawH = ch;
-            if (imgRatio > 1) {
-                drawH = cw / imgRatio;
-            } else {
-                drawW = ch * imgRatio;
-            }
-
-            ctx.drawImage(cropImg, -drawW / 2 + panX, -drawH / 2 + panY, drawW, drawH);
+            const sc = cropBaseScale() * zoomValue;
+            const w = cropImg.naturalWidth || cropImg.width, h = cropImg.naturalHeight || cropImg.height;
+            ctx.drawImage(cropImg, -w * sc / 2, -h * sc / 2, w * sc, h * sc);
             ctx.restore();
 
-            ctx.strokeStyle = 'var(--md-sys-color-primary)';
+            // Phần ngoài khung được làm tối, khung có viền + góc bo
+            const primary = (getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-primary') || '#d0bcff').trim() || '#d0bcff';
+            const R = 16;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, cw, ch);
+            ctx.roundRect(CROP_MARGIN, CROP_MARGIN, CROP_FRAME, CROP_FRAME, R);
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fill('evenodd');
+            ctx.restore();
+            ctx.strokeStyle = primary;
             ctx.lineWidth = 2;
-            ctx.strokeRect(20, 20, cw - 40, ch - 40); 
-
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
-            ctx.fillRect(0, 0, cw, 20);
-            ctx.fillRect(0, ch - 20, cw, 20);
-            ctx.fillRect(0, 20, 20, ch - 40);
-            ctx.fillRect(cw - 20, 20, 20, ch - 40);
+            ctx.beginPath();
+            ctx.roundRect(CROP_MARGIN, CROP_MARGIN, CROP_FRAME, CROP_FRAME, R);
+            ctx.stroke();
         }
 
         cropZoomSlider.addEventListener('input', (e) => {
-            zoomValue = parseFloat(e.target.value);
+            zoomValue = parseFloat(cropZoomSlider.value) || 1;
             drawCropCanvas();
         });
 
@@ -836,15 +851,17 @@
         });
 
         const registerDragEvents = (element) => {
+            let sx = 0, sy = 0, spx = 0, spy = 0;
+            const ratio = () => { const r = cropCanvas.getBoundingClientRect(); return r.width ? cropCanvas.width / r.width : 1; };
             const onStart = (clientX, clientY) => {
                 isDraggingCrop = true;
-                startDragX = clientX - panX;
-                startDragY = clientY - panY;
+                sx = clientX; sy = clientY; spx = panX; spy = panY;
             };
             const onMove = (clientX, clientY) => {
                 if (!isDraggingCrop) return;
-                panX = clientX - startDragX;
-                panY = clientY - startDragY;
+                const k = ratio();
+                panX = spx + (clientX - sx) * k;
+                panY = spy + (clientY - sy) * k;
                 drawCropCanvas();
             };
             const onEnd = () => isDraggingCrop = false;
@@ -872,48 +889,25 @@
         });
 
         btnCropOk.addEventListener('click', () => {
-            // Giữ nguyên độ phân giải ảnh gốc thay vì luôn ép cứng về 300x300 (trước đây
-            // làm giảm chất lượng nếu ảnh gốc có độ phân giải cao). Tính kích thước output
-            // theo đúng tỉ lệ giữa ảnh gốc và khung preview 300px đang dùng để thao tác
-            // crop/zoom/pan, rồi scale toàn bộ phép vẽ tương ứng - kết quả là vùng crop
-            // giống hệt những gì thấy trên preview nhưng ở độ phân giải gốc của ảnh.
-            const imgRatio = cropImg.naturalWidth / cropImg.naturalHeight;
-            const baseFitSize = imgRatio > 1 ? cropImg.naturalWidth : cropImg.naturalHeight;
-            // Không nhỏ hơn 300 (giữ chất lượng tối thiểu như trước), không vượt quá 4096
-            // (giới hạn an toàn kỹ thuật để tránh chạm trần kích thước canvas của trình duyệt)
-            const outputScale = Math.min(Math.max(baseFitSize / 300, 1), 4096 / 300);
-            const OUT = Math.round(300 * outputScale);
-            const MARGIN = Math.round(20 * outputScale);
-            const INNER = OUT - MARGIN * 2;
-
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = OUT;
-            tempCanvas.height = OUT;
-            const tempCtx = tempCanvas.getContext('2d');
-
-            tempCtx.save();
-            tempCtx.translate(OUT / 2, OUT / 2);
-            tempCtx.rotate((rotationDegrees * Math.PI) / 180);
-            tempCtx.scale(zoomValue, zoomValue);
-
-            let drawW = OUT;
-            let drawH = OUT;
-            if (imgRatio > 1) {
-                drawH = OUT / imgRatio;
-            } else {
-                drawW = OUT * imgRatio;
-            }
-
-            // panX/panY được ghi nhận trong không gian preview 300px -> nhân theo outputScale
-            // để giữ đúng tỉ lệ vị trí đã kéo khi vẽ ở độ phân giải cao hơn
-            tempCtx.drawImage(cropImg, -drawW / 2 + panX * outputScale, -drawH / 2 + panY * outputScale, drawW, drawH);
-            tempCtx.restore();
-
+            // Xuất đúng vùng trong khung ở độ phân giải gốc của ảnh (không vượt 4096, không nhỏ hơn 300)
+            const w = cropImg.naturalWidth || cropImg.width, h = cropImg.naturalHeight || cropImg.height;
+            clampCropPan();
+            const nativePerFrame = 1 / (cropBaseScale() * zoomValue);        // px ảnh gốc ứng với 1px khung
+            const OUT = Math.round(Math.min(4096, Math.max(300, CROP_FRAME * nativePerFrame)));
+            const k = OUT / CROP_FRAME;                                       // hệ số phóng từ khung -> ảnh xuất
             const finalCanvas = document.createElement('canvas');
             finalCanvas.width = OUT;
             finalCanvas.height = OUT;
             const finalCtx = finalCanvas.getContext('2d');
-            finalCtx.drawImage(tempCanvas, MARGIN, MARGIN, INNER, INNER, 0, 0, OUT, OUT);
+            finalCtx.imageSmoothingQuality = 'high';
+            finalCtx.fillStyle = '#000';
+            finalCtx.fillRect(0, 0, OUT, OUT);
+            finalCtx.save();
+            finalCtx.translate(OUT / 2 + panX * k, OUT / 2 + panY * k);
+            finalCtx.rotate((rotationDegrees * Math.PI) / 180);
+            const sc = cropBaseScale() * zoomValue * k;
+            finalCtx.drawImage(cropImg, -w * sc / 2, -h * sc / 2, w * sc, h * sc);
+            finalCtx.restore();
 
             currentCroppedDataUrl = finalCanvas.toDataURL('image/jpeg', 0.92);
             
