@@ -250,12 +250,13 @@ public class MediaService extends Service {
             // Album art cho MediaSession/Notification do native tự đọc trực tiếp từ tệp nhạc
             return START_NOT_STICKY;
         } else if (i != null) {
+            // Khi trình phát native (ExoPlayer) đang hoạt động thì NativeAudio là nguồn duy nhất cập nhật MediaSession -> bỏ qua gói từ WebView để tránh giật --:-- / 0:00
+            if (NativeAudio.active()) return START_NOT_STICKY;
             String ns = nz(i.getStringExtra("state"));
             boolean metaChanged;
             String t = nz(i.getStringExtra("title")), ar = nz(i.getStringExtra("artist"));
             long d = i.getLongExtra("dur", 0);
             if (ns.isEmpty()) ns = i.getBooleanExtra("playing", false) ? "playing" : "paused";   // APK/bản trang cũ chỉ gửi playing
-            if (NativeAudio.active() && ("none".equals(ns) || t.isEmpty())) return START_NOT_STICKY;   // trang vừa tải lại chưa biết gì: trình phát native mới là nguồn đúng
             metaChanged = !t.equals(title) || !ar.equals(artist) || d != dur || !ns.equals(state);
             state = ns;
             playing = "playing".equals(ns) || "buffering".equals(ns);
