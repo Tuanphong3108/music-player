@@ -9,3 +9,4 @@
 - **Danh mục thông báo “Keep in Background”**: thông báo giữ app chạy nền chuyển sang kênh riêng tên “Keep in Background”, mức Im lặng (không âm thanh, không rung, không popup); kênh “Phát nhạc” cũ được xoá.
 - **Widget lấy ảnh bìa từ MediaSession của Media Player**: ảnh bìa (metadata `ALBUM_ART`) được đồng bộ sang cả 3 widget nhạc và widget hàng đợi (thu nhỏ ≤512px, bo góc, lưu tệp dự phòng), tự đổi khi sang bài mới.
 - **Vào lại app nhanh hơn**: đánh thức WebView ngay ở `onStart` (trước `onResume`) và không còn tự huỷ tiến trình khi hệ thống báo thiếu RAM trong lúc đang có phiên nhạc, nên quay lại không phải khởi động nguội.
+- **Bỏ lớp phủ che WebView lúc mở app**: không còn hiện màn hình chờ “đang tải” đè lên WebView khi khởi động; trang hiện thẳng. Hộp thoại “không phản hồi” khi trang thật sự treo vẫn giữ nguyên.

@@ -397,10 +397,8 @@ public class MainActivity extends Activity {
             @Override
             public void onPageStarted(WebView v, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(v, url, favicon);
-                if (!pageResponded && !hangAlertShown) {
-                    pingHandler.removeCallbacks(showLoadingOverlayRunnable);
-                    pingHandler.postDelayed(showLoadingOverlayRunnable, 400);
-                }
+                // Không dựng lớp phủ "đang tải" che WebView khi mở app nữa: để người dùng thấy trang tự hiện ra (giao diện web có sẵn bản khôi phục nhanh).
+                pingHandler.removeCallbacks(showLoadingOverlayRunnable);
             }
 
             @Override
