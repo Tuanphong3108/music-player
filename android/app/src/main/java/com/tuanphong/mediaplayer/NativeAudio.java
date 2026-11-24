@@ -76,14 +76,21 @@ final class NativeAudio {
     private static volatile boolean sleepFiredPending = false;
     private static volatile String sleepFiredType = "";
     private static volatile long sleepFiredTotal = 0;
-    private static final Runnable sleepRun = () -> triggerSleepEnded();
+    private static final Runnable sleepRun = () -> triggerSleepEnded("time", Math.max(1L, sleepDurationMin));
     /** Hẹn giờ ngủ do app giữ để vẫn tạm dừng đúng giờ / đúng số bài khi WebView bị đóng băng. endAtMs = 0: không hẹn theo giờ; tracks = 0: không hẹn theo bài. */
     static void setSleep(long endAtMs, int tracks) {
         ph.removeCallbacks(sleepRun);
         sleepAt = endAtMs;
         int tr = Math.max(0, tracks);
-        sleepTracks = tr;
-        sleepTotalTracks = tr > 0 ? tr : 0;
+        if (tr <= 0) {
+            sleepTracks = 0;
+            sleepTotalTracks = 0;
+        } else {
+            if (sleepTracks <= 0 || tr > sleepTotalTracks) {
+                sleepTotalTracks = tr;
+            }
+            sleepTracks = tr;
+        }
         if (endAtMs > 0L) {
             long rem = Math.max(0L, endAtMs - System.currentTimeMillis());
             sleepDurationMin = Math.max(1L, Math.round(rem / 60000.0));
@@ -99,8 +106,14 @@ final class NativeAudio {
     }
 
     static void triggerSleepEnded() {
-        String type = sleepTracks > 0 ? "tracks" : "time";
+        String type = sleepTotalTracks > 0 ? "tracks" : "time";
         long total = "tracks".equals(type) ? Math.max(1L, sleepTotalTracks) : Math.max(1L, sleepDurationMin);
+        triggerSleepEnded(type, total);
+    }
+
+    static void triggerSleepEnded(String explicitType, long explicitTotal) {
+        String type = "tracks".equals(explicitType) ? "tracks" : "time";
+        long total = Math.max(1L, explicitTotal);
         sleepAt = 0L;
         sleepDurationMin = 0L;
         sleepTracks = 0;
@@ -114,9 +127,7 @@ final class NativeAudio {
         if (app != null && isAppInBackground(app)) {
             showSleepEndedNotification(app, type, total);
         }
-        if (isAppInBackground(app)) {
-            MediaService.onNative(snapshot("sleep"));
-        }
+        uiH.post(() -> MediaService.onNative(snapshot("sleep")));
     }
 
     static boolean hasPendingSleepEndedNotice() {
@@ -162,10 +173,16 @@ final class NativeAudio {
         return false;
     }
 
-    static void checkTrackSleepOnEnd() {
-        if (sleepTracks > 0 && --sleepTracks == 0) {
-            triggerSleepEnded();
+    /** Giảm số bài hẹn giờ ngủ khi hết bài. Trả về true nếu đã hết số bài và vừa kích hoạt dừng ngủ. */
+    static boolean checkTrackSleepOnEnd() {
+        if (sleepTracks <= 0) return false;
+        long total = Math.max(1L, sleepTotalTracks > 0 ? sleepTotalTracks : sleepTracks);
+        sleepTracks--;
+        if (sleepTracks <= 0) {
+            triggerSleepEnded("tracks", total);
+            return true;
         }
+        return false;
     }
 
     static void consumeSleepEndedNotice() {
@@ -494,8 +511,7 @@ final class NativeAudio {
     private static void onEnded() {
         if (endedHandled) return;
         endedHandled = true;
-        if (sleepTracks > 0) {
-            checkTrackSleepOnEnd();
+        if (sleepTracks > 0 && checkTrackSleepOnEnd()) {
             return;
         }
         if (!webAlive() && hasNext()) {
