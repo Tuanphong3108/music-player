@@ -199,17 +199,19 @@
                 try { if (host.setPointerCapture) host.setPointerCapture(e.pointerId); } catch (err) {}
                 applyPreview(pctFromClientX(e.clientX));
             });
-            host.addEventListener('pointermove', (e) => {
+            window.addEventListener('pointermove', (e) => {
                 if (!seekDragging || (activePtr != null && e.pointerId !== activePtr)) return;
                 applyPreview(pctFromClientX(e.clientX));
             });
-            host.addEventListener('pointerup', (e) => {
+            window.addEventListener('pointerup', (e) => {
                 if (!seekDragging || (activePtr != null && e.pointerId !== activePtr)) return;
                 applyPreview(pctFromClientX(e.clientX));
                 endDrag(true);
             });
-            host.addEventListener('pointercancel', () => endDrag(true));
-            host.addEventListener('lostpointercapture', () => endDrag(true));
+            window.addEventListener('pointercancel', (e) => {
+                if (!seekDragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                endDrag(true);
+            });
             window.addEventListener('blur', () => endDrag(false));
             seekSlider.addEventListener('input', (e) => {
                 if (seekDragging) return;
