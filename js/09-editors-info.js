@@ -718,7 +718,7 @@
                 thumbEditorPreview.src = track.cover;
                 thumbEditorPreview.style.display = 'block';
                 thumbEditorPlaceholder.style.display = 'none';
-                btnThumbDelete.style.display = 'block'; 
+                btnThumbDelete.style.display = 'inline-flex'; 
             } else {
                 thumbEditorPreview.style.display = 'none';
                 thumbEditorPlaceholder.style.display = 'block';
