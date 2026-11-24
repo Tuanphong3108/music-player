@@ -1170,7 +1170,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_24_0746_pc_md_menu_dropdown', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_24_0752_ai_switch_smooth_anim', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
