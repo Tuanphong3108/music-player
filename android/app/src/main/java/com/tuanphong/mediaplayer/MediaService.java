@@ -128,7 +128,11 @@ public class MediaService extends Service {
         // Chuyển bài: khoảnh khắc hết bài / nạp bài kế có thể báo "paused/ended" ngắn -> giữ trạng thái đang phát (foreground + wakelock) tối đa ~4s
         // để Android không coi service là nhàn rỗi và kill trong lúc chuyển. Người dùng chủ động tạm dừng (không đổi bài, không hết bài) thì không bị ảnh hưởng.
         long nowRt = SystemClock.elapsedRealtime();
-        if ("playing".equals(ns) || "buffering".equals(ns)) lastPlayingAt = nowRt;
+        boolean isSleepStop = "sleep".equals(o.optString("ev")) || o.optBoolean("sleepFired");
+        if (isSleepStop) {
+            fgHandler.removeCallbacks(graceRecheck);
+            lastPlayingAt = 0;
+        } else if ("playing".equals(ns) || "buffering".equals(ns)) lastPlayingAt = nowRt;
         else if (!o.optBoolean("err") && ("ended".equals(st) || trackChanged) && nowRt - lastPlayingAt < TRANSITION_GRACE_MS) {
             ns = "buffering";
             fgHandler.removeCallbacks(graceRecheck);
