@@ -699,6 +699,7 @@ ai.toast_trans_hidden=Hid lyric translation
 ai.toast_need_key=Enter your Google Gemini API Key to translate lyrics!
 ai.toast_translating=Translating lyrics to {lang}...
 ai.toast_trans_done=Translated & saved lyrics ({lang})!
+ai.toast_same_lang=Lyrics are already in {lang}, no translation needed!
 ai.toast_trans_err=Lyric translation error: {err}
 ai.err_no_key=Google Gemini API Key is not set.
 ai.err_no_model=No available Gemini model found for this API Key.
