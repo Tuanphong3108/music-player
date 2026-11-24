@@ -13,3 +13,4 @@
 - **Sửa triệt để hẹn giờ tạm dừng theo số bài**: chặn sự kiện `STATE_ENDED` đến muộn khiến app tự chuyển bài kế sau khi dừng hẹn giờ, bỏ qua khoảng chờ chuyển bài trên MediaSession để chuyển sang Pause ngay lập tức, và đẩy thông báo “Đã tạm dừng theo hẹn giờ” đầy đủ như hẹn giờ theo phút.
 - **Next luôn là Next**: nút Next trên MediaSession/thông báo/widget luôn sang bài kế dù đang Repeat One hoặc ở bài cuối (quay vòng), giống nút Next trong app.
 - **Sửa mất tiếng khi tự chuyển bài dưới nền**: nếu âm lượng native còn kẹt ở 0 (tắt tiếng tạm lúc khôi phục chưa được trả lại) thì bài kế tự trả về 100%.
+- **Mất tiếng khi chuyển bài dưới nền (lần 2)**: ở nền, âm lượng native luôn bị ép 100% khi nạp bài mới hoặc khi trang gửi mức thấp hơn; vào app thì trang trả lại mức của bạn như cũ.

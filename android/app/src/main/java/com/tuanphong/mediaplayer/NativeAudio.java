@@ -384,7 +384,8 @@ final class NativeAudio {
         endedHandled = false;
         if (u == null) { loaded = true; if (skipBadTrack()) return; emit("error"); return; }
         loaded = true;
-        vol = volume; rate = speed <= 0 ? 1f : speed;
+        // Ở nền thì âm lượng native luôn 100% (trang cũng ép 1.0 khi ẩn): tránh kẹt ở 0/thấp do bước tắt tiếng tạm lúc khôi phục khiến bài mới im lặng tới khi vào app
+        vol = (play && isAppInBackground(app)) ? 1f : volume; rate = speed <= 0 ? 1f : speed;
         p.setVolume(vol);
         p.setPlaybackParameters(new PlaybackParameters(rate));
         p.setMediaItem(MediaItem.fromUri(u), Math.max(0, startMs));
@@ -405,7 +406,7 @@ final class NativeAudio {
     private static void pauseImpl() { if (p != null && loaded) p.setPlayWhenReady(false); }
     static void toggle() { ph.post(() -> { if (p != null && loaded) { if (p.getPlayWhenReady() && p.getPlaybackState() != Player.STATE_ENDED) pauseImpl(); else playImpl(); } }); }
     static void seek(final long ms) { ph.post(() -> { if (p != null && loaded) { endedHandled = false; p.seekTo(Math.max(0, ms)); } }); }
-    static void setVolume(final float v) { ph.post(() -> { vol = v; if (p != null) p.setVolume(v); }); }
+    static void setVolume(final float v) { ph.post(() -> { vol = (v < 1f && isAppInBackground(app)) ? 1f : v; if (p != null) p.setVolume(vol); }); }
     static void setRate(final float r) { ph.post(() -> { rate = r <= 0 ? 1f : r; if (p != null) p.setPlaybackParameters(new PlaybackParameters(rate)); }); }
 
     /** Dừng hẳn (trang chuyển sang phát bằng thẻ audio thường, hoặc app thoát). */
