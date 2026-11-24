@@ -1201,7 +1201,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_24_2215_fix_seek_pointer_pass', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_24_2220_seek_touch_direct', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
