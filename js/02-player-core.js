@@ -827,13 +827,18 @@
             return out;
         }
         const escHtml = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-        // Bọc dòng lyric (kèm chú thích nhỏ bên dưới nếu bài có tag)
-        function lyricHtml(text, track, clamp) {
-            const box = clamp ? 'display:-webkit-box;-webkit-line-clamp:' + clamp + ';-webkit-box-orient:vertical;overflow:hidden;' : '';
+        // Bọc dòng lyric (kèm bản dịch song ngữ & chú thích nhỏ bên dưới nếu có)
+        function lyricHtml(text, track, clamp, transText) {
+            const origClamp = transText ? (clamp ? Math.min(2, clamp) : 0) : clamp;
+            const box = origClamp ? 'display:-webkit-box;-webkit-line-clamp:' + origClamp + ';-webkit-box-orient:vertical;overflow:hidden;' : 'display:block;';
+            const transBox = clamp ? 'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;' : 'display:block;';
+            const trans = transText
+                ? '<span class="lyric-trans-inline" style="' + transBox + 'font-size:.72em;font-weight:600;opacity:.88;margin-top:4px;line-height:1.3;color:rgba(255,255,255,0.92);">' + escHtml(transText) + '</span>'
+                : '';
             const ct = lyricCreditText(track);
             const credit = ct
-                ? '<small style="display:block;font-size:.5em;font-weight:500;opacity:.65;margin-top:4px;letter-spacing:.3px;text-shadow:none;">' + escHtml(ct) + '</small>' : '';
-            return '<span style="' + box + '">' + text + '</span>' + credit;
+                ? '<small style="display:block;font-size:.5em;font-weight:500;opacity:.65;margin-top:5px;letter-spacing:.3px;text-shadow:none;">' + escHtml(ct) + '</small>' : '';
+            return '<span class="lyric-orig" style="' + box + '">' + text + '</span>' + trans + credit;
         }
         function updateLyricCredit() {
             const el = document.getElementById('lyric-credit');
@@ -946,15 +951,13 @@
             const trInfo = (typeof window.__getAiLyricTranslation === 'function') ? window.__getAiLyricTranslation(track) : null;
             const rawLine = activeIdx !== -1 ? track.lyrics[activeIdx].text : '';
             const trLine = (activeIdx !== -1 && trInfo && trInfo.active && Array.isArray(trInfo.lines)) ? (trInfo.lines[activeIdx] || '') : '';
-            let line = activeIdx !== -1 ? formatLyricLine(rawLine) : '';
-            if (activeIdx !== -1 && trLine && rawLine) {
-                line = trInfo.bilingual
-                    ? (formatLyricLine(rawLine) + `<span class="lyric-trans-inline">${escHtml(trLine)}</span>`)
-                    : escHtml(trLine);
-            }
-            const htmlTop = activeIdx !== -1 ? lyricHtml(line, track, document.documentElement.classList.contains('m-ui') ? 5 : 2) : '';
-            const htmlPip = activeIdx !== -1 ? lyricHtml(line, track, 3) : '';
-            const htmlFs = activeIdx !== -1 ? lyricHtml(line, track, 0) : '';
+            const mainLine = (activeIdx !== -1 && trLine && rawLine && !trInfo.bilingual)
+                ? escHtml(trLine)
+                : (activeIdx !== -1 ? formatLyricLine(rawLine) : '');
+            const subTrans = (activeIdx !== -1 && trLine && rawLine && trInfo.bilingual) ? trLine : '';
+            const htmlTop = activeIdx !== -1 ? lyricHtml(mainLine, track, document.documentElement.classList.contains('m-ui') ? 5 : 2, subTrans) : '';
+            const htmlPip = activeIdx !== -1 ? lyricHtml(mainLine, track, 3, subTrans) : '';
+            const htmlFs = activeIdx !== -1 ? lyricHtml(mainLine, track, 0, subTrans) : '';
             const transKey = (trInfo && trInfo.active) ? ('|' + trInfo.lang + ':' + (trInfo.bilingual ? 'bi' : 'tr')) : '';
             const idxStr = activeIdx.toString() + (creditKey ? '|' + creditKey : '') + transKey;
             
