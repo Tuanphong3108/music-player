@@ -188,9 +188,14 @@
                     .pip-lyric {
                         flex: 1; display: ${settings.showPipLyric ? 'flex' : 'none'}; flex-direction: column; align-items: center; justify-content: center;
                         text-align: center; font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700; color: var(--pip-primary, #D0BCFF);
-                        padding: 0 16px; text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-                        overflow: hidden;
-                        margin: 12px 0;
+                        padding: 0 12px; text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+                        overflow: hidden; line-height: 1.3;
+                        margin: 8px 0;
+                    }
+                    .pip-lyric .lyric-orig { display: block; width: 100%; }
+                    .pip-lyric .lyric-trans-inline {
+                        display: block; width: 100%; font-size: 0.72em; font-weight: 600;
+                        color: rgba(255,255,255,0.9); opacity: 0.9; margin-top: 4px; line-height: 1.28;
                     }
                     .bouncing-dots { display: inline-flex; align-items: flex-end; justify-content: center; height: 1em; gap: 4px; }
                     .bouncing-dots .dot { animation: dot-jump 1s infinite; font-size: 1.2em; line-height: 0.5; color: var(--pip-primary, #D0BCFF);}
