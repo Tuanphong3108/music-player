@@ -1686,15 +1686,15 @@
 
 
         /* ===== Thanh tua kiểu Material 3 Expressive (wavy progress): đoạn đã phát là sóng, tạm dừng thì phẳng dần ===== */
-        .seek-container { top: -14px; height: 28px; touch-action: none; cursor: pointer; user-select: none; -webkit-user-select: none; }
-        .seek-wave { display: block; position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
-        #seek-slider, #seek-slider:hover { position: relative; z-index: 1; height: 28px !important; background: transparent !important; border-radius: 0; margin: 0; touch-action: none; pointer-events: none; }
-        #seek-slider::-webkit-slider-runnable-track { background: transparent; height: 28px; }
-        #seek-slider::-webkit-slider-thumb { height: 28px; width: 6px; border-radius: 3px; opacity: 1; }
-        html.m-ui .seek-container { position: relative; left: auto; right: auto; top: auto; height: 42px; margin: -7px 0; width: 100%; z-index: 110; touch-action: none; cursor: pointer; }
-        html.m-ui #seek-slider, html.m-ui #seek-slider:hover { height: 42px !important; touch-action: none; pointer-events: none; }
-        html.m-ui #seek-slider::-webkit-slider-runnable-track { height: 42px; }
-        html.m-ui #seek-slider::-webkit-slider-thumb { margin-top: 7px; }
+        .seek-container { top: -14px; height: 28px; touch-action: none; cursor: pointer; user-select: none; -webkit-user-select: none; z-index: 200; background: transparent; }
+        .seek-wave { display: block; position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none !important; }
+        #seek-slider, #seek-slider:hover { position: relative; z-index: 1; height: 28px !important; background: transparent !important; border-radius: 0; margin: 0; touch-action: none; pointer-events: none !important; }
+        #seek-slider::-webkit-slider-runnable-track { background: transparent; height: 28px; pointer-events: none !important; }
+        #seek-slider::-webkit-slider-thumb { height: 28px; width: 6px; border-radius: 3px; opacity: 1; pointer-events: none !important; }
+        html.m-ui .seek-container { position: relative; left: auto; right: auto; top: auto; height: 44px; margin: -8px 0; width: 100%; z-index: 200; touch-action: none; cursor: pointer; background: transparent; }
+        html.m-ui #seek-slider, html.m-ui #seek-slider:hover { height: 44px !important; touch-action: none; pointer-events: none !important; }
+        html.m-ui #seek-slider::-webkit-slider-runnable-track { height: 44px; pointer-events: none !important; }
+        html.m-ui #seek-slider::-webkit-slider-thumb { margin-top: 8px; pointer-events: none !important; }
         html.m-ui .mlp-seek { position: relative; touch-action: none; cursor: pointer; user-select: none; -webkit-user-select: none; }
         html.m-ui .mlp-seek .seek-wave { left: 18px; width: calc(100% - 36px); }
         html.m-ui #m-lyric-seek { position: relative; z-index: 1; height: 44px; background: transparent !important; border-radius: 0; touch-action: none; pointer-events: none; }
