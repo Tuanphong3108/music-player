@@ -1031,16 +1031,17 @@
             if (!chosenKeys.length) throw new Error('AI không trả về bài hát hợp lệ nào trong thư viện.');
 
             const plName = spec.playlistName || String(parsed?.playlistName || '').trim() || ('AI Playlist ' + new Date().toLocaleDateString('vi-VN'));
+            const PL_KEY = 'mp_mobile_playlists_v1';
             let pls = [];
-            try { pls = JSON.parse(localStorage.getItem('mp_user_playlists_v1') || '[]') || []; } catch (e) {}
+            try { pls = JSON.parse(localStorage.getItem(PL_KEY) || '[]') || []; } catch (e) {}
             const newPl = {
                 id: 'pl_ai_' + Date.now(),
                 name: plName,
                 mode: 'manual',
                 coverType: 'icon',
-                iconBg: '#7c3aed',
+                iconBg: '#c4b5fd',
                 iconName: 'auto_awesome',
-                iconShape: 'clover',
+                iconShape: 'star',
                 starSides: 6,
                 starCurve: 0.25,
                 starRot: 0,
@@ -1048,10 +1049,11 @@
                 trackKeys: chosenKeys
             };
             pls.unshift(newPl);
-            localStorage.setItem('mp_user_playlists_v1', JSON.stringify(pls));
+            localStorage.setItem(PL_KEY, JSON.stringify(pls));
             addUsage(tokensEst, plName);
             closeAiLab();
             if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
+            if (typeof window.__setMobileNav === 'function') window.__setMobileNav('playlists', newPl.id);
             if (typeof showToast === 'function') {
                 showToast('Đã tạo "' + plName + '" (' + chosenKeys.length + ' bài)!', 'auto_awesome', 3500);
             }
@@ -1273,9 +1275,40 @@
         }
     }
 
+    function migrateLegacyAiPlaylists() {
+        try {
+            const legacyRaw = localStorage.getItem('mp_user_playlists_v1');
+            if (!legacyRaw) return;
+            const legacy = JSON.parse(legacyRaw);
+            if (!Array.isArray(legacy) || !legacy.length) {
+                localStorage.removeItem('mp_user_playlists_v1');
+                return;
+            }
+            const PL_KEY = 'mp_mobile_playlists_v1';
+            let cur = [];
+            try { cur = JSON.parse(localStorage.getItem(PL_KEY) || '[]') || []; } catch (e) {}
+            const seenIds = new Set(cur.map(p => p && p.id).filter(Boolean));
+            let moved = 0;
+            legacy.forEach(p => {
+                if (!p || !p.id || seenIds.has(p.id)) return;
+                if (p.iconShape === 'clover') p.iconShape = 'star';
+                if (p.iconBg === '#7c3aed') p.iconBg = '#c4b5fd';
+                cur.unshift(p);
+                seenIds.add(p.id);
+                moved++;
+            });
+            if (moved > 0) {
+                localStorage.setItem(PL_KEY, JSON.stringify(cur));
+                if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
+            }
+            localStorage.removeItem('mp_user_playlists_v1');
+        } catch (e) {}
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         injectStyles();
         ensureModals();
+        migrateLegacyAiPlaylists();
         syncAllSettingsHosts();
         if (cfg.apiKey && !fetchedModels.length) {
             fetchGeminiModels(cfg.apiKey, true);
