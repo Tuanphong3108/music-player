@@ -2052,6 +2052,19 @@
         });
         audio.addEventListener('play', () => { try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {} clearTimeout(pauseFlashTimer); if (document.body.classList.contains('has-video')) pauseOverlay.classList.remove('visible'); });
 
+        // Phát bắt đầu từ bất kỳ nguồn nào (bấm lời bài, phím media, tai nghe...) cũng phải cập nhật nút thành Playing
+        const syncPlayingUi = () => {
+            const sp = playBtn.querySelector('span');
+            if (sp && sp.innerText !== 'pause') {
+                sp.innerText = 'pause';
+                pauseOverlay.classList.remove('visible');
+                try { updatePlaylistUI(); } catch (e) {}
+                try { if (typeof updatePiPUI === 'function') updatePiPUI(); } catch (e) {}
+            }
+        };
+        audio.addEventListener('play', syncPlayingUi);
+        audio.addEventListener('playing', syncPlayingUi);
+
         playBtn.addEventListener('click', () => {
             if (!audio.src && currentIndex === -1) {
                 if (typeof window.__tryRestoreNow === 'function' && window.__tryRestoreNow(true)) return;
