@@ -2255,6 +2255,7 @@
             if (sleepState && sleepState.type === 'tracks') {
                 if (--sleepState.remaining <= 0) { fireSleep(); return; }
                 updateSleepUI();
+                if (typeof window.__syncNativeSleep === 'function') window.__syncNativeSleep(true);
             }
             if (repeatMode === 2) { audio.play(); return; }
             if (repeatMode === 1) { document.getElementById('next-btn').click(); return; }
