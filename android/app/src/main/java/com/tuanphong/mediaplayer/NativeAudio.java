@@ -253,6 +253,7 @@ final class NativeAudio {
     static void warmUp(final Context c) { ph.post(() -> ensure(c)); }
 
     static boolean active() { return loaded && p != null; }
+    static Context appContext() { return app; }
     static boolean webAlive() { return MainActivity.instance != null && SystemClock.elapsedRealtime() - lastAck < 4000; }
     static boolean hasNext() { return stepQ(1, true) >= 0; }
 
