@@ -14,3 +14,4 @@
 - **Next luôn là Next**: nút Next trên MediaSession/thông báo/widget luôn sang bài kế dù đang Repeat One hoặc ở bài cuối (quay vòng), giống nút Next trong app.
 - **Sửa mất tiếng khi tự chuyển bài dưới nền**: nếu âm lượng native còn kẹt ở 0 (tắt tiếng tạm lúc khôi phục chưa được trả lại) thì bài kế tự trả về 100%.
 - **Mất tiếng khi chuyển bài dưới nền (lần 2)**: ở nền, âm lượng native luôn bị ép 100% khi nạp bài mới hoặc khi trang gửi mức thấp hơn; vào app thì trang trả lại mức của bạn như cũ.
+- **Tua trên MediaSession không còn về 0:00**: khi native chưa nạp bài (sau khôi phục/khởi động ngầm), kéo thanh tua trên thông báo sẽ nạp bài ở trạng thái Pause đúng vị trí vừa kéo thay vì mất lệnh; khi đã nạp thì tua xong cập nhật thanh ngay.

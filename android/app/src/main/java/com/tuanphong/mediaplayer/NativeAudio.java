@@ -405,7 +405,7 @@ final class NativeAudio {
     static void pause() { ph.post(NativeAudio::pauseImpl); }
     private static void pauseImpl() { if (p != null && loaded) p.setPlayWhenReady(false); }
     static void toggle() { ph.post(() -> { if (p != null && loaded) { if (p.getPlayWhenReady() && p.getPlaybackState() != Player.STATE_ENDED) pauseImpl(); else playImpl(); } }); }
-    static void seek(final long ms) { ph.post(() -> { if (p != null && loaded) { endedHandled = false; p.seekTo(Math.max(0, ms)); } }); }
+    static void seek(final long ms) { ph.post(() -> { if (p != null && loaded) { endedHandled = false; p.seekTo(Math.max(0, ms)); emit("seek"); } }); }
     static void setVolume(final float v) { ph.post(() -> { vol = (v < 1f && isAppInBackground(app)) ? 1f : v; if (p != null) p.setVolume(vol); }); }
     static void setRate(final float r) { ph.post(() -> { rate = r <= 0 ? 1f : r; if (p != null) p.setPlaybackParameters(new PlaybackParameters(rate)); }); }
 
@@ -562,7 +562,9 @@ final class NativeAudio {
     }
 
     /** Native chưa nạp bài (vd. vừa mở lại, trang chưa sẵn sàng): tự nạp bài đã lưu và phát, không cần nhờ WebView. Trả về false nếu chưa xác định được bài. */
-    static boolean resumeFromSaved(Context c) {
+    static boolean resumeFromSaved(Context c) { return resumeFromSaved(c, -1, true); }
+    /** posMs >= 0: bắt đầu từ vị trí đó (ví dụ người dùng kéo thanh tua trên thông báo khi native chưa nạp bài); play=false thì nạp ở trạng thái Pause. */
+    static boolean resumeFromSaved(Context c, long posMs, boolean play) {
         try {
             String raw = persistedSessionJson(c);
             if (raw == null || raw.isEmpty()) return false;
@@ -575,7 +577,7 @@ final class NativeAudio {
                 id = byLoc;
             }
             if (MainActivity.resolveServed(id) == null) return false;
-            load(c, id, o.optString("title", ""), o.optString("artist", ""), o.optLong("pos", 0), true, vol <= 0 ? 1f : vol, rate <= 0 ? 1f : rate);
+            load(c, id, o.optString("title", ""), o.optString("artist", ""), posMs >= 0 ? posMs : o.optLong("pos", 0), play, vol <= 0 ? 1f : vol, rate <= 0 ? 1f : rate);
             return true;
         } catch (Throwable t) { return false; }
     }

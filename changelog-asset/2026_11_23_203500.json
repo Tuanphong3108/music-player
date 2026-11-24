@@ -80,6 +80,10 @@
     {
       "content": "Thanh tua mobile nhận chạm theo vị trí trên thanh (không phụ thuộc phần tử bị chạm), sửa lỗi chỉ kéo được ở đoạn đầu",
       "icon": "linear_scale"
+    },
+    {
+      "content": "Thêm nút cuộn đến bài đang phát ở trang chính; kéo thanh tua trên thông báo giờ tua đúng vị trí",
+      "icon": "my_location"
     }
   ],
   "en": [
@@ -162,6 +166,10 @@
     {
       "content": "Mobile seek bar now accepts touches by position on the bar (independent of the touched element), fixing drags only working near the start",
       "icon": "linear_scale"
+    },
+    {
+      "content": "Added a button on the main page to scroll to the currently playing song; seeking from the notification now keeps the position",
+      "icon": "my_location"
     }
   ]
 }

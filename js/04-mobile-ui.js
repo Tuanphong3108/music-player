@@ -57,6 +57,24 @@
             const mLibSearch = document.getElementById('m-lib-search');
             const mLibShuffle = document.getElementById('m-lib-shuffle');
             const mLibRescan = document.getElementById('m-lib-rescan');
+            const mLibLocate = document.getElementById('m-lib-locate');
+            if (mLibLocate) {
+                const locate = (retry) => {
+                    const row = mLibList.querySelector('.m-lib-item.active');
+                    if (row) {
+                        row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        row.classList.remove('m-locate-flash'); void row.offsetWidth; row.classList.add('m-locate-flash');
+                        setTimeout(() => row.classList.remove('m-locate-flash'), 1400);
+                        return;
+                    }
+                    const q = document.getElementById('m-lib-search');
+                    if (!retry && q && q.value) {   // đang lọc tìm kiếm làm ẩn bài đang phát: bỏ lọc rồi thử lại
+                        q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true }));
+                        setTimeout(() => locate(true), 80);
+                    }
+                };
+                mLibLocate.addEventListener('click', () => locate(false));
+            }
             const mMiniPlayer = document.getElementById('m-mini-player');
             const mMiniArt = document.getElementById('m-mini-art');
             const mMiniTitle = document.getElementById('m-mini-title');

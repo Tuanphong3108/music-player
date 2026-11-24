@@ -72,7 +72,7 @@ public class MediaService extends Service {
             @Override public void onPause() { if (NativeAudio.active()) NativeAudio.pause(); else if (playing) cmd("toggle"); }
             @Override public void onSkipToNext() { skip(true); }
             @Override public void onSkipToPrevious() { skip(false); }
-            @Override public void onSeekTo(long p) { if (NativeAudio.active()) NativeAudio.seek(p); else cmd("seek:" + p); }
+            @Override public void onSeekTo(long p) { if (NativeAudio.active()) NativeAudio.seek(p); else if (playing || !NativeAudio.resumeFromSaved(MediaService.this, p, false)) cmd("seek:" + p); }
             @Override public void onStop() { NativeAudio.release(); clearSession(); stopSelf(); }
         });
         session.setActive(false);

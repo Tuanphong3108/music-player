@@ -2263,3 +2263,6 @@ html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track:not(.m-early
 html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track:not(.m-early-card)) #m-lib-list {
     padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
 }
+
+@keyframes mLocateFlash { 0%,100% { background: transparent; } 30% { background: color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent); } }
+html.m-ui .m-lib-item.m-locate-flash { animation: mLocateFlash 1.2s ease; }
