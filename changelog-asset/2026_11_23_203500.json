@@ -64,6 +64,10 @@
     {
       "content": "Ảnh bìa tải lên tự cắt vuông, phủ kín khung (không lộ nền đen); dialog chỉnh ảnh bìa theo MD3E",
       "icon": "crop"
+    },
+    {
+      "content": "Sửa tên bài dài trên mobile không chạy ngang: giờ tự chạy chữ khi mở trình phát đầy đủ",
+      "icon": "text_rotation_none"
     }
   ],
   "en": [
@@ -130,6 +134,10 @@
     {
       "content": "Uploaded cover art is auto-cropped to a square that fully covers the frame (no black bars); cover dialogs restyled to MD3E",
       "icon": "crop"
+    },
+    {
+      "content": "Fixed long track titles not scrolling on mobile: the title now marquees as soon as the full player opens",
+      "icon": "text_rotation_none"
     }
   ]
 }

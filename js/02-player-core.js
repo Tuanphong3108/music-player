@@ -559,6 +559,16 @@
             }, 100);
         }
         window.addEventListener('resize', applyMarquee, { passive: true });
+        // Trên mobile khung phát đầy đủ bị ẩn (rộng 0) lúc đổi bài nên lần đo đầu bị bỏ qua: đo lại ngay khi khung hiện ra / đổi kích thước
+        try {
+            if (window.ResizeObserver && nameContainer) {
+                let lastMW = -1;
+                new ResizeObserver(() => {
+                    const w = nameContainer.clientWidth;
+                    if (w !== lastMW) { lastMW = w; if (w > 0) applyMarquee(); }
+                }).observe(nameContainer);
+            }
+        } catch (e) {}
 
         function togglePlaylist() { playlistCard.classList.toggle('collapsed'); }
 
