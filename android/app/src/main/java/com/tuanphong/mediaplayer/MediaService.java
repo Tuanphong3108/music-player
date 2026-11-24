@@ -431,7 +431,7 @@ public class MediaService extends Service {
                 .setContentTitle(title.isEmpty() ? "Media Player" : title)
                 .setContentText(artist)
                 .setContentIntent(open)
-                .setOngoing(playing)
+                .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setStyle(new Notification.MediaStyle().setMediaSession(session.getSessionToken()).setShowActionsInCompactView(0, 1, 2))
@@ -444,9 +444,8 @@ public class MediaService extends Service {
         try {
             if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
             else startForeground(1, n);
-            // Giữ trạng thái foreground thêm 2 phút khi tạm dừng để tránh Android 15-17 chặn startForeground khi bấm phát lại từ nền/widget/tai nghe
             fgHandler.removeCallbacks(stopFgRunnable);
-            if (!playing) fgHandler.postDelayed(stopFgRunnable, 120000);
+            // Luôn giữ thông báo foreground khi còn phiên (kể cả tạm dừng) để Android không kill app dưới nền; chỉ gỡ khi clearSession/đóng app.
         } catch (Throwable fe) {
             try { nm.notify(1, n); } catch (Throwable ignored) {}
         }
