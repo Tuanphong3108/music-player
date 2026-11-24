@@ -67,7 +67,7 @@
             if (!(N.startMs > 0) && rh.ms > 0) N.startMs = rh.ms;
             window.__restoreHint = null;
         }
-        N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering'; N.suppressEndedId = '';
+        N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering'; N.suppressEndedId = ''; N.seekGuard = 0;
         const t = nativeTrack();
         const ar = ((document.getElementById('track-artist') || {}).textContent || '').split('|')[0].trim();
         try { AB.nativeAudioLoad(N.id, (t && t.name) || '', (t && t.artist) || ar || '', Math.round(N.startMs), !!play, N.vol, N.rate); } catch (e) {}
@@ -89,7 +89,7 @@
         window.__adoptNative = false;
         // thẻ audio thật phải im và dừng nạp
         try { oPause.call(a); a.removeAttribute('src'); oLoad.call(a); } catch (e) {}
-        N.mode = 'native'; N.id = m[1]; N.url = v; N.err = false; N.ended = false; N.suppressEndedId = '';
+        N.mode = 'native'; N.id = m[1]; N.url = v; N.err = false; N.ended = false; N.suppressEndedId = ''; N.seekGuard = 0;
         if (adopting) {
             // trình phát native đã giữ sẵn thông tin bài & hàng đợi: đồng bộ metadata, đợi nạp xong rồi tua tới vị trí cũ và áp dụng Play/Pause
             N.loaded = false; N.pending = true; N.wasReady = false; N.isPlaying = false;
@@ -168,8 +168,10 @@
         v = Math.max(0, Number(v) || 0);
         if (!N.loaded) { N.startMs = v * 1000; return; }
         N.pos = v * 1000; N.stamp = now(); N.ended = false; N.suppressEndedId = '';
+        N.seekTarget = N.pos; N.seekGuard = now() + 1400;   // chặn các gói tick cũ trước khi ExoPlayer kịp seek xong làm giật ngược thanh tua
         try { AB.nativeAudioSeek(Math.round(v * 1000)); } catch (e) {}
         fire('seeking');
+        scheduleTickUi(true);
     });
     def('paused', function () { return isNative() ? (N.paused || N.ended) : orig.paused.get.call(a); });
     def('ended', function () { return isNative() ? N.ended : orig.ended.get.call(a); });
@@ -315,7 +317,20 @@
             }
             if (!isNative() || String(e.id || '') !== String(N.id || '') || !N.loaded) return;
             const wasPaused = N.paused, hadDur = N.dur > 0, wasEnded = N.ended;
-            N.pos = e.pos || 0; N.stamp = now(); N.dur = e.dur || N.dur; N.buf = e.buf || 0; N.st = e.st; N.rate = e.rate || 1;
+            const incomingPos = e.pos || 0;
+            if (e.ev === 'seeked') {
+                N.seekGuard = 0;
+                N.pos = incomingPos; N.stamp = now();
+            } else if (N.seekGuard && now() < N.seekGuard) {
+                if (Math.abs(incomingPos - (N.seekTarget || 0)) < 1500) {
+                    N.seekGuard = 0;
+                    N.pos = incomingPos; N.stamp = now();
+                }
+            } else {
+                N.seekGuard = 0;
+                N.pos = incomingPos; N.stamp = now();
+            }
+            N.dur = e.dur || N.dur; N.buf = e.buf || 0; N.st = e.st; N.rate = e.rate || 1;
             if (e.pwr) N.playGuard = 0;
             if (!e.pwr && !wasPaused && e.st !== 'ended' && N.playGuard && now() < N.playGuard) { /* sự kiện cũ: giữ trạng thái Playing */ }
             else N.paused = !e.pwr;
