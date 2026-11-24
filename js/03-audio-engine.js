@@ -422,10 +422,17 @@
             document.getElementById('sleep-fired-dialog').show();
         }
         document.getElementById('sleep-fired-ok').addEventListener('click', () => document.getElementById('sleep-fired-dialog').close());
+        let pendingSleepEndedNotice = null;
         window.__showNativeSleepEndedNotice = function (type, total) {
             try {
                 clearSleep(false, true);
                 const val = Math.max(1, Number(total) || 1);
+                if (document.hidden) {
+                    // App đang chạy ở nền / khóa màn hình: KHÔNG gọi consumeSleepEndedNotice() để giữ nguyên thông báo hệ thống Android; đợi người dùng mở lại app mới hiện hộp thoại và dọn thông báo
+                    pendingSleepEndedNotice = { type: type === 'tracks' ? 'tracks' : 'time', total: val };
+                    return;
+                }
+                pendingSleepEndedNotice = null;
                 const txt = type === 'tracks'
                     ? slT('sleep.fired_tracks', 'Nhạc đã tự tạm dừng vì hẹn giờ sau {n} bài đã hoàn thành.').replace('{n}', val)
                     : slT('sleep.fired_time', 'Nhạc đã tự tạm dừng vì hẹn giờ {n} phút đã hết.').replace('{n}', fmtN(val));
@@ -438,6 +445,13 @@
                 }
             } catch (e) {}
         };
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && pendingSleepEndedNotice) {
+                const info = pendingSleepEndedNotice;
+                pendingSleepEndedNotice = null;
+                window.__showNativeSleepEndedNotice(info.type, info.total);
+            }
+        });
         function setSleepTime(min, preset) {
             clearSleep(true, true);
             sleepState = { type: 'time', endAt: Date.now() + min * 60000, preset: preset || 'custom', total: min };
