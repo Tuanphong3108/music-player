@@ -68,6 +68,10 @@
     {
       "content": "Sửa tên bài dài trên mobile không chạy ngang: giờ tự chạy chữ khi mở trình phát đầy đủ",
       "icon": "text_rotation_none"
+    },
+    {
+      "content": "Bấm vào lời bài khi đang Pause: tua tới đoạn đó và chuyển sang Playing đúng trạng thái",
+      "icon": "lyrics"
     }
   ],
   "en": [
@@ -138,6 +142,10 @@
     {
       "content": "Fixed long track titles not scrolling on mobile: the title now marquees as soon as the full player opens",
       "icon": "text_rotation_none"
+    },
+    {
+      "content": "Tapping a lyric line while paused now seeks there and correctly switches to Playing",
+      "icon": "lyrics"
     }
   ]
 }

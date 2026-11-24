@@ -207,6 +207,7 @@
         if (N.pending) doLoad(true);
         else if (N.loaded) {
             N.paused = false;
+            N.playGuard = now() + 1500;   // bỏ qua các sự kiện native cũ (pwr=false) đến muộn ngay sau lệnh Play, tránh bị kéo ngược về Pause
             if (N.ended) { N.ended = false; N.pos = 0; N.stamp = now(); }
             try { AB.nativeAudioPlay(); } catch (e) {}
             fire('play');
@@ -217,6 +218,7 @@
         if (!isNative()) return oPause.call(a);
         if (window.__adoptNative) return;   // chuyển bài do app tự sang: đừng làm gián đoạn
         if (N.pending) { doLoad(false); return; }
+        N.playGuard = 0;
         if (N.loaded && !N.paused) { N.paused = true; N.pos = curPos() * 1000; N.stamp = now(); try { AB.nativeAudioPause(); } catch (e) {} fire('pause'); }
     };
     a.load = function () { if (!isNative()) oLoad.call(a); };
@@ -308,7 +310,9 @@
             if (!isNative() || String(e.id || '') !== String(N.id || '') || !N.loaded) return;
             const wasPaused = N.paused, hadDur = N.dur > 0, wasEnded = N.ended;
             N.pos = e.pos || 0; N.stamp = now(); N.dur = e.dur || N.dur; N.buf = e.buf || 0; N.st = e.st; N.rate = e.rate || 1;
-            N.paused = !e.pwr;
+            if (e.pwr) N.playGuard = 0;
+            if (!e.pwr && !wasPaused && e.st !== 'ended' && N.playGuard && now() < N.playGuard) { /* sự kiện cũ: giữ trạng thái Playing */ }
+            else N.paused = !e.pwr;
             if (e.st !== 'ended') N.ended = false;
             if (e.err) { N.err = true; fire('error'); return; }
             if (!hadDur && N.dur > 0) { N.hadMeta = true; ['loadedmetadata', 'durationchange', 'loadeddata'].forEach(fire); }
