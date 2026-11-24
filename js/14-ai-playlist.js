@@ -1062,14 +1062,8 @@
                 id: 'pl_ai_' + Date.now(),
                 name: plName,
                 mode: 'manual',
-                coverType: 'icon',
-                iconBg: '#c4b5fd',
-                iconName: 'auto_awesome',
-                iconShape: 'star',
-                starSides: 6,
-                starCurve: 0.25,
-                starRot: 0,
-                starScale: 1,
+                ai: true,
+                coverType: 'default',
                 trackKeys: chosenKeys
             };
             pls.unshift(newPl);

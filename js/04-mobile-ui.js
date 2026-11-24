@@ -845,8 +845,17 @@
                         + `<span class="material-symbols-rounded" style="position:absolute;font-size:${Math.round(S * 0.36)}px;color:#111;font-variation-settings:'FILL' 1;">${iconName || 'music_note'}</span>`;
                 }
 
+                // Playlist do AI tạo: cạnh tên có icon Gemini
+                const isAiPl = (pl) => !!(pl && (pl.ai || String(pl.id || '').startsWith('pl_ai_')));
+                let __gmnN = 0;
+                const GEMINI_SVG = (px) => { const gid = 'gmnG' + (++__gmnN); return `<svg class="m-ai-badge" width="${px}" height="${px}" viewBox="0 0 28 28" aria-label="Gemini" role="img" style="flex:none;vertical-align:-3px;margin-left:6px;"><defs><linearGradient id="${gid}" x1="4" y1="24" x2="24" y2="4" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4285f4"/><stop offset=".55" stop-color="#9b72cb"/><stop offset="1" stop-color="#d96570"/></linearGradient></defs><path fill="url(#${gid})" d="M14 0C14.6 7.6 20.4 13.4 28 14 20.4 14.6 14.6 20.4 14 28 13.4 20.4 7.6 14.6 0 14 7.6 13.4 13.4 7.6 14 0Z"/></svg>`; };
+                function setPlTitle(el, pl) {
+                    el.textContent = pl.name;
+                    if (isAiPl(pl)) el.insertAdjacentHTML('beforeend', GEMINI_SVG(16));
+                }
                 function renderPlCoverHtml(pl, size, tracks) {
                     const S = size || 56;
+                    if (isAiPl(pl) && pl.coverType === 'icon' && pl.iconName === 'auto_awesome') pl = Object.assign({}, pl, { coverType: 'default' });   // playlist AI cũ: dùng ảnh ghép mặc định
                     if (pl.coverType === 'image' && pl.coverImage) {
                         return `<div class="m-pl-cover" style="width:${S}px;height:${S}px;"><img src="${pl.coverImage}" style="width:100%;height:100%;object-fit:cover;"></div>`;
                     }
@@ -1029,7 +1038,7 @@
                             renderPlCoverHtml(pl, 56, plTracks) +
                             '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
                             '<button type="button" class="m-lib-more" aria-label="Delete"><span class="material-symbols-rounded" style="font-size:20px;">delete</span></button>';
-                        card.querySelector('.m-lib-title').textContent = pl.name;
+                        setPlTitle(card.querySelector('.m-lib-title'), pl);
                         card.querySelector('.m-lib-artist').textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', plTracks.length) + (pl.mode === 'smart' ? ' • Smart' : '');
                         card.addEventListener('click', () => openPlaylistDetail(pl.id));
                         card.querySelector('.m-lib-more').addEventListener('click', async (ev) => {
@@ -1067,7 +1076,7 @@
                     paneLiked?.classList.remove('active');
                     paneDetail?.classList.add('active');
                     document.getElementById('m-lib-tabs')?.style.setProperty('display', 'none');
-                    if (plDetailTitle) plDetailTitle.textContent = pl.name;
+                    if (plDetailTitle) setPlTitle(plDetailTitle, pl);
                     const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
                     const playTxt = document.getElementById('m-pl-detail-play-txt');
                     const addTxt = document.getElementById('m-pl-detail-add-txt');

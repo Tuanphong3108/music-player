@@ -56,6 +56,10 @@
     {
       "content": "Mở nhạc từ app Files ổn định hơn: nhận tệp gửi qua ClipData, thêm định dạng ogg/flac, một tệp lỗi không làm mất cả lượt mở",
       "icon": "folder_open"
+    },
+    {
+      "content": "Danh sách phát tạo bằng AI dùng ảnh ghép mặc định và có icon Gemini cạnh tên",
+      "icon": "auto_awesome"
     }
   ],
   "en": [
@@ -114,6 +118,10 @@
     {
       "content": "More reliable opening from the Files app: supports ClipData hand-off, extra ogg/flac types, and one bad file no longer cancels the whole open",
       "icon": "folder_open"
+    },
+    {
+      "content": "AI-created playlists use the default collage cover and show a Gemini icon next to the name",
+      "icon": "auto_awesome"
     }
   ]
 }
