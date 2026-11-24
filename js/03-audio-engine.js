@@ -160,9 +160,10 @@
         (function bindMainSeekScrub() {
             const host = seekSlider.parentElement || seekSlider;
             let activePtr = null;
+            let activeTouchId = null;
             let lastPct = 0;
             const pctFromClientX = (clientX) => {
-                const r = seekSlider.getBoundingClientRect();
+                const r = host.getBoundingClientRect();
                 if (!r.width) return 0;
                 return Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100));
             };
@@ -185,31 +186,72 @@
                 const pid = activePtr;
                 seekDragging = false;
                 activePtr = null;
+                activeTouchId = null;
                 if (pid != null) {
                     try { if (host.hasPointerCapture && host.hasPointerCapture(pid)) host.releasePointerCapture(pid); } catch (e) {}
                 }
                 if (shouldCommit) commitSeek(lastPct);
             };
+            const findTouch = (list, id) => {
+                if (!list) return null;
+                for (let i = 0; i < list.length; i++) if (list[i].identifier === id) return list[i];
+                return null;
+            };
+            // Bắt trực tiếp touchstart/touchmove/touchend (passive: false) để trên Android WebView chạm/kéo ở MỌI vị trí trên thanh tua đều ăn ngay
+            host.addEventListener('touchstart', (e) => {
+                if (!e.changedTouches || !e.changedTouches.length) return;
+                if (!isFinite(audio.duration) || audio.duration <= 0) return;
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                seekDragging = true;
+                activeTouchId = t.identifier;
+                activePtr = null;
+                applyPreview(pctFromClientX(t.clientX));
+            }, { passive: false });
+            window.addEventListener('touchmove', (e) => {
+                if (!seekDragging || activeTouchId == null) return;
+                const t = findTouch(e.touches, activeTouchId) || findTouch(e.changedTouches, activeTouchId);
+                if (!t) return;
+                e.preventDefault();
+                applyPreview(pctFromClientX(t.clientX));
+            }, { passive: false });
+            window.addEventListener('touchend', (e) => {
+                if (!seekDragging || activeTouchId == null) return;
+                const t = findTouch(e.changedTouches, activeTouchId);
+                if (!t) return;
+                applyPreview(pctFromClientX(t.clientX));
+                endDrag(true);
+            }, { passive: false });
+            window.addEventListener('touchcancel', (e) => {
+                if (!seekDragging || activeTouchId == null) return;
+                const t = findTouch(e.changedTouches, activeTouchId);
+                if (!t) return;
+                endDrag(true);
+            }, { passive: false });
+
+            // Chuột / bút (PC & tablet): dùng Pointer Events
             host.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'touch') return;
                 if (e.button !== undefined && e.button !== 0) return;
                 if (!isFinite(audio.duration) || audio.duration <= 0) return;
                 e.preventDefault();
                 seekDragging = true;
                 activePtr = e.pointerId;
+                activeTouchId = null;
                 try { if (host.setPointerCapture) host.setPointerCapture(e.pointerId); } catch (err) {}
                 applyPreview(pctFromClientX(e.clientX));
             });
             window.addEventListener('pointermove', (e) => {
-                if (!seekDragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                if (!seekDragging || activeTouchId != null || (activePtr != null && e.pointerId !== activePtr)) return;
                 applyPreview(pctFromClientX(e.clientX));
             });
             window.addEventListener('pointerup', (e) => {
-                if (!seekDragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                if (!seekDragging || activeTouchId != null || (activePtr != null && e.pointerId !== activePtr)) return;
                 applyPreview(pctFromClientX(e.clientX));
                 endDrag(true);
             });
             window.addEventListener('pointercancel', (e) => {
-                if (!seekDragging || (activePtr != null && e.pointerId !== activePtr)) return;
+                if (!seekDragging || activeTouchId != null || (activePtr != null && e.pointerId !== activePtr)) return;
                 endDrag(true);
             });
             window.addEventListener('blur', () => endDrag(false));
