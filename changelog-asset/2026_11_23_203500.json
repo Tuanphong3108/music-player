@@ -72,6 +72,10 @@
     {
       "content": "Bấm vào lời bài khi đang Pause: tua tới đoạn đó và chuyển sang Playing đúng trạng thái",
       "icon": "lyrics"
+    },
+    {
+      "content": "Thêm khoảng trống dưới cùng các danh sách để bài cuối không bị Mini Player đè lên",
+      "icon": "vertical_align_bottom"
     }
   ],
   "en": [
@@ -146,6 +150,10 @@
     {
       "content": "Tapping a lyric line while paused now seeks there and correctly switches to Playing",
       "icon": "lyrics"
+    },
+    {
+      "content": "Added bottom spacing to lists so the last songs are no longer covered by the Mini Player",
+      "icon": "vertical_align_bottom"
     }
   ]
 }
