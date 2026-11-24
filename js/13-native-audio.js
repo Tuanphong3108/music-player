@@ -67,7 +67,7 @@
             if (!(N.startMs > 0) && rh.ms > 0) N.startMs = rh.ms;
             window.__restoreHint = null;
         }
-        N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering';
+        N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering'; N.suppressEndedId = '';
         const t = nativeTrack();
         const ar = ((document.getElementById('track-artist') || {}).textContent || '').split('|')[0].trim();
         try { AB.nativeAudioLoad(N.id, (t && t.name) || '', (t && t.artist) || ar || '', Math.round(N.startMs), !!play, N.vol, N.rate); } catch (e) {}
@@ -89,7 +89,7 @@
         window.__adoptNative = false;
         // thẻ audio thật phải im và dừng nạp
         try { oPause.call(a); a.removeAttribute('src'); oLoad.call(a); } catch (e) {}
-        N.mode = 'native'; N.id = m[1]; N.url = v; N.err = false; N.ended = false;
+        N.mode = 'native'; N.id = m[1]; N.url = v; N.err = false; N.ended = false; N.suppressEndedId = '';
         if (adopting) {
             // trình phát native đã giữ sẵn thông tin bài & hàng đợi: đồng bộ metadata, đợi nạp xong rồi tua tới vị trí cũ và áp dụng Play/Pause
             N.loaded = false; N.pending = true; N.wasReady = false; N.isPlaying = false;
@@ -167,7 +167,7 @@
         if (!isNative()) { orig.currentTime.set.call(a, v); return; }
         v = Math.max(0, Number(v) || 0);
         if (!N.loaded) { N.startMs = v * 1000; return; }
-        N.pos = v * 1000; N.stamp = now(); N.ended = false;
+        N.pos = v * 1000; N.stamp = now(); N.ended = false; N.suppressEndedId = '';
         try { AB.nativeAudioSeek(Math.round(v * 1000)); } catch (e) {}
         fire('seeking');
     });
@@ -207,6 +207,7 @@
         if (N.pending) doLoad(true);
         else if (N.loaded) {
             N.paused = false;
+            N.suppressEndedId = '';
             N.playGuard = now() + 1500;   // bỏ qua các sự kiện native cũ (pwr=false) đến muộn ngay sau lệnh Play, tránh bị kéo ngược về Pause
             if (N.ended) { N.ended = false; N.pos = 0; N.stamp = now(); }
             try { AB.nativeAudioPlay(); } catch (e) {}
@@ -267,8 +268,13 @@
             lastNativeEvAt = now();
             if (e.ev === 'sleep') {
                 if (isNative()) {
+                    N.playGuard = 0;
                     N.paused = true;
                     N.isPlaying = false;
+                    if (e.st === 'ended' || e.sleepFiredType === 'tracks') {
+                        N.ended = true;
+                        N.suppressEndedId = String(e.id || N.id || '');
+                    }
                     fire('pause');
                 }
                 sleepSig = '';
@@ -324,7 +330,12 @@
             if (wasPaused && !N.paused) fire('play');
             if (!wasPaused && N.paused && e.st !== 'ended') fire('pause');
             if (e.ev === 'seeked') { lastTickUiPos = N.pos; fire('seeked'); scheduleTickUi(true); }
-            if (e.st === 'ended' && !wasEnded) { N.ended = true; N.paused = true; fire('pause'); fire('ended'); return; }
+            if (e.st === 'ended') {
+                const suppressed = !!(N.suppressEndedId && N.suppressEndedId === String(e.id || ''));
+                N.ended = true; N.paused = true;
+                if (!wasEnded && !suppressed) { fire('pause'); fire('ended'); }
+                return;
+            }
             if (e.ev === 'tick' || e.ev === 'state' || e.ev === 'load') {
                 const posChanged = Math.abs(N.pos - lastTickUiPos) >= 15;
                 const needTime = (!N.paused && !N.ended) || posChanged || (!hadDur && N.dur > 0);
