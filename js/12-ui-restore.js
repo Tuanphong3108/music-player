@@ -33,6 +33,7 @@
         try { pos = audio.currentTime > 0.5 ? audio.currentTime : (window.__lastPos || 0); } catch (e) {}
         return {
             key: cur ? keyOf(cur) : '',
+            path: cur && cur.nativeLocation ? String(cur.nativeLocation) : '',
             pos: pos,
             playing: !!cur && !audio.paused,
             expanded: body.classList.contains('m-player-expanded'),
@@ -78,10 +79,11 @@
         try {
             const useOrder = !!(isShuffle && shuffleInitialized && shuffleOrder.length === playlist.length);
             const keys = playlist.map(keyOf);
+            const paths = playlist.map(t => (t && t.nativeLocation) ? String(t.nativeLocation) : '');
             const sig = keys.length + '|' + keys[0] + '|' + keys[keys.length - 1] + '|' + keys.join('').length + '|' + (useOrder ? shuffleOrder.join(',') : '') + '|' + keys.filter((k, i) => i % 5 === 0).join('');
             if (sig === qSig) return;
             qSig = sig;
-            localStorage.setItem(QKEY, JSON.stringify({ keys: keys, order: useOrder ? shuffleOrder.slice() : null }));
+            localStorage.setItem(QKEY, JSON.stringify({ keys: keys, paths: paths, order: useOrder ? shuffleOrder.slice() : null }));
         } catch (e) {}
     }
     setInterval(() => { if (!document.hidden) saveQueue(); }, 10000);
@@ -351,6 +353,41 @@
         });
     }
 
+    async function importMissingSavedPaths(boot, bootQ) {
+        try {
+            if (!window.AndroidBridge || typeof window.AndroidBridge.importLocationsForRestore !== 'function') return;
+            const { byKey } = buildPool();
+            const candidates = [];
+            const seen = new Set();
+            const pushPath = (p) => {
+                const s = String(p || '').trim();
+                if (!s) return;
+                if (!(s.startsWith('/') || s.startsWith('content://') || s.startsWith('file://'))) return;
+                const low = s.toLowerCase();
+                if (seen.has(low) || byKey.has(low)) return;
+                seen.add(low);
+                candidates.push(s);
+            };
+            if (boot) { pushPath(boot.curPath); pushPath(boot.curLoc); }
+            if (bootQ) {
+                pushPath(bootQ.curLoc);
+                if (Array.isArray(bootQ.locations)) bootQ.locations.forEach(pushPath);
+            }
+            if (saved) pushPath(saved.path);
+            try {
+                const q = JSON.parse(localStorage.getItem(QKEY) || 'null');
+                if (q && Array.isArray(q.paths)) q.paths.forEach(pushPath);
+            } catch (e) {}
+            if (!candidates.length) return;
+            const raw = window.AndroidBridge.importLocationsForRestore(JSON.stringify(candidates));
+            const imported = JSON.parse(raw || '[]');
+            if (Array.isArray(imported) && imported.length && typeof window.__nativeOpenFiles === 'function') {
+                await window.__nativeOpenFiles(imported);
+                await waitFrames();
+            }
+        } catch (e) {}
+    }
+
     function tryRestore(forceNow) {
         if (window.__externalOpenActive) { trackDone = true; armed = true; return true; }
         if (!saved && !(card && card.key) && !window.__nativeBoot && !(window.AndroidBridge && typeof window.AndroidBridge.nativeAudioQueueState === 'function')) return true;
@@ -410,6 +447,8 @@
 
         (async () => {
             try {
+                // Bước 2.5: Nếu có bài đã lưu đường dẫn tệp (/storage/... hoặc content://...) chưa có trong thư viện quét -> import trực tiếp từ native trước khi dựng hàng đợi
+                await importMissingSavedPaths(boot, bootQ);
                 // Bước 3: Nhập lại playlist tạm (kèm đúng thứ tự Shuffle nếu bật) và đợi DOM playlist dựng xong hẳn
                 if (bootQ) {
                     applyNativeQueue(bootQ);
