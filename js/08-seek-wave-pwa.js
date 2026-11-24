@@ -249,21 +249,41 @@
             try {
                 const fileHandles = await window.showOpenFilePicker({
                     multiple: true,
+                    excludeAcceptAllOption: false,
                     types: [{
-                        description: 'Audio / Video',
-                        accept: { 'audio/*': ['.mp3', '.ogg', '.wav', '.m4a', '.flac'], 'video/*': ['.mp4', '.m4v', '.webm', '.mkv', '.mov', '.ogv'] }
+                        description: 'Audio / Video / Lyrics',
+                        accept: {
+                            'audio/*': ['.mp3', '.ogg', '.oga', '.opus', '.wav', '.m4a', '.aac', '.flac', '.wma'],
+                            'video/*': ['.mp4', '.m4v', '.webm', '.mkv', '.mov', '.ogv'],
+                            'text/plain': ['.lrc']
+                        }
                     }]
                 });
                 const files = [];
                 for (const handle of fileHandles) {
-                    const file = await handle.getFile();
-                    file.fileHandle = handle; 
-                    files.push(file);
+                    try {
+                        if (handle.queryPermission && (await handle.queryPermission({ mode: 'read' })) !== 'granted') {
+                            if (handle.requestPermission) await handle.requestPermission({ mode: 'read' });
+                        }
+                        const file = await handle.getFile();
+                        file.fileHandle = handle;
+                        files.push(file);
+                    } catch (fileErr) {
+                        console.warn('Không đọc được tệp từ File System handle:', handle && handle.name, fileErr);
+                    }
                 }
-                handleFiles(files);
+                if (files.length) {
+                    await handleFiles(files);
+                } else {
+                    addBtnCancel();
+                    if (typeof showToast === 'function') showToast('Không đọc được tệp đã chọn từ hệ thống tệp.', 'error', 3500);
+                }
             } catch (err) {
                 addBtnCancel();
-                console.log("Người dùng đã huỷ hoặc lỗi chọn file:", err);
+                if (!err || err.name !== 'AbortError') {
+                    console.error("Lỗi chọn file bằng File System Access API:", err);
+                    if (typeof showToast === 'function') showToast('Không mở được tệp: ' + (err && err.message ? err.message : String(err)), 'error', 3800);
+                }
             }
         });
 
@@ -271,19 +291,40 @@
             addPickerPending = true; addBtnFolder();
             if (window.AndroidBridge && AndroidBridge.pickFolder) { AndroidBridge.pickFolder(); return; }
             try {
-                const dirHandle = await window.showDirectoryPicker();
+                const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+                if (dirHandle.queryPermission && (await dirHandle.queryPermission({ mode: 'read' })) !== 'granted') {
+                    if (dirHandle.requestPermission) await dirHandle.requestPermission({ mode: 'read' });
+                }
                 const files = [];
-                for await (const entry of dirHandle.values()) {
-                    if (entry.kind === 'file') {
-                        const file = await entry.getFile();
-                        file.fileHandle = entry; 
-                        files.push(file);
+                async function walkDir(dir, depth) {
+                    if (depth > 6) return;
+                    for await (const entry of dir.values()) {
+                        try {
+                            if (entry.kind === 'file') {
+                                const file = await entry.getFile();
+                                file.fileHandle = entry;
+                                files.push(file);
+                            } else if (entry.kind === 'directory') {
+                                await walkDir(entry, depth + 1);
+                            }
+                        } catch (entryErr) {
+                            console.warn('Bỏ qua mục không đọc được trong thư mục:', entry && entry.name, entryErr);
+                        }
                     }
                 }
-                handleFiles(files);
+                await walkDir(dirHandle, 0);
+                if (files.length) {
+                    await handleFiles(files);
+                } else {
+                    addBtnCancel();
+                    if (typeof showToast === 'function') showToast('Thư mục không có tệp nhạc/video nào đọc được.', 'info', 3000);
+                }
             } catch (err) {
                 addBtnCancel();
-                console.log("Người dùng đã huỷ hoặc lỗi thư mục:", err);
+                if (!err || err.name !== 'AbortError') {
+                    console.error("Lỗi chọn thư mục bằng File System Access API:", err);
+                    if (typeof showToast === 'function') showToast('Không đọc được thư mục: ' + (err && err.message ? err.message : String(err)), 'error', 3800);
+                }
             }
         });
 
