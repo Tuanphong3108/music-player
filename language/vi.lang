@@ -698,6 +698,7 @@ ai.toast_trans_hidden=Đã ẩn bản dịch lời bài hát
 ai.toast_need_key=Hãy nhập Google Gemini API Key để dịch lời bài hát!
 ai.toast_translating=Đang dịch lời sang {lang}...
 ai.toast_trans_done=Đã dịch & lưu lời ({lang})!
+ai.toast_same_lang=Lời bài hát đã ở ngôn ngữ {lang} rồi, không cần dịch!
 ai.toast_trans_err=Lỗi dịch lời bài hát: {err}
 ai.err_no_key=Chưa nhập Google Gemini API Key.
 ai.err_no_model=Không tìm thấy mô hình Gemini khả dụng cho API Key này.
