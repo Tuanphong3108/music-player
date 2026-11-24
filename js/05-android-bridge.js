@@ -1201,7 +1201,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_24_2145_keep_sleep_notif_bg', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_24_2205_fix_mobile_seek', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
