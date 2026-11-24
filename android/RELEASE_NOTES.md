@@ -6,3 +6,4 @@
 - **Không còn “khoảng hở” khi chuyển bài**: lúc hết bài/đổi bài, MediaSession giữ trạng thái đang phát (foreground + wakelock) tối đa ~4 giây thay vì báo tạm dừng, nên Android không thể kill dịch vụ giữa hai bài; tạm dừng thủ công vẫn dừng ngay.
 - **Chỉ tạm dừng khi người dùng bấm hoặc hết danh sách (không lặp)**: khi không ở trong app (nền/tắt màn hình), native tự chuyển bài lúc hết bài thay vì chờ WebView (vốn có thể bị đóng băng nên gây tạm dừng giữa hai bài), có xử lý lặp 1 bài; bài không đọc được sẽ tự nhảy sang bài kế (tối đa một vòng hàng đợi).
 - **Thông báo giữ app chạy nền**: thông báo phát nhạc luôn được ghim (foreground) suốt phiên, kể cả khi tạm dừng, không còn tự gỡ sau 2 phút và không vuốt tắt được; chỉ biến mất khi đóng app hoặc dọn phiên.
+- **Danh mục thông báo “Keep in Background”**: thông báo giữ app chạy nền chuyển sang kênh riêng tên “Keep in Background”, mức Im lặng (không âm thanh, không rung, không popup); kênh “Phát nhạc” cũ được xoá.

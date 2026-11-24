@@ -21,7 +21,7 @@ public class MediaService extends Service {
     static final String ACTION_UPDATE = "update";
     static final String ACTION_ART = "art";
     static final String ACTION_NATIVE_SYNC = "native_sync";
-    static final String CH = "playback";
+    static final String CH = "keep_in_background";
     static MediaService inst;
     private static volatile org.json.JSONObject pendingNative;
     private MediaSession session;
@@ -420,7 +420,13 @@ public class MediaService extends Service {
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel ch = new NotificationChannel(CH, "Phát nhạc", NotificationManager.IMPORTANCE_MIN);
+            try { nm.deleteNotificationChannel("playback"); } catch (Throwable ignored) {}   // kênh cũ "Phát nhạc"
+            // Danh mục "Keep in Background": im lặng (không âm thanh/rung/popup), chỉ để giữ app chạy nền
+            NotificationChannel ch = new NotificationChannel(CH, "Keep in Background", NotificationManager.IMPORTANCE_LOW);
+            ch.setDescription("Giữ trình phát chạy dưới nền");
+            ch.setSound(null, null);
+            ch.enableVibration(false);
+            ch.enableLights(false);
             ch.setShowBadge(false);
             nm.createNotificationChannel(ch);
         }
