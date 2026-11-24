@@ -229,6 +229,30 @@
           #ai-local-sheet .ai-ls-opt.sel{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-weight:700;}
           #ai-local-sheet .ai-ls-opt .st-chk{visibility:hidden;font-size:20px;}
           #ai-local-sheet .ai-ls-opt.sel .st-chk{visibility:visible;}
+          html:not(.m-ui) #ai-local-sheet{display:none !important;}
+          #ai-pc-menu{
+            --md-ref-typeface-plain: var(--app-font);
+            --md-ref-typeface-brand: var(--app-font);
+            --md-sys-typescale-body-large-font: var(--app-font);
+            --md-sys-typescale-label-large-font: var(--app-font);
+            --md-menu-container-color: var(--md-sys-color-surface-variant);
+            --md-menu-container-shape: 16px;
+            --md-menu-item-container-color: transparent;
+            --md-menu-item-label-text-color: var(--md-sys-color-on-surface);
+            --md-menu-item-selected-container-color: var(--md-sys-color-primary-container);
+            --md-menu-item-selected-label-text-color: var(--md-sys-color-on-primary-container);
+            --md-menu-item-hover-state-layer-color: var(--md-sys-color-primary);
+            --md-menu-item-focus-state-layer-color: var(--md-sys-color-primary);
+            --md-menu-item-label-text-font: var(--app-font);
+            --md-menu-item-label-text-weight: 600;
+            --md-menu-item-selected-label-text-weight: 700;
+            --md-menu-item-one-line-container-height: 44px;
+            font-family: var(--app-font);
+            z-index: 9800;
+            --md-menu-z-index: 9800;
+          }
+          #ai-pc-menu md-menu-item{font-family: var(--app-font); min-width: 190px;}
+          #ai-pc-menu md-menu-item[selected]{background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);}
           .lyric-translate-btn{position:absolute;top:16px;right:16px;height:44px;z-index:16;display:inline-flex;align-items:center;gap:6px;padding:0 16px;border-radius:22px;background:var(--md-sys-color-surface-variant);color:var(--md-sys-color-on-surface-variant);border:1px solid var(--playlist-border);cursor:pointer;font-family:var(--app-font);font-size:calc(13.5px * var(--font-scale-factor, 1));font-weight:700;opacity:0;pointer-events:none;transition:var(--m3-transition),background .2s,color .2s;}
           .lyric-translate-btn:hover{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);}
           .lyric-translate-btn.active{background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container);border-color:var(--md-sys-color-primary);}
@@ -262,7 +286,44 @@
         const sh = document.getElementById('ai-local-sheet');
         return !!(sh && (sh.classList.contains('open') || sh.classList.contains('show')));
     }
-    function openChoiceSheet(title, options, currentVal, onPick) {
+    function ensurePcMenu() {
+        let menu = document.getElementById('ai-pc-menu');
+        if (menu) return menu;
+        menu = document.createElement('md-menu');
+        menu.id = 'ai-pc-menu';
+        menu.setAttribute('positioning', 'popover');
+        menu.setAttribute('anchor-corner', 'end-end');
+        menu.setAttribute('menu-corner', 'start-end');
+        document.body.appendChild(menu);
+        return menu;
+    }
+    function openPcDropdownMenu(options, currentVal, onPick, anchorEl) {
+        injectStyles();
+        const menu = ensurePcMenu();
+        menu.open = false;
+        menu.innerHTML = '';
+        options.forEach(opt => {
+            const val = typeof opt === 'string' ? opt : opt.value;
+            const lbl = typeof opt === 'string' ? opt : opt.label;
+            const isSel = val === currentVal;
+            const item = document.createElement('md-menu-item');
+            if (isSel) item.setAttribute('selected', '');
+            item.innerHTML = `<div slot="headline">${String(lbl).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>${isSel ? '<span class="material-symbols-rounded" slot="end" style="font-size:18px;color:var(--md-sys-color-primary);">check</span>' : ''}`;
+            item.addEventListener('click', () => {
+                menu.open = false;
+                setTimeout(() => onPick(val), 20);
+            });
+            menu.appendChild(item);
+        });
+        if (anchorEl) menu.anchorElement = anchorEl;
+        requestAnimationFrame(() => { menu.open = true; });
+    }
+    function openChoiceSheet(title, options, currentVal, onPick, anchorEl) {
+        // Trên PC: luôn dùng Material Web Dropdown (<md-menu>), KHÔNG dùng Bottom Sheet
+        if (!document.documentElement.classList.contains('m-ui')) {
+            openPcDropdownMenu(options, currentVal, onPick, anchorEl || document.activeElement);
+            return;
+        }
         if (typeof window.__openSheetItems === 'function') {
             window.__openSheetItems(title, options.map(opt => {
                 const val = typeof opt === 'string' ? opt : opt.value;
@@ -1071,7 +1132,7 @@
             pcLbl.textContent = lyricTranslating ? 'Đang dịch...' : (active ? cfg.translateLang : 'Dịch');
         }
     }
-    function openTranslateLangPicker(translateAfter) {
+    function openTranslateLangPicker(translateAfter, anchorEl) {
         cfg = loadCfg();
         const list = TRANSLATE_LANGS.slice();
         if (cfg.translateLang && !list.includes(cfg.translateLang)) list.unshift(cfg.translateLang);
@@ -1092,7 +1153,7 @@
                 if (typeof renderLyrics === 'function') renderLyrics();
                 if (typeof syncLyrics === 'function') syncLyrics();
             }
-        });
+        }, anchorEl);
     }
     async function callAiForLyricTranslation(track, targetLang) {
         cfg = loadCfg();
@@ -1213,7 +1274,7 @@
         const pcTrBtn = document.getElementById('lyric-translate-btn');
         if (pcTrBtn) {
             pcTrBtn.addEventListener('click', () => translateCurrentTrackLyrics(false));
-            pcTrBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); openTranslateLangPicker(true); });
+            pcTrBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); openTranslateLangPicker(true, pcTrBtn); });
         }
         const mTrBtn = document.getElementById('m-lyric-translate');
         if (mTrBtn) {
