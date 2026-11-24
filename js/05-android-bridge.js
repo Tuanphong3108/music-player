@@ -728,6 +728,8 @@
             };
             const report = () => {
                 try {
+                    // Khi phát bằng trình phát native (ExoPlayer), NativeAudio tự đẩy trực tiếp pos/dur/state sang MediaService -> không gửi đè từ WebView kẻo MediaSession giật --:-- / 0:00
+                    if (window.__nativeAudioState && window.__nativeAudioState.mode === 'native') return;
                     const t = document.getElementById('track-name'), ar = document.getElementById('track-artist');
                     const artist = ((ar && ar.textContent) || '').split('|')[0].trim();
                     const st = mediaState(), active = st !== 'none';
@@ -1179,7 +1181,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_24_1655_fix_sleep_tracks', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_24_1708_fix_native_timer_mediasession', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
