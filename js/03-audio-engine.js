@@ -198,16 +198,25 @@
                 return null;
             };
             // Bắt trực tiếp touchstart/touchmove/touchend (passive: false) để trên Android WebView chạm/kéo ở MỌI vị trí trên thanh tua đều ăn ngay
-            host.addEventListener('touchstart', (e) => {
-                if (!e.changedTouches || !e.changedTouches.length) return;
-                // Dù duration chưa có (native chưa báo) vẫn giữ lấy cử chỉ để không bị lớp khác cướp; commit chỉ chạy khi đã có duration
-                e.preventDefault();
+            // Bắt theo TOẠ ĐỘ ở document (capture) thay vì theo phần tử đích: dù có lớp trong suốt/overlay nào đè lên một phần thanh thì chạm trong vùng thanh vẫn ăn
+            const inSeekZone = (t) => {
+                if (!host.offsetParent && getComputedStyle(host).position !== 'fixed') return false;
+                const r = host.getBoundingClientRect();
+                if (!r.width || !r.height) return false;
+                const SLOP = 10;
+                return t.clientX >= r.left - SLOP && t.clientX <= r.right + SLOP && t.clientY >= r.top - SLOP && t.clientY <= r.bottom + SLOP;
+            };
+            document.addEventListener('touchstart', (e) => {
+                if (seekDragging || !e.changedTouches || !e.changedTouches.length) return;
                 const t = e.changedTouches[0];
+                if (!inSeekZone(t)) return;
+                e.preventDefault();
+                e.stopPropagation();
                 seekDragging = true;
                 activeTouchId = t.identifier;
                 activePtr = null;
                 applyPreview(pctFromClientX(t.clientX));
-            }, { passive: false });
+            }, { passive: false, capture: true });
             window.addEventListener('touchmove', (e) => {
                 if (!seekDragging || activeTouchId == null) return;
                 const t = findTouch(e.touches, activeTouchId) || findTouch(e.changedTouches, activeTouchId);

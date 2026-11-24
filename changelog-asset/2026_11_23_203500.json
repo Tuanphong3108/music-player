@@ -76,6 +76,10 @@
     {
       "content": "Thêm khoảng trống dưới cùng các danh sách để bài cuối không bị Mini Player đè lên",
       "icon": "vertical_align_bottom"
+    },
+    {
+      "content": "Thanh tua mobile nhận chạm theo vị trí trên thanh (không phụ thuộc phần tử bị chạm), sửa lỗi chỉ kéo được ở đoạn đầu",
+      "icon": "linear_scale"
     }
   ],
   "en": [
@@ -154,6 +158,10 @@
     {
       "content": "Added bottom spacing to lists so the last songs are no longer covered by the Mini Player",
       "icon": "vertical_align_bottom"
+    },
+    {
+      "content": "Mobile seek bar now accepts touches by position on the bar (independent of the touched element), fixing drags only working near the start",
+      "icon": "linear_scale"
     }
   ]
 }
