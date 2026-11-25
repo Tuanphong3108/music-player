@@ -467,15 +467,22 @@ public class QuickPlayActivity extends Activity {
                     .alpha(0f)
                     .setDuration(210)
                     .setInterpolator(new AccelerateInterpolator())
-                    .withEndAction(() -> {
-                        finish();
-                        overridePendingTransition(0, 0);
-                    })
+                    .withEndAction(this::finishQuickTask)
                     .start();
         } else {
-            finish();
-            overridePendingTransition(0, 0);
+            finishQuickTask();
         }
+    }
+
+    /** Đóng sheet và dọn sạch task riêng của QuickPlayActivity khỏi màn hình Đa nhiệm (không đụng tới task của MainActivity). */
+    private void finishQuickTask() {
+        try {
+            if (Build.VERSION.SDK_INT >= 21) finishAndRemoveTask();
+            else finish();
+        } catch (Throwable ignored) {
+            try { finish(); } catch (Throwable ignored2) {}
+        }
+        overridePendingTransition(0, 0);
     }
 
     private void attachDragToDismiss(View handle) {
@@ -632,12 +639,12 @@ public class QuickPlayActivity extends Activity {
         i.setAction(Intent.ACTION_VIEW);
         i.setData(uri);
         i.setClipData(ClipData.newRawUri("", uri));
-        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         i.putExtra("qp_pos", ended ? 0L : pos);
         i.putExtra("qp_play", playing || ended);
         releasePlayer();
         startActivity(i);
-        finish();
+        finishQuickTask();
     }
 
     private void releasePlayer() {
@@ -653,13 +660,10 @@ public class QuickPlayActivity extends Activity {
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
-        // Thoát khi đang ở sheet nhanh (nhấn Home/Đa nhiệm) -> dừng nhạc luôn (chỉ khi mở sang app chính mới chạy nền)
+        // Thoát khi đang ở sheet nhanh (nhấn Home/Đa nhiệm) -> dừng nhạc & dọn task sheet nhanh luôn (chỉ khi mở sang app chính mới chạy nền)
         if (!handedOff) {
             releasePlayer();
-            if (!isFinishing()) {
-                finish();
-                overridePendingTransition(0, 0);
-            }
+            if (!isFinishing()) finishQuickTask();
         }
     }
 
@@ -668,10 +672,7 @@ public class QuickPlayActivity extends Activity {
         super.onStop();
         if (!handedOff && !isChangingConfigurations()) {
             releasePlayer();
-            if (!isFinishing()) {
-                finish();
-                overridePendingTransition(0, 0);
-            }
+            if (!isFinishing()) finishQuickTask();
         }
     }
 
