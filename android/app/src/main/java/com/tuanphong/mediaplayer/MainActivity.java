@@ -2371,20 +2371,25 @@ public class MainActivity extends Activity {
     }
 
     private void handleBack() {
-        if (customView != null) { web.getWebChromeClient().onHideCustomView(); return; }
-        if (web != null && pageReady) {
+        runOnUiThread(() -> {
+            if (customView != null && web != null && web.getWebChromeClient() != null) {
+                web.getWebChromeClient().onHideCustomView();
+                return;
+            }
+            if (web == null) {
+                try { moveTaskToBack(true); } catch (Throwable ignored) {}
+                return;
+            }
             web.evaluateJavascript(
-                    "(function(){try{if(window.__androidHandleBack&&window.__androidHandleBack())return 'handled';}catch(e){}return 'fallback';})()",
+                    "(function(){try{if(window.__androidHandleBack&&window.__androidHandleBack())return 'handled';}catch(e){}try{if(window.__showExitConfirmDialog){window.__showExitConfirmDialog();return 'dialog';}}catch(e){}return 'fallback';})()",
                     result -> {
                         String val = result == null ? "" : result.replace("\"", "");
-                        if (!"handled".equals(val)) {
-                            callJs("if(window.__showExitConfirmDialog){window.__showExitConfirmDialog();}else if(window.AndroidBridge&&window.AndroidBridge.exitBackground){window.AndroidBridge.exitBackground();}");
+                        if (!"handled".equals(val) && !"dialog".equals(val)) {
+                            try { moveTaskToBack(true); } catch (Throwable ignored) {}
                         }
                     }
             );
-            return;
-        }
-        callJs("if(window.__showExitConfirmDialog){window.__showExitConfirmDialog();}else if(window.AndroidBridge&&window.AndroidBridge.exitBackground){window.AndroidBridge.exitBackground();}");
+        });
     }
 
     @Override
