@@ -260,14 +260,15 @@
                 '[role="menu"]',
                 'input:not(#seek-slider)',
                 'textarea',
-                'select'
+                'select',
+                '[contenteditable="true"]'
             ].join(', ');
             const isBlockedByOverlay = (e, t) => {
                 const body = document.body;
                 const isMobile = document.documentElement.classList.contains('m-ui');
-                // Màn hình Lyric trên mobile (dùng thanh tua riêng trong Lyric), Playlist sheet, hoặc menu Mở rộng đang mở
-                if (body.classList.contains('m-lyric-ui') || body.classList.contains('m-playlist-open') || body.classList.contains('m-more-open')) return true;
-                if (isMobile && body.classList.contains('lyrics-open')) return true;
+                // Màn hình Lyric trên mobile (dùng thanh tua riêng trong Lyric), Playlist sheet, chế độ sửa danh sách, menu Mở rộng hoặc khi chưa mở Full Player
+                if (body.classList.contains('m-lyric-ui') || body.classList.contains('m-playlist-open') || body.classList.contains('reorder-active') || body.classList.contains('m-more-open')) return true;
+                if (isMobile && (body.classList.contains('lyrics-open') || !body.classList.contains('m-player-expanded'))) return true;
                 // Bất kỳ Cài đặt, modal, bottom sheet, dialog nhập hoặc menu nào đang mở
                 if (document.querySelector(BLOCKING_OPEN_SELECTOR)) return true;
                 // Trình chỉnh sửa Metadata (iframe) đang trượt vào màn hình
@@ -279,9 +280,13 @@
                 // Kiểm tra chính phần tử bị chạm & phần tử trên cùng tại điểm chạm
                 const hit = (e && e.target && e.target.nodeType === 1) ? e.target : (t ? document.elementFromPoint(t.clientX, t.clientY) : null);
                 if (hit && hit.closest && hit.closest(BLOCKING_TARGET_SELECTOR)) return true;
-                if (t && document.elementFromPoint) {
-                    const topEl = document.elementFromPoint(t.clientX, t.clientY);
-                    if (topEl && topEl !== hit && topEl.closest && topEl.closest(BLOCKING_TARGET_SELECTOR)) return true;
+                const topEl = (t && document.elementFromPoint) ? document.elementFromPoint(t.clientX, t.clientY) : null;
+                if (topEl && topEl !== hit && topEl.closest && topEl.closest(BLOCKING_TARGET_SELECTOR)) return true;
+                // Lớp bảo vệ tổng quát: nếu phần tử đang hứng chạm (hoặc phần tử trên cùng) nằm ngoài .player-shell và không bọc thanh seek -> đang bị bottom sheet/popup/overlay khác che
+                const shell = host.closest('.player-shell');
+                if (shell) {
+                    if (hit && !shell.contains(hit) && !hit.contains(host)) return true;
+                    if (topEl && !shell.contains(topEl) && !topEl.contains(host)) return true;
                 }
                 return false;
             };
