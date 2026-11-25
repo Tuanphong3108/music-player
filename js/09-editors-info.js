@@ -352,12 +352,14 @@
 
         async function openMoreInfoModal() {
             const track = playlist[currentIndex];
-            if (!track || moreInfoBtn.disabled) return;
-            const tech = track.file ? await probeAudioInfo(track) : null;
+            if (!track) return;
+            let tech = null;
+            if (track.file) {
+                try { tech = await probeAudioInfo(track); } catch (e) { tech = null; }
+            }
 
             const unknownStr = currentLangDict['moreinfo.unknown'] || 'Không rõ';
             const fileStr = currentLangDict['moreinfo.file_type'] || 'Tệp';
-            const isMobileUi = document.documentElement.classList.contains('m-ui');
             const rawFilePath = (track.nativeLocation || (track.file && (track.file.webkitRelativePath || track.file.path)) || '').trim();
             const rows = [];
             rows.push(moreInfoRowHTML('music_note', (track.file && track.file.type) || `${fileStr} ${track.ext}`, formatFileSizeVi(track.file ? track.file.size : null)));
@@ -380,7 +382,7 @@
                 } catch (e) {}
                 rows.push(moreInfoRowHTML('data_object', currentLangDict['moreinfo.structure_format'] || 'Định dạng theo cấu trúc tệp', escHtml(structParts.join(' • '))));
             }
-            if (isMobileUi && rawFilePath) {
+            if (rawFilePath) {
                 rows.push(moreInfoRowHTML('folder', currentLangDict['moreinfo.file_path'] || 'File Path', escHtml(rawFilePath)));
             }
             if (tech && (tech.rate || tech.kbps)) {
@@ -407,11 +409,11 @@
             moreInfoModal.classList.add('open');
         }
 
-        // Cập nhật trạng thái nút "Thông tin khác": xám đi nếu chưa có bài nào đang mở,
-        // hoặc bài hiện tại chưa xác nhận mở/đọc được (đang test / bị lỗi)
+        // Cập nhật trạng thái nút "Thông tin khác": chỉ xám khi chưa có bài nào đang chọn;
+        // bài bị lỗi/không phát được vẫn bấm mở được để xem File Path và cấu trúc tệp
         function updateMoreInfoBtnState() {
             const track = playlist[currentIndex];
-            moreInfoBtn.disabled = !track || track.canOpen !== true;
+            moreInfoBtn.disabled = !track;
         }
 
         moreInfoBtn.addEventListener('click', (e) => {
