@@ -220,46 +220,127 @@
             </div>`;
         }
 
-        // Đọc thông số kỹ thuật (tần số lấy mẫu, bitrate, định dạng) trực tiếp từ header tệp
+        // Đọc thông số kỹ thuật (tần số lấy mẫu, bitrate, định dạng & cấu trúc tệp thật) trực tiếp từ header tệp
         async function probeAudioInfo(track) {
-            if (track._tech) return track._tech;
-            const f = track.file; const info = { rate: 0, kbps: 0, fmt: (track.ext || '').replace('.', '').toUpperCase() };
+            if (track._tech && track._tech.realFmt !== undefined) return track._tech;
+            const f = track.file;
+            const info = { rate: 0, kbps: 0, fmt: (track.ext || '').replace('.', '').toUpperCase(), realFmt: '', realExts: [] };
             try {
                 const head = new Uint8Array(await f.slice(0, 262144).arrayBuffer());
                 const dv = new DataView(head.buffer);
-                const str = (o, n) => String.fromCharCode(...head.subarray(o, o + n));
-                if (str(0, 4) === 'RIFF' && str(8, 4) === 'WAVE') {
+                const str = (o, n) => {
+                    if (o < 0 || o + n > head.length) return '';
+                    let s = '';
+                    for (let i = 0; i < n; i++) s += String.fromCharCode(head[o + i]);
+                    return s;
+                };
+                const asciiScan = (limit) => {
+                    const len = Math.min(head.length, limit);
+                    let s = '';
+                    for (let i = 0; i < len; i++) {
+                        const c = head[i];
+                        s += (c >= 32 && c <= 126) ? String.fromCharCode(c) : ' ';
+                    }
+                    return s;
+                };
+
+                if (head.length >= 4 && head[0] === 0x1A && head[1] === 0x45 && head[2] === 0xDF && head[3] === 0xA3) {
+                    // EBML: WebM / Matroska (MKV/MKA)
+                    const txt = asciiScan(16384);
+                    const isWebm = /webm/i.test(txt);
+                    const container = isWebm ? 'WebM' : 'Matroska (MKV/MKA)';
+                    let codec = '';
+                    if (txt.includes('A_OPUS')) { codec = 'Opus'; info.rate = info.rate || 48000; }
+                    else if (txt.includes('A_VORBIS')) codec = 'Vorbis';
+                    else if (txt.includes('A_AAC')) codec = 'AAC';
+                    else if (txt.includes('A_MPEG/L3')) codec = 'MP3';
+                    else if (txt.includes('A_FLAC')) codec = 'FLAC';
+                    else if (txt.includes('A_PCM')) codec = 'PCM';
+                    info.fmt = isWebm ? 'WEBM' : 'MKA';
+                    info.realFmt = codec ? `${container} (${codec})` : container;
+                    info.realExts = isWebm ? ['webm', 'weba'] : ['mkv', 'mka', 'webm'];
+                } else if (head.length >= 12 && str(4, 4) === 'ftyp') {
+                    // ISO BMFF: MP4 / M4A / 3GP
+                    const brand = str(8, 4).trim();
+                    const isM4a = /^M4A$/i.test(brand) || /^M4B$/i.test(brand);
+                    const container = isM4a ? 'M4A (MP4)' : `MP4 (${brand || 'ISO'})`;
+                    const txt = asciiScan(65536);
+                    let codec = '';
+                    if (txt.includes('Opus') || txt.includes('dOps')) { codec = 'Opus'; info.rate = info.rate || 48000; }
+                    else if (txt.includes('alac')) codec = 'ALAC';
+                    else if (txt.includes('fLaC')) codec = 'FLAC';
+                    else if (txt.includes('mp4a')) codec = 'AAC';
+                    info.fmt = isM4a ? 'M4A' : 'MP4';
+                    info.realFmt = codec ? `${container} • ${codec}` : container;
+                    info.realExts = ['m4a', 'mp4', 'm4b', 'aac', '3gp', 'mov'];
+                } else if (str(0, 4) === 'RIFF' && str(8, 4) === 'WAVE') {
                     let o = 12;
                     while (o + 8 < head.length) {
                         const id = str(o, 4), sz = dv.getUint32(o + 4, true);
                         if (id === 'fmt ') { info.rate = dv.getUint32(o + 12, true); info.kbps = Math.round(dv.getUint32(o + 16, true) * 8 / 1000); info.fmt = 'WAV'; break; }
                         o += 8 + sz + (sz & 1);
                     }
+                    info.realFmt = 'WAV (RIFF/PCM)';
+                    info.realExts = ['wav', 'wave'];
                 } else if (str(0, 4) === 'fLaC') {
-                    info.rate = (head[18] << 12) | (head[19] << 4) | (head[20] >> 4); info.fmt = 'FLAC';
+                    info.rate = (head[18] << 12) | (head[19] << 4) | (head[20] >> 4);
+                    info.fmt = 'FLAC';
+                    info.realFmt = 'FLAC (Lossless)';
+                    info.realExts = ['flac'];
                 } else if (str(0, 4) === 'OggS') {
                     const i = str(0, 400).indexOf('OpusHead');
                     const v = Array.from(head.subarray(0, 400)).findIndex((_, k) => head[k] === 1 && str(k + 1, 6) === 'vorbis');
-                    if (i >= 0) { info.rate = 48000; info.fmt = 'OPUS'; }
-                    else if (v >= 0) { info.rate = dv.getUint32(v + 12, true); const nb = dv.getInt32(v + 20, true); if (nb > 0) info.kbps = Math.round(nb / 1000); info.fmt = 'OGG'; }
+                    if (i >= 0) { info.rate = 48000; info.fmt = 'OPUS'; info.realFmt = 'OGG (Opus)'; info.realExts = ['ogg', 'opus', 'oga']; }
+                    else if (v >= 0) { info.rate = dv.getUint32(v + 12, true); const nb = dv.getInt32(v + 20, true); if (nb > 0) info.kbps = Math.round(nb / 1000); info.fmt = 'OGG'; info.realFmt = 'OGG (Vorbis)'; info.realExts = ['ogg', 'oga']; }
+                    else { info.fmt = 'OGG'; info.realFmt = 'OGG'; info.realExts = ['ogg', 'oga', 'opus']; }
+                } else if (str(0, 4) === 'FORM' && (str(8, 4) === 'AIFF' || str(8, 4) === 'AIFC')) {
+                    info.fmt = 'AIFF';
+                    info.realFmt = 'AIFF';
+                    info.realExts = ['aif', 'aiff', 'aifc'];
+                } else if (head.length >= 4 && head[0] === 0x30 && head[1] === 0x26 && head[2] === 0xB2 && head[3] === 0x75) {
+                    info.fmt = 'WMA';
+                    info.realFmt = 'WMA (ASF)';
+                    info.realExts = ['wma', 'asf'];
                 } else {
                     let o = 0;
-                    if (str(0, 3) === 'ID3') o = 10 + ((head[6] << 21) | (head[7] << 14) | (head[8] << 7) | head[9]);
-                    if (o < head.length - 4 || str(0, 3) === 'ID3') {
+                    const hasId3 = str(0, 3) === 'ID3';
+                    if (hasId3) o = 10 + ((head[6] << 21) | (head[7] << 14) | (head[8] << 7) | head[9]);
+                    if (o < head.length - 4 || hasId3) {
                         let buf = head;
                         if (o + 4 > head.length) buf = new Uint8Array(await f.slice(o, o + 4096).arrayBuffer()), o = 0;
                         const RATES = [[11025, 12000, 8000], [0, 0, 0], [22050, 24000, 16000], [44100, 48000, 32000]];
                         const BR = { 11: [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448], 12: [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256], 13: [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320], 21: [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256], 22: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160], 23: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160] };
+                        const ADTS_RATES = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
                         for (let k = o; k < buf.length - 4 && k < o + 8192; k++) {
+                            if (buf[k] === 0xFF && (buf[k + 1] & 0xF6) === 0xF0) {
+                                // ADTS AAC syncword (0xFFF, layer === 0)
+                                const sri = (buf[k + 2] >> 2) & 0x0F;
+                                if (sri < ADTS_RATES.length) {
+                                    info.rate = ADTS_RATES[sri];
+                                    info.fmt = 'AAC';
+                                    info.realFmt = 'AAC (ADTS)';
+                                    info.realExts = ['aac', 'adts'];
+                                    break;
+                                }
+                            }
                             if (buf[k] === 0xFF && (buf[k + 1] & 0xE0) === 0xE0) {
                                 const ver = (buf[k + 1] >> 3) & 3, layer = (buf[k + 1] >> 1) & 3, bi = buf[k + 2] >> 4, ri = (buf[k + 2] >> 2) & 3;
                                 if (ver === 1 || layer === 0 || bi === 0 || bi === 15 || ri === 3) continue;
                                 info.rate = RATES[ver][ri];
                                 const key = (ver === 3 ? 1 : 2) * 10 + (4 - layer);
-                                info.kbps = (BR[key] || [])[bi] || 0; info.fmt = 'MP3';
-                                // Xing/Info: bitrate trung bình chính xác hơn cho VBR
+                                info.kbps = (BR[key] || [])[bi] || 0;
+                                const verName = ver === 3 ? 'MPEG-1' : (ver === 2 ? 'MPEG-2' : 'MPEG-2.5');
+                                const layerName = layer === 1 ? 'Layer III' : (layer === 2 ? 'Layer II' : 'Layer I');
+                                info.fmt = layer === 1 ? 'MP3' : (layer === 2 ? 'MP2' : 'MP1');
+                                info.realFmt = `${info.fmt} (${verName} ${layerName})`;
+                                info.realExts = layer === 1 ? ['mp3'] : (layer === 2 ? ['mp2', 'mp3'] : ['mp1', 'mp3']);
                                 break;
                             }
+                        }
+                        if (!info.realFmt && hasId3) {
+                            info.fmt = 'MP3';
+                            info.realFmt = 'MP3 (ID3)';
+                            info.realExts = ['mp3'];
                         }
                     }
                 }
@@ -280,6 +361,25 @@
             const rawFilePath = (track.nativeLocation || (track.file && (track.file.webkitRelativePath || track.file.path)) || '').trim();
             const rows = [];
             rows.push(moreInfoRowHTML('music_note', (track.file && track.file.type) || `${fileStr} ${track.ext}`, formatFileSizeVi(track.file ? track.file.size : null)));
+            // Dòng "Định dạng theo cấu trúc tệp" ngay bên dưới dòng Định dạng tệp
+            {
+                const extClean = (track.ext || '').replace(/^\./, '').toLowerCase();
+                const structParts = [];
+                structParts.push((tech && tech.realFmt) ? tech.realFmt : unknownStr);
+                if (tech && tech.realFmt && extClean && Array.isArray(tech.realExts) && tech.realExts.length && !tech.realExts.includes(extClean)) {
+                    const mismatchTpl = currentLangDict['moreinfo.ext_mismatch'] || 'khác đuôi {ext}';
+                    structParts.push(mismatchTpl.replace('{ext}', '.' + extClean));
+                }
+                try {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.nativeAudioState === 'function') {
+                        const ns = JSON.parse(window.AndroidBridge.nativeAudioState() || '{}');
+                        if (ns && ns.loaded && ns.seekable === false && (!track.nativeId || !ns.id || String(ns.id) === String(track.nativeId))) {
+                            structParts.push(currentLangDict['moreinfo.unseekable'] || 'Không hỗ trợ tua');
+                        }
+                    }
+                } catch (e) {}
+                rows.push(moreInfoRowHTML('data_object', currentLangDict['moreinfo.structure_format'] || 'Định dạng theo cấu trúc tệp', escHtml(structParts.join(' • '))));
+            }
             if (isMobileUi && rawFilePath) {
                 rows.push(moreInfoRowHTML('folder', currentLangDict['moreinfo.file_path'] || 'File Path', escHtml(rawFilePath)));
             }
