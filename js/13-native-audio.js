@@ -19,8 +19,11 @@
     let restoreMuteActive = false;
     let savedPreRestoreVol = null;
     const N = { mode: 'web', id: '', url: '', loaded: false, pending: false, startMs: 0, paused: true, pos: 0, stamp: 0, dur: 0, buf: 0,
-        rate: 1, vol: 1, st: 'idle', ended: false, err: false, hadMeta: false, adopt: false };
+        rate: 1, vol: 1, st: 'idle', ended: false, err: false, hadMeta: false, adopt: false, seekable: true };
     window.__nativeAudioState = N;
+    const syncSeekDisabledUi = () => {
+        try { document.documentElement.classList.toggle('seek-disabled', N.mode === 'native' && N.loaded && N.seekable === false); } catch (e) {}
+    };
     function setRestoreMute(mute) {
         try {
             if (mute) {
@@ -67,7 +70,8 @@
             if (!(N.startMs > 0) && rh.ms > 0) N.startMs = rh.ms;
             window.__restoreHint = null;
         }
-        N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering'; N.suppressEndedId = ''; N.seekGuard = 0;
+        N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering'; N.suppressEndedId = ''; N.seekGuard = 0; N.seekable = true;
+        syncSeekDisabledUi();
         const t = nativeTrack();
         const ar = ((document.getElementById('track-artist') || {}).textContent || '').split('|')[0].trim();
         try { AB.nativeAudioLoad(N.id, (t && t.name) || '', (t && t.artist) || ar || '', Math.round(N.startMs), !!play, N.vol, N.rate); } catch (e) {}
@@ -76,7 +80,8 @@
     }
     function stopNative() {
         if (N.loaded || N.pending) { try { AB.nativeAudioStop(); } catch (e) {} }
-        N.mode = 'web'; N.loaded = false; N.pending = false; N.id = ''; N.url = ''; N.ended = false; N.err = false; N.paused = true;
+        N.mode = 'web'; N.loaded = false; N.pending = false; N.id = ''; N.url = ''; N.ended = false; N.err = false; N.paused = true; N.seekable = true;
+        syncSeekDisabledUi();
     }
     function setSrc(v) {
         const m = typeof v === 'string' ? ID_RE.exec(v) : null;
@@ -108,6 +113,8 @@
                     wantPlay = !!(ns.pwr && (ns.st === 'ready' || ns.st === 'buffering'));
                     N.paused = !wantPlay;
                     N.ended = ns.st === 'ended';
+                    N.seekable = (ns.seekable !== false);
+                    syncSeekDisabledUi();
                     if (ns.pos > 0) seekTargetMs = ns.pos;
                 }
             } catch (e) {}
@@ -167,6 +174,7 @@
         if (!isNative()) { orig.currentTime.set.call(a, v); return; }
         v = Math.max(0, Number(v) || 0);
         if (!N.loaded) { N.startMs = v * 1000; return; }
+        if (N.seekable === false && v > 0) return;
         N.pos = v * 1000; N.stamp = now(); N.ended = false; N.suppressEndedId = '';
         N.seekTarget = N.pos; N.seekGuard = now() + 1400;   // chặn các gói tick cũ trước khi ExoPlayer kịp seek xong làm giật ngược thanh tua
         try { AB.nativeAudioSeek(Math.round(v * 1000)); } catch (e) {}
@@ -331,6 +339,8 @@
                 N.pos = incomingPos; N.stamp = now();
             }
             N.dur = e.dur || N.dur; N.buf = e.buf || 0; N.st = e.st; N.rate = e.rate || 1;
+            if (typeof e.seekable === 'boolean') N.seekable = e.seekable;
+            syncSeekDisabledUi();
             if (e.pwr) N.playGuard = 0;
             if (!e.pwr && !wasPaused && e.st !== 'ended' && N.playGuard && now() < N.playGuard) { /* sự kiện cũ: giữ trạng thái Playing */ }
             else N.paused = !e.pwr;
