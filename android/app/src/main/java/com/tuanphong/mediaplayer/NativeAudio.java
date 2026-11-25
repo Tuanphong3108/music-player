@@ -337,7 +337,11 @@ final class NativeAudio {
                         .build();
             }
         };
-        p = new ExoPlayer.Builder(app, rf).setLooper(pt.getLooper()).setLoadControl(lc).build();
+        // MP3/AAC không có bảng TOC (VBR không Xing) mặc định là "không tua được": seekTo bị kéo về 0:00. Bật tua theo bitrate không đổi để luôn tua được.
+        androidx.media3.extractor.DefaultExtractorsFactory ef = new androidx.media3.extractor.DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true);
+        p = new ExoPlayer.Builder(app, rf)
+                .setMediaSourceFactory(new androidx.media3.exoplayer.source.DefaultMediaSourceFactory(app, ef))
+                .setLooper(pt.getLooper()).setLoadControl(lc).build();
         sid = p.getAudioSessionId();
         p.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true);
@@ -419,7 +423,7 @@ final class NativeAudio {
             long d = p.getDuration();
             // Không để một lệnh tua (vd. từ thông báo) vượt/chạm cuối bài: sẽ bị coi là hết bài rồi lặp/nhảy lại từ đầu
             if (d != C.TIME_UNSET && d > 2000 && t > d - 800) t = d - 800;
-            android.util.Log.d("MPSeek", "seek req=" + ms + " clamped=" + t + " dur=" + d + " cur=" + p.getCurrentPosition() + " st=" + p.getPlaybackState() + " bg=" + isAppInBackground(app));
+            android.util.Log.d("MPSeek", "seek req=" + ms + " clamped=" + t + " dur=" + d + " cur=" + p.getCurrentPosition() + " st=" + p.getPlaybackState() + " seekable=" + p.isCurrentMediaItemSeekable() + " bg=" + isAppInBackground(app));
             p.seekTo(t);
         });
     }

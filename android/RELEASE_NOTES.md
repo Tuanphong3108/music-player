@@ -17,3 +17,4 @@
 - **Tua trên MediaSession không còn về 0:00**: khi native chưa nạp bài (sau khôi phục/khởi động ngầm), kéo thanh tua trên thông báo sẽ nạp bài ở trạng thái Pause đúng vị trí vừa kéo thay vì mất lệnh; khi đã nạp thì tua xong cập nhật thanh ngay.
 - **Tua từ thông báo không còn nhảy về đầu bài**: lệnh tua bị kẹp để không chạm cuối bài (trước đó có thể bị coi là hết bài rồi lặp/nhảy lại từ đầu khi ở nền).
 - **Thoát app là native toàn quyền, WebView không can thiệp**: khi rời app (Home/đa nhiệm/tắt màn hình) mà native đang phát, mọi lệnh điều khiển từ WebView (nạp bài, phát/dừng, tua, tốc độ, hàng đợi, shuffle) đều bị bỏ qua; khi vào lại, trang chỉ hỏi native “đang ở đâu” (bài, vị trí, trạng thái) để khớp giao diện.
+- **Sửa tua về 0:00 với MP3/AAC không có bảng tua**: bật tua theo bitrate không đổi cho ExoPlayer để các tệp không có TOC (VBR không Xing, ADTS) vẫn tua được thay vì bị kéo về đầu bài.
