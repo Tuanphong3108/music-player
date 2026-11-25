@@ -825,6 +825,7 @@
                 const creatorModal = document.getElementById('m-pl-creator-modal');
                 const paneArtists = document.getElementById('m-pane-artists');
                 const paneLiked = document.getElementById('m-pane-liked');
+                const paneFolders = document.getElementById('m-pane-folders');
                 const artistListEl = document.getElementById('m-artist-list');
                 const likedListEl = document.getElementById('m-liked-list');
                 const virtualPls = {};   // danh sách ảo (Nghệ sĩ...) mở trong khung chi tiết danh sách phát
@@ -970,11 +971,13 @@
                     panePls?.classList.toggle('active', tab === 'playlists');
                     paneArtists?.classList.toggle('active', tab === 'artists');
                     paneLiked?.classList.toggle('active', tab === 'liked');
+                    paneFolders?.classList.toggle('active', tab === 'folders');
                     paneDetail?.classList.remove('active');
                     document.getElementById('m-lib-tabs')?.style.removeProperty('display');
                     if (tab === 'playlists') renderMobilePlaylists();
                     if (tab === 'artists') renderMobileArtists();
                     if (tab === 'liked') renderMobileLiked();
+                    if (tab === 'folders') renderMobileFolders();
                 }
 
                 function rowArtHtml(tr) {
@@ -1015,6 +1018,97 @@
                         artistListEl.appendChild(row);
                     });
                 }
+
+
+                // --- Tab Thư mục: duyệt theo cây thư mục chứa nhạc; đầu trang có breadcrumb (Home > ... >) và tên thư mục hiện tại ---
+                let foldPath = [];   // các tên thư mục từ gốc tới thư mục đang xem
+                function trackFolderSegs(t) {
+                    let loc = String((t && (t.nativeLocation || (t.file && t.file.__nativeLocation))) || '').replace(/\\/g, '/');
+                    if (!loc || loc[0] !== '/') return null;
+                    let segs = loc.split('/').filter(Boolean);
+                    segs.pop();   // bỏ tên tệp
+                    if (segs[0] === 'storage' && segs.length >= 2) segs = segs.slice(segs[1] === 'emulated' ? 3 : 2);
+                    else if (segs[0] === 'sdcard') segs = segs.slice(1);
+                    return segs;
+                }
+                function buildFolderTree() {
+                    const root = { name: '', children: new Map(), tracks: [], total: 0 };
+                    getLibPool().forEach(t => {
+                        if (!t) return;
+                        const segs = trackFolderSegs(t) || [tr2('pl.folder_other', 'Khác')];
+                        let node = root;
+                        node.total++;
+                        segs.forEach(sg => {
+                            if (!node.children.has(sg)) node.children.set(sg, { name: sg, children: new Map(), tracks: [], total: 0 });
+                            node = node.children.get(sg);
+                            node.total++;
+                        });
+                        node.tracks.push(t);
+                    });
+                    return root;
+                }
+                function renderMobileFolders() {
+                    const listEl = document.getElementById('m-fold-list');
+                    const headEl = document.getElementById('m-fold-head');
+                    const crumbsEl = document.getElementById('m-fold-crumbs');
+                    const titleEl = document.getElementById('m-fold-title');
+                    if (!listEl) return;
+                    const root = buildFolderTree();
+                    // Đi theo đường dẫn hiện tại; nếu thư mục không còn tồn tại thì lùi lên
+                    let node = root; const valid = [];
+                    for (const sg of foldPath) { const c = node.children.get(sg); if (!c) break; node = c; valid.push(sg); }
+                    foldPath = valid;
+                    // Thư mục chỉ có đúng 1 thư mục con và không có bài: không cần dừng ở đó khi ở gốc
+                    headEl.classList.toggle('show', foldPath.length > 0);
+                    crumbsEl.innerHTML = '';
+                    if (foldPath.length) {
+                        const mk = (icon, text, depth) => {
+                            const b = document.createElement('button');
+                            b.type = 'button'; b.className = 'm-fold-crumb';
+                            if (icon) b.innerHTML = '<span class="material-symbols-rounded">' + icon + '</span>';
+                            else { b.innerHTML = '<span class="t"></span>'; b.firstChild.textContent = text; }
+                            b.addEventListener('click', () => { foldPath = foldPath.slice(0, depth); renderMobileFolders(); });
+                            crumbsEl.appendChild(b);
+                            const sep = document.createElement('span');
+                            sep.className = 'material-symbols-rounded m-fold-sep'; sep.textContent = 'chevron_right';
+                            crumbsEl.appendChild(sep);
+                        };
+                        mk('home', '', 0);
+                        for (let i = 0; i < foldPath.length - 1; i++) mk('', foldPath[i], i + 1);
+                        titleEl.textContent = foldPath[foldPath.length - 1];
+                    }
+                    listEl.innerHTML = '';
+                    const subs = Array.from(node.children.values()).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+                    if (!subs.length && !node.tracks.length) { listEl.innerHTML = emptyHtml('folder_off', tr2('pl.folders_empty', 'Chưa có thư mục nào.')); return; }
+                    subs.forEach(sub => {
+                        const row = document.createElement('div');
+                        row.className = 'm-lib-item';
+                        row.innerHTML = '<div class="m-fold-ico"><span class="material-symbols-rounded">folder</span></div>' +
+                            '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
+                            '<span class="material-symbols-rounded" style="opacity:.5;">chevron_right</span>';
+                        row.querySelector('.m-lib-title').textContent = sub.name;
+                        row.querySelector('.m-lib-artist').textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', sub.total);
+                        row.addEventListener('click', () => { foldPath = foldPath.concat([sub.name]); renderMobileFolders(); const l = document.getElementById('m-fold-list'); if (l) l.scrollTop = 0; });
+                        listEl.appendChild(row);
+                    });
+                    const activeTr = playlist[currentIndex] || null;
+                    const activeKey = activeTr ? trackKeyOf(activeTr) : '';
+                    const tracks = node.tracks.slice().sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' }));
+                    tracks.forEach(tr => {
+                        const row = document.createElement('div');
+                        row.className = 'm-lib-item' + (activeKey && trackKeyOf(tr) === activeKey ? ' active' : '');
+                        row.innerHTML = rowArtHtml(tr) + '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>';
+                        row.querySelector('.m-lib-title').textContent = tr.name || '';
+                        row.querySelector('.m-lib-artist').textContent = tr.artist || '';
+                        row.addEventListener('click', () => replaceQueueAndPlay(tracks, tr));
+                        listEl.appendChild(row);
+                    });
+                }
+                // Back trong tab Thư mục: lên một cấp
+                window.__mobileFoldersBack = function () {
+                    if (activeTab === 'folders' && !openedPlId && foldPath.length) { foldPath = foldPath.slice(0, -1); renderMobileFolders(); return true; }
+                    return false;
+                };
 
                 // --- Tab Yêu thích: các bài đã bấm trái tim ---
                 function renderMobileLiked() {
@@ -1105,6 +1199,7 @@
                     panePls?.classList.remove('active');
                     paneArtists?.classList.remove('active');
                     paneLiked?.classList.remove('active');
+                    paneFolders?.classList.remove('active');
                     paneDetail?.classList.add('active');
                     document.getElementById('m-lib-tabs')?.style.setProperty('display', 'none');
                     if (plDetailTitle) setPlTitle(plDetailTitle, pl);
@@ -1509,6 +1604,7 @@
                         renderMobilePlaylists();
                         if (activeTab === 'artists') renderMobileArtists();
                         if (activeTab === 'liked') renderMobileLiked();
+                        if (activeTab === 'folders') renderMobileFolders();
                         if (openedPlId) openPlaylistDetail(openedPlId, true);
                     } catch (e) {}
                 };
@@ -1521,6 +1617,7 @@
                 window.__closeMobilePlDetailIfOpen = function () {
                     if (typeof window.__handleAndroidBackAi === 'function' && window.__handleAndroidBackAi()) return true;
                     if (openedPlId) { setMobileLibTab(detailReturnTab); return true; }
+                    if (window.__mobileFoldersBack && window.__mobileFoldersBack()) return true;
                     return false;
                 };
             })();

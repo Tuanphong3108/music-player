@@ -2,6 +2,14 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Thêm tab “Thư mục” trên điện thoại: duyệt nhạc theo cây thư mục, đầu trang có đường dẫn Home > thư mục > và tên thư mục đang xem; nút Back lên một cấp.",
+      "icon": "folder"
+    },
+    {
+      "content": "Sheet xem nhanh khi mở nhạc từ app khác: sóng chạy ngược hướng, màu nhấn theo ảnh bìa (khi bật “Đổi màu theo Album Art”) hoặc theo màu của app, nền mờ khi bật Kính mờ (Blur), nền mờ/tối có hiệu ứng fade khi mở và đóng.",
+      "icon": "blur_on"
+    },
+    {
       "content": "Mở nhạc từ app khác (trình quản lý tệp...) giờ hiện sheet mini ở phía dưới: ảnh bìa, tên bài, thanh tua dạng sóng, nút phát/tạm dừng và nút “Open full player” để vào app đầy đủ (giữ nguyên vị trí đang nghe).",
       "icon": "queue_music"
     },
@@ -95,6 +103,14 @@
     }
   ],
   "en": [
+    {
+      "content": "New “Folders” tab on mobile: browse music by folder tree, with a Home > folder > breadcrumb and the current folder name at the top; Back goes up one level.",
+      "icon": "folder"
+    },
+    {
+      "content": "Quick preview sheet when opening audio from another app: reversed wave direction, accent from album art (when “Dynamic accent from Album Art” is on) or from the app accent, blurred backdrop when Blur is on, and fade-in/out of the backdrop on open and close.",
+      "icon": "blur_on"
+    },
     {
       "content": "Opening audio from another app (file manager, etc.) now shows a compact bottom sheet: cover art, title, wavy seek bar, play/pause and an “Open full player” button that continues from the same position.",
       "icon": "queue_music"

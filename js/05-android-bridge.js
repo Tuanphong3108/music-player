@@ -879,6 +879,29 @@
             new MutationObserver(queueWidgetColors).observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class', 'data-theme'] });
             setTimeout(sendWidgetColors, 1500);
 
+            // Sheet mini khi mở nhạc từ app khác: gửi cài đặt Blur / màu theo Album Art + bảng màu accent tĩnh (khi không dùng màu ảnh bìa)
+            let lastQuickPrefs = '', quickPrefsTimer = null;
+            const sendQuickPrefs = () => {
+                try {
+                    if (!AB.setQuickPlayPrefs || typeof settings === 'undefined') return;
+                    const mode = resolveThemeMode(settings.theme);
+                    const pal = (settings.accent === 'system' && typeof systemAccentHex !== 'undefined' && systemAccentHex)
+                        ? buildPaletteFromHex(systemAccentHex, mode)
+                        : ((accents[settings.accent] || accents.purple)[mode]);
+                    const o = { dyn: !!settings.dynamicAccent, glass: !!(settings.perf && settings.perf.glass), mode, pal: {} };
+                    ['primary', 'onPrimary', 'primaryContainer', 'onPrimaryContainer', 'secondaryContainer', 'surface', 'onSurface', 'surfaceVariant', 'onSurfaceVariant']
+                        .forEach(k => { o.pal[k] = pal[k]; });
+                    const js = JSON.stringify(o);
+                    if (js === lastQuickPrefs) return;
+                    lastQuickPrefs = js;
+                    AB.setQuickPlayPrefs(js);
+                } catch (e) {}
+            };
+            const queueQuickPrefs = () => { clearTimeout(quickPrefsTimer); quickPrefsTimer = setTimeout(sendQuickPrefs, 500); };
+            new MutationObserver(queueQuickPrefs).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme', 'style'] });
+            document.addEventListener('change', queueQuickPrefs, true);
+            setTimeout(sendQuickPrefs, 1800);
+
             // Công tắc "Tắt tối ưu hóa pin" (chỉ hiện trên Android app)
             (function () {
                 const row = document.getElementById('setting-battery-opt-row');

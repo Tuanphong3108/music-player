@@ -101,7 +101,7 @@
             'metaeditor.lrc_none': 'No results found.', 'metaeditor.lrc_error': 'Could not reach lrclib.net. Check your connection and try again.',
             'metaeditor.lrc_instrumental': 'NO LYRICS', 'metaeditor.lrc_back': 'Back', 'metaeditor.lrc_insert': 'Insert',
             'player.locate': 'Locate current track',
-            'pl.tab_artists': 'Artists', 'pl.tab_liked': 'Liked', 'pl.artists_empty': 'No artists yet.', 'pl.liked_empty': 'No liked songs yet. Tap the heart next to the Lyrics button to add one.', 'player.like': 'Like',
+            'pl.tab_artists': 'Artists', 'pl.tab_liked': 'Liked', 'pl.tab_folders': 'Folders', 'pl.folders_empty': 'No folders yet.', 'pl.folder_home': 'Home', 'pl.artists_empty': 'No artists yet.', 'pl.liked_empty': 'No liked songs yet. Tap the heart next to the Lyrics button to add one.', 'player.like': 'Like',
             'metaeditor.fill_title': 'Fill in info from the lyrics?', 'metaeditor.fill_body': 'The lyrics include track info. Fill the empty fields as shown below?', 'metaeditor.fill_no': 'Don\'t fill', 'metaeditor.fill_yes': 'Fill in',
             'confirmoverwrite.field_genre': 'Genre: ', 'confirmoverwrite.field_composer': 'Composer: ', 'confirmoverwrite.field_lyric': 'Lyric Embed (read-only)',
             'lyric.search_placeholder': 'Search lyrics on LRCLIB',

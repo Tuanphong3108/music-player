@@ -30,6 +30,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
@@ -74,6 +75,10 @@ public class QuickPlayActivity extends Activity {
     private boolean mainChecked = false, mainWasPlaying = false, mainResumed = false;
     private boolean vi, dark, handedOff = false, ended = false, closing = false;
     private Typeface gsfRegular, gsfBold, gsfRoundedBold;
+    private boolean prefDyn = false, prefGlass = false;   // "Đổi màu theo Album Art" và "Kính mờ (Blur)" lấy từ cài đặt trong app
+    private View handleView, artBoxView;
+    private ValueAnimator backdropAnim;
+    private float backdropT = 0f;
 
     // Bảng màu đồng bộ với accent color trong app (SharedPreferences "app")
     private int cSurface, cOnSurface, cOnVariant, cPrimary, cTrack, cSecBtn, cOnSecBtn, cPlayBtn, cOnPlayBtn, cOpenBtn, cOnOpenBtn, cArtBg;
@@ -123,6 +128,117 @@ public class QuickPlayActivity extends Activity {
     }
 
     private void pickColors(SharedPreferences appSp) {
+        try {
+            String js = appSp.getString("qp_prefs", "");
+            if (!js.isEmpty()) {
+                org.json.JSONObject o = new org.json.JSONObject(js);
+                prefDyn = o.optBoolean("dyn", false);
+                prefGlass = o.optBoolean("glass", false);
+                String mode = o.optString("mode", "");
+                if (!mode.isEmpty()) dark = "dark".equals(mode);
+                org.json.JSONObject pal = o.optJSONObject("pal");
+                if (pal != null) {
+                    applyPalette(new int[] {
+                            Color.parseColor(pal.getString("primary")), Color.parseColor(pal.getString("onPrimary")),
+                            Color.parseColor(pal.getString("primaryContainer")), Color.parseColor(pal.getString("onPrimaryContainer")),
+                            Color.parseColor(pal.getString("secondaryContainer")), Color.parseColor(pal.getString("surface")),
+                            Color.parseColor(pal.getString("onSurface")), Color.parseColor(pal.getString("surfaceVariant")),
+                            Color.parseColor(pal.getString("onSurfaceVariant"))
+                    });
+                    return;
+                }
+            }
+        } catch (Throwable ignored) {}
+        pickColorsLegacy(appSp);
+    }
+
+    /** pal = {primary, onPrimary, primaryContainer, onPrimaryContainer, secondaryContainer, surface, onSurface, surfaceVariant, onSurfaceVariant} */
+    private void applyPalette(int[] p) {
+        cPrimary = p[0]; cOnOpenBtn = p[1]; cPlayBtn = p[2]; cOnPlayBtn = p[3]; cSecBtn = p[4];
+        cSurface = dark ? blendColors(p[5], 0xFFFFFFFF, 0.05f) : p[5];
+        cOnSurface = p[6]; cTrack = p[7]; cOnVariant = p[8];
+        cOnSecBtn = p[6]; cOpenBtn = p[0]; cArtBg = p[7];
+    }
+
+    // --- Bảng màu từ ảnh bìa: cùng thuật toán HSL với buildPaletteFromHex của WebView ---
+    private static float[] rgbToHsl(int c) {
+        float r = Color.red(c) / 255f, g = Color.green(c) / 255f, b = Color.blue(c) / 255f;
+        float mx = Math.max(r, Math.max(g, b)), mn = Math.min(r, Math.min(g, b));
+        float l = (mx + mn) / 2f, h = 0, s = 0, d = mx - mn;
+        if (d > 1e-6f) {
+            s = l > 0.5f ? d / (2f - mx - mn) : d / (mx + mn);
+            if (mx == r) h = ((g - b) / d + (g < b ? 6 : 0));
+            else if (mx == g) h = (b - r) / d + 2;
+            else h = (r - g) / d + 4;
+            h *= 60f;
+        }
+        return new float[] { h, s, l };
+    }
+
+    private static int hslToColor(float h, float s, float l) {
+        s = Math.max(0f, Math.min(1f, s)); l = Math.max(0f, Math.min(1f, l));
+        float c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60f) % 2 - 1)), m = l - c / 2f;
+        float r, g, b;
+        if (h < 60) { r = c; g = x; b = 0; } else if (h < 120) { r = x; g = c; b = 0; } else if (h < 180) { r = 0; g = c; b = x; }
+        else if (h < 240) { r = 0; g = x; b = c; } else if (h < 300) { r = x; g = 0; b = c; } else { r = c; g = 0; b = x; }
+        return Color.rgb(Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255));
+    }
+
+    private int[] paletteFromColor(int base, boolean dk) {
+        float[] hsl = rgbToHsl(base);
+        float h = hsl[0], s0 = hsl[1];
+        float sp = s0 < 0.12f ? s0 : Math.max(0.3f, Math.min(0.9f, s0));
+        float sn = Math.min(0.14f, s0 * 0.3f), sm = Math.min(0.28f, s0 * 0.5f);
+        if (dk) {
+            return new int[] { hslToColor(h, sp, 0.80f), hslToColor(h, sp, 0.20f), hslToColor(h, sp, 0.30f), hslToColor(h, sp, 0.90f),
+                    hslToColor(h, sm, 0.23f), hslToColor(h, sn, 0.105f), hslToColor(h, sn, 0.90f), hslToColor(h, sn, 0.29f), hslToColor(h, sn, 0.80f) };
+        }
+        return new int[] { hslToColor(h, sp, 0.40f), 0xFFFFFFFF, hslToColor(h, Math.min(1f, sp + 0.1f), 0.90f), hslToColor(h, sp, 0.14f),
+                hslToColor(h, Math.min(0.5f, sm + 0.2f), 0.89f), hslToColor(h, Math.min(1f, sn + 0.3f), 0.98f), hslToColor(h, sn, 0.11f),
+                hslToColor(h, Math.min(0.3f, sn + 0.1f), 0.90f), hslToColor(h, sn, 0.29f) };
+    }
+
+    /** Màu chủ đạo của ảnh bìa: gom theo 24 dải màu, ưu tiên màu đậm/sáng vừa phải (bỏ gần-trắng/gần-đen/xám). */
+    private static int dominantColor(Bitmap bmp) {
+        Bitmap sm = Bitmap.createScaledBitmap(bmp, 48, 48, true);
+        double[] w = new double[24], rr = new double[24], gg = new double[24], bb = new double[24];
+        double tr = 0, tg = 0, tb = 0; int tn = 0;
+        for (int y = 0; y < 48; y++) for (int x = 0; x < 48; x++) {
+            int c = sm.getPixel(x, y);
+            if (Color.alpha(c) < 128) continue;
+            tr += Color.red(c); tg += Color.green(c); tb += Color.blue(c); tn++;
+            float[] hsl = rgbToHsl(c);
+            double wt = hsl[1] * (1.0 - Math.abs(2 * hsl[2] - 1.0));
+            if (hsl[2] < 0.1f || hsl[2] > 0.92f) wt *= 0.1;
+            int bin = Math.min(23, (int) (hsl[0] / 15f));
+            w[bin] += wt; rr[bin] += Color.red(c) * wt; gg[bin] += Color.green(c) * wt; bb[bin] += Color.blue(c) * wt;
+        }
+        if (sm != bmp) sm.recycle();
+        int best = 0;
+        for (int i = 1; i < 24; i++) if (w[i] > w[best]) best = i;
+        if (w[best] > 0.5) return Color.rgb((int) (rr[best] / w[best]), (int) (gg[best] / w[best]), (int) (bb[best] / w[best]));
+        if (tn > 0) return Color.rgb((int) (tr / tn), (int) (tg / tn), (int) (tb / tn));
+        return 0xFF808080;
+    }
+
+    /** Gán lại toàn bộ màu cho các view đã dựng (dùng sau khi lấy màu từ ảnh bìa). */
+    private void recolor() {
+        if (card == null) return;
+        card.setBackground(round(cSurface, 36));
+        if (handleView != null) handleView.setBackground(round(cTrack, 4));
+        if (artBoxView != null) artBoxView.setBackground(round(cArtBg, 22));
+        tvTitle.setTextColor(cOnSurface);
+        tvArtist.setTextColor(cOnVariant); tvAlbum.setTextColor(cOnVariant);
+        tvPos.setTextColor(cOnVariant); tvDur.setTextColor(cOnVariant);
+        btnPrev.setBackground(round(cSecBtn, 38)); ((ImageView) ((FrameLayout) btnPrev).getChildAt(0)).setColorFilter(cOnSecBtn);
+        btnNext.setBackground(round(cSecBtn, 38)); ((ImageView) ((FrameLayout) btnNext).getChildAt(0)).setColorFilter(cOnSecBtn);
+        btnPlayIcon.setColorFilter(cOnPlayBtn);
+        syncPlayIcon();
+        btnOpen.setBackground(round(cOpenBtn, 28)); btnOpen.setTextColor(cOnOpenBtn);
+        seek.recolor(cPrimary, cTrack);
+    }
+
+    private void pickColorsLegacy(SharedPreferences appSp) {
         int savedTheme = appSp.getInt("theme", 0);
         int savedBg = appSp.getInt("widget_bg", 0);
         int savedAccent = appSp.getInt("widget_accent", 0);
@@ -309,6 +425,7 @@ public class QuickPlayActivity extends Activity {
         // Tay nắm: kéo xuống để đóng
         View handle = new View(this);
         handle.setBackground(round(cTrack, 4));
+        handleView = handle;
         FrameLayout handleBox = new FrameLayout(this);
         handleBox.addView(handle, new FrameLayout.LayoutParams(dp(36), dp(4), Gravity.CENTER));
         col.addView(handleBox, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(24)));
@@ -322,6 +439,7 @@ public class QuickPlayActivity extends Activity {
 
         FrameLayout artBox = new FrameLayout(this);
         artBox.setBackground(round(cArtBg, 22));
+        artBoxView = artBox;
         artBox.setClipToOutline(true);
         artBox.setOutlineProvider(new android.view.ViewOutlineProvider() {
             @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), dp(22)); }
@@ -430,6 +548,39 @@ public class QuickPlayActivity extends Activity {
         card.setTranslationY(dp(80));
         card.setAlpha(0f);
         card.animate().translationY(0).alpha(1f).setDuration(240).setInterpolator(new DecelerateInterpolator()).start();
+        animateBackdrop(true, 260);
+    }
+
+    /** Nền phía sau sheet: bật "Kính mờ (Blur)" thì làm mờ ứng dụng bên dưới, tắt thì làm tối. Mở/đóng đều fade. */
+    private boolean blurSupported() {
+        if (Build.VERSION.SDK_INT < 31 || !prefGlass) return false;
+        try {
+            WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+            return wm.isCrossWindowBlurEnabled();
+        } catch (Throwable t) { return false; }
+    }
+
+    private void animateBackdrop(final boolean in, long dur) {
+        final boolean blur = blurSupported();
+        final float to = in ? 1f : 0f;
+        if (backdropAnim != null) backdropAnim.cancel();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        final int radius = dp(28);
+        backdropAnim = ValueAnimator.ofFloat(backdropT, to);
+        backdropAnim.setDuration(dur);
+        backdropAnim.setInterpolator(new android.view.animation.LinearInterpolator());
+        backdropAnim.addUpdateListener(a -> {
+            backdropT = (float) a.getAnimatedValue();
+            try {
+                if (blur) {
+                    getWindow().setBackgroundBlurRadius(Math.round(radius * backdropT));
+                    getWindow().setDimAmount(0.18f * backdropT);
+                } else {
+                    getWindow().setDimAmount(0.5f * backdropT);
+                }
+            } catch (Throwable ignored) {}
+        });
+        backdropAnim.start();
     }
 
     private TextView text(int sp, int color, boolean bold, boolean rounded) {
@@ -457,6 +608,7 @@ public class QuickPlayActivity extends Activity {
     private void dismissSheet() {
         if (closing) return;
         closing = true;
+        animateBackdrop(false, 210);
         if (player != null) {
             try { player.stop(); } catch (Throwable ignored) {}
         }
@@ -618,6 +770,9 @@ public class QuickPlayActivity extends Activity {
                 if (!empty(fa)) tvArtist.setText(fa);
                 if (!empty(fl)) tvAlbum.setText(fl);
                 fallbackDur = fd;
+                if (fb != null && prefDyn) {
+                    try { applyPalette(paletteFromColor(dominantColor(fb), dark)); recolor(); } catch (Throwable ignored) {}
+                }
                 if (fb != null) { art.setImageBitmap(fb); artNote.setVisibility(View.GONE); }
                 else { art.setImageDrawable(null); artNote.setVisibility(View.VISIBLE); }
             });
@@ -721,7 +876,7 @@ public class QuickPlayActivity extends Activity {
             anim.setRepeatCount(ValueAnimator.INFINITE);
             anim.setInterpolator(new android.view.animation.LinearInterpolator());
             anim.addUpdateListener(an -> {
-                phase = -(float) an.getAnimatedValue() * (float) (Math.PI * 2);
+                phase = (float) an.getAnimatedValue() * (float) (Math.PI * 2);
                 float target = (playing || dragging) ? 3f * dens : 0f;
                 amp += (target - amp) * 0.12f;
                 invalidate();
@@ -731,6 +886,7 @@ public class QuickPlayActivity extends Activity {
         @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); anim.start(); }
         @Override protected void onDetachedFromWindow() { anim.cancel(); super.onDetachedFromWindow(); }
 
+        void recolor(int primary, int trackColor) { wave.setColor(primary); thumb.setColor(primary); dot.setColor(primary); track.setColor(trackColor); invalidate(); }
         void setProgress(float p) { prog = p; invalidate(); }
         void setPlaying(boolean p) { playing = p; }
         void setSeekable(boolean sk) {

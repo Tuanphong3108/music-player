@@ -1989,6 +1989,23 @@
         /* Giao diện bên trong Playlist (Playlist Detail - Only Mobile) */
         html.m-ui .m-pld-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
         html.m-ui .m-pld-head { padding: 4px 4px 2px; flex-shrink: 0; }
+        html.m-ui .m-fold-head { display: none; flex-direction: column; gap: 2px; flex-shrink: 0; padding: 4px 4px 2px; }
+        html.m-ui .m-fold-head.show { display: flex; }
+        html.m-ui .m-fold-crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; min-height: 30px; }
+        html.m-ui .m-fold-crumb {
+            display: inline-flex; align-items: center; gap: 2px; max-width: 40vw; height: 30px; padding: 0 8px; border: none; border-radius: 999px; cursor: pointer;
+            background: transparent; color: var(--md-sys-color-on-surface-variant);
+            font-family: var(--app-font); font-size: calc(14px * var(--font-scale-factor, 1)); font-weight: 600;
+        }
+        html.m-ui .m-fold-crumb span.t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        html.m-ui .m-fold-crumb:active { background: color-mix(in srgb, var(--md-sys-color-primary) 14%, transparent); }
+        html.m-ui .m-fold-crumb .material-symbols-rounded { font-size: 20px; }
+        html.m-ui .m-fold-sep { font-size: 18px !important; opacity: .55; color: var(--md-sys-color-on-surface-variant); }
+        html.m-ui .m-fold-title { margin: 0; padding: 0 8px; font-size: calc(26px * var(--font-scale-factor, 1)); font-weight: 800; line-height: 1.18; word-break: break-word; }
+        html.m-ui .m-fold-ico {
+            width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; display: grid; place-items: center;
+            background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container, var(--md-sys-color-on-surface));
+        }
         html.m-ui .m-pld-title { margin: 0; font-size: calc(26px * var(--font-scale-factor, 1)); font-weight: 800; line-height: 1.18; word-break: break-word; }
         html.m-ui .m-pld-sub { font-size: calc(13px * var(--font-scale-factor, 1)); opacity: .68; margin-top: 2px; font-weight: 600; }
         html.m-ui .m-pld-primary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-shrink: 0; }

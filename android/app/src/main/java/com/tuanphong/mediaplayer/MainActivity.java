@@ -2924,6 +2924,12 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {}
         }
 
+        /** Cài đặt cho sheet mini (QuickPlayActivity): {dyn, glass, mode, pal{...}} - đọc lại khi sheet mở. */
+        @JavascriptInterface
+        public void setQuickPlayPrefs(String json) {
+            try { getSharedPreferences("app", MODE_PRIVATE).edit().putString("qp_prefs", json == null ? "" : json).apply(); } catch (Exception ignored) {}
+        }
+
         @JavascriptInterface
         public void setThemeColor(String hex) {
             try {
