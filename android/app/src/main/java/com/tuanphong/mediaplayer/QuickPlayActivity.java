@@ -71,6 +71,7 @@ public class QuickPlayActivity extends Activity {
     private ImageView art, artNote, btnPlayIcon;
     private View btnPlay, btnPrev, btnNext, card;
     private long fallbackDur = 0;
+    private boolean mainChecked = false, mainWasPlaying = false, mainResumed = false;
     private boolean vi, dark, handedOff = false, ended = false, closing = false;
     private Typeface gsfRegular, gsfBold, gsfRoundedBold;
 
@@ -526,7 +527,14 @@ public class QuickPlayActivity extends Activity {
             }
             @Override public void onPlayerError(PlaybackException e) { syncPlayIcon(); }
         });
-        try { NativeAudio.pause(); } catch (Throwable ignored) {}   // nếu app chính đang phát bài khác thì dừng lại nhường tệp vừa mở
+        // App chính đang phát thì tạm dừng nhường sheet; nhớ lại để tự phát tiếp khi đóng sheet (nếu trước đó đã Pause thì giữ nguyên Pause)
+        try {
+            if (!mainChecked) {
+                mainChecked = true;
+                mainWasPlaying = NativeAudio.active() && new org.json.JSONObject(NativeAudio.stateJson()).optBoolean("pwr");
+            }
+            if (mainWasPlaying) NativeAudio.pause();
+        } catch (Throwable ignored) {}
         player.setMediaItem(MediaItem.fromUri(uri));
         player.prepare();
         player.play();
@@ -650,6 +658,11 @@ public class QuickPlayActivity extends Activity {
     private void releasePlayer() {
         ui.removeCallbacks(tick);
         if (player != null) { try { player.release(); } catch (Throwable ignored) {} player = null; }
+        // Thoát sheet mà không mở app chính: phát tiếp nhạc của app chính nếu trước đó đang phát
+        if (!handedOff && mainWasPlaying && !mainResumed) {
+            mainResumed = true;
+            try { NativeAudio.play(); } catch (Throwable ignored) {}
+        }
     }
 
     @Override
