@@ -73,7 +73,7 @@ public class QuickPlayActivity extends Activity {
     private View btnPlay, btnPrev, btnNext, card;
     private long fallbackDur = 0;
     private boolean mainChecked = false, mainWasPlaying = false, mainResumed = false;
-    private boolean vi, dark, handedOff = false, ended = false, closing = false;
+    private boolean vi, dark, handedOff = false, ended = false, closing = false, cueRebuilt = false;
     private Typeface gsfRegular, gsfBold, gsfRoundedBold;
     private boolean prefDyn = false, prefGlass = false;   // "Đổi màu theo Album Art" và "Kính mờ (Blur)" lấy từ cài đặt trong app
     private View handleView, artBoxView;
@@ -674,6 +674,24 @@ public class QuickPlayActivity extends Activity {
             @Override public void onIsPlayingChanged(boolean p) { syncPlayIcon(); }
             @Override public void onPlayWhenReadyChanged(boolean pwr, int r) { syncPlayIcon(); }
             @Override public void onPlaybackStateChanged(int st) {
+                if (st == Player.STATE_READY && player != null && !player.isCurrentMediaItemSeekable() && !cueRebuilt) {
+                    cueRebuilt = true;
+                    final Uri src = uri;
+                    final Context ctx = getApplicationContext();
+                    new Thread(() -> {
+                        Uri fixed = WebmCueIndexer.ensureSeekable(ctx, src);
+                        if (fixed == null) return;
+                        ui.post(() -> {
+                            if (isDestroyed() || closing || player == null || !src.equals(uri)) return;
+                            if (player.isCurrentMediaItemSeekable()) return;
+                            long pos = Math.max(0L, player.getCurrentPosition());
+                            boolean wasPlaying = player.getPlayWhenReady();
+                            player.setMediaItem(MediaItem.fromUri(fixed), pos);
+                            player.prepare();
+                            player.setPlayWhenReady(wasPlaying);
+                        });
+                    }, "qp-webm-cues").start();
+                }
                 if (st == Player.STATE_ENDED) { ended = true; player.pause(); }
                 syncPlayIcon();
             }
