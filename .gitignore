@@ -1,5 +1,7 @@
 .vscode/
 .idea/
+.gradle/
+build/
 Thumbs.db
 Desktop.ini
 *.log

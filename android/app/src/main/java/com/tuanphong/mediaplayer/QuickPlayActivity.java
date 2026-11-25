@@ -1,10 +1,13 @@
 package com.tuanphong.mediaplayer;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -17,6 +20,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -27,11 +31,13 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -43,10 +49,19 @@ import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Sheet mini hiện nổi phía dưới khi mở tệp nhạc từ app khác (trình quản lý tệp...): ảnh bìa, tên, thanh tua, điều khiển cơ bản và nút "Open full player".
+ * Sheet mini hiện nổi phía dưới khi mở tệp nhạc từ app khác (trình quản lý tệp...): ảnh bìa, tên, thanh tua, điều khiển cơ bản và nút "Mở trình phát đầy đủ".
  * Tự phát bằng ExoPlayer riêng (không dựng WebView) nên mở gần như tức thì; bấm nút mới chuyển tệp + vị trí sang app chính.
  */
 public class QuickPlayActivity extends Activity {
@@ -54,22 +69,29 @@ public class QuickPlayActivity extends Activity {
     private Uri uri;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private WavySeek seek;
-    private TextView tvTitle, tvArtist, tvAlbum, tvPos, tvDur;
+    private TextView tvTitle, tvArtist, tvAlbum, tvPos, tvDur, tvOpenBtn;
     private ImageView art, btnPlayIcon;
-    private TextView artNote;
     private View btnPlay, btnPrev, btnNext, card;
     private long fallbackDur = 0;
-    private boolean vi, dark, handedOff = false, ended = false;
+    private boolean vi, dark, handedOff = false, ended = false, dismissing = false;
+    private Typeface fontRegular, fontBold;
 
-    // Bảng màu (khớp phong cách MD3 Expressive)
-    private int cSurface, cOnSurface, cOnVariant, cPrimary, cTrack, cSecBtn, cOnSecBtn, cPlayBtn, cOnPlayBtn, cOpenBtn, cOnOpenBtn, cArtBg;
+    // Bảng màu (khớp MD3 Expressive & đồng bộ accent color từ app)
+    private int cSurface, cOnSurface, cOnVariant, cPrimary, cOnPrimary, cTrack, cSecBtn, cOnSecBtn, cPlayBtn, cOnPlayBtn, cOpenBtn, cOnOpenBtn, cArtBg;
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        vi = Locale.getDefault().getLanguage().equals("vi");
+        SharedPreferences sp = getSharedPreferences("app", MODE_PRIVATE);
+        String savedLang = sp.getString("lang", "");
+        if (!savedLang.isEmpty()) {
+            vi = !"en".equalsIgnoreCase(savedLang);
+        } else {
+            vi = Locale.getDefault().getLanguage().equals("vi");
+        }
         dark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-        pickColors();
+        pickColors(sp);
+        loadGoogleSansFlexSync();
         uri = uriFrom(getIntent());
         if (uri == null) { finish(); return; }
         buildUi();
@@ -85,6 +107,12 @@ public class QuickPlayActivity extends Activity {
         setIntent(i);
         uri = u;
         ended = false;
+        dismissing = false;
+        if (card != null) {
+            card.animate().cancel();
+            card.setTranslationY(0f);
+            card.setAlpha(1f);
+        }
         player.setMediaItem(MediaItem.fromUri(uri));
         player.prepare();
         player.play();
@@ -99,14 +127,177 @@ public class QuickPlayActivity extends Activity {
         return u;
     }
 
-    private void pickColors() {
-        if (dark) {
-            cSurface = 0xFF1F2129; cOnSurface = 0xFFE4E2EA; cOnVariant = 0xFFC7C6D2; cPrimary = 0xFFB9C3FF; cTrack = 0xFF464955;
-            cSecBtn = 0xFFD0D4EE; cOnSecBtn = 0xFF1B1E32; cPlayBtn = 0xFFD9BDF0; cOnPlayBtn = 0xFF2B1A3C; cOpenBtn = 0xFF44507A; cOnOpenBtn = 0xFFDDE1FF; cArtBg = 0xFF2E3140;
-        } else {
-            cSurface = 0xFFF3F2FA; cOnSurface = 0xFF1B1B21; cOnVariant = 0xFF46464F; cPrimary = 0xFF4A5AA8; cTrack = 0xFFCACBD6;
-            cSecBtn = 0xFFDCE1FF; cOnSecBtn = 0xFF151B44; cPlayBtn = 0xFFEBDCFF; cOnPlayBtn = 0xFF2B1A3C; cOpenBtn = 0xFF4A5AA8; cOnOpenBtn = 0xFFFFFFFF; cArtBg = 0xFFE1E2EC;
+    private void pickColors(SharedPreferences sp) {
+        int savedBg = sp.getInt("widget_bg", 0);
+        int savedAccent = sp.getInt("widget_accent", 0);
+        if (savedBg != 0) {
+            int bgOpaque = 0xFF000000 | (savedBg & 0x00FFFFFF);
+            dark = luminance(bgOpaque) <= 0.62;
         }
+        if (savedAccent != 0) {
+            int acc = 0xFF000000 | (savedAccent & 0x00FFFFFF);
+            cPrimary = acc;
+            cOnPrimary = luminance(acc) > 0.55 ? 0xFF1C1B1F : 0xFFFFFFFF;
+            cOpenBtn = acc;
+            cOnOpenBtn = cOnPrimary;
+            if (dark) {
+                cSurface = savedBg != 0 ? (0xFF000000 | (savedBg & 0x00FFFFFF)) : blendColor(0xFF1C1B1F, acc, 0.08f);
+                cOnSurface = 0xFFE6E1E5;
+                cOnVariant = 0xFFCAC4D0;
+                cTrack = blendColor(0xFF49454F, acc, 0.14f);
+                cSecBtn = blendColor(0xFF332D41, acc, 0.22f);
+                cOnSecBtn = 0xFFE6E1E5;
+                cPlayBtn = blendColor(0xFF4F378B, acc, 0.45f);
+                cOnPlayBtn = luminance(cPlayBtn) > 0.55 ? 0xFF1C1B1F : 0xFFFFFFFF;
+                cArtBg = blendColor(0xFF2B2930, acc, 0.14f);
+            } else {
+                cSurface = savedBg != 0 ? (0xFF000000 | (savedBg & 0x00FFFFFF)) : blendColor(0xFFFEF7FF, acc, 0.05f);
+                cOnSurface = 0xFF1D1B20;
+                cOnVariant = 0xFF49454F;
+                cTrack = blendColor(0xFFCACBD6, acc, 0.18f);
+                cSecBtn = blendColor(0xFFE8DEF8, acc, 0.22f);
+                cOnSecBtn = 0xFF1D1B20;
+                cPlayBtn = blendColor(0xFFEADDFF, acc, 0.35f);
+                cOnPlayBtn = luminance(cPlayBtn) > 0.55 ? 0xFF1D1B20 : 0xFFFFFFFF;
+                cArtBg = blendColor(0xFFE7E0EB, acc, 0.16f);
+            }
+            return;
+        }
+        // Fallback nếu chưa lưu accent: dùng Dynamic Color của Android 12+ hoặc tím M3 mặc định
+        if (Build.VERSION.SDK_INT >= 31) {
+            try {
+                if (dark) {
+                    cSurface = getColor(android.R.color.system_neutral1_900);
+                    cOnSurface = getColor(android.R.color.system_neutral1_100);
+                    cOnVariant = getColor(android.R.color.system_neutral2_200);
+                    cPrimary = getColor(android.R.color.system_accent1_200);
+                    cOnPrimary = getColor(android.R.color.system_accent1_800);
+                    cTrack = getColor(android.R.color.system_neutral2_700);
+                    cSecBtn = getColor(android.R.color.system_accent2_700);
+                    cOnSecBtn = getColor(android.R.color.system_accent2_100);
+                    cPlayBtn = getColor(android.R.color.system_accent1_700);
+                    cOnPlayBtn = getColor(android.R.color.system_accent1_100);
+                    cOpenBtn = cPrimary;
+                    cOnOpenBtn = cOnPrimary;
+                    cArtBg = getColor(android.R.color.system_neutral2_800);
+                } else {
+                    cSurface = getColor(android.R.color.system_neutral1_50);
+                    cOnSurface = getColor(android.R.color.system_neutral1_900);
+                    cOnVariant = getColor(android.R.color.system_neutral2_700);
+                    cPrimary = getColor(android.R.color.system_accent1_600);
+                    cOnPrimary = 0xFFFFFFFF;
+                    cTrack = getColor(android.R.color.system_neutral2_200);
+                    cSecBtn = getColor(android.R.color.system_accent2_100);
+                    cOnSecBtn = getColor(android.R.color.system_accent2_900);
+                    cPlayBtn = getColor(android.R.color.system_accent1_100);
+                    cOnPlayBtn = getColor(android.R.color.system_accent1_900);
+                    cOpenBtn = cPrimary;
+                    cOnOpenBtn = cOnPrimary;
+                    cArtBg = getColor(android.R.color.system_neutral2_100);
+                }
+                return;
+            } catch (Throwable ignored) {}
+        }
+        if (dark) {
+            cSurface = 0xFF1C1B1F; cOnSurface = 0xFFE6E1E5; cOnVariant = 0xFFCAC4D0; cPrimary = 0xFFD0BCFF; cOnPrimary = 0xFF381E72; cTrack = 0xFF49454F;
+            cSecBtn = 0xFF332D41; cOnSecBtn = 0xFFEADDFF; cPlayBtn = 0xFF4F378B; cOnPlayBtn = 0xFFEADDFF; cOpenBtn = 0xFFD0BCFF; cOnOpenBtn = 0xFF381E72; cArtBg = 0xFF2B2930;
+        } else {
+            cSurface = 0xFFFEF7FF; cOnSurface = 0xFF1D1B20; cOnVariant = 0xFF49454F; cPrimary = 0xFF6750A4; cOnPrimary = 0xFFFFFFFF; cTrack = 0xFFE7E0EB;
+            cSecBtn = 0xFFE8DEF8; cOnSecBtn = 0xFF1D1B20; cPlayBtn = 0xFFEADDFF; cOnPlayBtn = 0xFF21005D; cOpenBtn = 0xFF6750A4; cOnOpenBtn = 0xFFFFFFFF; cArtBg = 0xFFE7E0EB;
+        }
+    }
+
+    private static double luminance(int c) {
+        return (0.299 * Color.red(c) + 0.587 * Color.green(c) + 0.114 * Color.blue(c)) / 255.0;
+    }
+
+    private static int blendColor(int base, int tint, float ratio) {
+        float inv = 1f - ratio;
+        int r = Math.round(Color.red(base) * inv + Color.red(tint) * ratio);
+        int g = Math.round(Color.green(base) * inv + Color.green(tint) * ratio);
+        int b = Math.round(Color.blue(base) * inv + Color.blue(tint) * ratio);
+        return Color.rgb(Math.max(0, Math.min(255, r)), Math.max(0, Math.min(255, g)), Math.max(0, Math.min(255, b)));
+    }
+
+    private void loadGoogleSansFlexSync() {
+        try {
+            File fontDir = new File(getCacheDir(), "fonts");
+            if (!fontDir.exists()) fontDir.mkdirs();
+            File regFile = new File(fontDir, "GoogleSansFlex-Regular.ttf");
+            if (regFile.exists() && regFile.length() > 1024) {
+                fontRegular = Typeface.createFromFile(regFile);
+                fontBold = Typeface.create(fontRegular, Typeface.BOLD);
+                return;
+            }
+            new Thread(() -> {
+                HttpURLConnection conn = null;
+                InputStream in = null;
+                FileOutputStream out = null;
+                try {
+                    HttpURLConnection cssConn = (HttpURLConnection) new URL(
+                            "https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;700").openConnection();
+                    cssConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14)");
+                    cssConn.setConnectTimeout(8000);
+                    cssConn.setReadTimeout(8000);
+                    BufferedReader br = new BufferedReader(new InputStreamReader(cssConn.getInputStream()));
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) sb.append(line).append('\n');
+                    br.close();
+                    cssConn.disconnect();
+                    Matcher m = Pattern.compile("url\\((https://fonts\\.gstatic\\.com/[^)]+\\.ttf)\\)").matcher(sb.toString());
+                    if (m.find()) {
+                        conn = (HttpURLConnection) new URL(m.group(1)).openConnection();
+                        conn.setConnectTimeout(10000);
+                        conn.setReadTimeout(10000);
+                        in = conn.getInputStream();
+                        out = new FileOutputStream(regFile);
+                        byte[] buf = new byte[8192];
+                        int n;
+                        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                        out.flush();
+                        out.close(); out = null;
+                        in.close(); in = null;
+                        Typeface tf = Typeface.createFromFile(regFile);
+                        Typeface boldTf = Typeface.create(tf, Typeface.BOLD);
+                        ui.post(() -> {
+                            fontRegular = tf;
+                            fontBold = boldTf;
+                            refreshFontsOnUi();
+                        });
+                    }
+                } catch (Throwable ignored) {
+                } finally {
+                    try { if (out != null) out.close(); } catch (Exception ignored) {}
+                    try { if (in != null) in.close(); } catch (Exception ignored) {}
+                    try { if (conn != null) conn.disconnect(); } catch (Exception ignored) {}
+                }
+            }, "qp-font").start();
+        } catch (Throwable ignored) {}
+    }
+
+    private void applyFont(TextView tv, boolean bold, boolean rounded) {
+        if (tv == null) return;
+        Typeface tf = bold ? fontBold : fontRegular;
+        if (tf != null) {
+            tv.setTypeface(tf, bold ? Typeface.BOLD : Typeface.NORMAL);
+        } else if (bold) {
+            tv.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        }
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                tv.setFontVariationSettings(rounded ? "'ROND' 100" : "'ROND' 0");
+            } catch (Throwable ignored) {}
+        }
+    }
+
+    private void refreshFontsOnUi() {
+        applyFont(tvTitle, true, true);
+        applyFont(tvArtist, false, false);
+        applyFont(tvAlbum, false, false);
+        applyFont(tvPos, false, false);
+        applyFont(tvDur, false, false);
+        applyFont(tvOpenBtn, true, true);
     }
 
     private int dp(float v) { return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics())); }
@@ -118,9 +309,24 @@ public class QuickPlayActivity extends Activity {
         return g;
     }
 
+    private void showDefaultArtwork() {
+        if (art == null) return;
+        art.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        int pad = dp(18);
+        art.setPadding(pad, pad, pad, pad);
+        art.setImageResource(R.drawable.ic_music_note);
+    }
+
+    private void showCoverBitmap(Bitmap bmp) {
+        if (art == null) return;
+        art.setPadding(0, 0, 0, 0);
+        art.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        art.setImageBitmap(bmp);
+    }
+
     private void buildUi() {
         final FrameLayout root = new FrameLayout(this);
-        root.setOnClickListener(v -> finish());   // chạm ra ngoài sheet = đóng
+        root.setOnClickListener(v -> dismissSheet());   // chạm ra ngoài sheet = dừng nhạc & trượt xuống đóng
 
         card = new LinearLayout(this);
         final LinearLayout col = (LinearLayout) card;
@@ -133,7 +339,7 @@ public class QuickPlayActivity extends Activity {
         if (getResources().getDisplayMetrics().widthPixels > dp(600)) clp.width = dp(520);
         root.addView(card, clp);
 
-        // Tay nắm: kéo xuống để đóng
+        // Tay nắm: kéo xuống để dừng nhạc & đóng
         View handle = new View(this);
         handle.setBackground(round(cTrack, 4));
         FrameLayout handleBox = new FrameLayout(this);
@@ -154,14 +360,8 @@ public class QuickPlayActivity extends Activity {
             @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), dp(22)); }
         });
         art = new ImageView(this);
-        art.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        showDefaultArtwork();
         artBox.addView(art, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        artNote = new TextView(this);
-        artNote.setText("♪");
-        artNote.setTextSize(TypedValue.COMPLEX_UNIT_SP, 44);
-        artNote.setTextColor(cPrimary);
-        artNote.setGravity(Gravity.CENTER);
-        artBox.addView(artNote, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         row.addView(artBox, new LinearLayout.LayoutParams(dp(96), dp(96)));
 
         LinearLayout texts = new LinearLayout(this);
@@ -169,13 +369,13 @@ public class QuickPlayActivity extends Activity {
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         tlp.leftMargin = dp(20);
         row.addView(texts, tlp);
-        tvTitle = text(26, cOnSurface, true);
+        tvTitle = text(24, cOnSurface, true, true);
         tvTitle.setMaxLines(2);
         tvTitle.setEllipsize(TextUtils.TruncateAt.END);
-        tvArtist = text(17, cOnVariant, false);
+        tvArtist = text(16, cOnVariant, false, false);
         tvArtist.setSingleLine(true);
         tvArtist.setEllipsize(TextUtils.TruncateAt.END);
-        tvAlbum = text(14, cOnVariant, false);
+        tvAlbum = text(14, cOnVariant, false, false);
         tvAlbum.setSingleLine(true);
         tvAlbum.setEllipsize(TextUtils.TruncateAt.END);
         texts.addView(tvTitle);
@@ -184,23 +384,29 @@ public class QuickPlayActivity extends Activity {
         texts.addView(tvArtist, alp);
         texts.addView(tvAlbum);
 
-        // Thanh tua dạng sóng
+        // Thanh tua dạng sóng + nút kéo gạch dọc cố định trục Y
         seek = new WavySeek(this);
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(36));
         slp.topMargin = dp(18);
         col.addView(seek, slp);
         seek.listener = (frac, fin) -> {
+            if (player != null && !player.isCurrentMediaItemSeekable()) {
+                if (fin) {
+                    Toast.makeText(this, vi ? "Tệp này không hỗ trợ tua" : "This file does not support seeking", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
             long d = durationMs();
             if (d <= 0) return;
             long pos = (long) (frac * d);
             tvPos.setText(fmt(pos));
-            if (fin) { player.seekTo(pos); ended = false; }
+            if (fin && player != null) { player.seekTo(pos); ended = false; }
         };
 
         LinearLayout times = new LinearLayout(this);
         times.setOrientation(LinearLayout.HORIZONTAL);
-        tvPos = text(14, cOnVariant, false);
-        tvDur = text(14, cOnVariant, false);
+        tvPos = text(14, cOnVariant, false, false);
+        tvDur = text(14, cOnVariant, false, false);
         tvPos.setText("00:00"); tvDur.setText("00:00");
         View sp = new View(this);
         times.addView(tvPos);
@@ -236,18 +442,15 @@ public class QuickPlayActivity extends Activity {
             if (player.isPlaying()) player.pause(); else player.play();
         });
 
-        // Nút mở app chính
-        TextView open = new TextView(this);
-        open.setText(vi ? "Mở trình phát đầy đủ" : "Open full player");
-        open.setTextColor(cOnOpenBtn);
-        open.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-        open.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        open.setGravity(Gravity.CENTER);
-        open.setBackground(round(cOpenBtn, 28));
-        open.setOnClickListener(v -> openFullPlayer());
+        // Nút mở app chính (bo tròn font ROND 100 + đồng bộ accent color)
+        tvOpenBtn = text(17, cOnOpenBtn, true, true);
+        tvOpenBtn.setText(vi ? "Mở trình phát đầy đủ" : "Open full player");
+        tvOpenBtn.setGravity(Gravity.CENTER);
+        tvOpenBtn.setBackground(round(cOpenBtn, 28));
+        tvOpenBtn.setOnClickListener(v -> openFullPlayer());
         LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(58));
         olp.topMargin = dp(20);
-        col.addView(open, olp);
+        col.addView(tvOpenBtn, olp);
 
         setContentView(root);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, wi) -> {
@@ -255,16 +458,16 @@ public class QuickPlayActivity extends Activity {
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
             return wi;
         });
-        card.setTranslationY(dp(60));
+        card.setTranslationY(dp(80));
         card.setAlpha(0f);
-        card.animate().translationY(0).alpha(1f).setDuration(220).setInterpolator(new DecelerateInterpolator()).start();
+        card.animate().translationY(0).alpha(1f).setDuration(240).setInterpolator(new DecelerateInterpolator()).start();
     }
 
-    private TextView text(int sp, int color, boolean bold) {
+    private TextView text(int sp, int color, boolean bold, boolean rounded) {
         TextView t = new TextView(this);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);
-        if (bold) t.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        applyFont(t, bold, rounded);
         return t;
     }
 
@@ -281,9 +484,36 @@ public class QuickPlayActivity extends Activity {
         return f;
     }
 
+    private void dismissSheet() {
+        if (dismissing) return;
+        dismissing = true;
+        releasePlayer();
+        if (card == null) {
+            finish();
+            overridePendingTransition(0, 0);
+            return;
+        }
+        float slideDist = card.getHeight() > 0 ? card.getHeight() + dp(40) : dp(360);
+        card.animate()
+                .translationY(slideDist)
+                .alpha(0f)
+                .setDuration(220)
+                .setInterpolator(new AccelerateInterpolator())
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override public void onAnimationEnd(Animator animation) {
+                        if (!isFinishing()) {
+                            finish();
+                            overridePendingTransition(0, 0);
+                        }
+                    }
+                })
+                .start();
+    }
+
     private void attachDragToDismiss(View handle) {
         final float[] y0 = { 0 };
         handle.setOnTouchListener((v, e) -> {
+            if (dismissing) return true;
             switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN: y0[0] = e.getRawY(); return true;
                 case MotionEvent.ACTION_MOVE: {
@@ -294,7 +524,7 @@ public class QuickPlayActivity extends Activity {
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL: {
                     float dy = Math.max(0, e.getRawY() - y0[0]);
-                    if (dy > dp(90)) finish();
+                    if (dy > dp(90)) dismissSheet();
                     else card.animate().translationY(0).setDuration(160).start();
                     return true;
                 }
@@ -335,6 +565,8 @@ public class QuickPlayActivity extends Activity {
             long d = durationMs();
             long pos = Math.max(0, player.getCurrentPosition());
             if (d > 0 && pos > d) pos = d;
+            boolean sk = player.isCurrentMediaItemSeekable();
+            seek.setSeekable(sk);
             if (!seek.dragging) {
                 seek.setProgress(d > 0 ? Math.min(1f, (float) pos / d) : 0f);
                 tvPos.setText(fmt(ended && d > 0 ? d : pos));
@@ -371,6 +603,7 @@ public class QuickPlayActivity extends Activity {
         tvTitle.setText(displayName(u));
         tvArtist.setText(vi ? "Không rõ nghệ sĩ" : "Unknown Artist");
         tvAlbum.setText(vi ? "Không rõ album" : "Unknown Album");
+        showDefaultArtwork();
         new Thread(() -> {
             String title = null, artist = null, album = null;
             long dur = 0;
@@ -404,8 +637,8 @@ public class QuickPlayActivity extends Activity {
                 if (!empty(fa)) tvArtist.setText(fa);
                 if (!empty(fl)) tvAlbum.setText(fl);
                 fallbackDur = fd;
-                if (fb != null) { art.setImageBitmap(fb); artNote.setVisibility(View.GONE); }
-                else { art.setImageDrawable(null); artNote.setVisibility(View.VISIBLE); }
+                if (fb != null) showCoverBitmap(fb);
+                else showDefaultArtwork();
             });
         }, "qp-meta").start();
     }
@@ -425,7 +658,7 @@ public class QuickPlayActivity extends Activity {
     }
 
     private void openFullPlayer() {
-        if (handedOff) return;
+        if (handedOff || dismissing) return;
         handedOff = true;
         long pos = player != null ? Math.max(0, player.getCurrentPosition()) : 0;
         boolean playing = player != null && player.getPlayWhenReady() && !ended;
@@ -439,11 +672,46 @@ public class QuickPlayActivity extends Activity {
         releasePlayer();
         startActivity(i);
         finish();
+        overridePendingTransition(0, 0);
     }
 
     private void releasePlayer() {
         ui.removeCallbacks(tick);
-        if (player != null) { try { player.release(); } catch (Throwable ignored) {} player = null; }
+        if (player != null) {
+            try { player.stop(); } catch (Throwable ignored) {}
+            try { player.release(); } catch (Throwable ignored) {}
+            player = null;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        dismissSheet();
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        // Thoát dưới dạng sheet nhanh (Home / Đa nhiệm) -> dừng nhạc & đóng sheet; chỉ khi mở sang app chính mới chạy nền
+        if (!handedOff) {
+            releasePlayer();
+            if (!isFinishing()) {
+                finish();
+                overridePendingTransition(0, 0);
+            }
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (!handedOff) {
+            releasePlayer();
+            if (!isFinishing()) {
+                finish();
+                overridePendingTransition(0, 0);
+            }
+        }
     }
 
     @Override
@@ -452,11 +720,12 @@ public class QuickPlayActivity extends Activity {
         super.onDestroy();
     }
 
-    /** Thanh tua dạng sóng (MD3E): phần đã phát là sóng chuyển động khi đang phát, phần còn lại là đường thẳng. */
+    /** Thanh tua dạng sóng (MD3E): phần đã phát là sóng chuyển động khi đang phát, nút kéo là dấu gạch dọc cố định theo trục Y giống WebView. */
     static class WavySeek extends View {
         interface L { void onSeek(float frac, boolean fin); }
         L listener;
         boolean dragging;
+        private boolean seekable = true;
         private float prog, amp, phase;
         private boolean playing;
         private final Paint wave = new Paint(Paint.ANTI_ALIAS_FLAG), track = new Paint(Paint.ANTI_ALIAS_FLAG), thumb = new Paint(Paint.ANTI_ALIAS_FLAG), dot = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -470,8 +739,8 @@ public class QuickPlayActivity extends Activity {
             QuickPlayActivity a = (QuickPlayActivity) c;
             wave.setStyle(Paint.Style.STROKE); wave.setStrokeCap(Paint.Cap.ROUND); wave.setStrokeWidth(4 * dens); wave.setColor(a.cPrimary);
             track.setStyle(Paint.Style.STROKE); track.setStrokeCap(Paint.Cap.ROUND); track.setStrokeWidth(4 * dens); track.setColor(a.cTrack);
-            thumb.setColor(a.cPrimary);
-            dot.setColor(a.cPrimary);
+            thumb.setStyle(Paint.Style.FILL); thumb.setColor(a.cPrimary);
+            dot.setStyle(Paint.Style.FILL); dot.setColor(a.cPrimary);
             anim = ValueAnimator.ofFloat(0f, 1f);
             anim.setDuration(1600);
             anim.setRepeatCount(ValueAnimator.INFINITE);
@@ -489,45 +758,64 @@ public class QuickPlayActivity extends Activity {
 
         void setProgress(float p) { prog = p; invalidate(); }
         void setPlaying(boolean p) { playing = p; }
+        void setSeekable(boolean s) {
+            if (seekable == s) return;
+            seekable = s;
+            setAlpha(s ? 1f : 0.45f);
+            invalidate();
+        }
 
         @Override protected void onDraw(Canvas cv) {
             float w = getWidth(), h = getHeight(), cy = h / 2f;
-            float r = 9 * dens;
-            float x0 = r, x1 = w - r;
+            float thumbW = (dragging ? 5.5f : 4.5f) * dens;
+            float thumbH = (dragging ? 26f : 22f) * dens;
+            float padX = 6 * dens;
+            float x0 = padX, x1 = w - padX;
             float px = x0 + (x1 - x0) * Math.max(0f, Math.min(1f, prog));
             float wl = 24 * dens;
-            path.reset();
-            path.moveTo(x0, cy);
-            for (float x = x0; x <= px; x += 2f) {
-                float fade = Math.min(1f, (x - x0) / (12 * dens));   // sóng nở dần từ đầu thanh
-                path.lineTo(x, cy + amp * fade * (float) Math.sin((x / wl) * 2 * Math.PI + phase));
+            float gap = thumbW * 0.5f + 4 * dens;
+            float waveEnd = Math.max(x0, px - gap);
+            if (waveEnd > x0) {
+                path.reset();
+                path.moveTo(x0, cy);
+                for (float x = x0; x <= waveEnd; x += 2f) {
+                    float fade = Math.min(1f, (x - x0) / (12 * dens));
+                    path.lineTo(x, cy + amp * fade * (float) Math.sin((x / wl) * 2 * Math.PI + phase));
+                }
+                cv.drawPath(path, wave);
             }
-            cv.drawPath(path, wave);
-            float gap = r + 4 * dens;
             if (px + gap < x1) cv.drawLine(px + gap, cy, x1, cy, track);
             dot.setColor(wave.getColor());
             cv.drawCircle(x1, cy, 2 * dens, dot);
-            float ty = cy + (px > x0 ? amp * (float) Math.sin((px / wl) * 2 * Math.PI + phase) : 0f);
-            cv.drawCircle(px, ty, dragging ? r * 1.15f : r, thumb);
+            // Dấu gạch dọc cố định theo trục Y (cy), không nhấp nhô theo sóng
+            float halfW = thumbW * 0.5f;
+            float halfH = thumbH * 0.5f;
+            cv.drawRoundRect(px - halfW, cy - halfH, px + halfW, cy + halfH, halfW, halfW, thumb);
         }
 
         @Override public boolean onTouchEvent(MotionEvent e) {
-            float r = 9 * dens;
-            float frac = (e.getX() - r) / Math.max(1f, getWidth() - 2 * r);
+            float padX = 6 * dens;
+            float frac = (e.getX() - padX) / Math.max(1f, getWidth() - 2 * padX);
             frac = Math.max(0f, Math.min(1f, frac));
             switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     getParent().requestDisallowInterceptTouchEvent(true);
+                    if (!seekable) {
+                        if (listener != null) listener.onSeek(prog, true);
+                        return true;
+                    }
                     dragging = true; prog = frac;
                     if (listener != null) listener.onSeek(frac, false);
                     invalidate();
                     return true;
                 case MotionEvent.ACTION_MOVE:
+                    if (!seekable || !dragging) return true;
                     prog = frac;
                     if (listener != null) listener.onSeek(frac, false);
                     invalidate();
                     return true;
                 case MotionEvent.ACTION_UP:
+                    if (!seekable) return true;
                     prog = frac; dragging = false;
                     if (listener != null) listener.onSeek(frac, true);
                     invalidate();
