@@ -78,6 +78,9 @@ lyric.right_click_hint=Right-click on the song to load lyrics
 ## --- Other info dialog ---
 moreinfo.title=Other info
 moreinfo.file_type=File
+moreinfo.structure_format=Format by file structure
+moreinfo.ext_mismatch=differs from {ext}
+moreinfo.unseekable=Unseekable
 moreinfo.date_modified=Date modified
 moreinfo.quality=Audio quality
 moreinfo.duration=Duration
