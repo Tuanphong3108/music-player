@@ -1700,6 +1700,7 @@
         html.m-ui #m-lyric-seek { position: relative; z-index: 1; height: 44px; background: transparent !important; border-radius: 0; touch-action: none; pointer-events: none; }
         html.m-ui #m-lyric-seek::-webkit-slider-runnable-track { background: transparent; height: 44px; }
         html.m-ui #m-lyric-seek::-webkit-slider-thumb { margin-top: 8px; }
+        html.seek-disabled .seek-container, html.seek-disabled .mlp-seek { opacity: 0.45; cursor: not-allowed; }
 
         /* ===== Khung báo lỗi phát tệp (Playback Error Overlay) ===== */
         /* ===== MOBILE UI MỚI: Màn hình chính Thư viện + Mini Player Pill + Full Player thu gọn + Playlist Sheet ===== */
