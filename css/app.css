@@ -1755,7 +1755,7 @@
             color: var(--md-sys-color-on-surface);
             transition: background .2s, transform .15s, border-radius .25s;
             content-visibility: auto;
-            contain-intrinsic-size: 0 66px;
+            contain-intrinsic-size: auto 66px;
             contain: layout style paint;
         }
         html.m-ui .m-lib-item:active { transform: scale(.985); }
@@ -2267,3 +2267,5 @@ html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track:not(.m-early
 
 @keyframes mLocateFlash { 0%,100% { background: transparent; } 30% { background: color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent); } }
 html.m-ui .m-lib-item.m-locate-flash { animation: mLocateFlash 1.2s ease; }
+
+html.m-ui #m-lib-list.m-locating .m-lib-item { content-visibility: visible; }

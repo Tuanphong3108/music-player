@@ -62,7 +62,20 @@
                 const locate = (retry) => {
                     const row = mLibList.querySelector('.m-lib-item.active');
                     if (row) {
-                        row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        // Hàng dùng content-visibility:auto (chiều cao chỉ là ước lượng nên cuộn bị lố/thiếu): tắt tạm để đo đúng chiều cao thật rồi nhảy thẳng tới giữa, sau đó trả lại như cũ
+                        const prevSB = mLibList.style.scrollBehavior;
+                        mLibList.style.scrollBehavior = 'auto';
+                        mLibList.classList.add('m-locating');
+                        const center = () => {
+                            const lr = mLibList.getBoundingClientRect(), rr = row.getBoundingClientRect();
+                            return (rr.top + rr.height / 2) - (lr.top + lr.height / 2);
+                        };
+                        mLibList.scrollTop += center();
+                        mLibList.scrollTop += center();   // đo lại một lần nữa để khử sai số do cuộn neo (scroll anchoring)
+                        requestAnimationFrame(() => {
+                            if (row.isConnected) mLibList.scrollTop += center();
+                            setTimeout(() => { mLibList.classList.remove('m-locating'); mLibList.style.scrollBehavior = prevSB; }, 400);
+                        });
                         row.classList.remove('m-locate-flash'); void row.offsetWidth; row.classList.add('m-locate-flash');
                         setTimeout(() => row.classList.remove('m-locate-flash'), 1400);
                         return;
