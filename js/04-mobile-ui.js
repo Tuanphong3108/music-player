@@ -1217,6 +1217,7 @@
                     tracks.forEach(tr => {
                         const row = document.createElement('div');
                         row.className = 'm-lib-item' + (activeKey && trackKeyOf(tr) === activeKey ? ' active' : '');
+                        row.dataset.key = trackKeyOf(tr);
                         row.innerHTML = rowArtHtml(tr) + '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>';
                         row.querySelector('.m-lib-title').textContent = tr.name || '';
                         row.querySelector('.m-lib-artist').textContent = tr.artist || '';
@@ -1241,6 +1242,7 @@
                     liked.forEach(tr => {
                         const row = document.createElement('div');
                         row.className = 'm-lib-item' + (activeKey && trackKeyOf(tr) === activeKey ? ' active' : '');
+                        row.dataset.key = trackKeyOf(tr);
                         row.innerHTML = rowArtHtml(tr) +
                             '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
                             '<button type="button" class="m-lib-more" aria-label="Unlike"><span class="material-symbols-rounded" style="font-size:20px;color:#ff5a7a;">favorite</span></button>';
@@ -1303,11 +1305,110 @@
 
                 // Cập nhật bài đang phát (sáng) trong chi tiết danh sách phát mà không cần dựng lại
                 window.__syncPldActive = function () {
-                    if (!plDetailList) return;
                     const t = playlist[currentIndex] || null;
                     const k = t ? trackKeyOf(t) : '';
-                    plDetailList.querySelectorAll('.m-lib-item').forEach(r => r.classList.toggle('active', !!k && r.dataset.key === k));
+                    // Chi tiết danh sách phát / nghệ sĩ, tab Yêu thích, tab Thư mục: bài sáng phải đúng bài đang phát
+                    [plDetailList, likedListEl, document.getElementById('m-fold-list')].forEach(listEl => {
+                        if (!listEl) return;
+                        listEl.querySelectorAll('.m-lib-item[data-key]').forEach(r => r.classList.toggle('active', !!k && r.dataset.key === k));
+                    });
                 };
+                // Đổi bài (kể cả tự chuyển bài khi đang ở tab khác) -> cập nhật ngay
+                ['loadedmetadata', 'play', 'emptied'].forEach(ev => audio.addEventListener(ev, () => window.__syncPldActive()));
+
+
+                // Kéo-thả sắp xếp bài trong danh sách phát (giống hàng đợi tạm): bài đang kéo chạy theo ngón tay, các bài khác tự né ra
+                function pldStartDrag(e, item, plId) {
+                    if (e.button !== undefined && e.button !== 0) return;
+                    const container = plDetailList;
+                    const items = Array.from(container.querySelectorAll('.m-lib-item'));
+                    const i0 = items.indexOf(item);
+                    if (i0 < 0) return;
+                    e.preventDefault(); e.stopPropagation();
+                    container.classList.add('m-reordering');
+                    const cTop = () => container.getBoundingClientRect().top;
+                    const base = cTop();
+                    const tops = items.map(el => el.getBoundingClientRect().top - base + container.scrollTop);
+                    const hs = items.map(el => el.getBoundingClientRect().height);
+                    const gap = items.length > 1 ? Math.max(0, (tops[1] - tops[0]) - hs[0]) : 0;
+                    const step = hs[i0] + gap;
+                    const centers = items.map((el, k) => tops[k] + hs[k] / 2);
+                    const minDy = tops[0] - tops[i0];
+                    const maxDy = tops[items.length - 1] + hs[items.length - 1] - (tops[i0] + hs[i0]);
+                    const startY = e.clientY, startScroll = container.scrollTop;
+                    let pointerY = e.clientY, target = i0, raf = null, dy = 0;
+                    item.classList.add('dragging');
+                    item.style.transition = 'none'; item.style.zIndex = '5'; item.style.position = 'relative';
+                    items.forEach((el, k) => { if (k !== i0) el.style.transition = 'transform .22s cubic-bezier(.2,0,0,1)'; });
+                    const handle = e.currentTarget || e.target;
+                    try { handle.setPointerCapture(e.pointerId); } catch (er) {}
+                    function layout() {
+                        dy = (pointerY - startY) + (container.scrollTop - startScroll);
+                        dy = Math.max(minDy, Math.min(maxDy, dy));
+                        item.style.transform = 'translateY(' + dy + 'px) scale(1.02)';
+                        const dTop = tops[i0] + dy, dBottom = dTop + hs[i0];
+                        let t = i0;
+                        for (let k = 0; k < items.length; k++) {
+                            if (k === i0) continue;
+                            if (k > i0 && dBottom > centers[k]) t = Math.max(t, k);
+                            if (k < i0 && dTop < centers[k]) t = Math.min(t, k);
+                        }
+                        target = t;
+                        items.forEach((el, k) => {
+                            if (k === i0) return;
+                            let shift = 0;
+                            if (k > i0 && k <= t) shift = -step; else if (k < i0 && k >= t) shift = step;
+                            el.style.transform = shift ? 'translateY(' + shift + 'px)' : '';
+                        });
+                    }
+                    function autoScroll() {
+                        const r = container.getBoundingClientRect(), zone = 56;
+                        let v = 0;
+                        if (pointerY < r.top + zone) v = -Math.min(14, (r.top + zone - pointerY) / 3);
+                        else if (pointerY > r.bottom - zone) v = Math.min(14, (pointerY - (r.bottom - zone)) / 3);
+                        if (v) { container.scrollTop += v; layout(); }
+                        raf = requestAnimationFrame(autoScroll);
+                    }
+                    raf = requestAnimationFrame(autoScroll);
+                    layout();
+                    const onMove = (ev) => { pointerY = ev.clientY; layout(); };
+                    const finish = (cancel) => {
+                        handle.removeEventListener('pointermove', onMove);
+                        handle.removeEventListener('pointerup', onUp);
+                        handle.removeEventListener('pointercancel', onCancel);
+                        cancelAnimationFrame(raf);
+                        try { handle.releasePointerCapture(e.pointerId); } catch (er) {}
+                        const finalT = cancel ? i0 : target;
+                        let slotDy = 0;
+                        if (finalT > i0) { for (let k = i0 + 1; k <= finalT; k++) slotDy += hs[k] + gap; }
+                        else if (finalT < i0) { for (let k = finalT; k < i0; k++) slotDy -= hs[k] + gap; }
+                        item.style.transition = 'transform .2s cubic-bezier(.2,0,0,1)';
+                        item.style.transform = 'translateY(' + slotDy + 'px)';
+                        setTimeout(() => {
+                            container.classList.remove('m-reordering');
+                            if (!cancel && finalT !== i0) {
+                                // Thứ tự mới của các bài đang hiển thị -> ghi lại vào danh sách phát (bài không còn trong thư viện giữ nguyên ở cuối)
+                                const order = items.map(el => el.dataset.key);
+                                const [mv] = order.splice(i0, 1);
+                                order.splice(finalT, 0, mv);
+                                const pls = loadPls();
+                                const cur = pls.find(x => x.id === plId);
+                                if (cur && Array.isArray(cur.trackKeys)) {
+                                    const shown = new Set(order);
+                                    const rest = cur.trackKeys.filter(k => !shown.has(String(k).toLowerCase()));
+                                    cur.trackKeys = order.concat(rest);
+                                    savePls(pls);
+                                }
+                            }
+                            openPlaylistDetail(plId, true);
+                        }, 210);
+                    }
+                    const onUp = () => finish(false);
+                    const onCancel = () => finish(true);
+                    handle.addEventListener('pointermove', onMove);
+                    handle.addEventListener('pointerup', onUp);
+                    handle.addEventListener('pointercancel', onCancel);
+                }
 
                 function openPlaylistDetail(plId, keepModes) {
                     const pl = loadPls().find(x => x.id === plId) || virtualPls[plId];
@@ -1352,13 +1453,8 @@
                         const key = trackKeyOf(tr);
                         row.className = 'm-lib-item' + (activeKey && key === activeKey ? ' active' : '');
                         row.dataset.key = key;
-                        let leftHtml = pldReorderMode ? '<span class="material-symbols-rounded" style="opacity:.6;font-size:20px;">drag_indicator</span>' : '';
+                        let leftHtml = pldReorderMode ? '<span class="material-symbols-rounded pld-handle" style="opacity:.7;font-size:24px;">drag_indicator</span>' : '';
                         let rightHtml = '';
-                        if (pldReorderMode) {
-                            rightHtml =
-                                '<button type="button" class="m-pld-row-act pld-up" title="Up"><span class="material-symbols-rounded" style="font-size:18px;">arrow_upward</span></button>' +
-                                '<button type="button" class="m-pld-row-act pld-dn" title="Down"><span class="material-symbols-rounded" style="font-size:18px;">arrow_downward</span></button>';
-                        }
                         if (pldRemoveMode) {
                             rightHtml += '<button type="button" class="m-pld-row-act pld-del" title="Remove"><span class="material-symbols-rounded" style="font-size:18px;">close</span></button>';
                         }
@@ -1384,20 +1480,7 @@
                                 openPlaylistDetail(plId, true);
                             }
                         });
-                        const moveItem = (dir) => {
-                            const pls = loadPls();
-                            const cur = pls.find(x => x.id === plId);
-                            if (!cur || !Array.isArray(cur.trackKeys)) return;
-                            const ni = pos + dir;
-                            if (ni < 0 || ni >= cur.trackKeys.length) return;
-                            const tmp = cur.trackKeys[pos];
-                            cur.trackKeys[pos] = cur.trackKeys[ni];
-                            cur.trackKeys[ni] = tmp;
-                            savePls(pls);
-                            openPlaylistDetail(plId, true);
-                        };
-                        row.querySelector('.pld-up')?.addEventListener('click', (ev) => { ev.stopPropagation(); moveItem(-1); });
-                        row.querySelector('.pld-dn')?.addEventListener('click', (ev) => { ev.stopPropagation(); moveItem(1); });
+                        row.querySelector('.pld-handle')?.addEventListener('pointerdown', (ev) => pldStartDrag(ev, row, plId));
                         plDetailList.appendChild(row);
                     });
                     document.getElementById('m-pl-detail-play').onclick = () => {

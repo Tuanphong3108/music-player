@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Danh sách phát: kéo-thả để sắp xếp (bỏ 2 nút lên/xuống); tab Artist/Thư mục/Yêu thích sáng đúng bài đang phát",
+      "icon": "drag_indicator"
+    },
+    {
       "content": "Bottom sheet tùy chọn bài hát (nút Thông tin khác hoặc ⋮ > Thông tin): Phát, Thích, Chia sẻ, Thêm vào hàng đợi, Tiếp theo (đưa lên phát ngay sau bài hiện tại, cả Playlist lẫn Shuffle), Danh sách phát (màn chọn nhiều playlist), Xóa, Đặt làm nhạc chuông/thông báo/báo thức (tự mở trang cấp quyền sửa cài đặt hệ thống), nút bút chì mở Metadata Editor và tab Thông tin.",
       "icon": "tune"
     },
@@ -111,6 +115,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Playlists: drag to reorder (up/down buttons removed); Artist/Folders/Liked tabs now highlight the correct playing song",
+      "icon": "drag_indicator"
+    },
     {
       "content": "Song options bottom sheet (More info button or ⋮ > Info): Play, Like, Share, Add to queue, Next (moves it right after the current song in both Playlist and Shuffle order), Playlist (multi-select playlists screen), Delete, Set as ringtone/notification/alarm (opens the system-settings permission page first), a pencil button for the Metadata Editor and an Info tab.",
       "icon": "tune"

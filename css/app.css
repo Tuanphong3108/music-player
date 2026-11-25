@@ -2380,3 +2380,7 @@ html.m-ui #m-lib-list.m-locating .m-lib-item { content-visibility: visible; }
         #ss-sound-dlg .ssd-ot small { display: block; opacity: .7; font-size: calc(15px * var(--font-scale-factor, 1)); }
         #ss-sound-dlg .ssd-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
         #ss-sound-dlg .ssd-cancel { border: none; background: none; cursor: pointer; padding: 10px 14px; border-radius: 20px; font: inherit; font-weight: 600; font-size: calc(18px * var(--font-scale-factor, 1)); color: var(--md-sys-color-primary); }
+        html.m-ui .pld-handle { touch-action: none; cursor: grab; padding: 8px 4px; margin: -8px -4px; }
+        html.m-ui .m-lib-list.m-reordering .m-lib-item { content-visibility: visible; }
+        html.m-ui .m-lib-list.m-reordering { overflow-anchor: none; }
+        html.m-ui .m-lib-item.dragging { box-shadow: 0 8px 24px rgba(0,0,0,.4); background: var(--md-sys-color-surface-container-highest, var(--md-sys-color-surface-variant)); }
