@@ -215,8 +215,8 @@
                 for (let i = 0; i < list.length; i++) if (list[i].identifier === id) return list[i];
                 return null;
             };
-            // Bắt trực tiếp touchstart/touchmove/touchend (passive: false) để trên Android WebView chạm/kéo ở MỌI vị trí trên thanh tua đều ăn ngay
-            // Bắt theo TOẠ ĐỘ ở document (capture) nhưng KHÔNG xuyên qua Cài đặt, bottom sheet, dialog, menu nổi hoặc màn hình Lyric đang mở
+            // Bắt trực tiếp touchstart/touchmove/touchend (passive: false) để trên Android WebView chạm/kéo ở MỌI vị trí trên thanh tua đều ăn ngay (kể cả khi có lớp trong suốt vô tình đè lên giữa thanh)
+            // Chỉ chặn theo TRẠNG THÁI ĐANG MỞ của Cài đặt, bottom sheet, dialog nhập, màn hình Lyric, màn hình Playlist (KHÔNG lọc theo e.target / elementFromPoint)
             const BLOCKING_OPEN_SELECTOR = [
                 '.cl-overlay.open',
                 'md-dialog[open]',
@@ -224,10 +224,15 @@
                 'md-menu[open]',
                 '#m-pl-more-popup.open',
                 '.bottom-sheet.open',
+                '.bottom-sheet.show',
                 '.m-sheet.open',
+                '.m-sheet.show',
                 '.sheet-overlay.open',
+                '.sheet-overlay.show',
                 '.modal.open',
+                '.modal-overlay.open',
                 '.context-menu.open',
+                '.context-menu.show',
                 '#context-menu.open',
                 '#custom-context-menu.open',
                 '#sleep-menu.open',
@@ -236,57 +241,19 @@
                 '[role="dialog"].open',
                 '[role="menu"].open'
             ].join(', ');
-            const BLOCKING_TARGET_SELECTOR = [
-                '.cl-overlay',
-                'md-dialog',
-                'dialog',
-                'md-menu',
-                'md-menu-item',
-                '.playlist-card',
-                '.lyric-overlay',
-                '.m-lyric-panel',
-                '.mlp-seek',
-                '.top-extra',
-                '#m-pl-more-popup',
-                '#sleep-menu',
-                '#speed-menu',
-                '#context-menu',
-                '#custom-context-menu',
-                '.context-menu',
-                '.bottom-sheet',
-                '.m-sheet',
-                '.sheet-overlay',
-                '[role="dialog"]',
-                '[role="menu"]',
-                'input:not(#seek-slider)',
-                'textarea',
-                'select',
-                '[contenteditable="true"]'
-            ].join(', ');
-            const isBlockedByOverlay = (e, t) => {
+            const isBlockedByOverlay = () => {
                 const body = document.body;
                 const isMobile = document.documentElement.classList.contains('m-ui');
-                // Màn hình Lyric trên mobile (dùng thanh tua riêng trong Lyric), Playlist sheet, chế độ sửa danh sách, menu Mở rộng hoặc khi chưa mở Full Player
+                // Màn hình Lyric đang mở (dùng thanh tua riêng trong Lyric), màn hình Playlist, chế độ sửa danh sách, menu Mở rộng, hoặc khi đang ở màn hình Thư viện (chưa nở Full Player)
                 if (body.classList.contains('m-lyric-ui') || body.classList.contains('m-playlist-open') || body.classList.contains('reorder-active') || body.classList.contains('m-more-open')) return true;
                 if (isMobile && (body.classList.contains('lyrics-open') || !body.classList.contains('m-player-expanded'))) return true;
-                // Bất kỳ Cài đặt, modal, bottom sheet, dialog nhập hoặc menu nào đang mở
+                // Bất kỳ Cài đặt, bottom sheet, dialog nhập hoặc menu nào đang mở
                 if (document.querySelector(BLOCKING_OPEN_SELECTOR)) return true;
                 // Trình chỉnh sửa Metadata (iframe) đang trượt vào màn hình
                 const metaIframe = document.getElementById('metadata-iframe');
                 if (metaIframe) {
                     const mr = metaIframe.getBoundingClientRect();
                     if (mr.width > 0 && mr.left < window.innerWidth - 20) return true;
-                }
-                // Kiểm tra chính phần tử bị chạm & phần tử trên cùng tại điểm chạm
-                const hit = (e && e.target && e.target.nodeType === 1) ? e.target : (t ? document.elementFromPoint(t.clientX, t.clientY) : null);
-                if (hit && hit.closest && hit.closest(BLOCKING_TARGET_SELECTOR)) return true;
-                const topEl = (t && document.elementFromPoint) ? document.elementFromPoint(t.clientX, t.clientY) : null;
-                if (topEl && topEl !== hit && topEl.closest && topEl.closest(BLOCKING_TARGET_SELECTOR)) return true;
-                // Lớp bảo vệ tổng quát: nếu phần tử đang hứng chạm (hoặc phần tử trên cùng) nằm ngoài .player-shell và không bọc thanh seek -> đang bị bottom sheet/popup/overlay khác che
-                const shell = host.closest('.player-shell');
-                if (shell) {
-                    if (hit && !shell.contains(hit) && !hit.contains(host)) return true;
-                    if (topEl && !shell.contains(topEl) && !topEl.contains(host)) return true;
                 }
                 return false;
             };
@@ -301,7 +268,7 @@
                 if (seekDragging || !e.changedTouches || !e.changedTouches.length) return;
                 const t = e.changedTouches[0];
                 if (!inSeekZone(t)) return;
-                if (isBlockedByOverlay(e, t)) return;
+                if (isBlockedByOverlay()) return;
                 if (window.__guardUnseekable && window.__guardUnseekable(e)) return;
                 e.preventDefault();
                 e.stopPropagation();
