@@ -12,3 +12,4 @@
 - **Sửa đóng sheet mini làm mất nhạc & MediaSession**: gỡ task của `QuickPlayActivity` kích hoạt `MediaService.onTaskRemoved` (tưởng người dùng vuốt đóng app) nên release native + dừng service; giờ bỏ qua khi task bị gỡ là của sheet mini.
 - **Sheet xem nhanh nâng cấp**: sóng chạy ngược hướng; màu nhấn lấy từ ảnh bìa khi bật “Đổi màu theo Album Art” (cùng thuật toán HSL của WebView), ngược lại dùng bảng màu accent của app (WebView gửi qua `setQuickPlayPrefs`); bật Kính mờ thì nền phía sau bị làm mờ (Android 12+, `setBackgroundBlurRadius`) thay vì tối; nền fade khi mở và đóng.
 - **Tab Thư mục** (giao diện điện thoại): duyệt theo cây thư mục, breadcrumb Home > … và tên thư mục; Back lên một cấp.
+- **Chọn nhiều bài**: thêm `shareNativeFiles` (ACTION_SEND_MULTIPLE qua FileProvider) và `deleteNativeFiles` (xóa tệp trực tiếp khi có quyền, nếu không thì `MediaStore.createDeleteRequest` hỏi người dùng; kết quả trả về `__onNativeDeleteResult`).

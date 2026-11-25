@@ -654,7 +654,7 @@
                                 img.onclick = () => window.open(img.src, '_blank');
                             });
 
-                            // Handle Links & MIT Redirection to Tab 7
+                            // Handle Links & MIT Redirection tới tab LICENSE (tìm theo isLicense, không dùng chỉ số cố định)
                             detailDescEl.querySelectorAll('a').forEach(link => {
                                 const href = link.getAttribute('href');
                                 const linkText = link.textContent.trim().toLowerCase();
@@ -663,7 +663,8 @@
                                     link.setAttribute('href', '#');
                                     link.onclick = (e) => {
                                         e.preventDefault();
-                                        openFeatureDetail(7);
+                                        const li = i18n[currentLang].features.findIndex(f => f.isLicense);
+                                        if (li >= 0) openFeatureDetail(li);
                                     };
                                     return;
                                 }

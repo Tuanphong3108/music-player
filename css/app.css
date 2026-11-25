@@ -1813,6 +1813,24 @@
             background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
         }
         html.m-ui .m-lib-tab:active { transform: scale(.96); }
+        html.m-ui .m-sel-bar { display: none; align-items: center; gap: 4px; flex-shrink: 0; padding: 2px 0 4px; min-height: 44px; }
+        html.m-ui body.m-selecting .m-sel-bar { display: flex; }
+        html.m-ui body.m-selecting #m-lib-tabs { display: none !important; }
+        html.m-ui .m-sel-count { flex: 1; min-width: 0; padding: 0 6px; font-weight: 800; font-size: calc(16px * var(--font-scale-factor, 1)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        html.m-ui .m-sel-btn {
+            width: 42px; height: 42px; border: none; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: grid; place-items: center;
+            background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface)); color: var(--md-sys-color-on-surface);
+        }
+        html.m-ui .m-sel-btn:active { transform: scale(.94); }
+        html.m-ui #m-sel-delete { color: var(--md-sys-color-error, #ff5a5f); }
+        html.m-ui body.m-selecting .m-lib-more { display: none; }
+        html.m-ui #m-lib-list .m-lib-item { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        html.m-ui .m-lib-item.selected { background: color-mix(in srgb, var(--md-sys-color-primary) 22%, var(--md-sys-color-surface)); }
+        html.m-ui .m-lib-item.selected .m-lib-art { position: relative; }
+        html.m-ui .m-lib-item.selected .m-lib-art::after {
+            content: 'check'; font-family: 'Material Symbols Rounded'; font-size: 26px; display: grid; place-items: center;
+            position: absolute; inset: 0; border-radius: inherit; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+        }
         html.m-ui .m-lib-pane { display: none; flex-direction: column; flex: 1; min-height: 0; gap: 10px; }
         html.m-ui .m-lib-pane.active { display: flex; }
         html.m-ui .m-pl-empty {

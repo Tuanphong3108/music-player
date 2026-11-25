@@ -518,6 +518,94 @@
                 }
             };
 
+
+            // --- CHẾ ĐỘ CHỌN NHIỀU (nhấn giữ bài ở màn hình chính) ---
+            const mSel = new Set();
+            const selBar = document.getElementById('m-sel-bar');
+            const selCountEl = document.getElementById('m-sel-count');
+            function updateSelCount() {
+                if (selCountEl) selCountEl.textContent = tr2('sel.count', '{n} tệp đã chọn').replace('{n}', mSel.size);
+            }
+            function enterSelect() { document.body.classList.add('m-selecting'); updateSelCount(); }
+            function exitSelect() {
+                mSel.clear();
+                document.body.classList.remove('m-selecting');
+                mLibList.querySelectorAll('.m-lib-item.selected').forEach(r => r.classList.remove('selected'));
+            }
+            function toggleSelect(tr, row, forceOn) {
+                row = mLibRowMap.get(mLibTrackId(tr)) || row;   // hàng có thể đã được dựng lại trong lúc nhấn giữ
+                if (forceOn || !mSel.has(tr)) { mSel.add(tr); row && row.classList.add('selected'); }
+                else { mSel.delete(tr); row && row.classList.remove('selected'); }
+                updateSelCount();
+                if (!mSel.size) exitSelect();
+            }
+            window.__exitMobileSelect = function () {
+                if (!document.body.classList.contains('m-selecting')) return false;
+                exitSelect(); return true;
+            };
+            const selTracks = () => (window.__mobileLibrary || []).filter(t => mSel.has(t));
+            document.getElementById('m-sel-cancel')?.addEventListener('click', exitSelect);
+            document.getElementById('m-sel-playlist')?.addEventListener('click', () => {
+                const list = selTracks();
+                if (!list.length) return;
+                exitSelect();
+                if (typeof window.__openCreatePlaylistFromTracks === 'function') window.__openCreatePlaylistFromTracks(list);
+            });
+            document.getElementById('m-sel-share')?.addEventListener('click', () => {
+                const list = selTracks();
+                if (!list.length) return;
+                const AB = window.AndroidBridge;
+                if (!AB || typeof AB.shareNativeFiles !== 'function') { showToast(tr2('sel.unsupported', 'Chức năng này cần app Android'), 'info'); return; }
+                const items = list.map(t => ({
+                    id: String(t.nativeId || ''), loc: String(t.nativeLocation || ''),
+                    name: String(t.nativeName || ((t.name || 'media') + '.' + (t.ext || 'mp3').toLowerCase())),
+                    mime: String((t.file && t.file.type) || '')
+                }));
+                try { if (typeof openShareSheet === 'function') openShareSheet('locating'); } catch (e) {}
+                exitSelect();
+                const err = AB.shareNativeFiles(JSON.stringify(items));
+                if (err) { try { if (typeof closeShareSheet === 'function') closeShareSheet(); } catch (e) {} showToast('Chia sẻ lỗi: ' + err, 'error'); }
+            });
+            let pendingDelete = null;
+            document.getElementById('m-sel-delete')?.addEventListener('click', async () => {
+                const list = selTracks();
+                if (!list.length) return;
+                const AB = window.AndroidBridge;
+                if (!AB || typeof AB.deleteNativeFiles !== 'function') { showToast(tr2('sel.unsupported', 'Chức năng này cần app Android'), 'info'); return; }
+                const ok = await confirmDialog(tr2('sel.del_msg', 'Xóa vĩnh viễn {n} tệp khỏi máy? Hành động này không thể hoàn tác.').replace('{n}', list.length),
+                    tr2('sel.del_ok', 'Xóa'), tr2('sel.del_title', 'Xóa khỏi máy'));
+                if (!ok) return;
+                pendingDelete = list;
+                exitSelect();
+                AB.deleteNativeFiles(JSON.stringify(list.map((t, k) => ({ k, id: String(t.nativeId || ''), loc: String(t.nativeLocation || '') }))));
+            });
+            // Kết quả xóa từ native: gỡ các bài đã xóa khỏi thư viện / hàng đợi
+            window.__onNativeDeleteResult = function (res) {
+                try {
+                    const list = pendingDelete || []; pendingDelete = null;
+                    const gone = new Set((res && res.deleted || []).map(k => list[k]).filter(Boolean));
+                    if (gone.size) {
+                        const cur = playlist[currentIndex] || null;
+                        const playingGone = cur && gone.has(cur);
+                        if (playingGone) {
+                            try { audio.pause(); audio.src = ''; } catch (e) {}
+                        }
+                        for (let i = playlist.length - 1; i >= 0; i--) {
+                            if (gone.has(playlist[i])) { playlist.splice(i, 1); if (currentIndex > i) currentIndex--; else if (currentIndex === i) currentIndex = -1; }
+                        }
+                        if (playingGone) currentIndex = -1;
+                        window.__mobileLibrary = (window.__mobileLibrary || []).filter(t => !gone.has(t));
+                        if (typeof shuffleInitialized !== 'undefined' && shuffleInitialized && typeof generateShuffleOrder === 'function') generateShuffleOrder();
+                        try { updatePlaylistUI(); } catch (e) {}
+                        renderMobileLibrary();
+                        try { if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews(); } catch (e) {}
+                        try { syncMobileMiniPlayer(); } catch (e) {}
+                        showToast(tr2('sel.del_done', 'Đã xóa {n} tệp').replace('{n}', gone.size), 'delete');
+                    }
+                    if (res && res.failed > 0) showToast(tr2('sel.del_fail', 'Không xóa được {n} tệp').replace('{n}', res.failed), 'error');
+                } catch (e) {}
+            };
+
             function renderMobileLibrary() {
                 if (!document.documentElement.classList.contains('m-ui') || !mLibList) return;
                 if (!window.__mobileLibrary.length && playlist.length) syncMobileLibraryFromPlaylist();
@@ -542,10 +630,31 @@
                         '<button type="button" class="m-lib-more" aria-label="More"><span class="material-symbols-rounded" style="font-size:20px;">more_vert</span></button>';
                     row.querySelector('.m-lib-title').textContent = tr.name || '';
                     row.querySelector('.m-lib-artist').textContent = tr.artist || '';
+                    if (mSel.has(tr)) row.classList.add('selected');
                     row.addEventListener('click', () => {
+                        if (row._lpFired) { row._lpFired = false; return; }
+                        if (document.body.classList.contains('m-selecting')) { toggleSelect(tr, row); return; }
                         // Chọn bài từ màn hình chính -> tự reset hàng đợi tạm về toàn bộ thư viện 0–Z
                         replaceQueueAndPlay(window.__mobileLibrary, tr);
                     });
+                    // Nhấn giữ -> vào chế độ chọn nhiều
+                    (function () {
+                        let lpT = null, sx = 0, sy = 0;
+                        const cancel = () => { clearTimeout(lpT); lpT = null; };
+                        row.addEventListener('pointerdown', (e) => {
+                            if (e.target.closest('.m-lib-more') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+                            sx = e.clientX; sy = e.clientY; cancel();
+                            lpT = setTimeout(() => {
+                                lpT = null; row._lpFired = true;
+                                try { if (navigator.vibrate) navigator.vibrate(18); } catch (er) {}
+                                if (!document.body.classList.contains('m-selecting')) enterSelect();
+                                toggleSelect(tr, row, true);
+                            }, 450);
+                        });
+                        row.addEventListener('pointermove', (e) => { if (lpT && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) cancel(); });
+                        ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => row.addEventListener(ev, cancel));
+                        row.addEventListener('contextmenu', (e) => e.preventDefault());
+                    })();
                     const mb = row.querySelector('.m-lib-more');
                     mb.addEventListener('click', (ev) => {
                         ev.stopPropagation();
@@ -1616,6 +1725,7 @@
                 };
                 window.__closeMobilePlDetailIfOpen = function () {
                     if (typeof window.__handleAndroidBackAi === 'function' && window.__handleAndroidBackAi()) return true;
+                    if (window.__exitMobileSelect && window.__exitMobileSelect()) return true;
                     if (openedPlId) { setMobileLibTab(detailReturnTab); return true; }
                     if (window.__mobileFoldersBack && window.__mobileFoldersBack()) return true;
                     return false;

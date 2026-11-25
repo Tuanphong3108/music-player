@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Màn hình chính trên điện thoại: nhấn giữ một bài để vào chế độ chọn nhiều (tab phía trên ẩn đi) với nút Tạo danh sách phát, Xóa khỏi máy (có hộp thoại xác nhận), Chia sẻ, số tệp đã chọn và nút hủy chọn. Sửa liên kết MIT License trong About giờ mở đúng tab LICENSE.",
+      "icon": "checklist"
+    },
+    {
       "content": "Thêm tab “Thư mục” trên điện thoại: duyệt nhạc theo cây thư mục, đầu trang có đường dẫn Home > thư mục > và tên thư mục đang xem; nút Back lên một cấp.",
       "icon": "folder"
     },
@@ -103,6 +107,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Mobile home: long-press a song to enter multi-select (the tabs hide) with Create playlist, Delete from device (with confirmation), Share, a selected-files counter and a cancel button. The MIT License link in About now opens the LICENSE tab.",
+      "icon": "checklist"
+    },
     {
       "content": "New “Folders” tab on mobile: browse music by folder tree, with a Home > folder > breadcrumb and the current folder name at the top; Back goes up one level.",
       "icon": "folder"

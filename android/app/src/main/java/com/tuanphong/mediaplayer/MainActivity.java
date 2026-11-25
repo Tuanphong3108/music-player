@@ -1010,6 +1010,151 @@ public class MainActivity extends Activity {
         handleIntent(i);
     }
 
+    // ===== Chọn nhiều bài ở màn hình chính: chia sẻ / xóa trên máy =====
+    private static final int REQ_DELETE_MEDIA = 77;
+    private final List<Integer> delDoneKeys = new ArrayList<>();
+    private final List<Integer> delPendingKeys = new ArrayList<>();
+    private int delFailed = 0;
+
+    private String resolvePathOf(String id, String loc) {
+        String path = (id != null && !id.isEmpty()) ? servedLocations.get(id) : null;
+        if ((path == null || path.isEmpty()) && loc != null && !loc.trim().isEmpty()) path = loc.trim();
+        return path;
+    }
+
+    private String shareMany(final org.json.JSONArray arr) {
+        new Thread(() -> {
+            try {
+                callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('preparing')");
+                File dir = new File(getCacheDir(), "share");
+                if (!dir.exists()) dir.mkdirs();
+                File[] old = dir.listFiles();
+                if (old != null) for (File of : old) { try { of.delete(); } catch (Throwable ignored) {} }
+                ArrayList<Uri> out = new ArrayList<>();
+                for (int n = 0; n < arr.length(); n++) {
+                    JSONObject o = arr.getJSONObject(n);
+                    String id = o.optString("id", ""), loc = o.optString("loc", "");
+                    String path = resolvePathOf(id, loc);
+                    Uri src = id.isEmpty() ? null : served.get(id);
+                    if (src == null && path != null && (path.startsWith("content://") || path.startsWith("file://"))) { try { src = Uri.parse(path); } catch (Throwable ignored) {} }
+                    File direct = null;
+                    if (path != null && !path.isEmpty() && !path.startsWith("content://")) {
+                        try { File f = path.startsWith("file://") ? new File(Uri.parse(path).getPath()) : new File(path); if (f.isFile() && f.canRead() && f.length() > 0) direct = f; } catch (Throwable ignored) {}
+                    }
+                    String nm = o.optString("name", "");
+                    if (nm.trim().isEmpty()) nm = direct != null ? direct.getName() : (src != null ? displayName(src) : "media" + n + ".mp3");
+                    nm = nm.replaceAll("[\\\\/:*?\"<>|]", "_");
+                    File dst = new File(dir, (n + 1) + "_" + nm);
+                    boolean copied = false;
+                    try (InputStream in = direct != null ? new java.io.FileInputStream(direct) : (src != null ? getContentResolver().openInputStream(src) : null);
+                         FileOutputStream os = new FileOutputStream(dst)) {
+                        if (in != null) { byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush(); copied = dst.length() > 0; }
+                    } catch (Throwable ignored) {}
+                    if (copied) out.add(FileProvider.getUriForFile(this, getPackageName() + ".fp", dst));
+                }
+                if (out.isEmpty()) {
+                    callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
+                    callJs("window.showToast&&showToast(" + JSONObject.quote(isEnglishLang() ? "Could not read files to share" : "Không đọc được tệp để chia sẻ") + ")");
+                    return;
+                }
+                final ArrayList<Uri> uris = out;
+                runOnUiThread(() -> {
+                    try {
+                        Intent i = new Intent(uris.size() == 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE);
+                        i.setType("audio/*");
+                        if (uris.size() == 1) i.putExtra(Intent.EXTRA_STREAM, uris.get(0)); else i.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+                        android.content.ClipData cd = android.content.ClipData.newRawUri("", uris.get(0));
+                        for (int k = 1; k < uris.size(); k++) cd.addItem(new android.content.ClipData.Item(uris.get(k)));
+                        i.setClipData(cd);
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        Intent ch = Intent.createChooser(i, null);
+                        ch.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('done')");
+                        startActivity(ch);
+                    } catch (Exception e) {
+                        callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
+                    }
+                });
+            } catch (Throwable t) {
+                callJs("window.__onAndroidShareStatus&&window.__onAndroidShareStatus('error')");
+            }
+        }, "share-many").start();
+        return "";
+    }
+
+    private Uri mediaStoreUriForPath(String path) {
+        if (path == null || path.isEmpty() || path.startsWith("content://")) return null;
+        try (Cursor c = getContentResolver().query(android.provider.MediaStore.Files.getContentUri("external"),
+                new String[]{android.provider.MediaStore.Files.FileColumns._ID},
+                android.provider.MediaStore.Files.FileColumns.DATA + "=?", new String[]{path}, null)) {
+            if (c != null && c.moveToFirst()) return android.content.ContentUris.withAppendedId(android.provider.MediaStore.Files.getContentUri("external"), c.getLong(0));
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private void deleteMany(final org.json.JSONArray arr) {
+        new Thread(() -> {
+            synchronized (delDoneKeys) { delDoneKeys.clear(); delPendingKeys.clear(); delFailed = 0; }
+            ArrayList<Uri> needReq = new ArrayList<>();
+            ArrayList<String> scanPaths = new ArrayList<>();
+            for (int n = 0; n < arr.length(); n++) {
+                try {
+                    JSONObject o = arr.getJSONObject(n);
+                    int k = o.optInt("k", n);
+                    String id = o.optString("id", ""), loc = o.optString("loc", "");
+                    String path = resolvePathOf(id, loc);
+                    Uri u = id.isEmpty() ? null : served.get(id);
+                    boolean ok = false;
+                    if (path != null && !path.isEmpty() && !path.startsWith("content://")) {
+                        try {
+                            File f = path.startsWith("file://") ? new File(Uri.parse(path).getPath()) : new File(path);
+                            if (!f.exists()) ok = true;
+                            else if (f.delete()) { ok = true; scanPaths.add(f.getAbsolutePath()); }
+                        } catch (Throwable ignored) {}
+                    }
+                    if (!ok && u != null) {
+                        try { if (android.provider.DocumentsContract.isDocumentUri(this, u)) ok = android.provider.DocumentsContract.deleteDocument(getContentResolver(), u); } catch (Throwable ignored) {}
+                        if (!ok && "content".equals(u.getScheme())) {
+                            try { ok = getContentResolver().delete(u, null, null) > 0; } catch (Throwable ignored) {}
+                        }
+                    }
+                    if (!ok && Build.VERSION.SDK_INT >= 30) {
+                        Uri mu = (u != null && "media".equals(u.getAuthority())) ? u : mediaStoreUriForPath(path);
+                        if (mu != null) { needReq.add(mu); synchronized (delDoneKeys) { delPendingKeys.add(k); } continue; }
+                    }
+                    synchronized (delDoneKeys) { if (ok) delDoneKeys.add(k); else delFailed++; }
+                } catch (Throwable t) { synchronized (delDoneKeys) { delFailed++; } }
+            }
+            if (!scanPaths.isEmpty()) {
+                try { android.media.MediaScannerConnection.scanFile(getApplicationContext(), scanPaths.toArray(new String[0]), null, null); } catch (Throwable ignored) {}
+            }
+            if (!needReq.isEmpty() && Build.VERSION.SDK_INT >= 30) {
+                final ArrayList<Uri> reqUris = needReq;
+                runOnUiThread(() -> {
+                    try {
+                        android.app.PendingIntent pi = android.provider.MediaStore.createDeleteRequest(getContentResolver(), reqUris);
+                        startIntentSenderForResult(pi.getIntentSender(), REQ_DELETE_MEDIA, null, 0, 0, 0);
+                    } catch (Throwable t) {
+                        synchronized (delDoneKeys) { delFailed += delPendingKeys.size(); delPendingKeys.clear(); }
+                        reportDelete();
+                    }
+                });
+            } else {
+                reportDelete();
+            }
+        }, "delete-many").start();
+    }
+
+    private void reportDelete() {
+        JSONObject r = new JSONObject();
+        try {
+            org.json.JSONArray d = new org.json.JSONArray();
+            synchronized (delDoneKeys) { for (int k : delDoneKeys) d.put(k); r.put("failed", delFailed); }
+            r.put("deleted", d);
+        } catch (Throwable ignored) {}
+        callJs("window.__onNativeDeleteResult&&__onNativeDeleteResult(" + r + ")");
+    }
+
     private volatile boolean pendingExternalOpen = false;
     private volatile long pendingStartMs = -1;      // từ sheet mini (QuickPlayActivity): bắt đầu từ vị trí này
     private volatile boolean pendingStartPlay = true;
@@ -2174,6 +2319,12 @@ public class MainActivity extends Activity {
             }
             filePathCb.onReceiveValue(out);
             filePathCb = null;
+        } else if (req == REQ_DELETE_MEDIA) {
+            synchronized (delDoneKeys) {
+                if (res == RESULT_OK) delDoneKeys.addAll(delPendingKeys); else delFailed += delPendingKeys.size();
+                delPendingKeys.clear();
+            }
+            reportDelete();
         } else if (req == 47) {
             boolean ignored = isIgnoringBatteryOptimizationsInternal();
             callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(" + ignored + ")");
@@ -2922,6 +3073,18 @@ public class MainActivity extends Activity {
             try {
                 MediaWidgetProvider.saveWidgetColors(MainActivity.this, Color.parseColor(bgHex), Color.parseColor(accentHex));
             } catch (Exception ignored) {}
+        }
+
+        /** Chia sẻ nhiều tệp cùng lúc: json = [{id, loc, name, mime}] */
+        @JavascriptInterface
+        public String shareNativeFiles(final String json) {
+            try { return shareMany(new org.json.JSONArray(json)); } catch (Throwable t) { return String.valueOf(t); }
+        }
+
+        /** Xóa tệp trên máy: json = [{k, id, loc}]; kết quả trả về bất đồng bộ qua window.__onNativeDeleteResult({deleted:[k...], failed:n}) */
+        @JavascriptInterface
+        public void deleteNativeFiles(final String json) {
+            try { deleteMany(new org.json.JSONArray(json)); } catch (Throwable t) { callJs("window.__onNativeDeleteResult&&__onNativeDeleteResult({deleted:[],failed:-1})"); }
         }
 
         /** Cài đặt cho sheet mini (QuickPlayActivity): {dyn, glass, mode, pal{...}} - đọc lại khi sheet mở. */
