@@ -79,6 +79,7 @@ public class QuickPlayActivity extends Activity {
     private View handleView, artBoxView;
     private ValueAnimator backdropAnim;
     private float backdropT = 0f;
+    private Object backCallback;
 
     // Bảng màu đồng bộ với accent color trong app (SharedPreferences "app")
     private int cSurface, cOnSurface, cOnVariant, cPrimary, cTrack, cSecBtn, cOnSecBtn, cPlayBtn, cOnPlayBtn, cOpenBtn, cOnOpenBtn, cArtBg;
@@ -98,10 +99,21 @@ public class QuickPlayActivity extends Activity {
         loadGoogleSansFlexSync();
         uri = uriFrom(getIntent());
         if (uri == null) { finish(); return; }
+        setupBackCallback();
         buildUi();
         ensureGoogleSansFlexAsync();
         initPlayer();
         loadMetaAsync();
+    }
+
+    private void setupBackCallback() {
+        if (Build.VERSION.SDK_INT < 33) return;
+        try {
+            android.window.OnBackInvokedCallback cb = this::dismissSheet;
+            backCallback = cb;
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, cb);
+        } catch (Throwable ignored) { backCallback = null; }
     }
 
     @Override
@@ -864,6 +876,10 @@ public class QuickPlayActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (Build.VERSION.SDK_INT >= 33 && backCallback != null) {
+            try { getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((android.window.OnBackInvokedCallback) backCallback); } catch (Throwable ignored) {}
+            backCallback = null;
+        }
         releasePlayer();
         super.onDestroy();
     }
