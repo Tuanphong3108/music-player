@@ -31,6 +31,7 @@
             android:exported="true"
             android:supportsPictureInPicture="false"
             android:launchMode="singleTask"
+            android:taskAffinity="com.tuanphong.mediaplayer.main"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|density|uiMode"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -57,7 +58,10 @@
             android:name=".QuickPlayActivity"
             android:exported="true"
             android:theme="@style/QuickPlayTheme"
-            android:launchMode="singleTop"
+            android:launchMode="singleInstance"
+            android:taskAffinity="com.tuanphong.mediaplayer.quickplay"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|density|uiMode|layoutDirection">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -120,10 +124,10 @@
         <receiver
             android:name=".QueueWidgetProvider"
             android:exported="true"
-            android:label="@string/queue_widget_label">
+            android:label="Media Player - Hàng đợi">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.tuanphong.mediaplayer.WIDGET_CMD" />
+                <action android:name="com.tuanphong.mediaplayer.QUEUE_WIDGET_CMD" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
