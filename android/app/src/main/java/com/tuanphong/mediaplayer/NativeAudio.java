@@ -337,10 +337,11 @@ final class NativeAudio {
                         .build();
             }
         };
-        // MP3/AAC không có bảng TOC (VBR không Xing hoặc header Xing lỗi) mặc định là "không tua được": seekTo bị kéo về 0:00. Bật luôn CBR seeking để luôn tua được.
+        // MP3/AAC không có bảng TOC (VBR không Xing hoặc header Xing lỗi) mặc định là "không tua được": bật CBR seeking + đánh chỉ mục khung MP3.
         androidx.media3.extractor.DefaultExtractorsFactory ef = new androidx.media3.extractor.DefaultExtractorsFactory()
                 .setConstantBitrateSeekingEnabled(true)
-                .setConstantBitrateSeekingAlwaysEnabled(true);
+                .setConstantBitrateSeekingAlwaysEnabled(true)
+                .setMp3ExtractorFlags(androidx.media3.extractor.mp3.Mp3Extractor.FLAG_ENABLE_INDEX_SEEKING);
         p = new ExoPlayer.Builder(app, rf)
                 .setMediaSourceFactory(new androidx.media3.exoplayer.source.DefaultMediaSourceFactory(app, ef))
                 .setLooper(pt.getLooper()).setLoadControl(lc).build();
@@ -427,7 +428,13 @@ final class NativeAudio {
             if (d != C.TIME_UNSET && d > 2000 && t > d - 800) t = d - 800;
             Uri curU = uriFor(curId);
             String sch = curU == null ? "null" : String.valueOf(curU.getScheme());
-            android.util.Log.d("MPSeek", "seek req=" + ms + " clamped=" + t + " dur=" + d + " cur=" + p.getCurrentPosition() + " st=" + p.getPlaybackState() + " seekable=" + p.isCurrentMediaItemSeekable() + " scheme=" + sch + " bg=" + isAppInBackground(app));
+            boolean seekable = p.isCurrentMediaItemSeekable();
+            android.util.Log.d("MPSeek", "seek req=" + ms + " clamped=" + t + " dur=" + d + " cur=" + p.getCurrentPosition() + " st=" + p.getPlaybackState() + " seekable=" + seekable + " scheme=" + sch + " bg=" + isAppInBackground(app));
+            // Nếu tệp thật sự không có bảng tua (vd. WebM/MKV thiếu Cues), không đẩy seekTo(>0) xuống ExoPlayer để tránh bị kéo tụt về 0:00
+            if (!seekable && t > 0) {
+                emit("state");
+                return;
+            }
             p.seekTo(t);
         });
     }
@@ -679,8 +686,9 @@ final class NativeAudio {
                 o.put("buf", Math.max(0, p.getBufferedPosition()));
                 o.put("rate", rate);
                 o.put("err", p.getPlayerError() != null);
+                o.put("seekable", p.isCurrentMediaItemSeekable());
             } else {
-                o.put("st", "idle"); o.put("pwr", false); o.put("pos", 0); o.put("dur", 0); o.put("buf", 0); o.put("rate", rate); o.put("err", false);
+                o.put("st", "idle"); o.put("pwr", false); o.put("pos", 0); o.put("dur", 0); o.put("buf", 0); o.put("rate", rate); o.put("err", false); o.put("seekable", true);
             }
             o.put("qn", qIds.length);
             o.put("shuffle", shuffled && order.length == qIds.length);
