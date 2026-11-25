@@ -23,3 +23,11 @@ android {
 dependencies { implementation("androidx.webkit:webkit:1.11.0")
     implementation("androidx.core:core:1.13.1")
     implementation("androidx.media3:media3-exoplayer:1.4.1") }
+
+val copyMusicNoteRes by tasks.registering(Copy::class) {
+    from(rootProject.file("../music_note.png"))
+    into(layout.projectDirectory.dir("src/main/res/drawable-nodpi"))
+    rename { "ic_music_note.png" }
+}
+tasks.named("preBuild") { dependsOn(copyMusicNoteRes) }
+
