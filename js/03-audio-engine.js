@@ -216,7 +216,75 @@
                 return null;
             };
             // Bắt trực tiếp touchstart/touchmove/touchend (passive: false) để trên Android WebView chạm/kéo ở MỌI vị trí trên thanh tua đều ăn ngay
-            // Bắt theo TOẠ ĐỘ ở document (capture) thay vì theo phần tử đích: dù có lớp trong suốt/overlay nào đè lên một phần thanh thì chạm trong vùng thanh vẫn ăn
+            // Bắt theo TOẠ ĐỘ ở document (capture) nhưng KHÔNG xuyên qua Cài đặt, bottom sheet, dialog, menu nổi hoặc màn hình Lyric đang mở
+            const BLOCKING_OPEN_SELECTOR = [
+                '.cl-overlay.open',
+                'md-dialog[open]',
+                'dialog[open]',
+                'md-menu[open]',
+                '#m-pl-more-popup.open',
+                '.bottom-sheet.open',
+                '.m-sheet.open',
+                '.sheet-overlay.open',
+                '.modal.open',
+                '.context-menu.open',
+                '#context-menu.open',
+                '#custom-context-menu.open',
+                '#sleep-menu.open',
+                '#speed-menu.open',
+                '[role="dialog"][open]',
+                '[role="dialog"].open',
+                '[role="menu"].open'
+            ].join(', ');
+            const BLOCKING_TARGET_SELECTOR = [
+                '.cl-overlay',
+                'md-dialog',
+                'dialog',
+                'md-menu',
+                'md-menu-item',
+                '.playlist-card',
+                '.lyric-overlay',
+                '.m-lyric-panel',
+                '.mlp-seek',
+                '.top-extra',
+                '#m-pl-more-popup',
+                '#sleep-menu',
+                '#speed-menu',
+                '#context-menu',
+                '#custom-context-menu',
+                '.context-menu',
+                '.bottom-sheet',
+                '.m-sheet',
+                '.sheet-overlay',
+                '[role="dialog"]',
+                '[role="menu"]',
+                'input:not(#seek-slider)',
+                'textarea',
+                'select'
+            ].join(', ');
+            const isBlockedByOverlay = (e, t) => {
+                const body = document.body;
+                const isMobile = document.documentElement.classList.contains('m-ui');
+                // Màn hình Lyric trên mobile (dùng thanh tua riêng trong Lyric), Playlist sheet, hoặc menu Mở rộng đang mở
+                if (body.classList.contains('m-lyric-ui') || body.classList.contains('m-playlist-open') || body.classList.contains('m-more-open')) return true;
+                if (isMobile && body.classList.contains('lyrics-open')) return true;
+                // Bất kỳ Cài đặt, modal, bottom sheet, dialog nhập hoặc menu nào đang mở
+                if (document.querySelector(BLOCKING_OPEN_SELECTOR)) return true;
+                // Trình chỉnh sửa Metadata (iframe) đang trượt vào màn hình
+                const metaIframe = document.getElementById('metadata-iframe');
+                if (metaIframe) {
+                    const mr = metaIframe.getBoundingClientRect();
+                    if (mr.width > 0 && mr.left < window.innerWidth - 20) return true;
+                }
+                // Kiểm tra chính phần tử bị chạm & phần tử trên cùng tại điểm chạm
+                const hit = (e && e.target && e.target.nodeType === 1) ? e.target : (t ? document.elementFromPoint(t.clientX, t.clientY) : null);
+                if (hit && hit.closest && hit.closest(BLOCKING_TARGET_SELECTOR)) return true;
+                if (t && document.elementFromPoint) {
+                    const topEl = document.elementFromPoint(t.clientX, t.clientY);
+                    if (topEl && topEl !== hit && topEl.closest && topEl.closest(BLOCKING_TARGET_SELECTOR)) return true;
+                }
+                return false;
+            };
             const inSeekZone = (t) => {
                 if (!host.offsetParent && getComputedStyle(host).position !== 'fixed') return false;
                 const r = host.getBoundingClientRect();
@@ -228,6 +296,7 @@
                 if (seekDragging || !e.changedTouches || !e.changedTouches.length) return;
                 const t = e.changedTouches[0];
                 if (!inSeekZone(t)) return;
+                if (isBlockedByOverlay(e, t)) return;
                 if (window.__guardUnseekable && window.__guardUnseekable(e)) return;
                 e.preventDefault();
                 e.stopPropagation();
