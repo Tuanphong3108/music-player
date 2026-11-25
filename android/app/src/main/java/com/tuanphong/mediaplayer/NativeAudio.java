@@ -321,6 +321,24 @@ final class NativeAudio {
         }
     };
 
+    private static volatile int prefOutId = -1;
+    static int preferredOutputId() { return prefOutId; }
+    private static android.media.AudioDeviceInfo findOutput(Context c, int id) {
+        try {
+            android.media.AudioManager am = (android.media.AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
+            for (android.media.AudioDeviceInfo d : am.getDevices(android.media.AudioManager.GET_DEVICES_OUTPUTS)) if (d.getId() == id) return d;
+        } catch (Throwable ignored) {}
+        return null;
+    }
+    /** Ép ExoPlayer xuất ra thiết bị đầu ra cụ thể (AudioTrack.setPreferredDevice); id < 0 = mặc định hệ thống. */
+    static boolean setPreferredOutput(final Context c, final int id) {
+        final android.media.AudioDeviceInfo info = id >= 0 ? findOutput(c, id) : null;
+        if (id >= 0 && info == null) return false;
+        prefOutId = id;
+        if (p == null) return false;
+        ph.post(() -> { try { if (p != null) p.setPreferredAudioDevice(info); } catch (Throwable ignored) {} });
+        return true;
+    }
     private static volatile long fbDurMs = 0;
     private static volatile String fbDurId = "";
     private static boolean id0Eq(String id) { return id != null && id.equals(curId); }
@@ -366,6 +384,7 @@ final class NativeAudio {
                 .setMediaSourceFactory(new androidx.media3.exoplayer.source.DefaultMediaSourceFactory(app, ef))
                 .setLooper(pt.getLooper()).setLoadControl(lc).build();
         sid = p.getAudioSessionId();
+        if (prefOutId >= 0) { android.media.AudioDeviceInfo pd = findOutput(app, prefOutId); if (pd != null) p.setPreferredAudioDevice(pd); else prefOutId = -1; }
         p.setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true);
         p.setHandleAudioBecomingNoisy(true);

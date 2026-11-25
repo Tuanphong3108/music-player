@@ -84,6 +84,10 @@
     {
       "content": "Thêm nút cuộn đến bài đang phát ở trang chính; kéo thanh tua trên thông báo giờ tua đúng vị trí",
       "icon": "my_location"
+    },
+    {
+      "content": "Chọn thiết bị đầu ra ngay trong app: bấm thiết bị là ép phát ra thiết bị đó, không phải mở trang Bluetooth/hệ thống",
+      "icon": "speaker"
     }
   ],
   "en": [
@@ -170,6 +174,10 @@
     {
       "content": "Added a button on the main page to scroll to the currently playing song; seeking from the notification now keeps the position",
       "icon": "my_location"
+    },
+    {
+      "content": "Choose the audio output right inside the app: tapping a device routes playback to it, no need to open Bluetooth/system pages",
+      "icon": "speaker"
     }
   ]
 }

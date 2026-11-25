@@ -1033,6 +1033,7 @@
                     permBtn: isEn ? 'Open permission settings' : 'Mở trang cấp quyền',
                     speaker: isEn ? 'Speaker' : 'Loa ngoài', wired: isEn ? 'Wired headphones' : 'Tai nghe có dây', usb: 'USB', hdmi: 'HDMI', hearing: isEn ? 'Hearing aid' : 'Máy trợ thính',
                     bt: 'Bluetooth', active: isEn ? 'Currently playing' : 'Đang phát ở đây', switchTo: isEn ? 'Tap to switch in system output picker' : 'Chạm để chuyển trong bảng chọn đầu ra của hệ thống',
+                    auto: isEn ? 'System default (automatic)' : 'Mặc định hệ thống (tự động)',
                     none: isEn ? 'No output devices found' : 'Không tìm thấy thiết bị đầu ra nào'
                 };
                 openSheetLoading(title);
@@ -1046,8 +1047,18 @@
                         label: d.kind === 'speaker' ? S.speaker : (d.name || S[d.kind] || S.bt),
                         sub: d.active ? S.active : (d.kind === 'bluetooth' ? S.switchTo : ''),
                         icon: icons[d.kind] || 'speaker', selected: !!d.active,
-                        pick: () => { if (!d.active && AB.openSystemOutputSwitcher) AB.openSystemOutputSwitcher(); }
-                    })));
+                        pick: () => {
+                            if (d.active) return;
+                            // Ưu tiên chọn thẳng trong app (ép ExoPlayer xuất ra thiết bị này); nếu native chưa phát/không áp dụng được thì mở bảng đầu ra của hệ thống
+                            let ok = false;
+                            try { ok = !!(AB.setOutputDevice && AB.setOutputDevice(d.id)); } catch (e) {}
+                            if (ok) { closeSheet(); if (typeof showToast === 'function') showToast((d.kind === 'speaker' ? S.speaker : (d.name || S[d.kind] || S.bt))); }
+                            else if (AB.openSystemOutputSwitcher) AB.openSystemOutputSwitcher();
+                        }
+                    })).concat(devs.some(d => d.pref) ? [{
+                        label: S.auto, sub: '', icon: 'auto_mode', selected: false,
+                        pick: () => { try { AB.setOutputDevice(-1); } catch (e) {} closeSheet(); }
+                    }] : []));
                 };
                 const showNoPerm = () => {
                     if (seq !== outFlowSeq) return;

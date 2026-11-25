@@ -1770,6 +1770,8 @@ public class MainActivity extends Activity {
                     String k = o.getString("kind");
                     active = anyBt ? k.equals("bluetooth") : anyWired ? (k.equals("wired") || k.equals("usb")) : k.equals("speaker");
                 }
+                int pref = NativeAudio.preferredOutputId();
+                if (pref >= 0) { boolean has = false; for (JSONObject x : items) if (x.getInt("id") == pref) has = true; if (has) { active = o.getInt("id") == pref; o.put("pref", active); } }
                 o.put("active", active);
                 arr.put(o);
             }
@@ -3302,6 +3304,10 @@ public class MainActivity extends Activity {
                 } catch (Throwable ignored) {}
             });
         }
+
+        /** Ép trình phát native xuất âm thanh ra thiết bị cụ thể (id từ getOutputDevicesJson); id < 0 = trả về mặc định của hệ thống. Trả về false nếu native chưa phát/không áp dụng được. */
+        @JavascriptInterface
+        public boolean setOutputDevice(final int id) { return NativeAudio.setPreferredOutput(MainActivity.this, id); }
 
         /** Mở bảng chuyển đầu ra phương tiện của hệ thống (WebView không tự ép định tuyến sang thiết bị cụ thể được). */
         @JavascriptInterface
