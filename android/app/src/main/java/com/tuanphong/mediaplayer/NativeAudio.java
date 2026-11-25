@@ -261,6 +261,11 @@ final class NativeAudio {
     static boolean active() { return loaded && p != null; }
     static Context appContext() { return app; }
     static boolean webAlive() { return MainActivity.instance != null && SystemClock.elapsedRealtime() - lastAck < 4000; }
+    /** Native đang phát và người dùng đã rời app: mọi lệnh điều khiển từ WebView bị bỏ qua; trang chỉ hỏi lại trạng thái (nativeAudioState) khi quay lại. */
+    static boolean nativeOwnsPlayback() {
+        MainActivity a = MainActivity.instance;
+        return active() && a != null && a.hasLeftApp();
+    }
     static boolean hasNext() { return stepQ(1, true) >= 0; }
 
     private static int curQ() {

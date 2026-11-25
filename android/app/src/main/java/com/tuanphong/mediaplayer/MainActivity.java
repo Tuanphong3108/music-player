@@ -61,6 +61,12 @@ public class MainActivity extends Activity {
     private final List<JSONObject> pending = new ArrayList<>();
     private final android.os.Handler pingHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean appLeftHome = false;
+    /** Đã rời app (về Home/đa nhiệm/tắt màn hình): lúc này trình phát native là chủ duy nhất, WebView không được điều khiển nó nữa. */
+    boolean hasLeftApp() {
+        if (!appLeftHome) return false;
+        try { if (Build.VERSION.SDK_INT >= 24 && isInPictureInPictureMode()) return false; } catch (Throwable ignored) {}
+        return true;
+    }
     boolean isInBackgroundForMedia() {
         return appLeftHome || !hasWindowFocus();
     }
@@ -2259,6 +2265,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        appLeftHome = false;   // quay lại app: trả quyền điều khiển cho WebView (trang sẽ hỏi lại vị trí/bài từ native)
         // Đánh thức WebView sớm nhất có thể (trước onResume) để khung hình/JS chạy lại ngay khi quay về app
         try {
             if (web != null) {
@@ -2791,22 +2798,22 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void consumeSleepEndedNotice() { NativeAudio.consumeSleepEndedNotice(); }
         @JavascriptInterface public int nativeAudioSessionId() { return NativeAudio.sessionId(); }
-        @JavascriptInterface public void nativeAudioLoad(final String id, final String title, final String artist, final long startMs, final boolean play, final float vol, final float rate) {
+        @JavascriptInterface public void nativeAudioLoad(final String id, final String title, final String artist, final long startMs, final boolean play, final float vol, final float rate) { if (NativeAudio.nativeOwnsPlayback()) return;
             NativeAudio.lastAck = android.os.SystemClock.elapsedRealtime();
             NativeAudio.post(() -> NativeAudio.load(MainActivity.this, id, title, artist, startMs, play, vol, rate));
         }
-        @JavascriptInterface public void nativeAudioPlay() { NativeAudio.post(NativeAudio::play); }
-        @JavascriptInterface public void nativeAudioPause() { NativeAudio.post(NativeAudio::pause); }
-        @JavascriptInterface public void nativeAudioSeek(final long ms) { NativeAudio.post(() -> NativeAudio.seek(ms)); }
+        @JavascriptInterface public void nativeAudioPlay() { if (NativeAudio.nativeOwnsPlayback()) return; NativeAudio.post(NativeAudio::play); }
+        @JavascriptInterface public void nativeAudioPause() { if (NativeAudio.nativeOwnsPlayback()) return; NativeAudio.post(NativeAudio::pause); }
+        @JavascriptInterface public void nativeAudioSeek(final long ms) { if (NativeAudio.nativeOwnsPlayback()) return; NativeAudio.post(() -> NativeAudio.seek(ms)); }
         @JavascriptInterface public void nativeAudioVolume(final float v) { NativeAudio.post(() -> NativeAudio.setVolume(v)); }
-        @JavascriptInterface public void nativeAudioRate(final float r) { NativeAudio.post(() -> NativeAudio.setRate(r)); }
-        @JavascriptInterface public void nativeAudioStop() { NativeAudio.post(NativeAudio::stop); }
+        @JavascriptInterface public void nativeAudioRate(final float r) { if (NativeAudio.nativeOwnsPlayback()) return; NativeAudio.post(() -> NativeAudio.setRate(r)); }
+        @JavascriptInterface public void nativeAudioStop() { if (NativeAudio.nativeOwnsPlayback()) return; NativeAudio.post(NativeAudio::stop); }
         @JavascriptInterface public void nativeAudioSetSleep(final long endAtMs, final int tracks) { NativeAudio.post(() -> NativeAudio.setSleep(endAtMs, tracks)); }
         @JavascriptInterface public void nativeAudioMixer(String json) { NativeAudio.setMixer(json); }
         @JavascriptInterface public void nativeAudioViz(boolean on) { NativeAudio.setViz(on); }
         @JavascriptInterface public String nativeAudioFft() { return NativeAudio.fftBase64(); }
-        @JavascriptInterface public void nativeAudioSetQueue(String json) { NativeAudio.setQueue(json); }
-        @JavascriptInterface public void nativeAudioSetShuffle(final boolean enabled) { NativeAudio.post(() -> NativeAudio.setShuffleEnabled(enabled)); }
+        @JavascriptInterface public void nativeAudioSetQueue(String json) { if (NativeAudio.nativeOwnsPlayback()) return; NativeAudio.setQueue(json); }
+        @JavascriptInterface public void nativeAudioSetShuffle(final boolean enabled) { if (NativeAudio.nativeOwnsPlayback()) return; NativeAudio.post(() -> NativeAudio.setShuffleEnabled(enabled)); }
         @JavascriptInterface public boolean nativeAudioGetShuffle() { return NativeAudio.isShuffleEnabled(); }
 
         /** Bản đầy đủ: state = playing | paused | buffering | ended | error | none; bufMs = vị trí đã đệm. Chụp elapsedRealtime ngay khi nhận để vị trí không bị trễ theo IPC. */
