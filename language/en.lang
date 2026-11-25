@@ -81,6 +81,7 @@ moreinfo.file_type=File
 moreinfo.structure_format=Format by file structure
 moreinfo.ext_mismatch=differs from {ext}
 moreinfo.unseekable=Unseekable
+toast.unseekable=This file does not support seeking
 moreinfo.date_modified=Date modified
 moreinfo.quality=Audio quality
 moreinfo.duration=Duration
