@@ -1062,6 +1062,7 @@
             };
             seekHost.addEventListener('pointerdown', (e) => {
                 if (e.button !== undefined && e.button !== 0) return;
+                if (window.__guardUnseekable && window.__guardUnseekable(e)) return;
                 if (!isFinite(audio.duration) || audio.duration <= 0) return;
                 e.preventDefault();
                 dragging = true;
