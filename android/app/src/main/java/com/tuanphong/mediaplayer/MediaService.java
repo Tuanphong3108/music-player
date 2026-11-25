@@ -493,6 +493,15 @@ public class MediaService extends Service {
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
+        // Task của sheet mini (QuickPlayActivity) bị gỡ khi đóng sheet: không phải người dùng đóng app chính, đừng dừng phiên phát
+        try {
+            android.content.ComponentName cn = rootIntent == null ? null : rootIntent.getComponent();
+            if (cn != null ? cn.getClassName().endsWith("QuickPlayActivity")
+                    : (rootIntent != null && Intent.ACTION_VIEW.equals(rootIntent.getAction()))) {
+                super.onTaskRemoved(rootIntent);
+                return;
+            }
+        } catch (Throwable ignored) {}
         // Người dùng vuốt lên đóng app khỏi đa nhiệm: đánh dấu thoát chủ động, dọn widget/màu sạch sẽ và KHÔNG ghi mã lỗi
         NativeAudio.release();
         clearSession();
