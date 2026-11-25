@@ -81,6 +81,7 @@ moreinfo.file_type=Tệp
 moreinfo.structure_format=Định dạng theo cấu trúc tệp
 moreinfo.ext_mismatch=khác đuôi {ext}
 moreinfo.unseekable=Không hỗ trợ tua
+toast.unseekable=Tệp này không hỗ trợ tua
 moreinfo.date_modified=Ngày sửa đổi
 moreinfo.quality=Chất lượng âm thanh
 moreinfo.duration=Thời lượng
