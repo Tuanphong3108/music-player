@@ -78,6 +78,9 @@ lyric.right_click_hint=Chuột phải vào bài hát để nạp lẻ
 ## --- Dialog Thông tin khác ---
 moreinfo.title=Thông tin khác
 moreinfo.file_type=Tệp
+moreinfo.structure_format=Định dạng theo cấu trúc tệp
+moreinfo.ext_mismatch=khác đuôi {ext}
+moreinfo.unseekable=Không hỗ trợ tua
 moreinfo.date_modified=Ngày sửa đổi
 moreinfo.quality=Chất lượng âm thanh
 moreinfo.duration=Thời lượng
