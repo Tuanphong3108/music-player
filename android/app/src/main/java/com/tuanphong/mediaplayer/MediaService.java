@@ -72,7 +72,7 @@ public class MediaService extends Service {
             @Override public void onPause() { if (NativeAudio.active()) NativeAudio.pause(); else if (playing) cmd("toggle"); }
             @Override public void onSkipToNext() { skip(true); }
             @Override public void onSkipToPrevious() { skip(false); }
-            @Override public void onSeekTo(long p) { android.util.Log.d("MPSeek", "onSeekTo " + p + " active=" + NativeAudio.active()); if (NativeAudio.active()) NativeAudio.seek(p); else if (playing || !NativeAudio.resumeFromSaved(MediaService.this, p, false)) cmd("seek:" + p); }
+            @Override public void onSeekTo(long p) { android.util.Log.d("MPSeek", "onSeekTo " + p + " active=" + NativeAudio.active() + " metaDur=" + dur + " curPos=" + pos); if (NativeAudio.active()) NativeAudio.seek(p); else if (playing || !NativeAudio.resumeFromSaved(MediaService.this, p, false)) cmd("seek:" + p); }
             @Override public void onStop() { NativeAudio.release(); clearSession(); stopSelf(); }
         });
         session.setActive(false);
@@ -113,11 +113,11 @@ public class MediaService extends Service {
     private static final long TRANSITION_GRACE_MS = 4000;
     private long lastPlayingAt = 0;
     private final Runnable graceRecheck = () -> {
-        try { if (NativeAudio.active()) applyNative(NativeAudio.snapshot("sync")); } catch (Throwable ignored) {}
+        try { if (NativeAudio.active()) NativeAudio.syncToMediaService(); } catch (Throwable ignored) {}
     };
 
     private void applyNative(org.json.JSONObject o) {
-        if (!NativeAudio.active()) return;
+        if (!NativeAudio.active() || o == null || !o.has("st")) return;
         String st = o.optString("st");
         boolean pwr = o.optBoolean("pwr");
         String ns = o.optBoolean("err") ? "error" : "ended".equals(st) ? "ended"
@@ -287,6 +287,7 @@ public class MediaService extends Service {
             pendingNative = null;
             if (snap != null && NativeAudio.active()) {
                 applyNative(snap);
+                NativeAudio.syncToMediaService();
             } else {
                 clearSession();
             }
@@ -296,9 +297,10 @@ public class MediaService extends Service {
             // Album art cho MediaSession/Notification do native tự đọc trực tiếp từ tệp nhạc
             return START_NOT_STICKY;
         } else if (i != null) {
-            // Khi trình phát native (ExoPlayer) đang hoạt động thì dùng trực tiếp snapshot từ NativeAudio (vẫn đảm bảo startForeground) -> không để WebView ghi đè --:-- / 0:00
+            // Khi trình phát native (ExoPlayer) đang hoạt động thì dùng snapshot thread-safe từ NativeAudio (vẫn đảm bảo startForeground) -> không để WebView ghi đè --:-- / 0:00
             if (NativeAudio.active()) {
                 applyNative(NativeAudio.snapshot("sync"));
+                NativeAudio.syncToMediaService();
                 return START_NOT_STICKY;
             }
             String ns = nz(i.getStringExtra("state"));
