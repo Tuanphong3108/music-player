@@ -337,8 +337,10 @@ final class NativeAudio {
                         .build();
             }
         };
-        // MP3/AAC không có bảng TOC (VBR không Xing) mặc định là "không tua được": seekTo bị kéo về 0:00. Bật tua theo bitrate không đổi để luôn tua được.
-        androidx.media3.extractor.DefaultExtractorsFactory ef = new androidx.media3.extractor.DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true);
+        // MP3/AAC không có bảng TOC (VBR không Xing hoặc header Xing lỗi) mặc định là "không tua được": seekTo bị kéo về 0:00. Bật luôn CBR seeking để luôn tua được.
+        androidx.media3.extractor.DefaultExtractorsFactory ef = new androidx.media3.extractor.DefaultExtractorsFactory()
+                .setConstantBitrateSeekingEnabled(true)
+                .setConstantBitrateSeekingAlwaysEnabled(true);
         p = new ExoPlayer.Builder(app, rf)
                 .setMediaSourceFactory(new androidx.media3.exoplayer.source.DefaultMediaSourceFactory(app, ef))
                 .setLooper(pt.getLooper()).setLoadControl(lc).build();
@@ -423,7 +425,9 @@ final class NativeAudio {
             long d = p.getDuration();
             // Không để một lệnh tua (vd. từ thông báo) vượt/chạm cuối bài: sẽ bị coi là hết bài rồi lặp/nhảy lại từ đầu
             if (d != C.TIME_UNSET && d > 2000 && t > d - 800) t = d - 800;
-            android.util.Log.d("MPSeek", "seek req=" + ms + " clamped=" + t + " dur=" + d + " cur=" + p.getCurrentPosition() + " st=" + p.getPlaybackState() + " seekable=" + p.isCurrentMediaItemSeekable() + " bg=" + isAppInBackground(app));
+            Uri curU = uriFor(curId);
+            String sch = curU == null ? "null" : String.valueOf(curU.getScheme());
+            android.util.Log.d("MPSeek", "seek req=" + ms + " clamped=" + t + " dur=" + d + " cur=" + p.getCurrentPosition() + " st=" + p.getPlaybackState() + " seekable=" + p.isCurrentMediaItemSeekable() + " scheme=" + sch + " bg=" + isAppInBackground(app));
             p.seekTo(t);
         });
     }
@@ -637,7 +641,24 @@ final class NativeAudio {
         return true;
     }
 
+    /** Yêu cầu đẩy snapshot mới nhất từ đúng luồng ExoPlayer sang MediaService (tránh đọc Player từ Main Thread). */
+    static void syncToMediaService() {
+        ph.post(() -> {
+            if (!active()) return;
+            final JSONObject snap = snapshot("sync");
+            uiH.post(() -> MediaService.onNative(snap));
+        });
+    }
+
     static JSONObject snapshot(String ev) {
+        // ExoPlayer chỉ được truy cập trên luồng pt: nếu gọi từ luồng khác (Main Thread), lấy từ stateJson() (thread-safe, đã ngoại suy vị trí) để không bị IllegalStateException trả về pos=0/dur=0.
+        if (Looper.myLooper() != pt.getLooper()) {
+            try {
+                JSONObject cached = new JSONObject(stateJson());
+                cached.put("ev", ev);
+                return cached;
+            } catch (Throwable ignored) {}
+        }
         JSONObject o = new JSONObject();
         try {
             o.put("ev", ev);
