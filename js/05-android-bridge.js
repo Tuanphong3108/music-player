@@ -207,16 +207,21 @@
             })();
             const handleBackNavigation = function () {
                 try {
-                    if (document.body.classList.contains('screen-animating')) {
-                        return true;
-                    }
+                    const isElShown = (el) => {
+                        if (!el) return false;
+                        const st = getComputedStyle(el);
+                        if (st.display === 'none' || st.visibility === 'hidden' || parseFloat(st.opacity || '1') <= 0.05) return false;
+                        const r = el.getBoundingClientRect();
+                        return r.width > 0 && r.height > 0;
+                    };
                     const shareSheet = document.getElementById('share-sheet');
                     if (shareSheet && (shareSheet.classList.contains('open') || shareSheet.classList.contains('show'))) {
-                        return true;
+                        if (isElShown(shareSheet)) return true;
+                        shareSheet.classList.remove('open', 'show');
                     }
-                    if (gettingStartedOverlay && gettingStartedOverlay.style.display === 'block') {
+                    if (typeof gettingStartedOverlay !== 'undefined' && gettingStartedOverlay && gettingStartedOverlay.style.display === 'block') {
                         try {
-                            const gw = gettingStartedIframe && gettingStartedIframe.contentWindow;
+                            const gw = (typeof gettingStartedIframe !== 'undefined' && gettingStartedIframe) ? gettingStartedIframe.contentWindow : null;
                             if (gw && typeof gw.__gsAndroidBack === 'function' && gw.__gsAndroidBack()) return true;
                         } catch (e) {}
                         return true;
@@ -232,17 +237,17 @@
                     }
                     const openMenus = Array.from(document.querySelectorAll('md-menu, .m3-dropdown, .ctxl')).filter(el => {
                         if (el.tagName === 'MD-MENU') return !!el.open;
-                        const st = getComputedStyle(el);
-                        return el.classList.contains('show') || el.classList.contains('open') || st.display === 'flex' || st.display === 'block';
+                        return isElShown(el);
                     });
                     if (openMenus.length) {
                         openMenus.forEach(el => {
                             if (el.tagName === 'MD-MENU') {
+                                try { if (typeof el.close === 'function') el.close(); } catch (e) {}
                                 try { el.open = false; } catch (e) {}
                                 el.removeAttribute('open');
                             } else {
                                 el.classList.remove('show', 'open');
-                                if (el.style.display) el.style.display = 'none';
+                                el.style.display = 'none';
                             }
                         });
                         return true;
@@ -1238,7 +1243,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_25_quickplay', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_25_back_fix', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
