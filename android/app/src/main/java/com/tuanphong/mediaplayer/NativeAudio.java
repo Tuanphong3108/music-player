@@ -321,6 +321,26 @@ final class NativeAudio {
         }
     };
 
+    private static volatile long fbDurMs = 0;
+    private static volatile String fbDurId = "";
+    private static boolean id0Eq(String id) { return id != null && id.equals(curId); }
+    /** Đọc thời lượng dự phòng ở luồng riêng: với một số MP3 dài không có bảng TOC thì ExoPlayer trả TIME_UNSET nên giao diện hiện 0:00. */
+    private static void fetchFallbackDuration(final String id, final Uri u) {
+        fbDurMs = 0; fbDurId = id;
+        final Context c = app;
+        if (c == null || u == null) return;
+        new Thread(() -> {
+            android.media.MediaMetadataRetriever r = new android.media.MediaMetadataRetriever();
+            try {
+                r.setDataSource(c, u);
+                String v = r.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+                long d = v == null ? 0 : Long.parseLong(v.trim());
+                if (d > 0 && id.equals(fbDurId)) { fbDurMs = d; ph.post(() -> { if (id.equals(curId)) emit("state"); }); }
+            } catch (Throwable ignored) {
+            } finally { try { r.release(); } catch (Throwable ignored) {} }
+        }, "dur-fallback").start();
+    }
+
     private static void ensure(Context c) {
         if (p != null) return;
         app = c.getApplicationContext();
@@ -403,6 +423,7 @@ final class NativeAudio {
         p.setPlaybackParameters(new PlaybackParameters(rate));
         p.setMediaItem(MediaItem.fromUri(u), Math.max(0, startMs));
         p.prepare();
+        fetchFallbackDuration(id, u);
         p.setPlayWhenReady(play);
         emit("load");
         ph.removeCallbacks(ticker);
@@ -682,6 +703,7 @@ final class NativeAudio {
                 o.put("pwr", p.getPlayWhenReady());
                 o.put("pos", Math.max(0, p.getCurrentPosition()));
                 long d = p.getDuration();
+                if ((d == C.TIME_UNSET || d <= 0) && fbDurMs > 0 && id0Eq(fbDurId)) d = fbDurMs;   // ExoPlayer chưa/không đọc được thời lượng (MP3 dài/VBR không TOC): dùng thời lượng đọc từ MediaMetadataRetriever
                 o.put("dur", d == C.TIME_UNSET ? 0 : d);
                 o.put("buf", Math.max(0, p.getBufferedPosition()));
                 o.put("rate", rate);
