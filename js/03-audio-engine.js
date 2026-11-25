@@ -157,6 +157,24 @@
             return `${m}:${sec < 10 ? '0' : ''}${sec}`;
         }
 
+        let _lastUnseekableToast = 0;
+        window.__guardUnseekable = function (e) {
+            const ns = window.__nativeAudioState;
+            if (ns && ns.mode === 'native' && ns.loaded && ns.seekable === false) {
+                if (e && e.cancelable) e.preventDefault();
+                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                const nowTs = Date.now();
+                if (nowTs - _lastUnseekableToast > 1500) {
+                    _lastUnseekableToast = nowTs;
+                    if (typeof showToast === 'function') {
+                        showToast((typeof currentLangDict !== 'undefined' && currentLangDict['toast.unseekable']) || 'Tệp này không hỗ trợ tua');
+                    }
+                }
+                return true;
+            }
+            return false;
+        };
+
         (function bindMainSeekScrub() {
             const host = seekSlider.parentElement || seekSlider;
             let activePtr = null;
@@ -210,6 +228,7 @@
                 if (seekDragging || !e.changedTouches || !e.changedTouches.length) return;
                 const t = e.changedTouches[0];
                 if (!inSeekZone(t)) return;
+                if (window.__guardUnseekable && window.__guardUnseekable(e)) return;
                 e.preventDefault();
                 e.stopPropagation();
                 seekDragging = true;
@@ -242,6 +261,7 @@
             host.addEventListener('pointerdown', (e) => {
                 if (e.pointerType === 'touch') return;
                 if (e.button !== undefined && e.button !== 0) return;
+                if (window.__guardUnseekable && window.__guardUnseekable(e)) return;
                 if (!isFinite(audio.duration) || audio.duration <= 0) return;
                 e.preventDefault();
                 seekDragging = true;
