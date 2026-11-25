@@ -341,7 +341,33 @@ final class NativeAudio {
     }
     private static volatile long fbDurMs = 0;
     private static volatile String fbDurId = "";
+    private static volatile String cueRebuildId = "";
+    private static final java.util.Map<String, Uri> seekableCache = new java.util.concurrent.ConcurrentHashMap<>();
     private static boolean id0Eq(String id) { return id != null && id.equals(curId); }
+
+    /** Tự động dựng lại bảng chỉ mục Cues trong cache cho tệp WebM/MKV bị ExoPlayer báo seekable=false để tua mượt + giữ nguyên EQ. */
+    private static void tryRebuildWebmCues(final String trackId) {
+        if (trackId == null || trackId.isEmpty() || trackId.equals(cueRebuildId)) return;
+        final Context c = app;
+        final Uri srcUri = uriFor(trackId);
+        if (c == null || srcUri == null) return;
+        cueRebuildId = trackId;
+        new Thread(() -> {
+            Uri fixed = WebmCueIndexer.ensureSeekable(c, srcUri);
+            if (fixed == null) return;
+            seekableCache.put(trackId, fixed);
+            ph.post(() -> {
+                if (p == null || !loaded || !trackId.equals(curId)) return;
+                if (p.isCurrentMediaItemSeekable()) return;
+                long resumePos = Math.max(0L, p.getCurrentPosition());
+                boolean wasPlaying = p.getPlayWhenReady();
+                p.setMediaItem(MediaItem.fromUri(fixed), resumePos);
+                p.prepare();
+                p.setPlayWhenReady(wasPlaying);
+                emit("state");
+            });
+        }, "webm-cues").start();
+    }
     /** Đọc thời lượng dự phòng ở luồng riêng: với một số MP3 dài không có bảng TOC thì ExoPlayer trả TIME_UNSET nên giao diện hiện 0:00. */
     private static void fetchFallbackDuration(final String id, final Uri u) {
         fbDurMs = 0; fbDurId = id;
@@ -390,7 +416,12 @@ final class NativeAudio {
         p.setHandleAudioBecomingNoisy(true);
         p.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int st) {
-                if (st == Player.STATE_READY) errStreak = 0;
+                if (st == Player.STATE_READY) {
+                    errStreak = 0;
+                    if (p != null && !p.isCurrentMediaItemSeekable()) {
+                        tryRebuildWebmCues(curId);
+                    }
+                }
                 if (st == Player.STATE_ENDED) { onEnded(); return; }
                 emit("state");
             }
@@ -431,8 +462,9 @@ final class NativeAudio {
     }
     private static void loadImpl(Context c, String id, String t, String a, long startMs, boolean play, float volume, float speed) {
         ensure(c);
-        Uri u = uriFor(id);
-        curId = id; title = t == null ? "" : t; artist = a == null ? "" : a;
+        Uri u = seekableCache.get(id);
+        if (u == null) u = uriFor(id);
+        curId = id; cueRebuildId = ""; title = t == null ? "" : t; artist = a == null ? "" : a;
         endedHandled = false;
         if (u == null) { loaded = true; if (skipBadTrack()) return; emit("error"); return; }
         loaded = true;
