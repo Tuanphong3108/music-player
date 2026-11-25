@@ -1011,6 +1011,74 @@ public class MainActivity extends Activity {
     }
 
     // ===== Chọn nhiều bài ở màn hình chính: chia sẻ / xóa trên máy =====
+    private void setAsSoundImpl(final String id, final String loc, final String name, final String type) {
+        new Thread(() -> {
+            String err = null;
+            try {
+                if (Build.VERSION.SDK_INT >= 23 && !android.provider.Settings.System.canWrite(this)) throw new Exception("NO_PERMISSION");
+                String path = resolvePathOf(id, loc);
+                Uri src = (id == null || id.isEmpty()) ? null : served.get(id);
+                File direct = null;
+                if (path != null && !path.isEmpty() && !path.startsWith("content://")) {
+                    try { File f = path.startsWith("file://") ? new File(Uri.parse(path).getPath()) : new File(path); if (f.isFile() && f.canRead()) direct = f; } catch (Throwable ignored) {}
+                }
+                if (direct == null && src == null && path != null && path.startsWith("content://")) src = Uri.parse(path);
+                if (direct == null && src == null) throw new Exception("NOT_FOUND");
+                String base = (name == null || name.trim().isEmpty()) ? (direct != null ? direct.getName() : "sound") : name.trim();
+                if (base.lastIndexOf('.') < 1) base = base + ".mp3";
+                base = base.replaceAll("[\\\\/:*?\"<>|]", "_");
+                String mime = guessAudioMime(base.toLowerCase());
+                int rtType; String relDir; boolean isRing = false, isNotif = false, isAlarm = false;
+                if ("notification".equals(type)) { rtType = android.media.RingtoneManager.TYPE_NOTIFICATION; relDir = android.os.Environment.DIRECTORY_NOTIFICATIONS; isNotif = true; }
+                else if ("alarm".equals(type)) { rtType = android.media.RingtoneManager.TYPE_ALARM; relDir = android.os.Environment.DIRECTORY_ALARMS; isAlarm = true; }
+                else { rtType = android.media.RingtoneManager.TYPE_RINGTONE; relDir = android.os.Environment.DIRECTORY_RINGTONES; isRing = true; }
+                String title = base.substring(0, base.lastIndexOf('.'));
+                android.content.ContentResolver cr = getContentResolver();
+                Uri out;
+                android.content.ContentValues cv = new android.content.ContentValues();
+                cv.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, base);
+                cv.put(android.provider.MediaStore.MediaColumns.TITLE, title);
+                cv.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mime);
+                cv.put(android.provider.MediaStore.Audio.Media.IS_RINGTONE, isRing);
+                cv.put(android.provider.MediaStore.Audio.Media.IS_NOTIFICATION, isNotif);
+                cv.put(android.provider.MediaStore.Audio.Media.IS_ALARM, isAlarm);
+                cv.put(android.provider.MediaStore.Audio.Media.IS_MUSIC, false);
+                if (Build.VERSION.SDK_INT >= 29) {
+                    cv.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, relDir);
+                    // Xóa bản đã cài trước đó (cùng tên + cùng thư mục) để không bị trùng
+                    try { cr.delete(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                            android.provider.MediaStore.MediaColumns.DISPLAY_NAME + "=? AND " + android.provider.MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ?",
+                            new String[]{base, relDir + "%"}); } catch (Throwable ignored) {}
+                    out = cr.insert(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cv);
+                    if (out == null) throw new Exception("INSERT_FAILED");
+                    try (InputStream in = direct != null ? new java.io.FileInputStream(direct) : cr.openInputStream(src);
+                         java.io.OutputStream os = cr.openOutputStream(out)) {
+                        if (in == null || os == null) throw new Exception("IO");
+                        byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush();
+                    }
+                } else {
+                    File dir = android.os.Environment.getExternalStoragePublicDirectory(relDir);
+                    if (!dir.exists()) dir.mkdirs();
+                    File dst = new File(dir, base);
+                    try (InputStream in = direct != null ? new java.io.FileInputStream(direct) : cr.openInputStream(src);
+                         FileOutputStream os = new FileOutputStream(dst)) {
+                        if (in == null) throw new Exception("IO");
+                        byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush();
+                    }
+                    cv.put(android.provider.MediaStore.MediaColumns.DATA, dst.getAbsolutePath());
+                    out = cr.insert(android.provider.MediaStore.Audio.Media.getContentUriForPath(dst.getAbsolutePath()), cv);
+                    if (out == null) throw new Exception("INSERT_FAILED");
+                }
+                android.media.RingtoneManager.setActualDefaultRingtoneUri(this, rtType, out);
+            } catch (Throwable t) {
+                err = String.valueOf(t.getMessage() != null ? t.getMessage() : t);
+            }
+            JSONObject r = new JSONObject();
+            try { r.put("ok", err == null); r.put("type", type == null ? "" : type); if (err != null) r.put("error", err); } catch (Throwable ignored) {}
+            callJs("window.__onSetSoundResult&&__onSetSoundResult(" + r + ")");
+        }, "set-sound").start();
+    }
+
     private static final int REQ_DELETE_MEDIA = 77;
     private final List<Integer> delDoneKeys = new ArrayList<>();
     private final List<Integer> delPendingKeys = new ArrayList<>();
@@ -3078,6 +3146,32 @@ public class MainActivity extends Activity {
             try {
                 MediaWidgetProvider.saveWidgetColors(MainActivity.this, Color.parseColor(bgHex), Color.parseColor(accentHex));
             } catch (Exception ignored) {}
+        }
+
+        /** Đã được cấp quyền "Sửa đổi cài đặt hệ thống" chưa (cần để đặt nhạc chuông / thông báo / báo thức) */
+        @JavascriptInterface
+        public boolean canWriteSettings() {
+            try { return Build.VERSION.SDK_INT < 23 || android.provider.Settings.System.canWrite(MainActivity.this); } catch (Throwable t) { return false; }
+        }
+
+        /** Mở trang cho phép sửa đổi cài đặt hệ thống của app */
+        @JavascriptInterface
+        public void openWriteSettings() {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()));
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Throwable t) {
+                    try { startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); } catch (Throwable ignored) {}
+                }
+            });
+        }
+
+        /** Đặt bài làm nhạc chuông / âm thông báo / âm báo thức. type: ringtone | notification | alarm. Kết quả: window.__onSetSoundResult({ok,type,error}) */
+        @JavascriptInterface
+        public void setAsSound(final String id, final String loc, final String name, final String type) {
+            setAsSoundImpl(id, loc, name, type);
         }
 
         /** Chia sẻ nhiều tệp cùng lúc: json = [{id, loc, name, mime}] */

@@ -24,6 +24,7 @@ const APP_SHELL = [
   './js/12-ui-restore.js',
   './js/13-native-audio.js',
   './js/14-ai-playlist.js',
+  './js/15-song-sheet.js',
   './index_md1.html',
   './index_indev.html',
   './changelog.html',

@@ -567,18 +567,19 @@
                 if (err) { try { if (typeof closeShareSheet === 'function') closeShareSheet(); } catch (e) {} showToast('Chia sẻ lỗi: ' + err, 'error'); }
             });
             let pendingDelete = null;
-            document.getElementById('m-sel-delete')?.addEventListener('click', async () => {
-                const list = selTracks();
-                if (!list.length) return;
+            document.getElementById('m-sel-delete')?.addEventListener('click', () => { const l = selTracks(); if (l.length) deleteTracksFlow(l, true); });
+            window.__deleteTracksFlow = (list) => deleteTracksFlow(list, false);
+            async function deleteTracksFlow(list, fromSelection) {
+                if (!list || !list.length) return;
                 const AB = window.AndroidBridge;
                 if (!AB || typeof AB.deleteNativeFiles !== 'function') { showToast(tr2('sel.unsupported', 'Chức năng này cần app Android'), 'info'); return; }
                 const ok = await confirmDialog(tr2('sel.del_msg', 'Xóa vĩnh viễn {n} tệp khỏi máy? Hành động này không thể hoàn tác.').replace('{n}', list.length),
                     tr2('sel.del_ok', 'Xóa'), tr2('sel.del_title', 'Xóa khỏi máy'));
                 if (!ok) return;
                 pendingDelete = list;
-                exitSelect();
+                if (fromSelection) exitSelect();
                 AB.deleteNativeFiles(JSON.stringify(list.map((t, k) => ({ k, id: String(t.nativeId || ''), loc: String(t.nativeLocation || '') }))));
-            });
+            }
             // Kết quả xóa từ native: gỡ các bài đã xóa khỏi thư viện / hàng đợi
             window.__onNativeDeleteResult = function (res) {
                 try {
@@ -947,6 +948,16 @@
                 const loadStats = () => { try { return JSON.parse(localStorage.getItem(STATS_KEY) || '{}'); } catch (e) { return {}; } };
                 const saveStats = (o) => { try { localStorage.setItem(STATS_KEY, JSON.stringify(o)); } catch (e) {} };
                 const trackKeyOf = (t) => (t && (t.nativeLocation || t.rawName || t.name || '')).toLowerCase();
+                // API cho bottom sheet tùy chọn bài hát (js/15-song-sheet.js)
+                window.__plApi = {
+                    load: loadPls, save: savePls, key: trackKeyOf,
+                    rerender: () => { try { renderMobilePlaylists(); } catch (e) {} },
+                    cover: (pl, size, tracks) => renderPlCoverHtml(pl, size, tracks),
+                    resolve: (pl) => resolvePlaylistTracks(pl),
+                    isAi: (pl) => isAiPl(pl),
+                    pool: () => getLibPool(),
+                    replaceAndPlay: (list, tr) => replaceQueueAndPlay(list, tr)
+                };
 
                 window.__recordMobilePlayStat = function (track) {
                     if (!track) return;
@@ -1725,6 +1736,7 @@
                 };
                 window.__closeMobilePlDetailIfOpen = function () {
                     if (typeof window.__handleAndroidBackAi === 'function' && window.__handleAndroidBackAi()) return true;
+                    if (window.__closeSongSheet && window.__closeSongSheet()) return true;
                     if (window.__exitMobileSelect && window.__exitMobileSelect()) return true;
                     if (openedPlId) { setMobileLibTab(detailReturnTab); return true; }
                     if (window.__mobileFoldersBack && window.__mobileFoldersBack()) return true;

@@ -350,9 +350,9 @@
             return info;
         }
 
-        async function openMoreInfoModal() {
-            const track = playlist[currentIndex];
-            if (!track) return;
+        async function buildMoreInfoRows(track) {
+            if (!track) return [];
+            const isCur = track === playlist[currentIndex];
             let tech = null;
             if (track.file) {
                 try { tech = await probeAudioInfo(track); } catch (e) { tech = null; }
@@ -393,7 +393,7 @@
                 rows.push(moreInfoRowHTML('graphic_eq', currentLangDict['moreinfo.quality'] || 'Chất lượng âm thanh', parts.join(' • ')));
             }
             rows.push(moreInfoRowHTML('calendar_month', currentLangDict['moreinfo.date_modified'] || 'Ngày sửa đổi', formatModifiedDateVi(track.file ? track.file.lastModified : null)));
-            rows.push(moreInfoRowHTML('schedule', currentLangDict['moreinfo.duration'] || 'Thời lượng', formatDurationVi(audio.duration)));
+            rows.push(moreInfoRowHTML('schedule', currentLangDict['moreinfo.duration'] || 'Thời lượng', formatDurationVi(isCur ? audio.duration : (track.duration || track.dur || 0))));
             rows.push(moreInfoRowHTML('edit', currentLangDict['moreinfo.title_label'] || 'Tên bài hát', track.name || unknownStr));
             rows.push(moreInfoRowHTML('person', currentLangDict['moreinfo.artist_label'] || 'Nghệ sĩ', track.artist || unknownStr));
             rows.push(moreInfoRowHTML('album', currentLangDict['moreinfo.album_label'] || 'Đĩa nhạc', track.album || unknownStr));
@@ -405,6 +405,14 @@
                 rows.push(`<div style="font-size: calc(13px * var(--font-scale-factor, 1)); font-weight:700; opacity:0.85; margin-top:8px; padding-top:14px; border-top:1px solid var(--playlist-border);">${escHtml(currentLangDict['moreinfo.lyric_info'] || 'Lyric Information')}</div>`);
                 lyInfo.forEach(([k, v]) => rows.push(moreInfoRowHTML(LRC_INFO_ICONS[k] || 'info', escHtml(currentLangDict['moreinfo.lrc_' + k] || LRC_INFO_LABELS[k]), escHtml(v))));
             }
+            return rows;
+        }
+        window.__buildMoreInfoRows = buildMoreInfoRows;
+
+        async function openMoreInfoModal() {
+            const track = playlist[currentIndex];
+            if (!track) return;
+            const rows = await buildMoreInfoRows(track);
             moreInfoBody.innerHTML = rows.join('');
             moreInfoModal.classList.add('open');
         }
@@ -418,6 +426,7 @@
 
         moreInfoBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (document.documentElement.classList.contains('m-ui') && typeof window.__openSongSheet === 'function') { window.__openSongSheet(playlist[currentIndex]); return; }
             openMoreInfoModal();
         });
         moreInfoClose.addEventListener('click', () => moreInfoModal.classList.remove('open'));
