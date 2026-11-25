@@ -1011,6 +1011,8 @@ public class MainActivity extends Activity {
     }
 
     private volatile boolean pendingExternalOpen = false;
+    private volatile long pendingStartMs = -1;      // từ sheet mini (QuickPlayActivity): bắt đầu từ vị trí này
+    private volatile boolean pendingStartPlay = true;
     private volatile String pendingWidgetCmd = null;
 
     private void handleIntent(Intent i) {
@@ -1043,6 +1045,9 @@ public class MainActivity extends Activity {
             }
             return;
         }
+        pendingStartMs = i.getLongExtra("qp_pos", -1);
+        pendingStartPlay = i.getBooleanExtra("qp_play", true);
+        i.removeExtra("qp_pos"); i.removeExtra("qp_play");
         i.setAction(Intent.ACTION_MAIN); // tránh nạp lại khi xoay màn hình
         pendingExternalOpen = true;
         NativeAudio.stop(); // dừng bài cũ ngay để trang ưu tiên mở tệp từ nguồn ngoài thay vì khôi phục nguồn cũ
@@ -1548,9 +1553,11 @@ public class MainActivity extends Activity {
                 o.put("size", querySize(u));
                 o.put("modified", queryModified(u));
                 if (fromExternal) o.put("fromExternal", true);
+                if (fromExternal && pendingStartMs > 0) { o.put("startMs", pendingStartMs); o.put("startPlay", pendingStartPlay); }
                 pending.add(o);
             } catch (Exception ignored) {}
         }
+        if (fromExternal) pendingStartMs = -1;
         flushPending();
     }
 

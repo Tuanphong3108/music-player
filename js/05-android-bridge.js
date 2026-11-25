@@ -84,6 +84,20 @@
                     }
                     if (files.length) {
                         await handleFiles(files, isLibraryBatch ? { noPlay: true } : undefined);
+                        // Mở từ sheet mini (QuickPlayActivity): tiếp tục đúng vị trí đang nghe
+                        const stIt = isExternalBatch ? (list || []).find(x => x && x.startMs > 0) : null;
+                        if (stIt) {
+                            let tries = 0;
+                            const iv = setInterval(() => {
+                                try {
+                                    if ((audio.duration > 0 && audio.readyState >= 1) || ++tries > 40) {
+                                        clearInterval(iv);
+                                        audio.currentTime = stIt.startMs / 1000;
+                                        if (stIt.startPlay === false) audio.pause();
+                                    }
+                                } catch (e) { clearInterval(iv); }
+                            }, 150);
+                        }
                         if (isLibraryBatch && document.documentElement.classList.contains('m-ui')) {
                             if (typeof window.__syncMobileLibraryFromPlaylist === 'function') window.__syncMobileLibraryFromPlaylist();
                             if (typeof window.__renderMobileLibrary === 'function') window.__renderMobileLibrary();
@@ -1201,7 +1215,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_25_seek_state_only_guard', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_25_quickplay', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
