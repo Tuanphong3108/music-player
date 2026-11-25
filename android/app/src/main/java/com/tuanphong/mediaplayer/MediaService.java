@@ -60,6 +60,7 @@ public class MediaService extends Service {
     private String state = "none";
     private long buffered = 0;
     private boolean artDirty = false;
+    private boolean seekable = true;
     private long stamp = 0;   // elapsedRealtime tại thời điểm trang chụp vị trí -> vị trí hệ thống nội suy chính xác, không trễ theo độ trễ IPC
 
     @Override
@@ -138,7 +139,9 @@ public class MediaService extends Service {
             fgHandler.removeCallbacks(graceRecheck);
             fgHandler.postDelayed(graceRecheck, TRANSITION_GRACE_MS + 250);
         }
-        boolean metaChanged = trackChanged || !ns.equals(state) || (d > 0 && d != dur);
+        boolean sk = o.optBoolean("seekable", true);
+        boolean metaChanged = trackChanged || !ns.equals(state) || (d > 0 && d != dur) || (sk != seekable);
+        seekable = sk;
         if (trackChanged) {
             curTrackId = incomingId;
             artRetries = 0;
@@ -310,6 +313,7 @@ public class MediaService extends Service {
             if (ns.isEmpty()) ns = i.getBooleanExtra("playing", false) ? "playing" : "paused";   // APK/bản trang cũ chỉ gửi playing
             metaChanged = !t.equals(title) || !ar.equals(artist) || d != dur || !ns.equals(state);
             state = ns;
+            seekable = true;
             playing = "playing".equals(ns) || "buffering".equals(ns);
             holdWake(playing);
             title = t; artist = ar; dur = d;
@@ -325,6 +329,7 @@ public class MediaService extends Service {
 
     private void clearSession() {
         playing = false;
+        seekable = true;
         holdWake(false);
         MediaWidgetProvider.savePlaybackState(this, false, "", "", "", 0);
         QueueWidgetProvider.clearQueue(this);
@@ -407,7 +412,8 @@ public class MediaService extends Service {
     private void publishPlaybackOnly() {
         if (session == null) return;
         long actions = PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_PLAY_PAUSE
-                | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_STOP;
+                | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_STOP;
+        if (seekable) actions |= PlaybackState.ACTION_SEEK_TO;
         int st;
         switch (state) {
             case "playing": st = PlaybackState.STATE_PLAYING; break;
