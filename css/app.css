@@ -438,9 +438,10 @@
         .cl-overlay {
             position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
             display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+            opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.4s ease, visibility 0s linear 0.4s;
         }
-        .cl-overlay.open { opacity: 1; pointer-events: auto; }
+        .cl-overlay:not(.open), .cl-overlay:not(.open) * { pointer-events: none !important; }
+        .cl-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.4s ease, visibility 0s; }
         .cl-dialog {
             width: 90%; max-width: 600px; height: 80%; max-height: 800px;
             background: var(--md-sys-color-surface-variant); border-radius: 28px;
@@ -1676,7 +1677,8 @@
         html.m-ui body.m-more-open .top-extra { animation: pgFade .22s cubic-bezier(.2, 0, 0, 1) both; }
         body.lyrics-open .lyric-overlay { animation: pgInUp .35s cubic-bezier(.2, 0, 0, 1) backwards; }
         /* Animation thoát (bản điện thoại): đóng trang thì trượt xuống + mờ dần, đối xứng với lúc mở */
-        html.m-ui .cl-overlay { transition: opacity .28s cubic-bezier(.2, 0, 0, 1); }
+        html.m-ui .cl-overlay { transition: opacity .28s cubic-bezier(.2, 0, 0, 1), visibility 0s linear .28s; }
+        html.m-ui .cl-overlay.open { transition: opacity .28s cubic-bezier(.2, 0, 0, 1), visibility 0s; }
         html.m-ui .cl-overlay .cl-dialog { transform: translateY(28px) scale(.96); opacity: 0; transition: transform .3s cubic-bezier(.2, 0, 0, 1), opacity .24s linear; }
         html.m-ui .cl-overlay.open .cl-dialog { transform: none; opacity: 1; }
         html.m-ui .lyric-overlay { transform: translateY(24px); transition: opacity .28s cubic-bezier(.2, 0, 0, 1), transform .3s cubic-bezier(.2, 0, 0, 1); }
