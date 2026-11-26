@@ -710,4 +710,13 @@ ai.err_no_valid_tracks=AI không trả về bài hát hợp lệ nào trong thư
 ai.err_no_lyric_content=Lời bài hát không có nội dung để dịch.
 ai.err_no_valid_trans=AI không trả về dòng dịch hợp lệ.
 sel.del_playing=Không thể xóa bài đang phát
+settings.cat_developer=Developer Features
+settings.desc_developer=Bảng điều khiển (Console) và công cụ gỡ lỗi
+dev.enable_console=Bật bảng điều khiển (Console)
+dev.enable_console_desc=Hiển thị nút </> trong menu 3 chấm để mở bảng Console, chạy lệnh JavaScript và soi lớp phủ giao diện trực tiếp trong ứng dụng.
+dev.console_title=Developer Console
+dev.console_empty=Chưa có log nào. Nhập lệnh JS bên dưới để chạy thử.
+dev.console_placeholder=Nhập lệnh JavaScript...
+dev.inspect_hint=Chạm vào bất kỳ vị trí nào để soi lớp phủ (elementsFromPoint)
+dev.copied=Đã sao chép log
 
