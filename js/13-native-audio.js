@@ -216,7 +216,7 @@
         if (!isNative()) return oPlay.call(a);
         if (N.pending) doLoad(true);
         else if (N.loaded) {
-            N.paused = false;
+            N.paused = false; N.userPaused = false;
             N.suppressEndedId = '';
             N.playGuard = now() + 1500;   // bỏ qua các sự kiện native cũ (pwr=false) đến muộn ngay sau lệnh Play, tránh bị kéo ngược về Pause
             if (N.ended) { N.ended = false; N.pos = 0; N.stamp = now(); }
@@ -230,7 +230,7 @@
         if (window.__adoptNative) return;   // chuyển bài do app tự sang: đừng làm gián đoạn
         if (N.pending) { doLoad(false); return; }
         N.playGuard = 0;
-        if (N.loaded && !N.paused) { N.paused = true; N.pos = curPos() * 1000; N.stamp = now(); try { AB.nativeAudioPause(); } catch (e) {} fire('pause'); }
+        if (N.loaded && !N.paused) { N.userPaused = true; N.autoAdvAt = 0; N.paused = true; N.pos = curPos() * 1000; N.stamp = now(); try { AB.nativeAudioPause(); } catch (e) {} fire('pause'); }
     };
     a.load = function () { if (!isNative()) oLoad.call(a); };
 
@@ -353,12 +353,19 @@
             if (nowPlaying && !N.isPlaying) fire('playing');
             N.wasReady = nowReady; N.isPlaying = nowPlaying;
             if (wasPaused && !N.paused) fire('play');
+            // Vừa tự chuyển bài (hết bài -> next) mà native tự pause không rõ lý do (không phải người dùng/mất audio focus/rút tai nghe): phát lại ngay thay vì đứng im
+            if (!wasPaused && N.paused && e.st !== 'ended' && N.autoAdvAt && now() - N.autoAdvAt < 4000 && !e.pwr
+                && [2, 3, 6].indexOf(Number(e.pwrReason)) < 0 && !N.userPaused) {
+                N.autoAdvAt = 0; N.paused = false; N.playGuard = now() + 1500;
+                try { AB.nativeAudioPlay(); } catch (er) {}
+                return;
+            }
             if (!wasPaused && N.paused && e.st !== 'ended') fire('pause');
             if (e.ev === 'seeked') { lastTickUiPos = N.pos; fire('seeked'); scheduleTickUi(true); }
             if (e.st === 'ended') {
                 const suppressed = !!(N.suppressEndedId && N.suppressEndedId === String(e.id || ''));
                 N.ended = true; N.paused = true;
-                if (!wasEnded && !suppressed) { fire('pause'); fire('ended'); }
+                if (!wasEnded && !suppressed) { N.autoAdvAt = now(); N.userPaused = false; fire('pause'); fire('ended'); }
                 return;
             }
             if (e.ev === 'tick' || e.ev === 'state' || e.ev === 'load') {

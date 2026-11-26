@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Android: sửa lỗi đôi khi tự tạm dừng sau khi bài tự chuyển sang bài kế (thử phát lại nếu bị pause không rõ lý do)",
+      "icon": "skip_next"
+    },
+    {
       "content": "Danh sách phát: kéo-thả để sắp xếp (bỏ 2 nút lên/xuống); tab Artist/Thư mục/Yêu thích sáng đúng bài đang phát",
       "icon": "drag_indicator"
     },
@@ -115,6 +119,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Android: fixed playback sometimes pausing itself right after auto-advancing to the next track",
+      "icon": "skip_next"
+    },
     {
       "content": "Playlists: drag to reorder (up/down buttons removed); Artist/Folders/Liked tabs now highlight the correct playing song",
       "icon": "drag_indicator"

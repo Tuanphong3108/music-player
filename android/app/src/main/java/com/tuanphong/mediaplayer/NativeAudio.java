@@ -65,6 +65,8 @@ final class NativeAudio {
     private static volatile int repeat = 0;
     private static volatile boolean loaded = false;
     private static boolean endedHandled = false;
+    /** Lý do gần nhất ExoPlayer đổi playWhenReady (Player.PLAY_WHEN_READY_CHANGE_REASON_*), gửi kèm snapshot để trang biết pause là do người dùng hay do hệ thống. */
+    private static volatile int lastPwrReason = 1;
     private static float rate = 1f, vol = 1f;
     /** elapsedRealtime của lần trang web phản hồi gần nhất (evaluateJavascript trả về = renderer còn sống). */
     static volatile long lastAck = 0;
@@ -426,6 +428,8 @@ final class NativeAudio {
                 emit("state");
             }
             @Override public void onPlayWhenReadyChanged(boolean pwr, int reason) {
+                lastPwrReason = reason;
+                android.util.Log.d("MPPause", "pwr=" + pwr + " reason=" + reason + " st=" + (p != null ? p.getPlaybackState() : -1) + " id=" + curId);
                 ph.removeCallbacks(ticker);
                 // Sau khi hết bài & dừng theo hẹn giờ ngủ, không bắn lại state/tick với STATE_ENDED kẻo WebView tưởng hết bài thường rồi tự nhảy bài kế
                 if (!pwr && endedHandled && p != null && p.getPlaybackState() == Player.STATE_ENDED) {
@@ -752,6 +756,7 @@ final class NativeAudio {
                 int st = p.getPlaybackState();
                 o.put("st", st == Player.STATE_ENDED ? "ended" : st == Player.STATE_BUFFERING ? "buffering" : st == Player.STATE_READY ? "ready" : "idle");
                 o.put("pwr", p.getPlayWhenReady());
+                o.put("pwrReason", lastPwrReason);
                 o.put("pos", Math.max(0, p.getCurrentPosition()));
                 long d = p.getDuration();
                 if ((d == C.TIME_UNSET || d <= 0) && fbDurMs > 0 && id0Eq(fbDurId)) d = fbDurMs;   // ExoPlayer chưa/không đọc được thời lượng (MP3 dài/VBR không TOC): dùng thời lượng đọc từ MediaMetadataRetriever
