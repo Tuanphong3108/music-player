@@ -391,6 +391,35 @@
         } catch (e) {}
     }, 1000);
 
+    // Watchdog: UI đang ở trạng thái Phát nhưng native đứng yên (vd. kẹt ở 0:00 sau khi tự chuyển bài, không có sự kiện pause nào) -> thử Play lại, rồi nạp lại bài tối đa 2 lần
+    let wdId = '', wdPos = -1, wdStill = 0, wdTries = 0;
+    setInterval(() => {
+        try {
+            if (document.hidden || N.mode !== 'native' || !N.loaded || N.paused || N.ended || N.pending || N.seekGuard) { wdStill = 0; return; }
+            if (typeof AB.nativeAudioState !== 'function') return;
+            const s = JSON.parse(AB.nativeAudioState() || 'null');
+            if (!s || !s.loaded || String(s.id || '') !== String(N.id)) { wdStill = 0; return; }
+            if (s.id !== wdId) { wdId = s.id; wdTries = 0; wdPos = -1; wdStill = 0; }
+            const moving = wdPos < 0 || Math.abs((s.pos || 0) - wdPos) > 50;
+            wdPos = s.pos || 0;
+            if (s.st === 'ended' || moving) { wdStill = 0; return; }
+            if (++wdStill < 5) return;   // ~5 giây không nhúc nhích
+            wdStill = 0;
+            if (wdTries >= 3) return;
+            wdTries++;
+            try { console.warn('[watchdog] native đứng yên st=' + s.st + ' pwr=' + s.pwr + ' pos=' + s.pos + ' lần ' + wdTries); } catch (e) {}
+            if (wdTries === 1 && !s.pwr) {
+                N.playGuard = now() + 1500;
+                try { AB.nativeAudioPlay(); } catch (e) {}
+            } else {
+                // nạp lại đúng bài từ vị trí hiện tại và phát
+                N.startMs = Math.max(0, Math.round(s.pos || 0));
+                N.pending = true;
+                doLoad(true);
+            }
+        } catch (e) {}
+    }, 1000);
+
     // Gửi cả hàng đợi + thứ tự shuffle + chế độ lặp sang app native để app tự điều khiển bài kế/trước khi trang không phản hồi
     let qSig = '';
     function syncQueue(force) {

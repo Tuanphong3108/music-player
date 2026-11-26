@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Android: tự phát hiện khi nhạc đứng yên (kẹt 0:00 sau khi chuyển bài) và tự phát lại / nạp lại bài",
+      "icon": "restart_alt"
+    },
+    {
       "content": "Android: sửa lỗi đôi khi tự tạm dừng sau khi bài tự chuyển sang bài kế (thử phát lại nếu bị pause không rõ lý do)",
       "icon": "skip_next"
     },
@@ -119,6 +123,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Android: auto-detects stalled playback (stuck at 0:00 after a track change) and retries / reloads the track",
+      "icon": "restart_alt"
+    },
     {
       "content": "Android: fixed playback sometimes pausing itself right after auto-advancing to the next track",
       "icon": "skip_next"
