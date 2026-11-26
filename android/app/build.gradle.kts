@@ -4,7 +4,7 @@ android {
     compileSdk = 36
     defaultConfig {
         applicationId = "com.tuanphong.mediaplayer"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = (System.getenv("VERSION_CODE") ?: "10").toInt()
         versionName = System.getenv("VERSION_NAME") ?: "1.0.10"
