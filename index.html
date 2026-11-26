@@ -348,6 +348,7 @@
                     <button class="st-tab" data-tab="performance"><span class="material-symbols-rounded">speed</span><span data-i18n="settings.cat_performance">Hiệu năng & hiệu ứng</span></button>
                     <div class="st-tab-spacer"></div>
                     <button class="st-tab" data-tab="ai"><span class="material-symbols-rounded">auto_awesome</span><span data-i18n="settings.cat_ai">AI Integration (β)</span></button>
+                    <button class="st-tab" data-tab="developer"><span class="material-symbols-rounded">code</span><span data-i18n="settings.cat_developer">Developer Features</span></button>
                     <button class="st-tab st-tab-link" id="st-android-apk-btn" data-tab="android"><span class="material-symbols-rounded">android</span><span data-i18n="settings.download_android">Tải bản Android</span></button>
                     <button class="st-tab" data-tab="about"><span class="material-symbols-rounded">info</span><span data-i18n="about.title">About</span></button>
                 </nav>
@@ -744,6 +745,19 @@
                 <div class="st-pane" data-pane="ai">
                     <h3 class="st-pane-title" data-i18n="settings.cat_ai">AI Integration (β)</h3>
                     <div id="ai-settings-host"></div>
+                </div>
+                <div class="st-pane" data-pane="developer">
+                    <h3 class="st-pane-title" data-i18n="settings.cat_developer">Developer Features</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="dev.enable_console">Bật bảng điều khiển (Console)</span>
+                            <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="dev.enable_console_desc">Hiển thị nút &lt;/&gt; trong menu 3 chấm để mở bảng Console, chạy lệnh JavaScript và soi lớp phủ giao diện trực tiếp trong ứng dụng.</span>
+                        </div>
+                        <md-switch icons id="setting-dev-console">
+                            <span class="material-symbols-rounded" slot="on-icon">check</span>
+                            <span class="material-symbols-rounded" slot="off-icon">close</span>
+                        </md-switch>
+                    </div>
                 </div>
                 <div class="st-pane" data-pane="android">
                     <h3 class="st-pane-title" data-i18n="settings.download_android">Tải bản Android</h3>
@@ -1242,6 +1256,7 @@
                 <button class="btn-m3" id="settings-btn" title="Cài đặt" data-i18n-title="topbar.settings"><span class="material-symbols-rounded">settings</span></button>
                 <button class="btn-m3" id="share-btn" title="Chia sẻ" data-i18n-title="topbar.share"><span class="material-symbols-rounded">share</span></button>
                 <button class="btn-m3" id="feedback-btn" title="Gửi phản hồi" data-i18n-title="topbar.feedback"><span class="material-symbols-rounded">feedback</span></button>
+                <button class="btn-m3" id="dev-console-btn" title="Developer Console" data-i18n-title="dev.console_title"><span class="material-symbols-rounded">code</span></button>
                 <button class="btn-m3" id="m-more-update-btn" title="Cập nhật ứng dụng Android"><span class="material-symbols-rounded">system_update</span></button>
                 </div>
                 
@@ -2375,6 +2390,7 @@
     <script src="js/12-ui-restore.js"></script>
     <script src="js/14-ai-playlist.js"></script>
     <script src="js/15-song-sheet.js"></script>
+    <script src="js/16-dev-console.js"></script>
 
     <!--
       Script ĐỘC LẬP, tách hẳn khỏi script chính phía trên: dù script chính có ném lỗi
