@@ -573,6 +573,12 @@
                 if (!list || !list.length) return;
                 const AB = window.AndroidBridge;
                 if (!AB || typeof AB.deleteNativeFiles !== 'function') { showToast(tr2('sel.unsupported', 'Chức năng này cần app Android'), 'info'); return; }
+                const cur = (typeof currentIndex === 'number' && currentIndex >= 0 && Array.isArray(playlist)) ? playlist[currentIndex] : null;
+                const curId = cur ? mLibTrackId(cur) : '';
+                if (cur && list.some(t => t && (t === cur || (curId && mLibTrackId(t) === curId)))) {
+                    showToast(tr2('sel.del_playing', 'Không thể xóa bài đang phát'), 'block');
+                    return;
+                }
                 const ok = await confirmDialog(tr2('sel.del_msg', 'Xóa vĩnh viễn {n} tệp khỏi máy? Hành động này không thể hoàn tác.').replace('{n}', list.length),
                     tr2('sel.del_ok', 'Xóa'), tr2('sel.del_title', 'Xóa khỏi máy'));
                 if (!ok) return;
