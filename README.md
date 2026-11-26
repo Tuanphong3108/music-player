@@ -1,7 +1,5 @@
 # 🎵 Media Player
 
-🌐 **Tiếng Việt** | [🇺🇸 English](README_en.md)
-
 > Trình phát nhạc **và video** cục bộ (Client-side & Hybrid Android) hiện đại, mượt mà và giàu tính năng được xây dựng trên nền tảng **Material Design 3 Expressive**. Hỗ trợ trải nghiệm trọn vẹn trên cả **máy tính (Web / PWA)** lẫn **điện thoại & máy tính bảng Android 8.0+ (APK gốc)**.
 
 ---
@@ -107,7 +105,7 @@ Bản Android không chỉ là một khung WebView đơn thuần mà kết hợp
 ## 🛠️ Công nghệ sử dụng
 
 * **Giao diện & Web Core:** HTML5, CSS3, Tailwind CSS, Material Web Components (`@material/web` — MD3 Expressive), Google Sans Flex.
-* **Xử lý Metadata & Lyrics:** `jsmediatags`, `browser-id3-writer`, LRCLIB API, cùng bộ đọc lyric nhúng & lập chỉ mục WebM thuần Java.
+* **Xử lý Metadata & Lyrics:** `jsmediatags`, `browser-id3-writer`, LRCLIB API, plus native Java embedded lyrics parser and WebM cue indexer.
 * **Audio Engine:** Web Audio API (trên Web/PC) & **AndroidX Media3 ExoPlayer 1.4.1** kèm custom `AudioProcessor` DSP (trên Android).
 * **Nền tảng Android:** Java 17, `compileSdk 36`, `targetSdk 36`, `minSdk 26` (Android 8.0+), AndroidX Core & WebKit, tự động build & phát hành APK qua GitHub Actions.
 
