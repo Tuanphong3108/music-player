@@ -862,12 +862,7 @@ public class QuickPlayActivity extends Activity {
         }
         rows.add(new String[]{vi ? "Định dạng theo cấu trúc tệp" : "Format by file structure", structSb.toString()});
 
-        // 3. File Path
-        if (!empty(metaPath)) {
-            rows.add(new String[]{"File Path", metaPath});
-        }
-
-        // 4. Chất lượng âm thanh
+        // 3. Chất lượng âm thanh
         if (metaSampleRate > 0 || metaBitrateKbps > 0) {
             List<String> qParts = new ArrayList<>();
             if (metaSampleRate > 0) {
