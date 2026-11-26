@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Developer Features: xem log native ngay trong app (lọc mức độ / tag / tìm kiếm) và Xuất chẩn đoán (trạng thái + log, đã che đường dẫn)",
+      "icon": "receipt_long"
+    },
+    {
       "content": "Developer Features: thêm Sao chép trạng thái app, Kiểm tra Bridge, Tải lại / Xóa cache & tải lại, và nút Đặt lại cài đặt Developer",
       "icon": "build"
     },
@@ -127,6 +131,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Developer Features: in-app native log viewer (level / tag / search filters) and Export diagnostics (state + logs, paths redacted)",
+      "icon": "receipt_long"
+    },
     {
       "content": "Developer Features: added Copy app state, Bridge test, Reload / Clear cache & reload, and Reset developer settings",
       "icon": "build"

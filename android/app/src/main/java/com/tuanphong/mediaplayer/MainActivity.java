@@ -3456,6 +3456,28 @@ public class MainActivity extends Activity {
             if (!enabled && devConsole != null) devConsole.hide();
         }
 
+        /** Log của chính app (logcat -d, Android chỉ cho đọc log của tiến trình mình), đã che đường dẫn tệp cá nhân. Dùng cho Developer Features. */
+        @JavascriptInterface
+        public String readAppLogs(int maxLines) {
+            int n = Math.max(50, Math.min(3000, maxLines));
+            Process pr = null;
+            try {
+                pr = new ProcessBuilder("logcat", "-d", "-v", "threadtime", "-t", String.valueOf(n)).redirectErrorStream(true).start();
+                java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(pr.getInputStream(), "UTF-8"));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line.replaceAll("/(storage|sdcard|data/user)/[^\\s\"'<>]*", "<path>")).append('\n');
+                    if (sb.length() > 600000) break;
+                }
+                return sb.toString();
+            } catch (Throwable t) {
+                return "readAppLogs lỗi: " + t;
+            } finally {
+                if (pr != null) pr.destroy();
+            }
+        }
+
         @JavascriptInterface
         public void devConsoleLog(String level, String message) {
             if (devConsole != null) devConsole.append(level, message);

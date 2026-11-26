@@ -44,7 +44,7 @@
     const DEV_KEYS = [STORAGE_KEY];
     const BRIDGE_METHODS = ['getAppVersion', 'getAppVersionCode', 'nativeAudioLoad', 'nativeAudioPlay', 'nativeAudioPause', 'nativeAudioSeek', 'nativeAudioState',
         'nativeAudioSetQueue', 'nativeAudioStop', 'setMediaState', 'setArtwork', 'shareNativeFiles', 'deleteNativeFiles', 'setAsSound', 'canWriteSettings',
-        'openWriteSettings', 'setQuickPlayPrefs', 'toggleDevConsole', 'setDevConsoleEnabled', 'closeDevConsole'];
+        'openWriteSettings', 'setQuickPlayPrefs', 'toggleDevConsole', 'setDevConsoleEnabled', 'closeDevConsole', 'readAppLogs'];
 
     function safe(fn, dflt) { try { const v = fn(); return v === undefined ? dflt : v; } catch (e) { return dflt === undefined ? ('lỗi: ' + (e && e.message)) : dflt; } }
 
@@ -116,6 +116,68 @@
         }
     }
 
+
+    // ---------- Native Log Viewer + Export Diagnostics ----------
+    const LOG_RE = /^(\d\d-\d\d \d\d:\d\d:\d\d\.\d+)\s+(\d+)\s+(\d+)\s+([VDIWEF])\s+(.*?)\s*:\s?(.*)$/;
+    const LEVELS = 'VDIWEF';
+    function readLogs(max) {
+        const AB = window.AndroidBridge;
+        if (!AB || typeof AB.readAppLogs !== 'function') return null;
+        try { return String(AB.readAppLogs(max || 1500) || ''); } catch (e) { return null; }
+    }
+    function parseLogs(raw) {
+        const out = [];
+        (raw || '').split('\n').forEach(l => {
+            const m = LOG_RE.exec(l);
+            if (m) out.push({ t: m[1], lv: m[4], tag: m[5], msg: m[6], raw: l });
+            else if (l.trim() && out.length) out[out.length - 1].raw += '\n' + l;
+        });
+        return out;
+    }
+    function filterLogs(arr, o) {
+        const min = LEVELS.indexOf(o.level || 'V');
+        const tag = (o.tag || '').toLowerCase(), q = (o.q || '').toLowerCase();
+        return arr.filter(e => LEVELS.indexOf(e.lv) >= min && (!tag || e.tag.toLowerCase().indexOf(tag) >= 0) && (!q || e.raw.toLowerCase().indexOf(q) >= 0));
+    }
+    async function exportDiagnostics() {
+        const state = await buildAppState();
+        const raw = readLogs(2000);
+        let logs = '(không đọc được log native)';
+        if (raw !== null) {
+            const arr = parseLogs(raw);
+            const keep = arr.filter(e => LEVELS.indexOf(e.lv) >= 3 || /^(MP|NativeAudio|MediaService|MainActivity|QuickPlay|chromium|cr_console|Console)/i.test(e.tag));
+            logs = keep.slice(-250).map(e => e.raw).join('\n') || '(trống)';
+        }
+        return state + '\n\n== Logs (W/E + MP*/Media*/Console, 250 dòng cuối) ==\n' + logs;
+    }
+    function buildLogViewer(host) {
+        const box = document.createElement('div'); box.className = 'dev-logs'; box.style.display = 'none';
+        box.innerHTML = '<div class="dev-log-bar"></div><input type="search" class="dev-log-q" placeholder="Tìm trong log..."><pre class="dev-out" style="display:block;"></pre>';
+        const bar = box.querySelector('.dev-log-bar'), q = box.querySelector('.dev-log-q'), pre = box.querySelector('pre');
+        const st = { level: 'V', tag: '' };
+        const chips = [['Tất cả', 'V', ''], ['Cảnh báo+', 'W', ''], ['Lỗi', 'E', ''], ['MP*', 'V', 'MP'], ['Media', 'V', 'Media'], ['Web', 'V', 'chromium']];
+        let arr = [], cur = chips[0];
+        const render = () => {
+            const f = filterLogs(arr, { level: st.level, tag: st.tag, q: q.value });
+            const last = f.slice(-300);
+            pre.textContent = (raw0 === null ? 'Chỉ có trong app Android (cần APK mới có readAppLogs).' : (last.map(e => e.raw).join('\n') || 'Không có dòng log nào khớp.'));
+            pre.scrollTop = pre.scrollHeight;
+        };
+        let raw0 = '';
+        const reload = () => { raw0 = readLogs(2000); arr = raw0 === null ? [] : parseLogs(raw0); render(); };
+        chips.forEach(c => {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'dev-chip' + (c === cur ? ' on' : ''); b.textContent = c[0];
+            b.addEventListener('click', () => { cur = c; st.level = c[1]; st.tag = c[2]; bar.querySelectorAll('.dev-chip').forEach(x => x.classList.toggle('on', x === b)); render(); });
+            bar.appendChild(b);
+        });
+        const act = (icon, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'dev-chip act'; b.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;">' + icon + '</span>'; b.addEventListener('click', fn); bar.appendChild(b); };
+        act('refresh', reload);
+        act('content_copy', () => copyText(pre.textContent));
+        q.addEventListener('input', render);
+        host.appendChild(box);
+        return { toggle: () => { const on = box.style.display === 'none'; box.style.display = on ? 'flex' : 'none'; if (on) reload(); } };
+    }
+
     function buildTools() {
         const host = document.getElementById('dev-tools');
         if (!host) return;
@@ -139,10 +201,17 @@
         };
         btn('content_copy', 'dev.copy_state', 'Sao chép trạng thái app', async () => { const t = await buildAppState(); show(t); copyText(t); });
         btn('settings_ethernet', 'dev.bridge_test', 'Kiểm tra Bridge', async () => show(await bridgeTest()));
+        const lv = buildLogViewer(host);
+        btn('receipt_long', 'dev.logs', 'Xem log native', () => lv.toggle());
+        btn('upload_file', 'dev.export', 'Xuất chẩn đoán', async () => {
+            const t = await exportDiagnostics(); show(t);
+            if (navigator.share) { try { await navigator.share({ title: 'Media Player diagnostics', text: t }); return; } catch (e) {} }
+            copyText(t);
+        });
         btn('refresh', 'dev.reload', 'Tải lại trang', () => location.reload());
         btn('cleaning_services', 'dev.clear_reload', 'Xóa cache & tải lại', () => clearCacheAndReload());
         btn('restart_alt', 'dev.reset', 'Đặt lại cài đặt Developer', () => { resetDevSettings(); show(T('dev.reset_done', 'Đã đặt lại cài đặt Developer về mặc định.')); }, 'danger');
-        host.appendChild(info); host.appendChild(grid); host.appendChild(out);
+        host.insertBefore(info, host.firstChild); host.insertBefore(grid, info.nextSibling); host.appendChild(out);
         refreshInfo();
     }
 

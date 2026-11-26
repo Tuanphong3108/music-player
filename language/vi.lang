@@ -727,3 +727,5 @@ dev.clear_reload=Xóa cache & tải lại
 dev.reset=Đặt lại cài đặt Developer
 dev.reset_done=Đã đặt lại cài đặt Developer về mặc định.
 dev.state_copied=Đã sao chép
+dev.logs=Xem log native
+dev.export=Xuất chẩn đoán

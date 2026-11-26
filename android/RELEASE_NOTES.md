@@ -5,3 +5,4 @@
 - **Tối ưu bảng Thông tin trên Sheet phát nhanh**: ẩn mục *File Path* khỏi thẻ thông tin trong sheet xem trước tệp cho gọn gàng (ứng dụng chính vẫn giữ nguyên).
 - **Cập nhật WebView & điều hướng Back**: tự động đổi màu chủ đạo theo ảnh bìa ngay khi quét xong giữa chừng, chặn xóa bài đang phát kèm toast thông báo, và hỗ trợ nút/cử chỉ Back cùng Predictive Back cho Bottom Sheet bài hát và Metadata Editor (nhắc xác nhận nếu có thay đổi chưa lưu).
 - Phát hiện pause không rõ lý do ngay sau khi tự chuyển bài (hết bài → next) khi đang mở app: trang tự phát lại trong 4s; native gửi thêm pwrReason và log MPPause.
+- **Developer Features – Log viewer & Xuất chẩn đoán**: thêm `readAppLogs()` đọc logcat của chính app (đã che đường dẫn tệp) để xem log native ngay trong Cài đặt, lọc theo mức độ/tag/từ khóa, và xuất chẩn đoán gồm trạng thái app + log W/E.

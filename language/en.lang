@@ -728,3 +728,5 @@ dev.clear_reload=Clear cache & reload
 dev.reset=Reset developer settings
 dev.reset_done=Developer settings reset to default.
 dev.state_copied=Copied
+dev.logs=View native logs
+dev.export=Export diagnostics
