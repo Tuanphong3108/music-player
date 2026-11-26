@@ -76,6 +76,7 @@ public class QuickPlayActivity extends Activity {
     private TextView tvTitle, tvArtist, tvAlbum, tvPos, tvDur, btnOpen;
     private ImageView art, artNote, btnPlayIcon, btnInfoIcon;
     private View btnPlay, btnPrev, btnNext, btnInfo, card;
+    private FrameLayout outerRoot;
     private LinearLayout playerPane, infoList;
     private ScrollView infoScroll;
     private long fallbackDur = 0;
@@ -600,7 +601,9 @@ public class QuickPlayActivity extends Activity {
         ilp.topMargin = dp(16);
         col.addView(infoScroll, ilp);
 
-        setContentView(root);
+        outerRoot = new FrameLayout(this);
+        outerRoot.addView(root, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(outerRoot);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, wi) -> {
             Insets bars = wi.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
@@ -1148,7 +1151,7 @@ public class QuickPlayActivity extends Activity {
         handedOff = true;
         long pos = player != null ? Math.max(0, player.getCurrentPosition()) : 0;
         boolean playing = player != null && player.getPlayWhenReady() && !ended;
-        Intent i = new Intent(this, MainActivity.class);
+        final Intent i = new Intent(this, MainActivity.class);
         i.setAction(Intent.ACTION_VIEW);
         i.setData(uri);
         i.setClipData(ClipData.newRawUri("", uri));
@@ -1156,7 +1159,64 @@ public class QuickPlayActivity extends Activity {
         i.putExtra("qp_pos", ended ? 0L : pos);
         i.putExtra("qp_play", playing || ended);
         releasePlayer();
+
+        if (card instanceof ViewGroup && outerRoot != null && card.getWidth() > 0 && outerRoot.getWidth() > 0 && outerRoot.getHeight() > 0) {
+            // Pha 1: làm mờ ẩn toàn bộ nội dung bên trong sheet, chỉ giữ lại khối màu nền
+            ViewGroup vg = (ViewGroup) card;
+            for (int idx = 0; idx < vg.getChildCount(); idx++) {
+                vg.getChildAt(idx).animate().alpha(0f).setDuration(120).start();
+            }
+            animateBackdrop(false, 130);
+            ui.postDelayed(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                int[] cardLoc = new int[2];
+                int[] rootLoc = new int[2];
+                card.getLocationInWindow(cardLoc);
+                outerRoot.getLocationInWindow(rootLoc);
+                final int startL = cardLoc[0] - rootLoc[0];
+                final int startT = cardLoc[1] - rootLoc[1];
+                final int startW = card.getWidth();
+                final int startH = card.getHeight();
+                final int fullW = outerRoot.getWidth();
+                final int fullH = outerRoot.getHeight();
+                final float startRad = dp(36);
+
+                final View expand = new View(QuickPlayActivity.this);
+                final GradientDrawable expandBg = round(cSurface, 36);
+                expand.setBackground(expandBg);
+                final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(startW, startH);
+                lp.leftMargin = startL;
+                lp.topMargin = startT;
+                outerRoot.addView(expand, lp);
+                card.setVisibility(View.INVISIBLE);
+
+                // Pha 2: phóng to khối màu nền từ vị trí sheet phủ toàn màn hình rồi mở app chính
+                ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
+                va.setDuration(240);
+                va.setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f));
+                va.addUpdateListener(an -> {
+                    float t = (float) an.getAnimatedValue();
+                    lp.leftMargin = Math.round(startL * (1f - t));
+                    lp.topMargin = Math.round(startT * (1f - t));
+                    lp.width = Math.round(startW + (fullW - startW) * t);
+                    lp.height = Math.round(startH + (fullH - startH) * t);
+                    expandBg.setCornerRadius(startRad * (1f - t));
+                    expand.setLayoutParams(lp);
+                });
+                va.addListener(new android.animation.AnimatorListenerAdapter() {
+                    @Override public void onAnimationEnd(android.animation.Animator animation) {
+                        try { startActivity(i); } catch (Throwable ignored) {}
+                        overridePendingTransition(0, 0);
+                        finishQuickTask();
+                    }
+                });
+                va.start();
+            }, 115);
+            return;
+        }
+
         startActivity(i);
+        overridePendingTransition(0, 0);
         finishQuickTask();
     }
 
