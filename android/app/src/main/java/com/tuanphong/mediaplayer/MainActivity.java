@@ -155,13 +155,30 @@ public class MainActivity extends Activity {
     private static final String CRASH_PREFS = "crash_report";
     private static volatile boolean selfDestructing = false;
 
+    private static boolean wasPlayingBeforeCrash(Context ctx) {
+        if (ctx == null) return false;
+        try {
+            if (NativeAudio.isCurrentlyPlaying()) return true;
+        } catch (Throwable ignored) {}
+        try {
+            String raw = ctx.getSharedPreferences("native_session_backup", MODE_PRIVATE).getString("session_json", "");
+            if (raw != null && !raw.isEmpty()) {
+                JSONObject o = new JSONObject(raw);
+                if (o.optBoolean("pwr", false)) return true;
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
     static void recordCrashSync(Context ctx, String code, String reason) {
         if (ctx == null) return;
         try {
+            boolean wasPlaying = wasPlayingBeforeCrash(ctx);
             ctx.getSharedPreferences(CRASH_PREFS, MODE_PRIVATE).edit()
                     .putString("code", code == null ? "BG_UNKNOWN_KILL" : code)
                     .putString("reason", reason == null ? "" : reason)
                     .putLong("ts", System.currentTimeMillis())
+                    .putBoolean("was_playing", wasPlaying)
                     .putBoolean("clean_exit", false)
                     .commit();
         } catch (Throwable ignored) {}
@@ -209,8 +226,8 @@ public class MainActivity extends Activity {
     static void triggerBackgroundSelfDestruct(Context ctx, String code, String reason) {
         if (ctx == null || selfDestructing) return;
         selfDestructing = true;
-        try { NativeAudio.release(); } catch (Throwable ignored) {}
         try { recordCrashSync(ctx, code, reason); } catch (Throwable ignored) {}
+        try { NativeAudio.release(); } catch (Throwable ignored) {}
         try { MediaWidgetProvider.resetToIdle(ctx); } catch (Throwable ignored) {}
         try { MediaWidgetProvider.resetWidgetColors(ctx); } catch (Throwable ignored) {}
         try { ctx.stopService(new Intent(ctx, MediaService.class)); } catch (Throwable ignored) {}
@@ -3577,7 +3594,9 @@ public class MainActivity extends Activity {
                 if (code == null || code.isEmpty()) return "";
                 String reason = sp.getString("reason", "");
                 long ts = sp.getLong("ts", 0L);
-                sp.edit().remove("code").remove("reason").remove("ts").apply();
+                boolean wasPlaying = sp.getBoolean("was_playing", false);
+                sp.edit().remove("code").remove("reason").remove("ts").remove("was_playing").apply();
+                if (!wasPlaying) return "";
                 JSONObject o = new JSONObject();
                 o.put("code", code);
                 o.put("reason", reason == null ? "" : reason);
