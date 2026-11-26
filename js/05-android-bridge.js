@@ -229,6 +229,10 @@
                     // Dialog của Material Web (md-dialog) nằm trong top layer nên luôn nằm trên mọi thứ khác -> đóng trước
                     const mdTop = window.__mdTopDialog && window.__mdTopDialog();
                     if (mdTop) { try { mdTop.close(); } catch (e) { mdTop.open = false; } return true; }
+                    // Bottom sheet tùy chọn / thông tin bài hát (z-index 9400–9600) nằm trên trình phát & playlist -> đóng trước
+                    if (typeof window.__closeSongSheet === 'function' && window.__closeSongSheet()) {
+                        return true;
+                    }
                     const stSheet = document.getElementById('st-sheet');
                     if (stSheet && (stSheet.classList.contains('open') || stSheet.classList.contains('show'))) {
                         stSheet.classList.remove('show');
@@ -357,6 +361,12 @@
                     if (document.body.classList.contains('screen-animating')) return null;
                     const md = window.__mdTopDialog && window.__mdTopDialog();
                     if (md) return (md.shadowRoot && md.shadowRoot.querySelector('.container')) || md;
+                    const ssSound = document.getElementById('ss-sound-dlg');
+                    if (ssSound && ssSound.classList.contains('open')) return ssSound.querySelector('.ssd-card') || ssSound;
+                    const ssPl = document.getElementById('ss-pl-screen');
+                    if (ssPl && ssPl.classList.contains('open')) return ssPl;
+                    const ssRoot = document.getElementById('ss-root');
+                    if (ssRoot && ssRoot.classList.contains('open')) return ssRoot.querySelector('#ss-box') || ssRoot;
                     const sh = document.getElementById('st-sheet');
                     if (sh && (sh.classList.contains('open') || sh.classList.contains('show'))) return sh.querySelector('.st-sheet-box');
                     const ov = Array.from(document.querySelectorAll('.cl-overlay.open, dialog[open]')).filter(visible).sort((a, b) => z(b) - z(a))[0];
@@ -1243,7 +1253,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_26_pldrag', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_26_song_sheet_back', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
