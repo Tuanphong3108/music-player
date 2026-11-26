@@ -612,48 +612,57 @@ public class QuickPlayActivity extends Activity {
 
         LinearLayout optRow1 = new LinearLayout(this);
         optRow1.setOrientation(LinearLayout.HORIZONTAL);
-        optPlayBtn = makeOptionPill(vi ? "Tạm dừng" : "Pause", 58, true);
+        optPlayBtn = makeOptionPill(vi ? "Tạm dừng" : "Pause", 74, true);
+        setPillIcon(optPlayBtn, R.drawable.ic_opt_pause, cOnPlayBtn);
         optPlayBtn.setOnClickListener(v -> {
             if (player == null) return;
             if (ended || player.getPlaybackState() == Player.STATE_ENDED) { player.seekTo(0); ended = false; player.play(); return; }
             if (player.isPlaying()) player.pause(); else player.play();
         });
-        optShareBtn = makeOptionPill(vi ? "Chia sẻ" : "Share", 58, false);
-        optShareBtn.setOnClickListener(v -> shareCurrentUri());
-        LinearLayout.LayoutParams or1a = new LinearLayout.LayoutParams(0, dp(58), 1.15f);
-        LinearLayout.LayoutParams or1b = new LinearLayout.LayoutParams(0, dp(58), 0.85f);
-        or1b.leftMargin = dp(8);
-        optRow1.addView(optPlayBtn, or1a);
-        optRow1.addView(optShareBtn, or1b);
-        optionsPane.addView(optRow1, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        LinearLayout optRow2 = new LinearLayout(this);
-        optRow2.setOrientation(LinearLayout.HORIZONTAL);
-        optRestartBtn = makeOptionPill(vi ? "Phát lại từ đầu" : "Restart", 54, false);
+        // Nút chỉ có icon giống hàng Phát / Chia sẻ trong menu Options của app: Phát lại từ đầu + Chia sẻ
+        optRestartBtn = makeOptionPill("", 74, false);
+        optRestartBtn.setPadding(0, 0, 0, 0);
+        optRestartBtn.setContentDescription(vi ? "Phát lại từ đầu" : "Restart");
+        setPillIcon(optRestartBtn, R.drawable.ic_opt_restart, cOnSecBtn);
         optRestartBtn.setOnClickListener(v -> {
             if (player == null) return;
             player.seekTo(0); ended = false;
             if (!player.isPlaying()) player.play();
             toggleInfo(false);
         });
-        optLoopBtn = makeOptionPill(vi ? "Lặp 1 bài: Tắt" : "Loop: Off", 54, false);
+        optShareBtn = makeOptionPill("", 74, false);
+        optShareBtn.setPadding(0, 0, 0, 0);
+        optShareBtn.setContentDescription(vi ? "Chia sẻ" : "Share");
+        setPillIcon(optShareBtn, R.drawable.ic_opt_share, cOnSecBtn);
+        optShareBtn.setOnClickListener(v -> shareCurrentUri());
+        LinearLayout.LayoutParams or1a = new LinearLayout.LayoutParams(0, dp(74), 1f);
+        LinearLayout.LayoutParams or1r = new LinearLayout.LayoutParams(dp(74), dp(74));
+        or1r.leftMargin = dp(8);
+        LinearLayout.LayoutParams or1b = new LinearLayout.LayoutParams(dp(74), dp(74));
+        or1b.leftMargin = dp(8);
+        optRow1.addView(optPlayBtn, or1a);
+        optRow1.addView(optRestartBtn, or1r);
+        optRow1.addView(optShareBtn, or1b);
+        optionsPane.addView(optRow1, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout optRow2 = new LinearLayout(this);
+        optRow2.setOrientation(LinearLayout.HORIZONTAL);
+        optLoopBtn = makeOptionPill(vi ? "Lặp 1 bài: Tắt" : "Loop one: Off", 64, false);
+        setPillIcon(optLoopBtn, R.drawable.ic_opt_loop, cOnSecBtn);
         optLoopBtn.setOnClickListener(v -> {
             loopOne = !loopOne;
             if (player != null) player.setRepeatMode(loopOne ? Player.REPEAT_MODE_ONE : Player.REPEAT_MODE_OFF);
             syncDetailsStyles();
         });
-        LinearLayout.LayoutParams or2a = new LinearLayout.LayoutParams(0, dp(54), 1f);
-        LinearLayout.LayoutParams or2b = new LinearLayout.LayoutParams(0, dp(54), 1f);
-        or2b.leftMargin = dp(8);
-        optRow2.addView(optRestartBtn, or2a);
-        optRow2.addView(optLoopBtn, or2b);
+        optRow2.addView(optLoopBtn, new LinearLayout.LayoutParams(0, dp(64), 1f));
         LinearLayout.LayoutParams or2Lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         or2Lp.topMargin = dp(8);
         optionsPane.addView(optRow2, or2Lp);
 
-        optOpenFullBtn = makeOptionPill(vi ? "Mở trình phát đầy đủ" : "Open full player", 56, true);
+        optOpenFullBtn = makeOptionPill(vi ? "Mở trình phát đầy đủ" : "Open full player", 64, true);
+        setPillIcon(optOpenFullBtn, R.drawable.ic_opt_open_full, cOnOpenBtn);
         optOpenFullBtn.setOnClickListener(v -> openFullPlayer());
-        LinearLayout.LayoutParams or3Lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56));
+        LinearLayout.LayoutParams or3Lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(64));
         or3Lp.topMargin = dp(8);
         optionsPane.addView(optOpenFullBtn, or3Lp);
 
@@ -896,6 +905,7 @@ public class QuickPlayActivity extends Activity {
         btnPlay.setBackground(round(cPlayBtn, playing ? 26 : 38));
         if (optPlayBtn != null) {
             optPlayBtn.setText(playing ? (vi ? "Tạm dừng" : "Pause") : (vi ? "Phát" : "Play"));
+            setPillIcon(optPlayBtn, playing ? R.drawable.ic_opt_pause : R.drawable.ic_opt_play, cOnPlayBtn);
         }
     }
 
@@ -910,6 +920,19 @@ public class QuickPlayActivity extends Activity {
         btnInfo.setBackground(round(infoOpen ? cPlayBtn : cSecBtn, 18));
         btnInfoIcon.setImageResource(infoOpen ? R.drawable.ic_qp_back : R.drawable.ic_qp_info);
         btnInfoIcon.setColorFilter(infoOpen ? cOnPlayBtn : cOnSecBtn);
+    }
+
+    /** Gắn icon vector (đã tải từ Material Symbols Rounded) vào nút Options, tô màu theo chủ đề. */
+    private void setPillIcon(TextView tv, int res, int color) {
+        if (tv == null) return;
+        android.graphics.drawable.Drawable d = androidx.core.content.ContextCompat.getDrawable(this, res);
+        if (d == null) return;
+        d = d.mutate();
+        int sz = dp(24);
+        d.setBounds(0, 0, sz, sz);
+        d.setTint(color);
+        tv.setCompoundDrawablesRelative(d, null, null, null);
+        tv.setCompoundDrawablePadding(tv.getText() != null && tv.getText().length() > 0 ? dp(10) : 0);
     }
 
     private TextView makeOptionPill(String label, int heightDp, boolean roundedFont) {
@@ -938,25 +961,28 @@ public class QuickPlayActivity extends Activity {
             tabInfoBtn.setTextColor(detailsShowInfo ? cOnPlayBtn : cOnSurface);
         }
         if (optPlayBtn != null) {
-            optPlayBtn.setBackground(round(cPlayBtn, 26));
+            optPlayBtn.setBackground(round(cPlayBtn, 28));
             optPlayBtn.setTextColor(cOnPlayBtn);
+            setPillIcon(optPlayBtn, (player != null && player.getPlayWhenReady() && !ended && player.getPlaybackState() != Player.STATE_ENDED) ? R.drawable.ic_opt_pause : R.drawable.ic_opt_play, cOnPlayBtn);
         }
         if (optShareBtn != null) {
-            optShareBtn.setBackground(round(cSecBtn, 26));
-            optShareBtn.setTextColor(cOnSecBtn);
+            optShareBtn.setBackground(round(cSecBtn, 37));
+            setPillIcon(optShareBtn, R.drawable.ic_opt_share, cOnSecBtn);
         }
         if (optRestartBtn != null) {
             optRestartBtn.setBackground(round(cSecBtn, 26));
-            optRestartBtn.setTextColor(cOnSecBtn);
+            setPillIcon(optRestartBtn, R.drawable.ic_opt_restart, cOnSecBtn);
         }
         if (optLoopBtn != null) {
-            optLoopBtn.setText(loopOne ? (vi ? "Lặp 1 bài: Bật" : "Loop: On") : (vi ? "Lặp 1 bài: Tắt" : "Loop: Off"));
-            optLoopBtn.setBackground(round(loopOne ? cPlayBtn : cSecBtn, 26));
+            optLoopBtn.setText(loopOne ? (vi ? "Lặp 1 bài: Bật" : "Loop one: On") : (vi ? "Lặp 1 bài: Tắt" : "Loop one: Off"));
+            optLoopBtn.setBackground(round(loopOne ? cPlayBtn : cSecBtn, loopOne ? 30 : 26));
             optLoopBtn.setTextColor(loopOne ? cOnPlayBtn : cOnSecBtn);
+            setPillIcon(optLoopBtn, R.drawable.ic_opt_loop, loopOne ? cOnPlayBtn : cOnSecBtn);
         }
         if (optOpenFullBtn != null) {
             optOpenFullBtn.setBackground(round(cOpenBtn, 28));
             optOpenFullBtn.setTextColor(cOnOpenBtn);
+            setPillIcon(optOpenFullBtn, R.drawable.ic_opt_open_full, cOnOpenBtn);
         }
     }
 
