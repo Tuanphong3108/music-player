@@ -916,6 +916,19 @@ final class NativeAudio {
         } catch (Throwable ignored) {}
     }
 
+    static boolean isCurrentlyPlaying() {
+        try {
+            if (p != null && loaded && p.getPlayWhenReady() && p.getPlaybackState() != Player.STATE_ENDED && p.getPlaybackState() != Player.STATE_IDLE) {
+                return true;
+            }
+        } catch (Throwable ignored) {}
+        try {
+            JSONObject ls = new JSONObject(lastSnap);
+            return ls.optBoolean("pwr", false);
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
     /** Khớp trạng thái 0.5s: lưu snapshot phục hồi + đồng bộ hàng đợi/shuffle/repeat/sleep nếu WebView gửi lệch hoặc lúc WebView đang chết ở nền. */
     private static void matchStateEveryHalfSec() {
         long nowElapsed = SystemClock.elapsedRealtime();
