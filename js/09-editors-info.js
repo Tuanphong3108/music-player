@@ -521,6 +521,27 @@
             document.getElementById('metadata-loading-overlay').style.display = 'none';
             metadataIframe.style.right = '0';
         }
+        window.__isMetadataEditorOpen = function () {
+            if (!metadataIframe) return false;
+            const r = metadataIframe.style.right;
+            return r === '0' || r === '0px';
+        };
+        window.__handleMetadataEditorBack = function () {
+            if (!window.__isMetadataEditorOpen()) return false;
+            try {
+                const cw = metadataIframe.contentWindow;
+                if (cw && typeof cw.__metaAndroidBack === 'function') {
+                    cw.__metaAndroidBack();
+                    return true;
+                }
+                if (cw) {
+                    cw.postMessage({ type: 'androidBack' }, '*');
+                    return true;
+                }
+            } catch (e) {}
+            metadataIframe.style.right = 'calc(-1 * var(--vw))';
+            return true;
+        };
 
         function sendLoadDataToEditor() {
             const track = playlist[currentIndex];
