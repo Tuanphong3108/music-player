@@ -1784,8 +1784,8 @@
                         artImg.classList.remove('hidden');
                         artPlaceholder.classList.add('hidden');
                         bgPreview.style.backgroundImage = `url(${track.cover})`;
-                        refreshDynamicAccent(track);
                     }
+                    if (typeof refreshDynamicAccent === 'function') refreshDynamicAccent(track);
                     renderLyrics();
                     if (typeof syncLyrics === 'function') syncLyrics();
                     updatePlaylistUI();
@@ -2018,6 +2018,13 @@
             const track = playlist[currentIndex];
             trackNameEl.innerText = track.name;
             trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
+            if (track.cover) {
+                if (artImg.getAttribute('src') !== track.cover) artImg.src = track.cover;
+                artImg.classList.remove('hidden');
+                artPlaceholder.classList.add('hidden');
+                bgPreview.style.backgroundImage = `url(${track.cover})`;
+            }
+            if (typeof refreshDynamicAccent === 'function') refreshDynamicAccent(track);
             
             renderLyrics();
             applyMarquee();
