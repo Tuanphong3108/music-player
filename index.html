@@ -2187,6 +2187,7 @@
             }
 
             if (d && typeof d === 'object' && d.type === 'openLrcSearch') { document.getElementById('btnSearchLrc').click(); return; }
+            if (d && typeof d === 'object' && d.type === 'androidBack') { handleMetaBack(); return; }
 
             if (d && typeof d === 'object' && d.type === 'load') {
               subMode = !!d.video;
