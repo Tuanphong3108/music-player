@@ -36,6 +36,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.core.graphics.Insets;
@@ -55,6 +56,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,11 +74,18 @@ public class QuickPlayActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private WavySeek seek;
     private TextView tvTitle, tvArtist, tvAlbum, tvPos, tvDur, btnOpen;
-    private ImageView art, artNote, btnPlayIcon;
-    private View btnPlay, btnPrev, btnNext, card;
+    private ImageView art, artNote, btnPlayIcon, btnInfoIcon;
+    private View btnPlay, btnPrev, btnNext, btnInfo, card;
+    private LinearLayout playerPane, infoList;
+    private ScrollView infoScroll;
     private long fallbackDur = 0;
     private boolean mainChecked = false, mainWasPlaying = false, mainResumed = false;
-    private boolean vi, dark, handedOff = false, ended = false, closing = false, cueRebuilt = false;
+    private boolean vi, dark, handedOff = false, ended = false, closing = false, cueRebuilt = false, infoOpen = false;
+    private String metaTitle = "", metaArtist = "", metaAlbum = "", metaComposer = "", metaYear = "";
+    private String metaMime = "", metaExt = "", metaPath = "", metaRealFmt = "", metaFmtShort = "";
+    private boolean metaExtMismatch = false;
+    private long metaSize = -1L, metaModified = 0L;
+    private int metaSampleRate = 0, metaBitrateKbps = 0;
     private Typeface gsfRegular, gsfBold, gsfRoundedBold;
     private boolean prefDyn = false, prefGlass = false;   // "Đổi màu theo Album Art" và "Kính mờ (Blur)" lấy từ cài đặt trong app
     private View handleView, artBoxView;
@@ -109,7 +121,10 @@ public class QuickPlayActivity extends Activity {
     private void setupBackCallback() {
         if (Build.VERSION.SDK_INT < 33) return;
         try {
-            android.window.OnBackInvokedCallback cb = this::dismissSheet;
+            android.window.OnBackInvokedCallback cb = () -> {
+                if (infoOpen) toggleInfo(false);
+                else dismissSheet();
+            };
             backCallback = cb;
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                     android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, cb);
@@ -125,6 +140,8 @@ public class QuickPlayActivity extends Activity {
         uri = u;
         ended = false;
         closing = false;
+        cueRebuilt = false;
+        toggleInfo(false);
         player.setMediaItem(MediaItem.fromUri(uri));
         player.prepare();
         player.play();
@@ -247,6 +264,8 @@ public class QuickPlayActivity extends Activity {
         btnPlayIcon.setColorFilter(cOnPlayBtn);
         syncPlayIcon();
         btnOpen.setBackground(round(cOpenBtn, 28)); btnOpen.setTextColor(cOnOpenBtn);
+        syncInfoButton();
+        if (infoOpen) renderInfoCards();
         seek.recolor(cPrimary, cTrack);
     }
 
@@ -408,6 +427,7 @@ public class QuickPlayActivity extends Activity {
         applyTextStyle(tvPos, false, false);
         applyTextStyle(tvDur, false, false);
         applyTextStyle(btnOpen, true, true);
+        if (infoOpen) renderInfoCards();
     }
 
     private int dp(float v) { return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics())); }
@@ -434,13 +454,25 @@ public class QuickPlayActivity extends Activity {
         if (getResources().getDisplayMetrics().widthPixels > dp(600)) clp.width = dp(520);
         root.addView(card, clp);
 
-        // Tay nắm: kéo xuống để đóng
+        // Tay nắm (giữa) + nút Info (góc phải trên)
         View handle = new View(this);
         handle.setBackground(round(cTrack, 4));
         handleView = handle;
         FrameLayout handleBox = new FrameLayout(this);
         handleBox.addView(handle, new FrameLayout.LayoutParams(dp(36), dp(4), Gravity.CENTER));
-        col.addView(handleBox, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(24)));
+        FrameLayout infoBtnWrap = new FrameLayout(this);
+        infoBtnWrap.setClickable(true);
+        infoBtnWrap.setContentDescription(vi ? "Thông tin" : "Info");
+        btnInfoIcon = new ImageView(this);
+        btnInfoIcon.setImageResource(R.drawable.ic_qp_info);
+        infoBtnWrap.addView(btnInfoIcon, new FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER));
+        btnInfo = infoBtnWrap;
+        syncInfoButton();
+        btnInfo.setOnClickListener(v -> toggleInfo(!infoOpen));
+        handleBox.addView(btnInfo, new FrameLayout.LayoutParams(dp(34), dp(34), Gravity.END | Gravity.CENTER_VERTICAL));
+        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(36));
+        hlp.bottomMargin = dp(4);
+        col.addView(handleBox, hlp);
         attachDragToDismiss(handleBox);
 
         // Hàng ảnh bìa + chữ
@@ -487,11 +519,16 @@ public class QuickPlayActivity extends Activity {
         texts.addView(tvArtist, alp);
         texts.addView(tvAlbum);
 
+        // Khối điều khiển phát (ẩn khi mở bảng Thông tin)
+        playerPane = new LinearLayout(this);
+        playerPane.setOrientation(LinearLayout.VERTICAL);
+        col.addView(playerPane, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
         // Thanh tua dạng sóng (dấu gạch dọc đứng yên theo trục Y giống WebView)
         seek = new WavySeek(this);
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(36));
         slp.topMargin = dp(18);
-        col.addView(seek, slp);
+        playerPane.addView(seek, slp);
         seek.listener = (frac, fin) -> {
             long d = durationMs();
             if (d <= 0) return;
@@ -512,7 +549,7 @@ public class QuickPlayActivity extends Activity {
         times.addView(sp, new LinearLayout.LayoutParams(0, 1, 1f));
         times.addView(tvDur);
         times.setPadding(dp(4), 0, dp(4), 0);
-        col.addView(times, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        playerPane.addView(times, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         // Điều khiển
         LinearLayout ctr = new LinearLayout(this);
@@ -520,7 +557,7 @@ public class QuickPlayActivity extends Activity {
         ctr.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams ctrLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(76));
         ctrLp.topMargin = dp(20);
-        col.addView(ctr, ctrLp);
+        playerPane.addView(ctr, ctrLp);
 
         btnPrev = ctlButton(R.drawable.ic_qp_prev, cSecBtn, cOnSecBtn, 38);
         btnPlay = ctlButton(R.drawable.ic_qp_pause, cPlayBtn, cOnPlayBtn, 26);
@@ -549,7 +586,19 @@ public class QuickPlayActivity extends Activity {
         btnOpen.setOnClickListener(v -> openFullPlayer());
         LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56));
         olp.topMargin = dp(20);
-        col.addView(btnOpen, olp);
+        playerPane.addView(btnOpen, olp);
+
+        // Khối Thông tin (thẻ nhóm bo góc MD3 Expressive giống tab INFO của Media Player)
+        infoScroll = new ScrollView(this);
+        infoScroll.setVerticalScrollBarEnabled(false);
+        infoScroll.setVisibility(View.GONE);
+        infoList = new LinearLayout(this);
+        infoList.setOrientation(LinearLayout.VERTICAL);
+        infoScroll.addView(infoList, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        int maxInfoH = Math.min(dp(380), Math.round(getResources().getDisplayMetrics().heightPixels * 0.52f));
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, maxInfoH);
+        ilp.topMargin = dp(16);
+        col.addView(infoScroll, ilp);
 
         setContentView(root);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, wi) -> {
@@ -761,16 +810,163 @@ public class QuickPlayActivity extends Activity {
         return h > 0 ? String.format(Locale.US, "%d:%02d:%02d", h, m, sec) : String.format(Locale.US, "%02d:%02d", m, sec);
     }
 
+    private void syncInfoButton() {
+        if (btnInfo == null || btnInfoIcon == null) return;
+        btnInfo.setBackground(round(infoOpen ? cPlayBtn : cSecBtn, 18));
+        btnInfoIcon.setImageResource(infoOpen ? R.drawable.ic_qp_back : R.drawable.ic_qp_info);
+        btnInfoIcon.setColorFilter(infoOpen ? cOnPlayBtn : cOnSecBtn);
+    }
+
+    private void toggleInfo(boolean show) {
+        if (infoOpen == show) return;
+        infoOpen = show;
+        syncInfoButton();
+        if (playerPane != null) playerPane.setVisibility(show ? View.GONE : View.VISIBLE);
+        if (infoScroll != null) {
+            infoScroll.setVisibility(show ? View.VISIBLE : View.GONE);
+            if (show) {
+                renderInfoCards();
+                infoScroll.scrollTo(0, 0);
+            }
+        }
+    }
+
+    private GradientDrawable round4(int color, float tlDp, float trDp, float brDp, float blDp) {
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(color);
+        float tl = dp(tlDp), tr = dp(trDp), br = dp(brDp), bl = dp(blDp);
+        g.setCornerRadii(new float[]{tl, tl, tr, tr, br, br, bl, bl});
+        return g;
+    }
+
+    private void renderInfoCards() {
+        if (infoList == null) return;
+        infoList.removeAllViews();
+        String unknown = vi ? "Không rõ" : "Unknown";
+        List<String[]> rows = new ArrayList<>();
+
+        // 1. Định dạng tệp & dung lượng
+        String fileLabel = !empty(metaMime) ? metaMime : ((vi ? "Tệp" : "File") + (empty(metaExt) ? "" : " ." + metaExt.toUpperCase(Locale.US)));
+        String sizeVal = metaSize >= 0
+                ? String.format(vi ? new Locale("vi", "VN") : Locale.US, "%.2f MB", metaSize / (1024.0 * 1024.0))
+                : unknown;
+        rows.add(new String[]{fileLabel, sizeVal});
+
+        // 2. Định dạng theo cấu trúc tệp
+        StringBuilder structSb = new StringBuilder(!empty(metaRealFmt) ? metaRealFmt : unknown);
+        if (metaExtMismatch && !empty(metaExt)) {
+            structSb.append(" • ").append(vi ? ("khác đuôi ." + metaExt) : ("differs from ." + metaExt));
+        }
+        if (player != null && !player.isCurrentMediaItemSeekable()) {
+            structSb.append(" • ").append(vi ? "Không hỗ trợ tua" : "Unseekable");
+        }
+        rows.add(new String[]{vi ? "Định dạng theo cấu trúc tệp" : "Format by file structure", structSb.toString()});
+
+        // 3. File Path
+        if (!empty(metaPath)) {
+            rows.add(new String[]{"File Path", metaPath});
+        }
+
+        // 4. Chất lượng âm thanh
+        if (metaSampleRate > 0 || metaBitrateKbps > 0) {
+            List<String> qParts = new ArrayList<>();
+            if (metaSampleRate > 0) {
+                double khz = metaSampleRate / 1000.0;
+                qParts.add((khz == Math.floor(khz) ? String.format(Locale.US, "%.0f", khz) : String.format(Locale.US, "%.1f", khz)) + " kHz");
+            }
+            if (metaBitrateKbps > 0) qParts.add(metaBitrateKbps + " kbps");
+            if (!empty(metaFmtShort)) qParts.add(metaFmtShort);
+            rows.add(new String[]{vi ? "Chất lượng âm thanh" : "Audio quality", TextUtils.join(" • ", qParts)});
+        }
+
+        // 5. Ngày sửa đổi
+        if (metaModified > 0) {
+            String modStr = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT,
+                    vi ? new Locale("vi", "VN") : Locale.US).format(new Date(metaModified));
+            rows.add(new String[]{vi ? "Ngày sửa đổi" : "Date modified", modStr});
+        }
+
+        // 6. Thời lượng
+        rows.add(new String[]{vi ? "Thời lượng" : "Duration", fmt(durationMs())});
+
+        // 7. Metadata bài hát
+        rows.add(new String[]{vi ? "Tên bài hát" : "Title", !empty(metaTitle) ? metaTitle : unknown});
+        rows.add(new String[]{vi ? "Nghệ sĩ" : "Artist", !empty(metaArtist) ? metaArtist : unknown});
+        rows.add(new String[]{vi ? "Đĩa nhạc" : "Album", !empty(metaAlbum) ? metaAlbum : unknown});
+        rows.add(new String[]{vi ? "Nhà soạn nhạc" : "Composer", !empty(metaComposer) ? metaComposer : unknown});
+        if (!empty(metaYear)) {
+            rows.add(new String[]{vi ? "Năm" : "Year", metaYear});
+        }
+
+        int cardBg = blendColors(cSurface, cTrack, 0.42f);
+        int count = rows.size();
+        for (int i = 0; i < count; i++) {
+            String[] pair = rows.get(i);
+            LinearLayout item = new LinearLayout(this);
+            item.setOrientation(LinearLayout.VERTICAL);
+            item.setPadding(dp(18), dp(13), dp(18), dp(13));
+            float topR = (i == 0) ? 22f : 6f;
+            float botR = (i == count - 1) ? 22f : 6f;
+            item.setBackground(round4(cardBg, topR, topR, botR, botR));
+
+            TextView lbl = text(14, cOnSurface, true, false);
+            lbl.setText(pair[0]);
+            TextView val = text(13, cOnVariant, false, false);
+            val.setText(pair[1]);
+            val.setTextIsSelectable(true);
+            LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            vlp.topMargin = dp(2);
+
+            item.addView(lbl);
+            item.addView(val, vlp);
+
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (i > 0) rlp.topMargin = dp(3);
+            infoList.addView(item, rlp);
+        }
+    }
+
     private void loadMetaAsync() {
         final Uri u = uri;
         final Context ctx = getApplicationContext();
-        tvTitle.setText(displayName(u));
+        final String fallbackTitle = displayName(u);
+        tvTitle.setText(fallbackTitle);
         tvArtist.setText(vi ? "Không rõ nghệ sĩ" : "Unknown Artist");
         tvAlbum.setText(vi ? "Không rõ album" : "Unknown Album");
+        metaTitle = fallbackTitle; metaArtist = ""; metaAlbum = ""; metaComposer = ""; metaYear = "";
+        metaMime = ""; metaExt = ""; metaPath = ""; metaRealFmt = ""; metaFmtShort = "";
+        metaExtMismatch = false; metaSize = -1L; metaModified = 0L; metaSampleRate = 0; metaBitrateKbps = 0;
         new Thread(() -> {
-            String title = null, artist = null, album = null;
-            long dur = 0;
+            String title = null, artist = null, album = null, composer = null, year = null, mime = null;
+            long dur = 0, size = -1L, mod = 0L;
+            int sr = 0, kbps = 0;
             Bitmap bmp = null;
+
+            String fullName = null;
+            try (Cursor c = ctx.getContentResolver().query(u, new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE}, null, null, null)) {
+                if (c != null && c.moveToFirst()) {
+                    fullName = c.getString(0);
+                    int sIdx = c.getColumnIndex(OpenableColumns.SIZE);
+                    if (sIdx >= 0 && !c.isNull(sIdx)) size = c.getLong(sIdx);
+                }
+            } catch (Throwable ignored) {}
+            String pathStr = "";
+            if ("file".equalsIgnoreCase(u.getScheme()) && u.getPath() != null) {
+                File f = new File(u.getPath());
+                pathStr = f.getAbsolutePath();
+                if (size < 0 && f.isFile()) size = f.length();
+                if (f.isFile()) mod = f.lastModified();
+                if (empty(fullName)) fullName = f.getName();
+            } else {
+                pathStr = u.toString();
+            }
+            String ext = "";
+            if (!empty(fullName)) {
+                int dot = fullName.lastIndexOf('.');
+                if (dot > 0 && dot < fullName.length() - 1) ext = fullName.substring(dot + 1).toLowerCase(Locale.US);
+            }
+            try { mime = ctx.getContentResolver().getType(u); } catch (Throwable ignored) {}
+
             MediaMetadataRetriever r = new MediaMetadataRetriever();
             try {
                 r.setDataSource(ctx, u);
@@ -778,8 +974,25 @@ public class QuickPlayActivity extends Activity {
                 artist = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
                 if (empty(artist)) artist = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
                 album = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+                composer = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPOSER);
+                if (empty(composer)) composer = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_WRITER);
+                year = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR);
+                if (empty(year)) {
+                    String dt = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE);
+                    if (dt != null && dt.trim().length() >= 4) year = dt.trim().substring(0, 4);
+                }
+                if (empty(mime)) mime = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
                 String ds = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                 if (ds != null) dur = Long.parseLong(ds.trim());
+                String brs = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
+                if (brs != null) {
+                    int bVal = Integer.parseInt(brs.trim());
+                    if (bVal > 0) kbps = Math.round(bVal / 1000f);
+                }
+                if (Build.VERSION.SDK_INT >= 31) {
+                    String srs = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE);
+                    if (srs != null) sr = Integer.parseInt(srs.trim());
+                }
                 byte[] pic = r.getEmbeddedPicture();
                 if (pic != null && pic.length > 0) {
                     BitmapFactory.Options o = new BitmapFactory.Options();
@@ -793,18 +1006,130 @@ public class QuickPlayActivity extends Activity {
                 }
             } catch (Throwable ignored) {
             } finally { try { r.release(); } catch (Throwable ignored) {} }
-            final String ft = title, fa = artist, fl = album; final long fd = dur; final Bitmap fb = bmp;
+
+            // Đọc header tệp để nhận diện định dạng theo cấu trúc thật
+            String realFmt = "";
+            String fmtShort = ext.toUpperCase(Locale.US);
+            boolean mismatch = false;
+            try (InputStream in = ctx.getContentResolver().openInputStream(u)) {
+                if (in != null) {
+                    byte[] head = new byte[65536];
+                    int read = 0, n;
+                    while (read < head.length && (n = in.read(head, read, head.length - read)) > 0) read += n;
+                    if (read >= 12) {
+                        String s0 = new String(head, 0, Math.min(read, 16), java.nio.charset.StandardCharsets.ISO_8859_1);
+                        if ((head[0] & 0xFF) == 0x1A && (head[1] & 0xFF) == 0x45 && (head[2] & 0xFF) == 0xDF && (head[3] & 0xFF) == 0xA3) {
+                            String txt = new String(head, 0, Math.min(read, 16384), java.nio.charset.StandardCharsets.ISO_8859_1);
+                            boolean isWebm = txt.toLowerCase(Locale.US).contains("webm");
+                            String cont = isWebm ? "WebM" : "Matroska (MKV/MKA)";
+                            String codec = "";
+                            if (txt.contains("A_OPUS")) { codec = "Opus"; if (sr <= 0) sr = 48000; }
+                            else if (txt.contains("A_VORBIS")) codec = "Vorbis";
+                            else if (txt.contains("A_AAC")) codec = "AAC";
+                            else if (txt.contains("A_MPEG/L3")) codec = "MP3";
+                            else if (txt.contains("A_FLAC")) codec = "FLAC";
+                            else if (txt.contains("A_PCM")) codec = "PCM";
+                            fmtShort = isWebm ? "WEBM" : "MKA";
+                            realFmt = codec.isEmpty() ? cont : (cont + " (" + codec + ")");
+                            mismatch = !empty(ext) && !(ext.equals("webm") || ext.equals("weba") || ext.equals("mkv") || ext.equals("mka"));
+                        } else if (s0.length() >= 8 && "ftyp".equals(s0.substring(4, 8))) {
+                            String brand = s0.length() >= 12 ? s0.substring(8, 12).trim() : "";
+                            boolean isM4a = "M4A".equalsIgnoreCase(brand) || "M4B".equalsIgnoreCase(brand);
+                            String cont = isM4a ? "M4A (MP4)" : ("MP4 (" + (brand.isEmpty() ? "ISO" : brand) + ")");
+                            String txt = new String(head, 0, read, java.nio.charset.StandardCharsets.ISO_8859_1);
+                            String codec = "";
+                            if (txt.contains("Opus") || txt.contains("dOps")) { codec = "Opus"; if (sr <= 0) sr = 48000; }
+                            else if (txt.contains("alac")) codec = "ALAC";
+                            else if (txt.contains("fLaC")) codec = "FLAC";
+                            else if (txt.contains("mp4a")) codec = "AAC";
+                            fmtShort = isM4a ? "M4A" : "MP4";
+                            realFmt = codec.isEmpty() ? cont : (cont + " • " + codec);
+                            mismatch = !empty(ext) && !(ext.equals("m4a") || ext.equals("mp4") || ext.equals("m4b") || ext.equals("aac") || ext.equals("3gp") || ext.equals("mov"));
+                        } else if (s0.startsWith("RIFF") && s0.length() >= 12 && "WAVE".equals(s0.substring(8, 12))) {
+                            fmtShort = "WAV"; realFmt = "WAV (RIFF/PCM)";
+                            mismatch = !empty(ext) && !(ext.equals("wav") || ext.equals("wave"));
+                        } else if (s0.startsWith("fLaC")) {
+                            fmtShort = "FLAC"; realFmt = "FLAC (Lossless)";
+                            if (sr <= 0 && read > 20) sr = ((head[18] & 0xFF) << 12) | ((head[19] & 0xFF) << 4) | ((head[20] & 0xFF) >> 4);
+                            mismatch = !empty(ext) && !ext.equals("flac");
+                        } else if (s0.startsWith("OggS")) {
+                            String txt = new String(head, 0, Math.min(read, 400), java.nio.charset.StandardCharsets.ISO_8859_1);
+                            if (txt.contains("OpusHead")) { fmtShort = "OPUS"; realFmt = "OGG (Opus)"; if (sr <= 0) sr = 48000; }
+                            else if (txt.contains("vorbis")) { fmtShort = "OGG"; realFmt = "OGG (Vorbis)"; }
+                            else { fmtShort = "OGG"; realFmt = "OGG"; }
+                            mismatch = !empty(ext) && !(ext.equals("ogg") || ext.equals("opus") || ext.equals("oga"));
+                        } else if (s0.startsWith("FORM") && s0.length() >= 12 && ("AIFF".equals(s0.substring(8, 12)) || "AIFC".equals(s0.substring(8, 12)))) {
+                            fmtShort = "AIFF"; realFmt = "AIFF";
+                            mismatch = !empty(ext) && !(ext.equals("aif") || ext.equals("aiff") || ext.equals("aifc"));
+                        } else if ((head[0] & 0xFF) == 0x30 && (head[1] & 0xFF) == 0x26 && (head[2] & 0xFF) == 0xB2 && (head[3] & 0xFF) == 0x75) {
+                            fmtShort = "WMA"; realFmt = "WMA (ASF)";
+                            mismatch = !empty(ext) && !(ext.equals("wma") || ext.equals("asf"));
+                        } else {
+                            boolean hasId3 = s0.startsWith("ID3");
+                            int off = hasId3 ? 10 + (((head[6] & 0x7F) << 21) | ((head[7] & 0x7F) << 14) | ((head[8] & 0x7F) << 7) | (head[9] & 0x7F)) : 0;
+                            if (off < read - 4) {
+                                for (int k = off; k < Math.min(read - 4, off + 8192); k++) {
+                                    int b0 = head[k] & 0xFF, b1 = head[k + 1] & 0xFF, b2 = head[k + 2] & 0xFF;
+                                    if (b0 == 0xFF && (b1 & 0xF6) == 0xF0) {
+                                        fmtShort = "AAC"; realFmt = "AAC (ADTS)";
+                                        mismatch = !empty(ext) && !(ext.equals("aac") || ext.equals("adts"));
+                                        break;
+                                    }
+                                    if (b0 == 0xFF && (b1 & 0xE0) == 0xE0) {
+                                        int ver = (b1 >> 3) & 3, layer = (b1 >> 1) & 3, bi = b2 >> 4, ri = (b2 >> 2) & 3;
+                                        if (ver == 1 || layer == 0 || bi == 0 || bi == 15 || ri == 3) continue;
+                                        String vName = ver == 3 ? "MPEG-1" : (ver == 2 ? "MPEG-2" : "MPEG-2.5");
+                                        String lName = layer == 1 ? "Layer III" : (layer == 2 ? "Layer II" : "Layer I");
+                                        fmtShort = layer == 1 ? "MP3" : (layer == 2 ? "MP2" : "MP1");
+                                        realFmt = fmtShort + " (" + vName + " " + lName + ")";
+                                        mismatch = !empty(ext) && !(ext.equals("mp3") || ext.equals("mp2") || ext.equals("mp1"));
+                                        break;
+                                    }
+                                }
+                            }
+                            if (realFmt.isEmpty() && hasId3) {
+                                fmtShort = "MP3"; realFmt = "MP3 (ID3)";
+                                mismatch = !empty(ext) && !ext.equals("mp3");
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+            if (kbps <= 0 && size > 0 && dur > 0) kbps = (int) Math.round((size * 8.0) / (dur / 1000.0) / 1000.0);
+
+            final String ft = title, fa = artist, fl = album, fc = composer, fy = year, fm = mime;
+            final String fExt = ext, fPath = pathStr, fRealFmt = realFmt, fFmtShort = fmtShort;
+            final boolean fMismatch = mismatch;
+            final long fd = dur, fSize = size, fMod = mod;
+            final int fSr = sr, fKbps = kbps;
+            final Bitmap fb = bmp;
             ui.post(() -> {
                 if (isDestroyed() || !u.equals(uri)) return;
                 if (!empty(ft)) tvTitle.setText(ft);
                 if (!empty(fa)) tvArtist.setText(fa);
                 if (!empty(fl)) tvAlbum.setText(fl);
                 fallbackDur = fd;
+                metaTitle = !empty(ft) ? ft : fallbackTitle;
+                metaArtist = fa == null ? "" : fa;
+                metaAlbum = fl == null ? "" : fl;
+                metaComposer = fc == null ? "" : fc;
+                metaYear = fy == null ? "" : fy;
+                metaMime = fm == null ? "" : fm;
+                metaExt = fExt;
+                metaPath = fPath;
+                metaRealFmt = fRealFmt;
+                metaFmtShort = fFmtShort;
+                metaExtMismatch = fMismatch;
+                metaSize = fSize;
+                metaModified = fMod;
+                metaSampleRate = fSr;
+                metaBitrateKbps = fKbps;
                 if (fb != null && prefDyn) {
                     try { applyPalette(paletteFromColor(dominantColor(fb), dark)); recolor(); } catch (Throwable ignored) {}
                 }
                 if (fb != null) { art.setImageBitmap(fb); artNote.setVisibility(View.GONE); }
                 else { art.setImageDrawable(null); artNote.setVisibility(View.VISIBLE); }
+                if (infoOpen) renderInfoCards();
             });
         }, "qp-meta").start();
     }
@@ -852,7 +1177,8 @@ public class QuickPlayActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        dismissSheet();
+        if (infoOpen) toggleInfo(false);
+        else dismissSheet();
     }
 
     @Override
