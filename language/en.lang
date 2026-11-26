@@ -747,3 +747,4 @@ dev.logs_need_apk=Android app only (needs an APK with readAppLogs).
 dev.logs_nomatch=No matching log lines.
 dev.sw_active=controlling
 dev.sw_inactive=not controlling
+settings.factory_reset_confirm_android=Erase all app data? Settings, playlists, liked songs, fonts and everything else will be wiped as if freshly installed, and the app will close. Music files on your device are not affected.

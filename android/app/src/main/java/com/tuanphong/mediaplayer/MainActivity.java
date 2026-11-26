@@ -3267,6 +3267,21 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Đặt lại cài đặt gốc: xóa TOÀN BỘ dữ liệu của ứng dụng (như vừa cài mới) rồi hệ thống tự kết thúc tiến trình. Nhạc trên thiết bị không bị đụng tới. */
+        @JavascriptInterface
+        public boolean factoryResetApp() {
+            new Thread(() -> {
+                boolean ok = false;
+                try {
+                    try { NativeAudio.pause(); } catch (Throwable ignored) {}
+                    android.app.ActivityManager am = (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+                    ok = am != null && am.clearApplicationUserData();
+                } catch (Throwable ignored) {}
+                if (!ok) callJs("window.showToast&&showToast(" + JSONObject.quote(isEnglishLang() ? "Could not erase app data" : "Không xóa được dữ liệu ứng dụng") + ")");
+            }, "factory-reset").start();
+            return true;
+        }
+
         /** Đặt bài làm nhạc chuông / âm thông báo / âm báo thức. type: ringtone | notification | alarm. Kết quả: window.__onSetSoundResult({ok,type,error}) */
         @JavascriptInterface
         public void setAsSound(final String id, final String loc, final String name, final String type) {

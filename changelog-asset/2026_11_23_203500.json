@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Android: Đặt lại cài đặt gốc giờ xóa toàn bộ dữ liệu ứng dụng (PC/web vẫn chỉ xóa dữ liệu trang)",
+      "icon": "delete_forever"
+    },
+    {
       "content": "INFO: thêm nút \"Mở trong Thư mục\" cạnh File Path, nhảy thẳng tới thư mục chứa bài trong tab Thư mục",
       "icon": "folder_open"
     },
@@ -143,6 +147,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Android: Factory reset now erases all app data (PC/web still only clears page data)",
+      "icon": "delete_forever"
+    },
     {
       "content": "INFO: added an \"Open in Files\" button next to File Path that jumps to the song's folder in the Folders tab",
       "icon": "folder_open"

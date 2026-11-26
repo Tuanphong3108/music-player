@@ -746,3 +746,4 @@ dev.logs_need_apk=Chỉ có trong app Android (cần APK mới có readAppLogs).
 dev.logs_nomatch=Không có dòng log nào khớp.
 dev.sw_active=đang điều khiển
 dev.sw_inactive=chưa điều khiển
+settings.factory_reset_confirm_android=Xóa toàn bộ dữ liệu ứng dụng? Cài đặt, danh sách phát, bài đã thích, phông chữ và mọi dữ liệu khác sẽ bị xóa như vừa cài mới, và ứng dụng sẽ tự đóng. Nhạc trên thiết bị không bị ảnh hưởng.

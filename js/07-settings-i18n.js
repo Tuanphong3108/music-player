@@ -536,11 +536,18 @@
 
         // --- Đặt lại cài đặt gốc ---
         document.getElementById('factory-reset-btn').addEventListener('click', async () => {
+            // Trong app Android: xóa TOÀN BỘ dữ liệu ứng dụng (cài đặt, danh sách phát, phông chữ, cache WebView...) rồi app tự đóng. Trên PC/web: chỉ xóa dữ liệu trang như cũ.
+            const nativeWipe = !!(window.IS_ANDROID_APP && window.AndroidBridge && typeof window.AndroidBridge.factoryResetApp === 'function');
             const ok = await confirmDialog(
-                currentLangDict['settings.factory_reset_confirm'] || 'Đặt lại toàn bộ cài đặt về mặc định? Phông chữ đã thêm và dữ liệu đã lưu sẽ bị xóa, rồi màn hình bắt đầu sẽ chạy lại.',
+                nativeWipe
+                    ? (currentLangDict['settings.factory_reset_confirm_android'] || 'Xóa toàn bộ dữ liệu ứng dụng? Cài đặt, danh sách phát, bài đã thích, phông chữ và mọi dữ liệu khác sẽ bị xóa như vừa cài mới, và ứng dụng sẽ tự đóng. Nhạc trên thiết bị không bị ảnh hưởng.')
+                    : (currentLangDict['settings.factory_reset_confirm'] || 'Đặt lại toàn bộ cài đặt về mặc định? Phông chữ đã thêm và dữ liệu đã lưu sẽ bị xóa, rồi màn hình bắt đầu sẽ chạy lại.'),
                 currentLangDict['settings.factory_reset_btn'] || 'Đặt lại',
                 currentLangDict['settings.factory_reset'] || 'Đặt lại cài đặt gốc');
             if (!ok) return;
+            if (nativeWipe) {
+                try { window.AndroidBridge.factoryResetApp(); return; } catch (e) {}
+            }
             const ro = document.getElementById('reset-overlay');
             if (ro) ro.style.display = 'flex';
             await new Promise(r => setTimeout(r, 60));
