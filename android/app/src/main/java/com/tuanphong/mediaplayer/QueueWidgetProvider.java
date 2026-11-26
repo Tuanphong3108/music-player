@@ -122,7 +122,7 @@ public class QueueWidgetProvider extends AppWidgetProvider {
         openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent openPi = PendingIntent.getActivity(
                 context, 200, openIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.queue_widget_header, openPi);
         views.setOnClickPendingIntent(R.id.queue_widget_empty, openPi);
         views.setOnClickPendingIntent(R.id.queue_widget_play, buildCmdPendingIntent(context, "toggle", 201));
@@ -168,6 +168,6 @@ public class QueueWidgetProvider extends AppWidgetProvider {
         i.putExtra(MediaWidgetProvider.EXTRA_CMD, cmd);
         return PendingIntent.getBroadcast(
                 context, reqCode, i,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 }
