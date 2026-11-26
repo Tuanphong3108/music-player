@@ -21,7 +21,7 @@
         root.id = 'ss-root';
         root.innerHTML =
             '<div class="ss-scrim" id="ss-scrim"></div>' +
-            '<div class="ss-box" id="ss-box">' +
+            '<div class="ss-box" id="ss-box" role="dialog" aria-modal="true" tabindex="-1">' +
             '<div class="ss-grip"></div>' +
             '<div class="ss-body">' +
             '<div class="ss-head"><div class="ss-art" id="ss-art"></div><div class="ss-title" id="ss-title"></div>' +
@@ -54,7 +54,15 @@
         document.body.appendChild(root);
 
         const $ = (id) => root.querySelector('#' + id);
-        $('ss-scrim').addEventListener('click', close);
+        const scrim = $('ss-scrim');
+        const boxEl = $('ss-box');
+        // Chặn sự kiện chạm/nhấn xuyên xuống thanh seek hoặc giao diện phía sau
+        ['pointerdown', 'touchstart', 'mousedown'].forEach(ev => {
+            scrim.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+            boxEl.addEventListener(ev, (e) => { e.stopPropagation(); });
+        });
+        scrim.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); close(); });
+        boxEl.addEventListener('click', (e) => { e.stopPropagation(); });
         root.querySelectorAll('.ss-tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
         $('ss-edit').addEventListener('click', editMetadata);
         $('ss-play').addEventListener('click', playNow);
@@ -151,9 +159,20 @@
         b.lastChild.textContent = playing ? T('ss.pause', 'Tạm dừng') : T('ss.play', 'Phát');
     }
 
+    let closeTimer = 0;
+
+    function setBackgroundBlocked(blocked) {
+        document.body.classList.toggle('ss-open', !!blocked);
+        const app = document.querySelector('.app-container');
+        if (app) {
+            try { app.inert = !!blocked; } catch (e) {}
+        }
+    }
+
     function open(tr, startTab) {
         if (!tr) return;
         build();
+        clearTimeout(closeTimer);
         track = tr;
         const art = root.querySelector('#ss-art');
         art.innerHTML = tr.cover ? '<img alt="" src="' + esc(tr.cover) + '">' : icon('music_note');
@@ -162,16 +181,34 @@
         root.querySelector('#ss-sound').style.display = (AB() && typeof AB().setAsSound === 'function') ? '' : 'none';
         syncLike(); syncPlayBtn();
         setTab(startTab || 'options');
+        // Gỡ focus khỏi thanh seek / nút nền rồi khóa nền & chuyển focus thẳng vào sheet
+        try {
+            if (document.activeElement && !root.contains(document.activeElement) && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+        } catch (e) {}
+        setBackgroundBlocked(true);
         root.style.display = 'block';
         void root.offsetWidth;
         root.classList.add('open');
+        const box = root.querySelector('#ss-box');
+        if (box) {
+            try { box.focus({ preventScroll: true }); } catch (e) { try { box.focus(); } catch (e2) {} }
+        }
     }
 
     function close() {
         if (!root) return;
+        clearTimeout(closeTimer);
         root.classList.remove('open');
         const box = root.querySelector('#ss-box'); box.style.transform = '';
-        setTimeout(() => { if (!root.classList.contains('open')) root.style.display = 'none'; }, 260);
+        // Giữ khóa nền suốt thời gian trượt đóng để cú chạm tắt sheet không bị lọt xuống thanh seek
+        closeTimer = setTimeout(() => {
+            if (!root.classList.contains('open')) {
+                root.style.display = 'none';
+                setBackgroundBlocked(false);
+            }
+        }, 280);
     }
     window.__closeSongSheet = function () {
         const pl = document.getElementById('ss-pl-screen'), sd = document.getElementById('ss-sound-dlg');
