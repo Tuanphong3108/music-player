@@ -229,10 +229,6 @@
                     // Dialog của Material Web (md-dialog) nằm trong top layer nên luôn nằm trên mọi thứ khác -> đóng trước
                     const mdTop = window.__mdTopDialog && window.__mdTopDialog();
                     if (mdTop) { try { mdTop.close(); } catch (e) { mdTop.open = false; } return true; }
-                    // Developer Console (z-index 9800) đang mở -> đóng trước
-                    if (typeof window.__closeDevConsole === 'function' && window.__closeDevConsole()) {
-                        return true;
-                    }
                     // Hộp thoại xác nhận ghi đè metadata nổi trên iframe -> hủy đúng luồng để iframe thoát trạng thái đang lưu
                     const confirmOv = document.getElementById('confirm-overwrite-modal');
                     if (confirmOv && confirmOv.classList.contains('open')) {
@@ -385,8 +381,6 @@
                     if (document.body.classList.contains('screen-animating')) return null;
                     const md = window.__mdTopDialog && window.__mdTopDialog();
                     if (md) return (md.shadowRoot && md.shadowRoot.querySelector('.container')) || md;
-                    const devOv = document.getElementById('dev-console-overlay');
-                    if (devOv && devOv.classList.contains('open')) return devOv.querySelector('#dev-console-sheet') || devOv;
                     const confirmOv = document.getElementById('confirm-overwrite-modal');
                     if (confirmOv && confirmOv.classList.contains('open')) return confirmOv.firstElementChild || confirmOv;
                     if (typeof window.__isMetadataEditorOpen === 'function' && window.__isMetadataEditorOpen()) {
@@ -1285,7 +1279,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_26_dev_console', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_26_native_dev_console', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
