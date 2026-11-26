@@ -711,4 +711,13 @@ ai.err_no_valid_tracks=AI did not return any valid songs from your library.
 ai.err_no_lyric_content=Lyrics have no text content to translate.
 ai.err_no_valid_trans=AI did not return valid translated lines.
 sel.del_playing=Cannot delete the currently playing song
+settings.cat_developer=Developer Features
+settings.desc_developer=In-app console and debugging tools
+dev.enable_console=Enable Developer Console
+dev.enable_console_desc=Show a </> button in the 3-dot menu to open the Console, run JavaScript commands, and inspect UI overlays right inside the app.
+dev.console_title=Developer Console
+dev.console_empty=No logs yet. Type a JavaScript command below to run.
+dev.console_placeholder=Enter JavaScript command...
+dev.inspect_hint=Tap anywhere to inspect elements at that point (elementsFromPoint)
+dev.copied=Logs copied
 
