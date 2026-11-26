@@ -350,8 +350,8 @@
             return info;
         }
 
-        async function buildMoreInfoRows(track) {
-            if (!track) return [];
+        async function buildMoreInfoData(track) {
+            if (!track) return { items: [], lyricTitle: '', lyricItems: [] };
             const isCur = track === playlist[currentIndex];
             let tech = null;
             if (track.file) {
@@ -361,8 +361,12 @@
             const unknownStr = currentLangDict['moreinfo.unknown'] || 'Không rõ';
             const fileStr = currentLangDict['moreinfo.file_type'] || 'Tệp';
             const rawFilePath = (track.nativeLocation || (track.file && (track.file.webkitRelativePath || track.file.path)) || '').trim();
-            const rows = [];
-            rows.push(moreInfoRowHTML('music_note', (track.file && track.file.type) || `${fileStr} ${track.ext}`, formatFileSizeVi(track.file ? track.file.size : null)));
+            const items = [];
+            items.push({
+                icon: 'music_note',
+                label: (track.file && track.file.type) || `${fileStr} ${track.ext || ''}`.trim(),
+                value: formatFileSizeVi(track.file ? track.file.size : null)
+            });
             // Dòng "Định dạng theo cấu trúc tệp" ngay bên dưới dòng Định dạng tệp
             {
                 const extClean = (track.ext || '').replace(/^\./, '').toLowerCase();
@@ -380,30 +384,63 @@
                         }
                     }
                 } catch (e) {}
-                rows.push(moreInfoRowHTML('data_object', currentLangDict['moreinfo.structure_format'] || 'Định dạng theo cấu trúc tệp', escHtml(structParts.join(' • '))));
+                items.push({
+                    icon: 'data_object',
+                    label: currentLangDict['moreinfo.structure_format'] || 'Định dạng theo cấu trúc tệp',
+                    value: structParts.join(' • ')
+                });
             }
             if (rawFilePath) {
-                rows.push(moreInfoRowHTML('folder', currentLangDict['moreinfo.file_path'] || 'File Path', escHtml(rawFilePath)));
+                items.push({
+                    icon: 'folder',
+                    label: currentLangDict['moreinfo.file_path'] || 'File Path',
+                    value: rawFilePath
+                });
             }
             if (tech && (tech.rate || tech.kbps)) {
                 const parts = [];
                 if (tech.rate) parts.push((tech.rate / 1000).toLocaleString(savedLanguage === 'en' ? 'en-US' : 'vi-VN', { maximumFractionDigits: 1 }) + ' kHz');
                 if (tech.kbps) parts.push(tech.kbps + ' kbps');
                 if (tech.fmt) parts.push(tech.fmt);
-                rows.push(moreInfoRowHTML('graphic_eq', currentLangDict['moreinfo.quality'] || 'Chất lượng âm thanh', parts.join(' • ')));
+                items.push({
+                    icon: 'graphic_eq',
+                    label: currentLangDict['moreinfo.quality'] || 'Chất lượng âm thanh',
+                    value: parts.join(' • ')
+                });
             }
-            rows.push(moreInfoRowHTML('calendar_month', currentLangDict['moreinfo.date_modified'] || 'Ngày sửa đổi', formatModifiedDateVi(track.file ? track.file.lastModified : null)));
-            rows.push(moreInfoRowHTML('schedule', currentLangDict['moreinfo.duration'] || 'Thời lượng', formatDurationVi(isCur ? audio.duration : (track.duration || track.dur || 0))));
-            rows.push(moreInfoRowHTML('edit', currentLangDict['moreinfo.title_label'] || 'Tên bài hát', track.name || unknownStr));
-            rows.push(moreInfoRowHTML('person', currentLangDict['moreinfo.artist_label'] || 'Nghệ sĩ', track.artist || unknownStr));
-            rows.push(moreInfoRowHTML('album', currentLangDict['moreinfo.album_label'] || 'Đĩa nhạc', track.album || unknownStr));
-            rows.push(moreInfoRowHTML('edit_note', currentLangDict['moreinfo.composer_label'] || 'Nhà soạn nhạc', track.composer || unknownStr));
-            if (track.year) rows.push(moreInfoRowHTML('calendar_today', currentLangDict['moreinfo.year_label'] || 'Năm', track.year));
+            items.push({
+                icon: 'calendar_month',
+                label: currentLangDict['moreinfo.date_modified'] || 'Ngày sửa đổi',
+                value: formatModifiedDateVi(track.file ? track.file.lastModified : null)
+            });
+            items.push({
+                icon: 'schedule',
+                label: currentLangDict['moreinfo.duration'] || 'Thời lượng',
+                value: formatDurationVi(isCur ? audio.duration : (track.duration || track.dur || 0))
+            });
+            items.push({ icon: 'edit', label: currentLangDict['moreinfo.title_label'] || 'Tên bài hát', value: track.name || unknownStr });
+            items.push({ icon: 'person', label: currentLangDict['moreinfo.artist_label'] || 'Nghệ sĩ', value: track.artist || unknownStr });
+            items.push({ icon: 'album', label: currentLangDict['moreinfo.album_label'] || 'Đĩa nhạc', value: track.album || unknownStr });
+            items.push({ icon: 'edit_note', label: currentLangDict['moreinfo.composer_label'] || 'Nhà soạn nhạc', value: track.composer || unknownStr });
+            if (track.year) items.push({ icon: 'calendar_today', label: currentLangDict['moreinfo.year_label'] || 'Năm', value: String(track.year) });
 
             const lyInfo = lyricInfoList(track);
-            if (lyInfo.length) {
-                rows.push(`<div style="font-size: calc(13px * var(--font-scale-factor, 1)); font-weight:700; opacity:0.85; margin-top:8px; padding-top:14px; border-top:1px solid var(--playlist-border);">${escHtml(currentLangDict['moreinfo.lyric_info'] || 'Lyric Information')}</div>`);
-                lyInfo.forEach(([k, v]) => rows.push(moreInfoRowHTML(LRC_INFO_ICONS[k] || 'info', escHtml(currentLangDict['moreinfo.lrc_' + k] || LRC_INFO_LABELS[k]), escHtml(v))));
+            const lyricTitle = lyInfo.length ? (currentLangDict['moreinfo.lyric_info'] || 'Lyric Information') : '';
+            const lyricItems = lyInfo.map(([k, v]) => ({
+                icon: LRC_INFO_ICONS[k] || 'info',
+                label: currentLangDict['moreinfo.lrc_' + k] || LRC_INFO_LABELS[k] || k,
+                value: String(v || '')
+            }));
+            return { items, lyricTitle, lyricItems };
+        }
+        window.__buildMoreInfoData = buildMoreInfoData;
+
+        async function buildMoreInfoRows(track) {
+            const data = await buildMoreInfoData(track);
+            const rows = data.items.map(it => moreInfoRowHTML(it.icon, escHtml(it.label), escHtml(it.value)));
+            if (data.lyricItems.length) {
+                rows.push(`<div style="font-size: calc(13px * var(--font-scale-factor, 1)); font-weight:700; opacity:0.85; margin-top:8px; padding-top:14px; border-top:1px solid var(--playlist-border);">${escHtml(data.lyricTitle)}</div>`);
+                data.lyricItems.forEach(it => rows.push(moreInfoRowHTML(it.icon, escHtml(it.label), escHtml(it.value))));
             }
             return rows;
         }
