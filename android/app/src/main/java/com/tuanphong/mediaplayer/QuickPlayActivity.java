@@ -353,13 +353,11 @@ public class QuickPlayActivity extends Activity {
     private void applyLoadedFontFile(File regFile) {
         gsfRegular = Typeface.createFromFile(regFile);
         gsfBold = Typeface.create(gsfRegular, Typeface.BOLD);
-        if (Build.VERSION.SDK_INT >= 26) {
-            try {
-                gsfRoundedBold = new Typeface.Builder(regFile)
-                        .setFontVariationSettings("'wght' 700, 'ROND' 100")
-                        .build();
-            } catch (Throwable ignored) {}
-        }
+        try {
+            gsfRoundedBold = new Typeface.Builder(regFile)
+                    .setFontVariationSettings("'wght' 700, 'ROND' 100")
+                    .build();
+        } catch (Throwable ignored) {}
         if (gsfRoundedBold == null) gsfRoundedBold = gsfBold;
     }
 
@@ -418,7 +416,7 @@ public class QuickPlayActivity extends Activity {
         } else {
             tv.setTypeface(Typeface.create("sans-serif-medium", bold ? Typeface.BOLD : Typeface.NORMAL));
         }
-        if (rounded && Build.VERSION.SDK_INT >= 26) {
+        if (rounded) {
             try { tv.setFontVariationSettings("'wght' 700, 'ROND' 100"); } catch (Throwable ignored) {}
         }
     }
@@ -786,8 +784,7 @@ public class QuickPlayActivity extends Activity {
     /** Đóng sheet và dọn sạch task riêng của QuickPlayActivity khỏi màn hình Đa nhiệm (không đụng tới task của MainActivity). */
     private void finishQuickTask() {
         try {
-            if (Build.VERSION.SDK_INT >= 21) finishAndRemoveTask();
-            else finish();
+            finishAndRemoveTask();
         } catch (Throwable ignored) {
             try { finish(); } catch (Throwable ignored2) {}
         }
