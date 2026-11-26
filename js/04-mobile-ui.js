@@ -370,6 +370,7 @@
                                 tr._bgCoverChecked = true;
                             }
                             appliedAnyCache = true;
+                            syncCoverToCurrentTrackIfMatch(tr);
                         } else if (tr.nativeStreamUrl && !tr._bgCoverChecked) {
                             // Chưa có cache trong app -> bật trạng thái xoay Album Art cho tới khi quét xong
                             tr._metaLoading = true;
@@ -455,19 +456,7 @@
                                     saveTrackMetaToCache(tr);
                                     patchMobileLibRowDom(tr);
                                     if (changed) {
-                                        if (playlist[currentIndex] === tr) {
-                                            trackNameEl.innerText = tr.name;
-                                            trackArtistEl.innerText = `${tr.artist} | ${tr.ext}`;
-                                            if (tr.cover) {
-                                                artImg.src = tr.cover;
-                                                artImg.classList.remove('hidden');
-                                                artPlaceholder.classList.add('hidden');
-                                                bgPreview.style.backgroundImage = `url(${tr.cover})`;
-                                                refreshDynamicAccent(tr);
-                                            }
-                                            updateFsUI();
-                                            updateMediaSession();
-                                        }
+                                        syncCoverToCurrentTrackIfMatch(tr);
                                         if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
                                     }
                                 } else {
