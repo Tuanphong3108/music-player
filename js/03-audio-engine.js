@@ -240,6 +240,7 @@
                 '#ss-root.open',
                 '#ss-pl-screen.open',
                 '#ss-sound-dlg.open',
+                '#dev-console-overlay.open',
                 '#st-sheet.open',
                 '#st-sheet.show',
                 '#share-sheet.open',
