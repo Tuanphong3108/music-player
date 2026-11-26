@@ -79,6 +79,8 @@ public class MainActivity extends Activity {
     private volatile boolean updateDownloadCancelled = false;
     private android.view.View hangOverlay = null;
     private android.view.View loadingOverlay = null;
+    private android.widget.LinearLayout contentStack = null;
+    private NativeDevConsole devConsole = null;
     private android.animation.ValueAnimator md3ArcAnimator = null;
     private android.animation.ValueAnimator md3RotAnimator = null;
     private String appLang = "vi";
@@ -188,7 +190,10 @@ public class MainActivity extends Activity {
                 try { w.pauseTimers(); } catch (Throwable ignored) {}
             }
             try { w.loadUrl("about:blank"); } catch (Throwable ignored) {}
-            try { if (root != null) root.removeView(w); } catch (Throwable ignored) {}
+            try {
+                if (w.getParent() instanceof ViewGroup) ((ViewGroup) w.getParent()).removeView(w);
+                else if (root != null) root.removeView(w);
+            } catch (Throwable ignored) {}
             try { w.removeAllViews(); } catch (Throwable ignored) {}
             try { w.destroy(); } catch (Throwable ignored) {}
         };
@@ -287,8 +292,16 @@ public class MainActivity extends Activity {
         instance = this;
         root = new FrameLayout(this);
         themeColor = getSharedPreferences("app", MODE_PRIVATE).getInt("theme", 0xFF1C1B1F);
+        contentStack = new android.widget.LinearLayout(this);
+        contentStack.setOrientation(android.widget.LinearLayout.VERTICAL);
         web = new WebView(this);
-        root.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        contentStack.addView(web, new android.widget.LinearLayout.LayoutParams(-1, 0, 1f));
+        devConsole = new NativeDevConsole(this, new NativeDevConsole.Host() {
+            @Override public WebView getWebView() { return web; }
+            @Override public boolean isEnglish() { return isEnglishLang(); }
+        });
+        contentStack.addView(devConsole.getView(), devConsole.createLayoutParams());
+        root.addView(contentStack, new FrameLayout.LayoutParams(-1, -1));
         setContentView(root);
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             if (customView != null) {
@@ -495,9 +508,16 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public boolean onConsoleMessage(android.webkit.ConsoleMessage cm) {
+                if (devConsole != null) devConsole.onWebConsoleMessage(cm);
+                return super.onConsoleMessage(cm);
+            }
+
+            @Override
             public void onShowCustomView(View view, CustomViewCallback cb) {
                 if (customView != null) { cb.onCustomViewHidden(); return; }
                 customView = view; customCb = cb;
+                if (devConsole != null) devConsole.hide();
                 root.addView(view, new FrameLayout.LayoutParams(-1, -1));
                 web.setVisibility(View.GONE);
                 hideBars(true);
@@ -2411,10 +2431,23 @@ public class MainActivity extends Activity {
             final android.window.OnBackInvokedCallback cb;
             if (Build.VERSION.SDK_INT >= 34) {
                 cb = new android.window.OnBackAnimationCallback() {
-                    @Override public void onBackStarted(android.window.BackEvent e) { callJs("window.__pbStart&&__pbStart(" + e.getSwipeEdge() + ")"); }
-                    @Override public void onBackProgressed(android.window.BackEvent e) { callJs("window.__pbProgress&&__pbProgress(" + e.getProgress() + "," + e.getSwipeEdge() + ")"); }
-                    @Override public void onBackCancelled() { callJs("window.__pbCancel&&__pbCancel()"); }
-                    @Override public void onBackInvoked() { callJs("window.__pbCommit&&__pbCommit()"); handleBack(); }
+                    @Override public void onBackStarted(android.window.BackEvent e) {
+                        if (devConsole != null && devConsole.isVisible()) return;
+                        callJs("window.__pbStart&&__pbStart(" + e.getSwipeEdge() + ")");
+                    }
+                    @Override public void onBackProgressed(android.window.BackEvent e) {
+                        if (devConsole != null && devConsole.isVisible()) return;
+                        callJs("window.__pbProgress&&__pbProgress(" + e.getProgress() + "," + e.getSwipeEdge() + ")");
+                    }
+                    @Override public void onBackCancelled() {
+                        if (devConsole != null && devConsole.isVisible()) return;
+                        callJs("window.__pbCancel&&__pbCancel()");
+                    }
+                    @Override public void onBackInvoked() {
+                        if (devConsole != null && devConsole.isVisible()) { devConsole.hide(); return; }
+                        callJs("window.__pbCommit&&__pbCommit()");
+                        handleBack();
+                    }
                 };
             } else {
                 cb = new android.window.OnBackInvokedCallback() {
@@ -2440,6 +2473,10 @@ public class MainActivity extends Activity {
 
     private void handleBack() {
         runOnUiThread(() -> {
+            if (devConsole != null && devConsole.isVisible()) {
+                devConsole.hide();
+                return;
+            }
             if (customView != null && web != null && web.getWebChromeClient() != null) {
                 web.getWebChromeClient().onHideCustomView();
                 return;
@@ -3397,6 +3434,31 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean hasPendingExternalOpen() {
             return pendingExternalOpen;
+        }
+
+        @JavascriptInterface
+        public void openDevConsole() {
+            if (devConsole != null) devConsole.show();
+        }
+
+        @JavascriptInterface
+        public void closeDevConsole() {
+            if (devConsole != null) devConsole.hide();
+        }
+
+        @JavascriptInterface
+        public void toggleDevConsole() {
+            if (devConsole != null) devConsole.toggle();
+        }
+
+        @JavascriptInterface
+        public void setDevConsoleEnabled(boolean enabled) {
+            if (!enabled && devConsole != null) devConsole.hide();
+        }
+
+        @JavascriptInterface
+        public void devConsoleLog(String level, String message) {
+            if (devConsole != null) devConsole.append(level, message);
         }
 
         @JavascriptInterface
