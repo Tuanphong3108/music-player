@@ -321,6 +321,44 @@
                 }
             }
 
+            function syncCoverToCurrentTrackIfMatch(tr) {
+                if (!tr) return;
+                const cur = (typeof currentIndex === 'number' && currentIndex >= 0 && Array.isArray(playlist)) ? playlist[currentIndex] : null;
+                if (!cur) return;
+                const trId = mLibTrackId(tr);
+                const curId = mLibTrackId(cur);
+                if (cur !== tr && (!trId || trId !== curId)) return;
+                if (cur !== tr) {
+                    if (tr.name) cur.name = tr.name;
+                    if (tr.artist) cur.artist = tr.artist;
+                    if (tr.album) cur.album = tr.album;
+                    if (tr.year) cur.year = tr.year;
+                    if (tr.genre !== undefined) cur.genre = tr.genre;
+                    if (tr.composer !== undefined) cur.composer = tr.composer;
+                    if (tr.lyricsRaw && !cur.lyricsRaw) {
+                        cur.lyricsRaw = tr.lyricsRaw;
+                        cur.lyrics = tr.lyrics || parseLRC(tr.lyricsRaw);
+                    }
+                    cur.cover = tr.cover || null;
+                    cur._hasRealCover = !!tr._hasRealCover;
+                }
+                try {
+                    if (typeof trackNameEl !== 'undefined' && trackNameEl) trackNameEl.innerText = cur.name;
+                    if (typeof trackArtistEl !== 'undefined' && trackArtistEl) trackArtistEl.innerText = `${cur.artist} | ${cur.ext}`;
+                    if (cur.cover) {
+                        if (typeof artImg !== 'undefined' && artImg) {
+                            if (artImg.getAttribute('src') !== cur.cover) artImg.src = cur.cover;
+                            artImg.classList.remove('hidden');
+                        }
+                        if (typeof artPlaceholder !== 'undefined' && artPlaceholder) artPlaceholder.classList.add('hidden');
+                        if (typeof bgPreview !== 'undefined' && bgPreview) bgPreview.style.backgroundImage = `url(${cur.cover})`;
+                    }
+                    if (typeof refreshDynamicAccent === 'function') refreshDynamicAccent(cur);
+                    if (typeof updateFsUI === 'function') updateFsUI();
+                    if (typeof updateMediaSession === 'function') updateMediaSession();
+                } catch (e) {}
+            }
+
             let coverHydrateRunning = false;
             let coverHydratePending = false;
             window.__hydrateMobileLibraryCovers = async function () {
