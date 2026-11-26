@@ -1,5 +1,6 @@
 # Ghi chú phát hành bản Android
 # (Quy trình GitHub Actions tự động dùng nội dung tệp này làm release notes; để trống thì lấy 20 commit gần nhất.)
+- **Developer Console thuần Android (`NativeDevConsole`)**: bật trong *Cài đặt → Developer Features* để hiện nút `</>` trong menu 3 chấm; bấm vào sẽ mở cửa sổ Console vuông nằm tách biệt ở nửa dưới màn hình và **đẩy WebView lên trên** (hỗ trợ kéo cạnh trên để đổi chiều cao, bắt log trực tiếp qua `WebChromeClient.onConsoleMessage`, lọc `ALL/WARN/ERROR`, chạy lệnh JS, sao chép log và nút **Soi** điểm chạm `elementsFromPoint` mà không làm ảnh hưởng DOM/CSS trang web).
 - **Hiệu ứng mở trình phát đầy đủ từ Sheet phát nhanh (`QuickPlayActivity`)**: khi bấm *Mở trình phát đầy đủ*, nội dung trong sheet mờ dần ẩn đi để giữ lại khối màu nền, sau đó phóng to mượt phủ kín toàn màn hình rồi chuyển thẳng vào ứng dụng chính.
 - **Tối ưu bảng Thông tin trên Sheet phát nhanh**: ẩn mục *File Path* khỏi thẻ thông tin trong sheet xem trước tệp cho gọn gàng (ứng dụng chính vẫn giữ nguyên).
 - **Cập nhật WebView & điều hướng Back**: tự động đổi màu chủ đạo theo ảnh bìa ngay khi quét xong giữa chừng, chặn xóa bài đang phát kèm toast thông báo, và hỗ trợ nút/cử chỉ Back cùng Predictive Back cho Bottom Sheet bài hát và Metadata Editor (nhắc xác nhận nếu có thay đổi chưa lưu).
