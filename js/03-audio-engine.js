@@ -237,6 +237,14 @@
                 '#custom-context-menu.open',
                 '#sleep-menu.open',
                 '#speed-menu.open',
+                '#ss-root.open',
+                '#ss-pl-screen.open',
+                '#ss-sound-dlg.open',
+                '#st-sheet.open',
+                '#st-sheet.show',
+                '#share-sheet.open',
+                '#share-sheet.show',
+                '#ai-playlist-lab-modal.open',
                 '[role="dialog"][open]',
                 '[role="dialog"].open',
                 '[role="menu"].open'
@@ -244,8 +252,8 @@
             const isBlockedByOverlay = () => {
                 const body = document.body;
                 const isMobile = document.documentElement.classList.contains('m-ui');
-                // Màn hình Lyric đang mở (dùng thanh tua riêng trong Lyric), màn hình Playlist, chế độ sửa danh sách, menu Mở rộng, hoặc khi đang ở màn hình Thư viện (chưa nở Full Player)
-                if (body.classList.contains('m-lyric-ui') || body.classList.contains('m-playlist-open') || body.classList.contains('reorder-active') || body.classList.contains('m-more-open')) return true;
+                // Màn hình Lyric đang mở (dùng thanh tua riêng trong Lyric), màn hình Playlist, chế độ sửa danh sách, menu Mở rộng, bottom sheet bài hát, hoặc khi đang ở màn hình Thư viện (chưa nở Full Player)
+                if (body.classList.contains('ss-open') || body.classList.contains('m-lyric-ui') || body.classList.contains('m-playlist-open') || body.classList.contains('reorder-active') || body.classList.contains('m-more-open')) return true;
                 if (isMobile && (body.classList.contains('lyrics-open') || !body.classList.contains('m-player-expanded'))) return true;
                 // Bất kỳ Cài đặt, bottom sheet, dialog nhập hoặc menu nào đang mở
                 if (document.querySelector(BLOCKING_OPEN_SELECTOR)) return true;
@@ -302,6 +310,7 @@
             host.addEventListener('pointerdown', (e) => {
                 if (e.pointerType === 'touch') return;
                 if (e.button !== undefined && e.button !== 0) return;
+                if (isBlockedByOverlay()) return;
                 if (window.__guardUnseekable && window.__guardUnseekable(e)) return;
                 if (!isFinite(audio.duration) || audio.duration <= 0) return;
                 e.preventDefault();
