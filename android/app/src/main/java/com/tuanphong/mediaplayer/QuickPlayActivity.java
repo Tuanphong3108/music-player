@@ -78,7 +78,7 @@ public class QuickPlayActivity extends Activity {
     private View btnPlay, btnPrev, btnNext, btnInfo, card;
     private FrameLayout outerRoot;
     private LinearLayout playerPane, detailsPane, optionsPane, infoList, detailsTabBar;
-    private TextView tabOptionsBtn, tabInfoBtn, optPlayBtn, optShareBtn, optRestartBtn, optLoopBtn, optOpenFullBtn;
+    private TextView tabOptionsBtn, tabInfoBtn, optPlayBtn, optShareBtn, optRestartBtn, optLoopBtn, optOpenFullBtn, optSoundBtn, optDeleteBtn;
     private ScrollView infoScroll;
     private long fallbackDur = 0;
     private boolean mainChecked = false, mainWasPlaying = false, mainResumed = false;
@@ -433,6 +433,8 @@ public class QuickPlayActivity extends Activity {
         applyTextStyle(optPlayBtn, true, true);
         applyTextStyle(optShareBtn, true, false);
         applyTextStyle(optRestartBtn, true, false);
+        applyTextStyle(optSoundBtn, true, false);
+        applyTextStyle(optDeleteBtn, true, false);
         applyTextStyle(optLoopBtn, true, false);
         applyTextStyle(optOpenFullBtn, true, true);
         if (infoOpen) renderInfoCards();
@@ -658,6 +660,23 @@ public class QuickPlayActivity extends Activity {
         LinearLayout.LayoutParams or2Lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         or2Lp.topMargin = dp(8);
         optionsPane.addView(optRow2, or2Lp);
+
+        // Hàng Đặt làm âm thanh / Xóa (giống menu Options của app chính)
+        LinearLayout optRowX = new LinearLayout(this);
+        optRowX.setOrientation(LinearLayout.HORIZONTAL);
+        optSoundBtn = makeOptionPill(vi ? "Đặt làm âm thanh" : "Set as sound", 64, false);
+        setPillIcon(optSoundBtn, R.drawable.ic_opt_sound, cOnSecBtn);
+        optSoundBtn.setOnClickListener(v -> showSoundDialog());
+        optDeleteBtn = makeOptionPill(vi ? "Xóa" : "Delete", 64, false);
+        setPillIcon(optDeleteBtn, R.drawable.ic_opt_delete, cOnSecBtn);
+        optDeleteBtn.setOnClickListener(v -> confirmDelete());
+        optRowX.addView(optSoundBtn, new LinearLayout.LayoutParams(0, dp(64), 1.5f));
+        LinearLayout.LayoutParams delLp = new LinearLayout.LayoutParams(0, dp(64), 1f);
+        delLp.leftMargin = dp(8);
+        optRowX.addView(optDeleteBtn, delLp);
+        LinearLayout.LayoutParams rowXLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowXLp.topMargin = dp(8);
+        optionsPane.addView(optRowX, rowXLp);
 
         optOpenFullBtn = makeOptionPill(vi ? "Mở trình phát đầy đủ" : "Open full player", 64, true);
         setPillIcon(optOpenFullBtn, R.drawable.ic_opt_open_full, cOnOpenBtn);
@@ -979,6 +998,17 @@ public class QuickPlayActivity extends Activity {
             optLoopBtn.setTextColor(loopOne ? cOnPlayBtn : cOnSecBtn);
             setPillIcon(optLoopBtn, R.drawable.ic_opt_loop, loopOne ? cOnPlayBtn : cOnSecBtn);
         }
+        if (optSoundBtn != null) {
+            optSoundBtn.setBackground(round(cSecBtn, 26));
+            optSoundBtn.setTextColor(cOnSecBtn);
+            setPillIcon(optSoundBtn, R.drawable.ic_opt_sound, cOnSecBtn);
+        }
+        if (optDeleteBtn != null) {
+            int dBg = dark ? 0xFF5C1A1A : 0xFFFFDAD6, dFg = dark ? 0xFFFFB4AB : 0xFF93000A;
+            optDeleteBtn.setBackground(round(dBg, 26));
+            optDeleteBtn.setTextColor(dFg);
+            setPillIcon(optDeleteBtn, R.drawable.ic_opt_delete, dFg);
+        }
         if (optOpenFullBtn != null) {
             optOpenFullBtn.setBackground(round(cOpenBtn, 28));
             optOpenFullBtn.setTextColor(cOnOpenBtn);
@@ -997,6 +1027,192 @@ public class QuickPlayActivity extends Activity {
             }
         }
         syncDetailsStyles();
+    }
+
+
+    // ===== Đặt làm âm thanh / Xóa tệp đang xem trước =====
+    private static final int REQ_QP_DELETE = 91;
+
+    private void toastMsg(String m) { try { android.widget.Toast.makeText(this, m, android.widget.Toast.LENGTH_LONG).show(); } catch (Throwable ignored) {} }
+
+    private String rawDisplayName(Uri u) {
+        String n = null;
+        try (Cursor c = getContentResolver().query(u, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (c != null && c.moveToFirst()) n = c.getString(0);
+        } catch (Throwable ignored) {}
+        if (empty(n)) n = u.getLastPathSegment();
+        if (!empty(n) && n.contains("/")) n = n.substring(n.lastIndexOf('/') + 1);
+        if (!empty(n) && n.contains(":")) n = n.substring(n.lastIndexOf(':') + 1);
+        if (empty(n)) n = "sound";
+        return n;
+    }
+
+    private void showSoundDialog() {
+        if (uri == null) return;
+        if (!android.provider.Settings.System.canWrite(this)) {
+            toastMsg(vi ? "Hãy bật \"Sửa đổi cài đặt hệ thống\" cho Media Player rồi bấm lại" : "Allow \"Modify system settings\" for Media Player, then tap again");
+            try {
+                startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())));
+            } catch (Throwable t) {
+                try { startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS)); } catch (Throwable ignored) {}
+            }
+            return;
+        }
+        final String[] types = {"ringtone", "notification", "alarm"};
+        final String[] labels = vi ? new String[]{"Nhạc chuông", "Âm thông báo", "Âm báo thức"} : new String[]{"Ringtone", "Notification sound", "Alarm sound"};
+        try {
+            new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(vi ? "Đặt làm âm thanh" : "Set as sound")
+                    .setItems(labels, (d, w) -> setSoundImpl(types[w], labels[w]))
+                    .setNegativeButton(vi ? "Hủy" : "Cancel", null)
+                    .show();
+        } catch (Throwable ignored) {}
+    }
+
+    private void setSoundImpl(final String type, final String label) {
+        final Uri src = uri;
+        if (src == null) return;
+        new Thread(() -> {
+            String err = null;
+            try {
+                String base = rawDisplayName(src).replaceAll("[\\\\/:*?\"<>|]", "_");
+                if (base.lastIndexOf('.') < 1) base = base + ".mp3";
+                String mime = !empty(metaMime) ? metaMime : "audio/mpeg";
+                int rtType; String relDir;
+                boolean isRing = false, isNotif = false, isAlarm = false;
+                if ("notification".equals(type)) { rtType = android.media.RingtoneManager.TYPE_NOTIFICATION; relDir = android.os.Environment.DIRECTORY_NOTIFICATIONS; isNotif = true; }
+                else if ("alarm".equals(type)) { rtType = android.media.RingtoneManager.TYPE_ALARM; relDir = android.os.Environment.DIRECTORY_ALARMS; isAlarm = true; }
+                else { rtType = android.media.RingtoneManager.TYPE_RINGTONE; relDir = android.os.Environment.DIRECTORY_RINGTONES; isRing = true; }
+                android.content.ContentResolver cr = getContentResolver();
+                android.content.ContentValues cv = new android.content.ContentValues();
+                cv.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, base);
+                cv.put(android.provider.MediaStore.MediaColumns.TITLE, base.substring(0, base.lastIndexOf('.')));
+                cv.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mime);
+                cv.put(android.provider.MediaStore.Audio.Media.IS_RINGTONE, isRing);
+                cv.put(android.provider.MediaStore.Audio.Media.IS_NOTIFICATION, isNotif);
+                cv.put(android.provider.MediaStore.Audio.Media.IS_ALARM, isAlarm);
+                cv.put(android.provider.MediaStore.Audio.Media.IS_MUSIC, false);
+                Uri out;
+                if (Build.VERSION.SDK_INT >= 29) {
+                    cv.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, relDir);
+                    try { cr.delete(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                            android.provider.MediaStore.MediaColumns.DISPLAY_NAME + "=? AND " + android.provider.MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ?",
+                            new String[]{base, relDir + "%"}); } catch (Throwable ignored) {}
+                    out = cr.insert(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cv);
+                    if (out == null) throw new Exception("INSERT_FAILED");
+                    try (InputStream in = cr.openInputStream(src); java.io.OutputStream os = cr.openOutputStream(out)) {
+                        if (in == null || os == null) throw new Exception("IO");
+                        byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush();
+                    }
+                } else {
+                    File dir = android.os.Environment.getExternalStoragePublicDirectory(relDir);
+                    if (!dir.exists()) dir.mkdirs();
+                    File dst = new File(dir, base);
+                    try (InputStream in = cr.openInputStream(src); FileOutputStream os = new FileOutputStream(dst)) {
+                        if (in == null) throw new Exception("IO");
+                        byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush();
+                    }
+                    cv.put(android.provider.MediaStore.MediaColumns.DATA, dst.getAbsolutePath());
+                    out = cr.insert(android.provider.MediaStore.Audio.Media.getContentUriForPath(dst.getAbsolutePath()), cv);
+                    if (out == null) throw new Exception("INSERT_FAILED");
+                }
+                android.media.RingtoneManager.setActualDefaultRingtoneUri(this, rtType, out);
+            } catch (Throwable t) {
+                err = String.valueOf(t.getMessage() != null ? t.getMessage() : t);
+            }
+            final String fe = err;
+            runOnUiThread(() -> toastMsg(fe == null
+                    ? (vi ? "Đã đặt làm " : "Set as ") + label.toLowerCase(Locale.ROOT)
+                    : (vi ? "Không đặt được âm thanh: " : "Could not set sound: ") + fe));
+        }, "qp-set-sound").start();
+    }
+
+    private void confirmDelete() {
+        if (uri == null) return;
+        try {
+            new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(vi ? "Xóa tệp này?" : "Delete this file?")
+                    .setMessage(vi ? "Tệp sẽ bị xóa khỏi thiết bị và không thể khôi phục." : "The file will be deleted from your device and cannot be restored.")
+                    .setPositiveButton(vi ? "Xóa" : "Delete", (d, w) -> deleteCurrent())
+                    .setNegativeButton(vi ? "Hủy" : "Cancel", null)
+                    .show();
+        } catch (Throwable ignored) {}
+    }
+
+    private File fileFromDocumentUri(Uri u) {
+        try {
+            if ("file".equals(u.getScheme())) return new File(u.getPath());
+            if (android.provider.DocumentsContract.isDocumentUri(this, u) && "com.android.externalstorage.documents".equals(u.getAuthority())) {
+                String id = android.provider.DocumentsContract.getDocumentId(u);
+                if (id != null && id.startsWith("primary:")) return new File(android.os.Environment.getExternalStorageDirectory(), id.substring(8));
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private Uri mediaUriFor(Uri u, File f) {
+        try {
+            if ("media".equals(u.getAuthority())) return u;
+            if (Build.VERSION.SDK_INT >= 31 && android.provider.DocumentsContract.isDocumentUri(this, u)) {
+                try { Uri m = android.provider.MediaStore.getMediaUri(this, u); if (m != null) return m; } catch (Throwable ignored) {}
+            }
+            if (f != null) {
+                try (Cursor c = getContentResolver().query(android.provider.MediaStore.Files.getContentUri("external"),
+                        new String[]{android.provider.MediaStore.Files.FileColumns._ID},
+                        android.provider.MediaStore.Files.FileColumns.DATA + "=?", new String[]{f.getAbsolutePath()}, null)) {
+                    if (c != null && c.moveToFirst()) return android.content.ContentUris.withAppendedId(android.provider.MediaStore.Files.getContentUri("external"), c.getLong(0));
+                }
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private void deleteCurrent() {
+        final Uri u = uri;
+        if (u == null) return;
+        new Thread(() -> {
+            boolean ok = false;
+            File f = fileFromDocumentUri(u);
+            if (f != null) {
+                try { if (!f.exists()) ok = true; else if (f.delete()) { ok = true; android.media.MediaScannerConnection.scanFile(getApplicationContext(), new String[]{f.getAbsolutePath()}, null, null); } } catch (Throwable ignored) {}
+            }
+            if (!ok) {
+                try { if (android.provider.DocumentsContract.isDocumentUri(this, u)) ok = android.provider.DocumentsContract.deleteDocument(getContentResolver(), u); } catch (Throwable ignored) {}
+            }
+            if (!ok && "content".equals(u.getScheme())) {
+                try { ok = getContentResolver().delete(u, null, null) > 0; } catch (Throwable ignored) {}
+            }
+            if (!ok && Build.VERSION.SDK_INT >= 30) {
+                final Uri mu = mediaUriFor(u, f);
+                if (mu != null) {
+                    runOnUiThread(() -> {
+                        try {
+                            android.app.PendingIntent pi = android.provider.MediaStore.createDeleteRequest(getContentResolver(), java.util.Collections.singletonList(mu));
+                            startIntentSenderForResult(pi.getIntentSender(), REQ_QP_DELETE, null, 0, 0, 0);
+                        } catch (Throwable t) { onDeleteDone(false); }
+                    });
+                    return;
+                }
+            }
+            final boolean fin = ok;
+            runOnUiThread(() -> onDeleteDone(fin));
+        }, "qp-delete").start();
+    }
+
+    private void onDeleteDone(boolean ok) {
+        if (isDestroyed()) return;
+        if (ok) {
+            toastMsg(vi ? "Đã xóa tệp" : "File deleted");
+            dismissSheet();
+        } else {
+            toastMsg(vi ? "Không xóa được tệp này từ đây (ứng dụng mở tệp không cấp quyền xóa)" : "Couldn't delete this file from here (the app that opened it didn't grant delete access)");
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == REQ_QP_DELETE) onDeleteDone(res == Activity.RESULT_OK);
     }
 
     private void shareCurrentUri() {
