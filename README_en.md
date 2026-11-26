@@ -1,7 +1,5 @@
 # 🎵 Media Player
 
-[🇻🇳 Tiếng Việt](README.md) | 🌐 **English**
-
 > A modern, smooth, and feature-rich local (client-side & hybrid Android) **audio and video** player built on top of **Material Design 3 Expressive**. Engineered for a seamless experience across both **desktop browsers (Web / PWA)** and **Android 8.0+ phones & tablets (native APK)**.
 
 ---
