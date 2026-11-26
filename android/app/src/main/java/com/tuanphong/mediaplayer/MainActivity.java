@@ -64,7 +64,7 @@ public class MainActivity extends Activity {
     /** Đã rời app (về Home/đa nhiệm/tắt màn hình): lúc này trình phát native là chủ duy nhất, WebView không được điều khiển nó nữa. */
     boolean hasLeftApp() {
         if (!appLeftHome) return false;
-        try { if (Build.VERSION.SDK_INT >= 24 && isInPictureInPictureMode()) return false; } catch (Throwable ignored) {}
+        try { if (isInPictureInPictureMode()) return false; } catch (Throwable ignored) {}
         return true;
     }
     boolean isInBackgroundForMedia() {
@@ -235,8 +235,7 @@ public class MainActivity extends Activity {
         if (act != null) {
             try { act.destroyWebViewForSelfDestruct(); } catch (Throwable ignored) {}
             try {
-                if (Build.VERSION.SDK_INT >= 21) act.finishAndRemoveTask();
-                else act.finishAffinity();
+                act.finishAndRemoveTask();
             } catch (Throwable ignored) {}
         }
         try { android.os.Process.killProcess(android.os.Process.myPid()); } catch (Throwable ignored) {}
@@ -357,12 +356,12 @@ public class MainActivity extends Activity {
         s.setAllowContentAccess(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
         // Giảm tải khởi động trên máy yếu: bỏ kiểm tra Safe Browsing mỗi lần tải, tắt zoom, nâng ưu tiên tiến trình hiển thị, bật tăng tốc phần cứng
-        if (Build.VERSION.SDK_INT >= 26) { try { s.setSafeBrowsingEnabled(false); } catch (Throwable ignored) {} }
+        try { s.setSafeBrowsingEnabled(false); } catch (Throwable ignored) {}
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
         s.setSaveFormData(false);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        if (Build.VERSION.SDK_INT >= 26) { try { web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false); } catch (Throwable ignored) {} }
+        try { web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false); } catch (Throwable ignored) {}
         s.setUserAgentString(s.getUserAgentString() + " MediaPlayerApp/1.0");
         web.addJavascriptInterface(new Bridge(), "AndroidBridge");
 
@@ -408,7 +407,7 @@ public class MainActivity extends Activity {
             public boolean onRenderProcessGone(WebView v, android.webkit.RenderProcessGoneDetail detail) {
                 boolean didCrash = false;
                 int prio = -1;
-                if (Build.VERSION.SDK_INT >= 26 && detail != null) {
+                if (detail != null) {
                     try { didCrash = detail.didCrash(); } catch (Throwable ignored) {}
                     try { prio = detail.rendererPriorityAtExit(); } catch (Throwable ignored) {}
                 }
@@ -991,8 +990,7 @@ public class MainActivity extends Activity {
         double lum = (0.299 * ((themeColor >> 16) & 255) + 0.587 * ((themeColor >> 8) & 255) + 0.114 * (themeColor & 255)) / 255.0;
         int f = View.SYSTEM_UI_FLAG_VISIBLE;
         if (lum > 0.6) {
-            if (Build.VERSION.SDK_INT >= 23) f |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            if (Build.VERSION.SDK_INT >= 26) f |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            f |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         }
         return f;
     }
@@ -1060,7 +1058,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             String err = null;
             try {
-                if (Build.VERSION.SDK_INT >= 23 && !android.provider.Settings.System.canWrite(this)) throw new Exception("NO_PERMISSION");
+                if (!android.provider.Settings.System.canWrite(this)) throw new Exception("NO_PERMISSION");
                 String path = resolvePathOf(id, loc);
                 Uri src = (id == null || id.isEmpty()) ? null : served.get(id);
                 File direct = null;
@@ -1732,7 +1730,7 @@ public class MainActivity extends Activity {
     }
 
     private void startSvc(Intent i) {
-        try { if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i); } catch (Exception ignored) {}
+        try { startForegroundService(i); } catch (Exception ignored) {}
     }
 
     /** Chạy JS và ghi nhận trang còn phản hồi (callback chỉ chạy khi renderer xử lý xong) — dùng để biết WebView còn sống cho trình phát native. */
@@ -1773,19 +1771,24 @@ public class MainActivity extends Activity {
                 String p = u.getPath();
                 if (p != null && !p.isEmpty()) return p;
             }
-            try (Cursor c = getContentResolver().query(u, new String[]{"_data", "relative_path", OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            String[] proj = (Build.VERSION.SDK_INT >= 29)
+                    ? new String[]{"_data", "relative_path", OpenableColumns.DISPLAY_NAME}
+                    : new String[]{"_data", OpenableColumns.DISPLAY_NAME};
+            try (Cursor c = getContentResolver().query(u, proj, null, null, null)) {
                 if (c != null && c.moveToFirst()) {
                     int dataIdx = c.getColumnIndex("_data");
                     if (dataIdx >= 0 && !c.isNull(dataIdx)) {
                         String absPath = c.getString(dataIdx);
                         if (absPath != null && !absPath.trim().isEmpty()) return absPath.trim();
                     }
-                    int relIdx = c.getColumnIndex("relative_path");
-                    int nameIdx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                    String rel = (relIdx >= 0 && !c.isNull(relIdx)) ? c.getString(relIdx) : "";
-                    String disp = (nameIdx >= 0 && !c.isNull(nameIdx)) ? c.getString(nameIdx) : "";
-                    if (rel != null && !rel.isEmpty()) {
-                        return "/storage/emulated/0/" + rel + (disp != null ? disp : "");
+                    if (Build.VERSION.SDK_INT >= 29) {
+                        int relIdx = c.getColumnIndex("relative_path");
+                        int nameIdx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                        String rel = (relIdx >= 0 && !c.isNull(relIdx)) ? c.getString(relIdx) : "";
+                        String disp = (nameIdx >= 0 && !c.isNull(nameIdx)) ? c.getString(nameIdx) : "";
+                        if (rel != null && !rel.isEmpty()) {
+                            return "/storage/emulated/0/" + rel + (disp != null ? disp : "");
+                        }
                     }
                 }
             } catch (Throwable ignored) {}
@@ -1996,10 +1999,7 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 33) {
             return checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED;
         }
-        if (Build.VERSION.SDK_INT >= 23) {
-            return checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-        }
-        return true;
+        return checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
     /** Quyền "Quản lý toàn bộ tệp" (Android 11+) - cần để Metadata Editor ghi trực tiếp vào tệp nhạc. */
@@ -2007,10 +2007,7 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 30) {
             try { return android.os.Environment.isExternalStorageManager(); } catch (Throwable t) { return false; }
         }
-        if (Build.VERSION.SDK_INT >= 23) {
-            return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-        }
-        return true;
+        return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
     /** Đủ quyền để app dùng: đọc nhạc + truy cập tất cả hình ảnh + truy cập toàn bộ tệp. */
@@ -2027,7 +2024,7 @@ public class MainActivity extends Activity {
             } catch (Throwable ex) {
                 try { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)); } catch (Throwable ignored) {}
             }
-        } else if (Build.VERSION.SDK_INT >= 23) {
+        } else {
             requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 103);
         }
     }
@@ -2093,10 +2090,7 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 33) {
             return checkSelfPermission(Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED;
         }
-        if (Build.VERSION.SDK_INT >= 23) {
-            return checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-        }
-        return true;
+        return checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
     private boolean hasNotificationPermissionInternal() {
@@ -2621,13 +2615,12 @@ public class MainActivity extends Activity {
         super.onStop();
         try { NativeAudio.saveBackupSync(this); } catch (Throwable ignored) {}
         cancelWatchdogOnLeave();
-        if (Build.VERSION.SDK_INT >= 26 && !isInPictureInPictureMode()) {
+        if (!isInPictureInPictureMode()) {
             callJs("window.__onAndroidLeaveApp&&window.__onAndroidLeaveApp()");
         }
     }
 
     private boolean canInstallUnknownSources() {
-        if (Build.VERSION.SDK_INT < 26) return true;
         try {
             return getPackageManager().canRequestPackageInstalls();
         } catch (Throwable ignored) {
@@ -2636,7 +2629,6 @@ public class MainActivity extends Activity {
     }
 
     private void openUnknownSourcesSettings(String apkUrl) {
-        if (Build.VERSION.SDK_INT < 26) return;
         waitingUnknownSourcePermission = true;
         pendingUpdateUrl = apkUrl;
         runOnUiThread(() -> {
@@ -3258,7 +3250,7 @@ public class MainActivity extends Activity {
         /** Đã được cấp quyền "Sửa đổi cài đặt hệ thống" chưa (cần để đặt nhạc chuông / thông báo / báo thức) */
         @JavascriptInterface
         public boolean canWriteSettings() {
-            try { return Build.VERSION.SDK_INT < 23 || android.provider.Settings.System.canWrite(MainActivity.this); } catch (Throwable t) { return false; }
+            try { return android.provider.Settings.System.canWrite(MainActivity.this); } catch (Throwable t) { return false; }
         }
 
         /** Mở trang cho phép sửa đổi cài đặt hệ thống của app */
@@ -3628,19 +3620,17 @@ public class MainActivity extends Activity {
                     callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(true)");
                     return;
                 }
-                if (Build.VERSION.SDK_INT >= 23) {
-                    try {
-                        Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                        intent.setData(Uri.parse("package:" + getPackageName()));
-                        startActivityForResult(intent, 47);
-                        return;
-                    } catch (Throwable ignored) {}
-                    try {
-                        Intent fallback = new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-                        startActivityForResult(fallback, 47);
-                        return;
-                    } catch (Throwable ignored) {}
-                }
+                try {
+                    Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    intent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivityForResult(intent, 47);
+                    return;
+                } catch (Throwable ignored) {}
+                try {
+                    Intent fallback = new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                    startActivityForResult(fallback, 47);
+                    return;
+                } catch (Throwable ignored) {}
                 callJs("window.__onAndroidBatteryOptResult&&window.__onAndroidBatteryOptResult(" + isIgnoringBatteryOptimizationsInternal() + ")");
             });
         }
@@ -3669,7 +3659,7 @@ public class MainActivity extends Activity {
                         if (!hasMediaPermissionInternal()) req.add(Manifest.permission.READ_MEDIA_AUDIO);
                         if (!hasImagesPermissionInternal()) req.add(Manifest.permission.READ_MEDIA_IMAGES);
                         requestPermissions(req.toArray(new String[0]), 101);
-                    } else if (Build.VERSION.SDK_INT >= 23) {
+                    } else {
                         requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
                     }
                 } else {
@@ -3686,7 +3676,7 @@ public class MainActivity extends Activity {
                     return;
                 }
                 if (Build.VERSION.SDK_INT >= 33) requestPermissions(new String[]{Manifest.permission.READ_MEDIA_AUDIO}, 105);
-                else if (Build.VERSION.SDK_INT >= 23) requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 105);
+                else requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 105);
             });
         }
 
@@ -3698,7 +3688,7 @@ public class MainActivity extends Activity {
                     return;
                 }
                 if (Build.VERSION.SDK_INT >= 33) requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES}, 105);
-                else if (Build.VERSION.SDK_INT >= 23) requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 105);
+                else requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 105);
             });
         }
 
@@ -3965,17 +3955,15 @@ public class MainActivity extends Activity {
                 return;
             }
             if (Build.VERSION.SDK_INT >= 33 && !hasNotificationPermissionInternal()) return;
-            if (Build.VERSION.SDK_INT >= 26) {
-                android.app.NotificationChannel ch = new android.app.NotificationChannel(
-                        SCAN_NOTIF_CHANNEL,
-                        isEnglishLang() ? "Library scanning" : "Quét thư viện nhạc",
-                        android.app.NotificationManager.IMPORTANCE_LOW
-                );
-                ch.setShowBadge(false);
-                ch.enableVibration(false);
-                ch.setSound(null, null);
-                nm.createNotificationChannel(ch);
-            }
+            android.app.NotificationChannel ch = new android.app.NotificationChannel(
+                    SCAN_NOTIF_CHANNEL,
+                    isEnglishLang() ? "Library scanning" : "Quét thư viện nhạc",
+                    android.app.NotificationManager.IMPORTANCE_LOW
+            );
+            ch.setShowBadge(false);
+            ch.enableVibration(false);
+            ch.setSound(null, null);
+            nm.createNotificationChannel(ch);
             int safeDone = Math.max(0, Math.min(done, total));
             String title = isEnglishLang() ? "Scanning track metadata..." : "Đang quét thông tin bài hát...";
             String sub = safeDone + "/" + total;
@@ -3988,9 +3976,7 @@ public class MainActivity extends Activity {
                     new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
                     android.app.PendingIntent.FLAG_IMMUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT
             );
-            android.app.Notification.Builder b = Build.VERSION.SDK_INT >= 26
-                    ? new android.app.Notification.Builder(this, SCAN_NOTIF_CHANNEL)
-                    : new android.app.Notification.Builder(this);
+            android.app.Notification.Builder b = new android.app.Notification.Builder(this, SCAN_NOTIF_CHANNEL);
             b.setSmallIcon(android.R.drawable.ic_popup_sync)
                     .setContentTitle(title)
                     .setContentText(sub)
@@ -4004,7 +3990,6 @@ public class MainActivity extends Activity {
     }
 
     private boolean isIgnoringBatteryOptimizationsInternal() {
-        if (Build.VERSION.SDK_INT < 23) return true;
         try {
             android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
             return pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
