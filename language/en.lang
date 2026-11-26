@@ -710,4 +710,5 @@ ai.err_no_model=No available Gemini model found for this API Key.
 ai.err_no_valid_tracks=AI did not return any valid songs from your library.
 ai.err_no_lyric_content=Lyrics have no text content to translate.
 ai.err_no_valid_trans=AI did not return valid translated lines.
+sel.del_playing=Cannot delete the currently playing song
 
