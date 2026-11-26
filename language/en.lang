@@ -721,3 +721,10 @@ dev.console_placeholder=Enter JavaScript command...
 dev.inspect_hint=Tap anywhere to inspect elements at that point (elementsFromPoint)
 dev.copied=Logs copied
 
+dev.copy_state=Copy app state
+dev.bridge_test=Test Bridge
+dev.reload=Reload page
+dev.clear_reload=Clear cache & reload
+dev.reset=Reset developer settings
+dev.reset_done=Developer settings reset to default.
+dev.state_copied=Copied

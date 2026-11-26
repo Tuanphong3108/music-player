@@ -2410,3 +2410,10 @@ html.m-ui #m-lib-list.m-locating .m-lib-item { content-visibility: visible; }
         /* ===== Developer Features: nút <\> mở Native Developer Console ===== */
         #dev-console-btn { display: none; }
         body.dev-console-on #dev-console-btn { display: inline-flex; }
+        .dev-tools { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+        .dev-tools .dev-info { font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .65; line-height: 1.6; word-break: break-all; }
+        .dev-tools .dev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+        .dev-tools .dev-btn { border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 8px 14px; border-radius: 20px; font: inherit; font-weight: 700; font-size: calc(14px * var(--font-scale-factor, 1)); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); transition: transform .12s ease; }
+        .dev-tools .dev-btn:active { transform: scale(.97); }
+        .dev-tools .dev-btn.danger { background: var(--md-sys-color-error-container, #8c1d18); color: var(--md-sys-color-on-error-container, #fff); }
+        .dev-tools .dev-out { margin: 0; padding: 12px 14px; border-radius: 16px; background: var(--md-sys-color-surface-container, rgba(0,0,0,.25)); font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-all; max-height: 260px; overflow: auto; display: none; user-select: text; }

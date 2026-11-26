@@ -720,3 +720,10 @@ dev.console_placeholder=Nhập lệnh JavaScript...
 dev.inspect_hint=Chạm vào bất kỳ vị trí nào để soi lớp phủ (elementsFromPoint)
 dev.copied=Đã sao chép log
 
+dev.copy_state=Sao chép trạng thái app
+dev.bridge_test=Kiểm tra Bridge
+dev.reload=Tải lại trang
+dev.clear_reload=Xóa cache & tải lại
+dev.reset=Đặt lại cài đặt Developer
+dev.reset_done=Đã đặt lại cài đặt Developer về mặc định.
+dev.state_copied=Đã sao chép

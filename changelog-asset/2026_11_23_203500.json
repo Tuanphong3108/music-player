@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Developer Features: thêm Sao chép trạng thái app, Kiểm tra Bridge, Tải lại / Xóa cache & tải lại, và nút Đặt lại cài đặt Developer",
+      "icon": "build"
+    },
+    {
       "content": "Android: tự phát hiện khi nhạc đứng yên (kẹt 0:00 sau khi chuyển bài) và tự phát lại / nạp lại bài",
       "icon": "restart_alt"
     },
@@ -123,6 +127,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Developer Features: added Copy app state, Bridge test, Reload / Clear cache & reload, and Reset developer settings",
+      "icon": "build"
+    },
     {
       "content": "Android: auto-detects stalled playback (stuck at 0:00 after a track change) and retries / reloads the track",
       "icon": "restart_alt"
