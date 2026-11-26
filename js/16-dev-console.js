@@ -46,7 +46,7 @@
         'nativeAudioSetQueue', 'nativeAudioStop', 'setMediaState', 'setArtwork', 'shareNativeFiles', 'deleteNativeFiles', 'setAsSound', 'canWriteSettings',
         'openWriteSettings', 'setQuickPlayPrefs', 'toggleDevConsole', 'setDevConsoleEnabled', 'closeDevConsole', 'readAppLogs'];
 
-    function safe(fn, dflt) { try { const v = fn(); return v === undefined ? dflt : v; } catch (e) { return dflt === undefined ? ('lỗi: ' + (e && e.message)) : dflt; } }
+    function safe(fn, dflt) { try { const v = fn(); return v === undefined ? dflt : v; } catch (e) { return dflt === undefined ? ('error: ' + (e && e.message)) : dflt; } }
 
     async function swInfo() {
         const out = { controller: !!(navigator.serviceWorker && navigator.serviceWorker.controller), caches: [], regs: 0 };
@@ -80,18 +80,18 @@
 
     async function bridgeTest() {
         const AB = window.AndroidBridge;
-        if (!AB) return 'Không có AndroidBridge (đang chạy web thường).';
+        if (!AB) return T('dev.no_bridge', 'Không có AndroidBridge (đang chạy web thường).');
         const missing = [], ok = [];
         BRIDGE_METHODS.forEach(m => (typeof AB[m] === 'function' ? ok : missing).push(m));
         const t0 = performance.now();
-        const r1 = safe(() => AB.getAppVersion ? AB.getAppVersion() : '(thiếu)', '(thiếu)');
+        const r1 = safe(() => AB.getAppVersion ? AB.getAppVersion() : '(missing)', '(missing)');
         const t1 = performance.now();
         const r2 = safe(() => AB.nativeAudioState ? AB.nativeAudioState() : null, null);
         const t2 = performance.now();
-        return 'Có ' + ok.length + '/' + BRIDGE_METHODS.length + ' hàm bridge.\n' +
-            (missing.length ? 'THIẾU (APK cũ hơn web?): ' + missing.join(', ') + '\n' : 'Đủ hàm.\n') +
+        return T('dev.bridge_count', 'Có {a}/{b} hàm bridge.').replace('{a}', ok.length).replace('{b}', BRIDGE_METHODS.length) + '\n' +
+            (missing.length ? T('dev.bridge_missing', 'THIẾU (APK cũ hơn web?): ') + missing.join(', ') + '\n' : T('dev.bridge_full', 'Đủ hàm.') + '\n') +
             'getAppVersion → ' + r1 + ' (' + (t1 - t0).toFixed(1) + ' ms)\n' +
-            'nativeAudioState → ' + (r2 ? ('ok, ' + String(r2).length + ' ký tự') : 'rỗng') + ' (' + (t2 - t1).toFixed(1) + ' ms)';
+            'nativeAudioState → ' + (r2 ? (T('dev.bridge_ok', 'ok, {n} ký tự').replace('{n}', String(r2).length)) : T('dev.bridge_empty', 'rỗng')) + ' (' + (t2 - t1).toFixed(1) + ' ms)';
     }
 
     async function clearCacheAndReload() {
@@ -142,25 +142,26 @@
     async function exportDiagnostics() {
         const state = await buildAppState();
         const raw = readLogs(2000);
-        let logs = '(không đọc được log native)';
+        let logs = T('dev.logs_unreadable', '(không đọc được log native)');
         if (raw !== null) {
             const arr = parseLogs(raw);
             const keep = arr.filter(e => LEVELS.indexOf(e.lv) >= 3 || /^(MP|NativeAudio|MediaService|MainActivity|QuickPlay|chromium|cr_console|Console)/i.test(e.tag));
-            logs = keep.slice(-250).map(e => e.raw).join('\n') || '(trống)';
+            logs = keep.slice(-250).map(e => e.raw).join('\n') || T('dev.logs_empty', '(trống)');
         }
-        return state + '\n\n== Logs (W/E + MP*/Media*/Console, 250 dòng cuối) ==\n' + logs;
+        return state + '\n\n' + T('dev.logs_header', '== Logs (W/E + MP*/Media*/Console, 250 dòng cuối) ==') + '\n' + logs;
     }
     function buildLogViewer(host) {
         const box = document.createElement('div'); box.className = 'dev-logs'; box.style.display = 'none';
-        box.innerHTML = '<div class="dev-log-bar"></div><input type="search" class="dev-log-q" placeholder="Tìm trong log..."><pre class="dev-out" style="display:block;"></pre>';
+        box.innerHTML = '<div class="dev-log-bar"></div><input type="search" class="dev-log-q" placeholder=""><pre class="dev-out" style="display:block;"></pre>';
         const bar = box.querySelector('.dev-log-bar'), q = box.querySelector('.dev-log-q'), pre = box.querySelector('pre');
+        q.placeholder = T('dev.log_search', 'Tìm trong log...');
         const st = { level: 'V', tag: '' };
-        const chips = [['Tất cả', 'V', ''], ['Cảnh báo+', 'W', ''], ['Lỗi', 'E', ''], ['MP*', 'V', 'MP'], ['Media', 'V', 'Media'], ['Web', 'V', 'chromium']];
+        const chips = [[T('dev.f_all', 'Tất cả'), 'V', ''], [T('dev.f_warn', 'Cảnh báo+'), 'W', ''], [T('dev.f_err', 'Lỗi'), 'E', ''], ['MP*', 'V', 'MP'], ['Media', 'V', 'Media'], ['Web', 'V', 'chromium']];
         let arr = [], cur = chips[0];
         const render = () => {
             const f = filterLogs(arr, { level: st.level, tag: st.tag, q: q.value });
             const last = f.slice(-300);
-            pre.textContent = (raw0 === null ? 'Chỉ có trong app Android (cần APK mới có readAppLogs).' : (last.map(e => e.raw).join('\n') || 'Không có dòng log nào khớp.'));
+            pre.textContent = (raw0 === null ? T('dev.logs_need_apk', 'Chỉ có trong app Android (cần APK mới có readAppLogs).') : (last.map(e => e.raw).join('\n') || T('dev.logs_nomatch', 'Không có dòng log nào khớp.')));
             pre.scrollTop = pre.scrollHeight;
         };
         let raw0 = '';
@@ -196,7 +197,7 @@
         const refreshInfo = async () => {
             const sw = await swInfo();
             const AB = window.AndroidBridge;
-            info.textContent = 'URL: ' + location.href + '\n' + 'SW: ' + (sw.controller ? 'đang điều khiển' : 'chưa điều khiển') + ' • cache: ' + (sw.caches.join(', ') || '-') +
+            info.textContent = 'URL: ' + location.href + '\n' + 'SW: ' + (sw.controller ? T('dev.sw_active', 'đang điều khiển') : T('dev.sw_inactive', 'chưa điều khiển')) + ' • cache: ' + (sw.caches.join(', ') || '-') +
                 (AB && AB.getAppVersion ? '\nAPK: ' + safe(() => AB.getAppVersion()) : '');
         };
         btn('content_copy', 'dev.copy_state', 'Sao chép trạng thái app', async () => { const t = await buildAppState(); show(t); copyText(t); });
@@ -224,6 +225,7 @@
             return;
         }
         buildTools();
+        document.querySelectorAll('.st-tab[data-tab="developer"]').forEach(t => t.addEventListener('click', () => setTimeout(buildTools, 0)));
         const on = isEnabled();
         applyDevState(on);
 
