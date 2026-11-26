@@ -283,6 +283,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        if (getIntent() != null && getIntent().getBooleanExtra("qp_expand", false)) {
+            try {
+                if (Build.VERSION.SDK_INT >= 34) {
+                    overrideActivityTransition(Activity.OVERRIDE_TRANSITION_OPEN, 0, 0);
+                }
+            } catch (Throwable ignored) {}
+            overridePendingTransition(0, 0);
+        }
         selfDestructing = false;
         checkHistoricalExitInfo();
         // Activity mới = WebView mới = chưa phát gì (kể cả khi app vừa sập rồi mở lại): đưa các widget về trạng thái chưa mở bài nào
@@ -1246,7 +1254,45 @@ public class MainActivity extends Activity {
     private volatile boolean pendingExternalOpen = false;
     private volatile long pendingStartMs = -1;      // từ sheet mini (QuickPlayActivity): bắt đầu từ vị trí này
     private volatile boolean pendingStartPlay = true;
+    private volatile boolean pendingExpandPlayer = false;
     private volatile String pendingWidgetCmd = null;
+    private View qpTransitionVeil = null;
+    private final Runnable qpVeilFallback = this::dismissQpTransitionVeil;
+
+    /** Hiện lớp phủ đồng màu với sheet QuickPlay rồi mờ dần sang giao diện Full Player (tránh hiệu ứng nhảy app). */
+    private void showQpTransitionVeil(final int color) {
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed() || root == null) return;
+            pingHandler.removeCallbacks(qpVeilFallback);
+            if (qpTransitionVeil != null) {
+                try { qpTransitionVeil.animate().cancel(); } catch (Throwable ignored) {}
+                try { root.removeView(qpTransitionVeil); } catch (Throwable ignored) {}
+                qpTransitionVeil = null;
+            }
+            View v = new View(this);
+            v.setBackgroundColor(color != 0 ? (0xFF000000 | color) : themeColor);
+            v.setAlpha(1f);
+            v.setClickable(true);
+            qpTransitionVeil = v;
+            root.addView(v, new FrameLayout.LayoutParams(-1, -1));
+            overridePendingTransition(0, 0);
+            pingHandler.postDelayed(qpVeilFallback, 1200L);
+        });
+    }
+
+    private void dismissQpTransitionVeil() {
+        runOnUiThread(() -> {
+            pingHandler.removeCallbacks(qpVeilFallback);
+            final View v = qpTransitionVeil;
+            if (v == null) return;
+            qpTransitionVeil = null;
+            v.animate().alpha(0f).setDuration(220)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .withEndAction(() -> {
+                        try { if (root != null) root.removeView(v); } catch (Throwable ignored) {}
+                    }).start();
+        });
+    }
 
     private void handleIntent(Intent i) {
         if (i == null) return;
@@ -1280,9 +1326,15 @@ public class MainActivity extends Activity {
         }
         pendingStartMs = i.getLongExtra("qp_pos", -1);
         pendingStartPlay = i.getBooleanExtra("qp_play", true);
-        i.removeExtra("qp_pos"); i.removeExtra("qp_play");
+        boolean qpExpand = i.getBooleanExtra("qp_expand", false);
+        int qpBgColor = i.getIntExtra("qp_bg_color", 0);
+        i.removeExtra("qp_pos"); i.removeExtra("qp_play"); i.removeExtra("qp_expand"); i.removeExtra("qp_bg_color");
         i.setAction(Intent.ACTION_MAIN); // tránh nạp lại khi xoay màn hình
         pendingExternalOpen = true;
+        if (qpExpand) {
+            pendingExpandPlayer = true;
+            showQpTransitionVeil(qpBgColor != 0 ? qpBgColor : themeColor);
+        }
         NativeAudio.stop(); // dừng bài cũ ngay để trang ưu tiên mở tệp từ nguồn ngoài thay vì khôi phục nguồn cũ
         queueUris(uris, true);
     }
@@ -1787,10 +1839,11 @@ public class MainActivity extends Activity {
                 o.put("modified", queryModified(u));
                 if (fromExternal) o.put("fromExternal", true);
                 if (fromExternal && pendingStartMs > 0) { o.put("startMs", pendingStartMs); o.put("startPlay", pendingStartPlay); }
+                if (fromExternal && pendingExpandPlayer) o.put("expandPlayer", true);
                 pending.add(o);
             } catch (Exception ignored) {}
         }
-        if (fromExternal) pendingStartMs = -1;
+        if (fromExternal) { pendingStartMs = -1; pendingExpandPlayer = false; }
         flushPending();
     }
 
@@ -3434,6 +3487,11 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean hasPendingExternalOpen() {
             return pendingExternalOpen;
+        }
+
+        @JavascriptInterface
+        public void onQpTransitionReady() {
+            dismissQpTransitionVeil();
         }
 
         @JavascriptInterface
