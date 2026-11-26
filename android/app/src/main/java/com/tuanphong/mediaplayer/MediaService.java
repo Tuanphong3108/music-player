@@ -31,8 +31,7 @@ public class MediaService extends Service {
     private final Runnable stopFgRunnable = () -> {
         if (!playing) {
             try {
-                if (Build.VERSION.SDK_INT >= 24) stopForeground(STOP_FOREGROUND_DETACH);
-                else stopForeground(false);
+                stopForeground(STOP_FOREGROUND_DETACH);
             } catch (Throwable ignored) {}
         }
     };
@@ -102,8 +101,7 @@ public class MediaService extends Service {
                         : NativeAudio.appContext();
                 if (ctx != null) {
                     Intent si = new Intent(ctx, MediaService.class).setAction(ACTION_NATIVE_SYNC);
-                    if (Build.VERSION.SDK_INT >= 26) ctx.startForegroundService(si);
-                    else ctx.startService(si);
+                    ctx.startForegroundService(si);
                 }
             } catch (Throwable ignored) {}
             return;
@@ -343,8 +341,7 @@ public class MediaService extends Service {
             } catch (Exception ignored) {}
         }
         try {
-            if (Build.VERSION.SDK_INT >= 24) stopForeground(STOP_FOREGROUND_REMOVE);
-            else stopForeground(true);
+            stopForeground(STOP_FOREGROUND_REMOVE);
         } catch (Exception ignored) {}
         try {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -453,20 +450,18 @@ public class MediaService extends Service {
         MediaWidgetProvider.saveProgress(this, pos, dur);
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= 26) {
-            try { nm.deleteNotificationChannel("playback"); } catch (Throwable ignored) {}   // kênh cũ "Phát nhạc"
-            // Danh mục "Keep in Background": im lặng (không âm thanh/rung/popup), chỉ để giữ app chạy nền
-            NotificationChannel ch = new NotificationChannel(CH, "Keep in Background", NotificationManager.IMPORTANCE_LOW);
-            ch.setDescription("Giữ trình phát chạy dưới nền");
-            ch.setSound(null, null);
-            ch.enableVibration(false);
-            ch.enableLights(false);
-            ch.setShowBadge(false);
-            nm.createNotificationChannel(ch);
-        }
+        try { nm.deleteNotificationChannel("playback"); } catch (Throwable ignored) {}   // kênh cũ "Phát nhạc"
+        // Danh mục "Keep in Background": im lặng (không âm thanh/rung/popup), chỉ để giữ app chạy nền
+        NotificationChannel ch = new NotificationChannel(CH, "Keep in Background", NotificationManager.IMPORTANCE_LOW);
+        ch.setDescription("Giữ trình phát chạy dưới nền");
+        ch.setSound(null, null);
+        ch.enableVibration(false);
+        ch.enableLights(false);
+        ch.setShowBadge(false);
+        nm.createNotificationChannel(ch);
         PendingIntent open = PendingIntent.getActivity(this, 0,
                 new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE);
-        Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CH) : new Notification.Builder(this);
+        Notification.Builder b = new Notification.Builder(this, CH);
         b.setSmallIcon(android.R.drawable.ic_media_play)
                 .setContentTitle(title.isEmpty() ? "Media Player" : title)
                 .setContentText(artist)
