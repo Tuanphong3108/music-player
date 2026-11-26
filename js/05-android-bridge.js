@@ -229,6 +229,26 @@
                     // Dialog của Material Web (md-dialog) nằm trong top layer nên luôn nằm trên mọi thứ khác -> đóng trước
                     const mdTop = window.__mdTopDialog && window.__mdTopDialog();
                     if (mdTop) { try { mdTop.close(); } catch (e) { mdTop.open = false; } return true; }
+                    // Hộp thoại xác nhận ghi đè metadata nổi trên iframe -> hủy đúng luồng để iframe thoát trạng thái đang lưu
+                    const confirmOv = document.getElementById('confirm-overwrite-modal');
+                    if (confirmOv && confirmOv.classList.contains('open')) {
+                        const cBtn = document.getElementById('confirm-overwrite-cancel');
+                        if (cBtn) cBtn.click();
+                        else confirmOv.classList.remove('open');
+                        return true;
+                    }
+                    // Màn hình chờ mở Metadata Editor
+                    const metaLoadOv = document.getElementById('metadata-loading-overlay');
+                    if (metaLoadOv && isElShown(metaLoadOv)) {
+                        const okBtn = document.getElementById('metadata-timeout-ok');
+                        if (okBtn) okBtn.click();
+                        else metaLoadOv.style.display = 'none';
+                        return true;
+                    }
+                    // Iframe Metadata Editor đang mở -> đóng lớp con hoặc gọi tryClose() (báo xác nhận nếu có thay đổi chưa lưu)
+                    if (typeof window.__handleMetadataEditorBack === 'function' && window.__handleMetadataEditorBack()) {
+                        return true;
+                    }
                     // Bottom sheet tùy chọn / thông tin bài hát (z-index 9400–9600) nằm trên trình phát & playlist -> đóng trước
                     if (typeof window.__closeSongSheet === 'function' && window.__closeSongSheet()) {
                         return true;
@@ -361,6 +381,12 @@
                     if (document.body.classList.contains('screen-animating')) return null;
                     const md = window.__mdTopDialog && window.__mdTopDialog();
                     if (md) return (md.shadowRoot && md.shadowRoot.querySelector('.container')) || md;
+                    const confirmOv = document.getElementById('confirm-overwrite-modal');
+                    if (confirmOv && confirmOv.classList.contains('open')) return confirmOv.firstElementChild || confirmOv;
+                    if (typeof window.__isMetadataEditorOpen === 'function' && window.__isMetadataEditorOpen()) {
+                        const mf = document.getElementById('metadata-iframe');
+                        if (mf) return mf;
+                    }
                     const ssSound = document.getElementById('ss-sound-dlg');
                     if (ssSound && ssSound.classList.contains('open')) return ssSound.querySelector('.ssd-card') || ssSound;
                     const ssPl = document.getElementById('ss-pl-screen');
@@ -1253,7 +1279,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_26_song_sheet_back', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_26_meta_back', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
