@@ -2307,15 +2307,20 @@ html.m-ui #m-lib-list.m-locating .m-lib-item { content-visibility: visible; }
 
         /* ===== Bottom sheet tùy chọn bài hát (js/15-song-sheet.js) ===== */
         html:not(.m-ui) #cm-info { display: none; }
-        #ss-root { pointer-events: none; display: none; position: fixed; inset: 0; z-index: 9400; }
+        body.ss-open .app-container,
+        body.ss-open .seek-container,
+        body.ss-open #seek-slider,
+        body.ss-open #m-lyric-seek { pointer-events: none !important; }
+        #ss-root { pointer-events: none; display: none; position: fixed; inset: 0; z-index: 9400; touch-action: none; }
         #ss-root.open { pointer-events: auto; }
-        #ss-root .ss-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.5); opacity: 0; transition: opacity .25s ease; }
+        #ss-root .ss-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.5); opacity: 0; transition: opacity .25s ease; touch-action: none; }
         #ss-root.open .ss-scrim { opacity: 1; }
         #ss-root .ss-box {
             position: absolute; left: 0; right: 0; bottom: 0; max-height: 92%; display: flex; flex-direction: column;
             background: var(--md-sys-color-surface-container-low, var(--md-sys-color-surface)); color: var(--md-sys-color-on-surface);
             border-radius: 32px 32px 0 0; padding: 10px 16px calc(14px + env(safe-area-inset-bottom, 0px));
             transform: translateY(100%); transition: transform .3s cubic-bezier(.2,.9,.25,1);
+            outline: none;
         }
         #ss-root.open .ss-box { transform: translateY(0); }
         #ss-root .ss-grip, #ss-pl-screen .ssp-grip { width: 36px; height: 4px; border-radius: 4px; margin: 0 auto 6px; background: var(--md-sys-color-outline-variant, #888); flex-shrink: 0; touch-action: none; padding: 10px 0; background-clip: content-box; box-sizing: content-box; }
