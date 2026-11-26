@@ -77,11 +77,12 @@ public class QuickPlayActivity extends Activity {
     private ImageView art, artNote, btnPlayIcon, btnInfoIcon;
     private View btnPlay, btnPrev, btnNext, btnInfo, card;
     private FrameLayout outerRoot;
-    private LinearLayout playerPane, infoList;
+    private LinearLayout playerPane, detailsPane, optionsPane, infoList, detailsTabBar;
+    private TextView tabOptionsBtn, tabInfoBtn, optPlayBtn, optShareBtn, optRestartBtn, optLoopBtn, optOpenFullBtn;
     private ScrollView infoScroll;
     private long fallbackDur = 0;
     private boolean mainChecked = false, mainWasPlaying = false, mainResumed = false;
-    private boolean vi, dark, handedOff = false, ended = false, closing = false, cueRebuilt = false, infoOpen = false;
+    private boolean vi, dark, handedOff = false, ended = false, closing = false, cueRebuilt = false, infoOpen = false, detailsShowInfo = true, loopOne = false;
     private String metaTitle = "", metaArtist = "", metaAlbum = "", metaComposer = "", metaYear = "";
     private String metaMime = "", metaExt = "", metaPath = "", metaRealFmt = "", metaFmtShort = "";
     private boolean metaExtMismatch = false;
@@ -266,6 +267,7 @@ public class QuickPlayActivity extends Activity {
         syncPlayIcon();
         btnOpen.setBackground(round(cOpenBtn, 28)); btnOpen.setTextColor(cOnOpenBtn);
         syncInfoButton();
+        syncDetailsStyles();
         if (infoOpen) renderInfoCards();
         seek.recolor(cPrimary, cTrack);
     }
@@ -428,6 +430,13 @@ public class QuickPlayActivity extends Activity {
         applyTextStyle(tvPos, false, false);
         applyTextStyle(tvDur, false, false);
         applyTextStyle(btnOpen, true, true);
+        applyTextStyle(tabOptionsBtn, true, false);
+        applyTextStyle(tabInfoBtn, true, false);
+        applyTextStyle(optPlayBtn, true, true);
+        applyTextStyle(optShareBtn, true, false);
+        applyTextStyle(optRestartBtn, true, false);
+        applyTextStyle(optLoopBtn, true, false);
+        applyTextStyle(optOpenFullBtn, true, true);
         if (infoOpen) renderInfoCards();
     }
 
@@ -589,17 +598,100 @@ public class QuickPlayActivity extends Activity {
         olp.topMargin = dp(20);
         playerPane.addView(btnOpen, olp);
 
-        // Khối Thông tin (thẻ nhóm bo góc MD3 Expressive giống tab INFO của Media Player)
+        // Khối Chi tiết (2 tab OPTIONS / INFO giống Bottom Sheet của app chính)
+        detailsPane = new LinearLayout(this);
+        detailsPane.setOrientation(LinearLayout.VERTICAL);
+        detailsPane.setVisibility(View.GONE);
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dlp.topMargin = dp(14);
+        col.addView(detailsPane, dlp);
+
+        // Tab OPTIONS (TÙY CHỌN)
+        optionsPane = new LinearLayout(this);
+        optionsPane.setOrientation(LinearLayout.VERTICAL);
+        optionsPane.setVisibility(View.GONE);
+        detailsPane.addView(optionsPane, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout optRow1 = new LinearLayout(this);
+        optRow1.setOrientation(LinearLayout.HORIZONTAL);
+        optPlayBtn = makeOptionPill(vi ? "Tạm dừng" : "Pause", 58, true);
+        optPlayBtn.setOnClickListener(v -> {
+            if (player == null) return;
+            if (ended || player.getPlaybackState() == Player.STATE_ENDED) { player.seekTo(0); ended = false; player.play(); return; }
+            if (player.isPlaying()) player.pause(); else player.play();
+        });
+        optShareBtn = makeOptionPill(vi ? "Chia sẻ" : "Share", 58, false);
+        optShareBtn.setOnClickListener(v -> shareCurrentUri());
+        LinearLayout.LayoutParams or1a = new LinearLayout.LayoutParams(0, dp(58), 1.15f);
+        LinearLayout.LayoutParams or1b = new LinearLayout.LayoutParams(0, dp(58), 0.85f);
+        or1b.leftMargin = dp(8);
+        optRow1.addView(optPlayBtn, or1a);
+        optRow1.addView(optShareBtn, or1b);
+        optionsPane.addView(optRow1, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout optRow2 = new LinearLayout(this);
+        optRow2.setOrientation(LinearLayout.HORIZONTAL);
+        optRestartBtn = makeOptionPill(vi ? "Phát lại từ đầu" : "Restart", 54, false);
+        optRestartBtn.setOnClickListener(v -> {
+            if (player == null) return;
+            player.seekTo(0); ended = false;
+            if (!player.isPlaying()) player.play();
+            toggleInfo(false);
+        });
+        optLoopBtn = makeOptionPill(vi ? "Lặp 1 bài: Tắt" : "Loop: Off", 54, false);
+        optLoopBtn.setOnClickListener(v -> {
+            loopOne = !loopOne;
+            if (player != null) player.setRepeatMode(loopOne ? Player.REPEAT_MODE_ONE : Player.REPEAT_MODE_OFF);
+            syncDetailsStyles();
+        });
+        LinearLayout.LayoutParams or2a = new LinearLayout.LayoutParams(0, dp(54), 1f);
+        LinearLayout.LayoutParams or2b = new LinearLayout.LayoutParams(0, dp(54), 1f);
+        or2b.leftMargin = dp(8);
+        optRow2.addView(optRestartBtn, or2a);
+        optRow2.addView(optLoopBtn, or2b);
+        LinearLayout.LayoutParams or2Lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        or2Lp.topMargin = dp(8);
+        optionsPane.addView(optRow2, or2Lp);
+
+        optOpenFullBtn = makeOptionPill(vi ? "Mở trình phát đầy đủ" : "Open full player", 56, true);
+        optOpenFullBtn.setOnClickListener(v -> openFullPlayer());
+        LinearLayout.LayoutParams or3Lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56));
+        or3Lp.topMargin = dp(8);
+        optionsPane.addView(optOpenFullBtn, or3Lp);
+
+        // Tab INFO (THÔNG TIN — thẻ nhóm bo góc MD3 Expressive giống tab INFO của Media Player)
         infoScroll = new ScrollView(this);
         infoScroll.setVerticalScrollBarEnabled(false);
-        infoScroll.setVisibility(View.GONE);
         infoList = new LinearLayout(this);
         infoList.setOrientation(LinearLayout.VERTICAL);
         infoScroll.addView(infoList, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        int maxInfoH = Math.min(dp(380), Math.round(getResources().getDisplayMetrics().heightPixels * 0.52f));
+        int maxInfoH = Math.min(dp(340), Math.round(getResources().getDisplayMetrics().heightPixels * 0.46f));
         LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, maxInfoH);
-        ilp.topMargin = dp(16);
-        col.addView(infoScroll, ilp);
+        detailsPane.addView(infoScroll, ilp);
+
+        // Thanh chuyển tab OPTIONS / INFO ở đáy
+        detailsTabBar = new LinearLayout(this);
+        detailsTabBar.setOrientation(LinearLayout.HORIZONTAL);
+        detailsTabBar.setPadding(dp(5), dp(5), dp(5), dp(5));
+        tabOptionsBtn = text(13, cOnSurface, true, false);
+        tabOptionsBtn.setText(vi ? "TÙY CHỌN" : "OPTIONS");
+        tabOptionsBtn.setGravity(Gravity.CENTER);
+        tabOptionsBtn.setClickable(true);
+        tabOptionsBtn.setOnClickListener(v -> setDetailsTab(false));
+        tabInfoBtn = text(13, cOnPlayBtn, true, false);
+        tabInfoBtn.setText(vi ? "THÔNG TIN" : "INFO");
+        tabInfoBtn.setGravity(Gravity.CENTER);
+        tabInfoBtn.setClickable(true);
+        tabInfoBtn.setOnClickListener(v -> setDetailsTab(true));
+        LinearLayout.LayoutParams tb1 = new LinearLayout.LayoutParams(0, dp(42), 1f);
+        LinearLayout.LayoutParams tb2 = new LinearLayout.LayoutParams(0, dp(42), 1f);
+        tb2.leftMargin = dp(6);
+        detailsTabBar.addView(tabOptionsBtn, tb1);
+        detailsTabBar.addView(tabInfoBtn, tb2);
+        LinearLayout.LayoutParams tblp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tblp.topMargin = dp(12);
+        detailsPane.addView(detailsTabBar, tblp);
+        syncDetailsStyles();
 
         outerRoot = new FrameLayout(this);
         outerRoot.addView(root, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -805,6 +897,9 @@ public class QuickPlayActivity extends Activity {
         btnPlayIcon.setImageResource(playing ? R.drawable.ic_qp_pause : R.drawable.ic_qp_play);
         // Đang phát: ô vuông bo tròn; tạm dừng: viên thuốc (đúng tinh thần MD3E)
         btnPlay.setBackground(round(cPlayBtn, playing ? 26 : 38));
+        if (optPlayBtn != null) {
+            optPlayBtn.setText(playing ? (vi ? "Tạm dừng" : "Pause") : (vi ? "Phát" : "Play"));
+        }
     }
 
     private static String fmt(long ms) {
@@ -820,16 +915,88 @@ public class QuickPlayActivity extends Activity {
         btnInfoIcon.setColorFilter(infoOpen ? cOnPlayBtn : cOnSecBtn);
     }
 
+    private TextView makeOptionPill(String label, int heightDp, boolean roundedFont) {
+        TextView tv = text(15, cOnSecBtn, true, roundedFont);
+        tv.setText(label);
+        tv.setGravity(Gravity.CENTER);
+        tv.setSingleLine(true);
+        tv.setEllipsize(TextUtils.TruncateAt.END);
+        tv.setPadding(dp(14), 0, dp(14), 0);
+        tv.setClickable(true);
+        return tv;
+    }
+
+    private void syncDetailsStyles() {
+        if (detailsTabBar != null) {
+            int barBg = blendColors(cSurface, cTrack, 0.45f);
+            detailsTabBar.setBackground(round(barBg, 26));
+        }
+        int inactiveTabBg = dark ? 0xFF0E0E12 : blendColors(cSurface, cTrack, 0.25f);
+        if (tabOptionsBtn != null) {
+            tabOptionsBtn.setBackground(round(!detailsShowInfo ? cPlayBtn : inactiveTabBg, 21));
+            tabOptionsBtn.setTextColor(!detailsShowInfo ? cOnPlayBtn : cOnSurface);
+        }
+        if (tabInfoBtn != null) {
+            tabInfoBtn.setBackground(round(detailsShowInfo ? cPlayBtn : inactiveTabBg, 21));
+            tabInfoBtn.setTextColor(detailsShowInfo ? cOnPlayBtn : cOnSurface);
+        }
+        if (optPlayBtn != null) {
+            optPlayBtn.setBackground(round(cPlayBtn, 26));
+            optPlayBtn.setTextColor(cOnPlayBtn);
+        }
+        if (optShareBtn != null) {
+            optShareBtn.setBackground(round(cSecBtn, 26));
+            optShareBtn.setTextColor(cOnSecBtn);
+        }
+        if (optRestartBtn != null) {
+            optRestartBtn.setBackground(round(cSecBtn, 26));
+            optRestartBtn.setTextColor(cOnSecBtn);
+        }
+        if (optLoopBtn != null) {
+            optLoopBtn.setText(loopOne ? (vi ? "Lặp 1 bài: Bật" : "Loop: On") : (vi ? "Lặp 1 bài: Tắt" : "Loop: Off"));
+            optLoopBtn.setBackground(round(loopOne ? cPlayBtn : cSecBtn, 26));
+            optLoopBtn.setTextColor(loopOne ? cOnPlayBtn : cOnSecBtn);
+        }
+        if (optOpenFullBtn != null) {
+            optOpenFullBtn.setBackground(round(cOpenBtn, 28));
+            optOpenFullBtn.setTextColor(cOnOpenBtn);
+        }
+    }
+
+    private void setDetailsTab(boolean showInfo) {
+        detailsShowInfo = showInfo;
+        if (optionsPane != null) optionsPane.setVisibility(showInfo ? View.GONE : View.VISIBLE);
+        if (infoScroll != null) {
+            infoScroll.setVisibility(showInfo ? View.VISIBLE : View.GONE);
+            if (showInfo) {
+                renderInfoCards();
+                infoScroll.scrollTo(0, 0);
+            }
+        }
+        syncDetailsStyles();
+    }
+
+    private void shareCurrentUri() {
+        if (uri == null) return;
+        try {
+            Intent s = new Intent(Intent.ACTION_SEND);
+            s.setType(!empty(metaMime) ? metaMime : "audio/*");
+            s.putExtra(Intent.EXTRA_STREAM, uri);
+            s.setClipData(ClipData.newRawUri("", uri));
+            s.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(s, vi ? "Chia sẻ tệp âm thanh" : "Share audio file"));
+        } catch (Throwable ignored) {}
+    }
+
     private void toggleInfo(boolean show) {
         if (infoOpen == show) return;
         infoOpen = show;
         syncInfoButton();
         if (playerPane != null) playerPane.setVisibility(show ? View.GONE : View.VISIBLE);
-        if (infoScroll != null) {
-            infoScroll.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (detailsPane != null) {
+            detailsPane.setVisibility(show ? View.VISIBLE : View.GONE);
             if (show) {
-                renderInfoCards();
-                infoScroll.scrollTo(0, 0);
+                setDetailsTab(true);
             }
         }
     }
@@ -1155,18 +1322,37 @@ public class QuickPlayActivity extends Activity {
         i.setAction(Intent.ACTION_VIEW);
         i.setData(uri);
         i.setClipData(ClipData.newRawUri("", uri));
-        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NO_ANIMATION);
         i.putExtra("qp_pos", ended ? 0L : pos);
         i.putExtra("qp_play", playing || ended);
+        i.putExtra("qp_expand", true);
+        i.putExtra("qp_bg_color", cSurface);
         releasePlayer();
+
+        final Runnable launchMainSeamless = () -> {
+            try {
+                if (Build.VERSION.SDK_INT >= 34) {
+                    overrideActivityTransition(Activity.OVERRIDE_TRANSITION_CLOSE, 0, 0);
+                }
+            } catch (Throwable ignored) {}
+            try {
+                android.os.Bundle opts = android.app.ActivityOptions.makeCustomAnimation(QuickPlayActivity.this, 0, 0).toBundle();
+                startActivity(i, opts);
+            } catch (Throwable t) {
+                try { startActivity(i); } catch (Throwable ignored) {}
+            }
+            overridePendingTransition(0, 0);
+            // Giữ nền màu đã phóng to thêm 1 nhịp ngắn để MainActivity vẽ lớp phủ cùng màu rồi mới dọn task sheet -> không bị nhảy app hay lóe nền
+            ui.postDelayed(this::finishQuickTask, 220);
+        };
 
         if (card instanceof ViewGroup && outerRoot != null && card.getWidth() > 0 && outerRoot.getWidth() > 0 && outerRoot.getHeight() > 0) {
             // Pha 1: làm mờ ẩn toàn bộ nội dung bên trong sheet, chỉ giữ lại khối màu nền
             ViewGroup vg = (ViewGroup) card;
             for (int idx = 0; idx < vg.getChildCount(); idx++) {
-                vg.getChildAt(idx).animate().alpha(0f).setDuration(120).start();
+                vg.getChildAt(idx).animate().alpha(0f).setDuration(110).start();
             }
-            animateBackdrop(false, 130);
+            animateBackdrop(false, 120);
             ui.postDelayed(() -> {
                 if (isFinishing() || isDestroyed()) return;
                 int[] cardLoc = new int[2];
@@ -1190,7 +1376,7 @@ public class QuickPlayActivity extends Activity {
                 outerRoot.addView(expand, lp);
                 card.setVisibility(View.INVISIBLE);
 
-                // Pha 2: phóng to khối màu nền từ vị trí sheet phủ toàn màn hình rồi mở app chính
+                // Pha 2: phóng to khối màu nền từ vị trí sheet phủ toàn màn hình rồi chuyển mượt sang app chính
                 ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
                 va.setDuration(240);
                 va.setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f));
@@ -1205,19 +1391,15 @@ public class QuickPlayActivity extends Activity {
                 });
                 va.addListener(new android.animation.AnimatorListenerAdapter() {
                     @Override public void onAnimationEnd(android.animation.Animator animation) {
-                        try { startActivity(i); } catch (Throwable ignored) {}
-                        overridePendingTransition(0, 0);
-                        finishQuickTask();
+                        launchMainSeamless.run();
                     }
                 });
                 va.start();
-            }, 115);
+            }, 105);
             return;
         }
 
-        startActivity(i);
-        overridePendingTransition(0, 0);
-        finishQuickTask();
+        launchMainSeamless.run();
     }
 
     private void releasePlayer() {
