@@ -1127,9 +1127,14 @@
                 try { Object.assign(libCfg, JSON.parse(localStorage.getItem(LIB_KEY) || '{}')); } catch (e) {}
                 const saveLibCfg = () => {
                     try { localStorage.setItem(LIB_KEY, JSON.stringify(libCfg)); } catch (e) {}
+                    clearTimeout(saveLibCfg._t);
+                    saveLibCfg._t = setTimeout(() => { try { window.dispatchEvent(new Event('library-cfg-changed')); } catch (e) {} }, 250);
                     try {
                         if (window.AndroidBridge && typeof window.AndroidBridge.setLibraryScanPrefs === 'function') {
                             window.AndroidBridge.setLibraryScanPrefs(Number(libCfg.minDur) || 0, !!libCfg.autoScanLrc);
+                        }
+                        if (window.AndroidBridge && typeof window.AndroidBridge.setArtCacheLimit === 'function') {
+                            window.AndroidBridge.setArtCacheLimit(Number(libCfg.artCache) || 200);
                         }
                     } catch (e) {}
                 };

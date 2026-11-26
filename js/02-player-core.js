@@ -744,6 +744,7 @@
                         name: title,
                         artist: artist,
                         album: album,
+                        albumArtist: file.__metaAlbumArtist || '',
                         year: year,
                         genre: genre,
                         composer: composer,
@@ -1754,6 +1755,7 @@
                 if (meta.title && (!track.name || track.name === track.rawName)) { track.name = meta.title; changed = true; }
                 if (meta.artist && (!track.artist || track.artist === 'UNKNOWN ARTIST')) { track.artist = meta.artist; changed = true; }
                 if (meta.album && (!track.album || track.album === 'Unknown Album')) { track.album = meta.album; changed = true; }
+                if (meta.albumArtist && !track.albumArtist) { track.albumArtist = meta.albumArtist; changed = true; }
                 if (meta.year && !track.year) { track.year = meta.year; changed = true; }
                 if (meta.genre && !track.genre) { track.genre = meta.genre; changed = true; }
                 if (meta.composer && !track.composer) { track.composer = meta.composer; changed = true; }

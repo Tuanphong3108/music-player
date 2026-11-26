@@ -466,6 +466,7 @@
                                     if (meta.album && meta.album !== tr.album) {
                                         tr.album = meta.album; changed = true;
                                     }
+                                    if (meta.albumArtist && meta.albumArtist !== tr.albumArtist) { tr.albumArtist = meta.albumArtist; changed = true; }
                                     if (meta.year && meta.year !== tr.year) { tr.year = meta.year; changed = true; }
                                     if (meta.genre && meta.genre !== tr.genre) { tr.genre = meta.genre; changed = true; }
                                     if (meta.composer && meta.composer !== tr.composer) { tr.composer = meta.composer; changed = true; }
@@ -1165,16 +1166,69 @@
                     return '<div class="m-pl-empty"><span class="material-symbols-rounded">' + icon + '</span><p>' + text + '</p></div>';
                 }
 
+
+                // ===== Tách nhiều nghệ sĩ (Cài đặt > Quản lý nhạc > Artists) =====
+                const LIB_CFG_KEY = 'settings_mobile_library_v1';
+                function libCfgNow() {
+                    const d = { charDelims: '/, ;, +, &', wordDelims: 'featuring, feat., feat, ft., ft, vs., x', extractTitle: true, groupAlbumArtist: false };
+                    try { Object.assign(d, JSON.parse(localStorage.getItem(LIB_CFG_KEY) || '{}')); } catch (e) {}
+                    return d;
+                }
+                const reEsc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // Tách một chuỗi nghệ sĩ: dấu phân cách ký tự (có thể escape bằng \), rồi từ phân cách (feat., ft., vs., x...) cách nhau bởi khoảng trắng
+                function splitArtistString(str, cfg) {
+                    str = String(str || '').trim();
+                    if (!str) return [];
+                    const chars = String(cfg.charDelims || '').split(',').map(x => x.trim()).filter(x => x.length === 1);
+                    const words = String(cfg.wordDelims || '').split(',').map(x => x.trim()).filter(Boolean).sort((a, b) => b.length - a.length);
+                    let parts = [''];
+                    for (let i = 0; i < str.length; i++) {
+                        const ch = str[i];
+                        if (ch === '\\' && i + 1 < str.length && chars.indexOf(str[i + 1]) >= 0) { parts[parts.length - 1] += str[i + 1]; i++; continue; }
+                        if (chars.indexOf(ch) >= 0) { parts.push(''); continue; }
+                        parts[parts.length - 1] += ch;
+                    }
+                    if (words.length) {
+                        const re = new RegExp('\\s+(?:' + words.map(reEsc).join('|') + ')\\s+', 'i');
+                        const out = [];
+                        parts.forEach(pt => pt.replace(/[()\[\]]/g, ' ').split(re).forEach(x => out.push(x)));
+                        parts = out;
+                    }
+                    return parts.map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
+                }
+                // Nghệ sĩ của một bài: tag artist (đã tách) + nghệ sĩ khách mời trong tiêu đề, hoặc theo Album Artist nếu bật
+                window.__artistsOfTrack = function (t) {
+                    const cfg = libCfgNow();
+                    const out = [], seen = new Set();
+                    const add = (n) => { const k = n.toLowerCase(); if (!seen.has(k)) { seen.add(k); out.push(n); } };
+                    const aa = String(t.albumArtist || '').trim();
+                    if (cfg.groupAlbumArtist && aa && !/^various artists?$/i.test(aa)) {
+                        splitArtistString(aa, cfg).forEach(add);
+                        if (out.length) return out;
+                    }
+                    const raw = String(t.artist || '').trim();
+                    if (raw && !/^unknown artist$/i.test(raw)) splitArtistString(raw, cfg).forEach(add);
+                    if (cfg.extractTitle) {
+                        const title = String(t.name || '');
+                        const m = title.match(/[(\[]\s*(?:featuring|feat\.?|ft\.?|with)\s+([^)\]]+)[)\]]/i) || title.match(/\s(?:featuring|feat\.?|ft\.?)\s+(.+)$/i);
+                        if (m && m[1]) splitArtistString(m[1], cfg).forEach(add);
+                    }
+                    return out.length ? out : ['UNKNOWN ARTIST'];
+                };
+
+                window.addEventListener('library-cfg-changed', () => { try { if (activeTab === 'artists') renderMobileArtists(); } catch (e) {} });
+
                 // --- Tab Nghệ sĩ: gom bài theo ca sĩ, chạm để mở danh sách bài của ca sĩ đó ---
                 function renderMobileArtists() {
                     if (!artistListEl) return;
                     const groups = new Map();
                     getLibPool().forEach(t => {
                         if (!t) return;
-                        const name = String(t.artist || '').trim() || 'UNKNOWN ARTIST';
-                        const k = name.toLowerCase();
-                        if (!groups.has(k)) groups.set(k, { name, tracks: [] });
-                        groups.get(k).tracks.push(t);
+                        window.__artistsOfTrack(t).forEach(name => {
+                            const k = name.toLowerCase();
+                            if (!groups.has(k)) groups.set(k, { name, tracks: [] });
+                            groups.get(k).tracks.push(t);
+                        });
                     });
                     const arr = Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
                     artistListEl.innerHTML = '';
@@ -1190,7 +1244,7 @@
                         row.addEventListener('click', () => {
                             const id = 'virt_artist_' + g.name.toLowerCase();
                             virtualPls[id] = { id, name: g.name, mode: 'virtual', returnTab: 'artists',
-                                getTracks: () => getLibPool().filter(t => t && (String(t.artist || '').trim() || 'UNKNOWN ARTIST').toLowerCase() === g.name.toLowerCase()) };
+                                getTracks: () => getLibPool().filter(t => t && window.__artistsOfTrack(t).some(n => n.toLowerCase() === g.name.toLowerCase())) };
                             openPlaylistDetail(id);
                         });
                         artistListEl.appendChild(row);

@@ -1356,6 +1356,33 @@ public class MainActivity extends Activity {
 
 
     /** Trả ảnh bìa nhúng trực tiếp bên trong chính tệp nhạc theo id (không fallback sang albumart chung của thư mục để tránh gán nhầm ảnh bài khác). */
+    private long artCacheLimitBytes() {
+        return Math.max(50, getSharedPreferences("app", MODE_PRIVATE).getInt("art_cache_mb", 200)) * 1024L * 1024L;
+    }
+
+    private volatile long lastArtTrimAt = 0;
+    /** Xóa các ảnh bìa cũ nhất khi bộ nhớ đệm vượt giới hạn (giảm xuống ~85% để khỏi dọn liên tục). */
+    private void trimArtCache() {
+        long now = System.currentTimeMillis();
+        if (now - lastArtTrimAt < 4000) return;
+        lastArtTrimAt = now;
+        try {
+            File[] fs = new File(getCacheDir(), "art").listFiles();
+            if (fs == null) return;
+            long total = 0;
+            for (File f : fs) total += f.length();
+            long limit = artCacheLimitBytes();
+            if (total <= limit) return;
+            java.util.Arrays.sort(fs, (a, b) -> Long.compare(a.lastModified(), b.lastModified()));
+            long target = (long) (limit * 0.85);
+            for (File f : fs) {
+                if (total <= target) break;
+                long len = f.length();
+                if (f.delete()) total -= len;
+            }
+        } catch (Throwable ignored) {}
+    }
+
     private WebResourceResponse serveArtwork(String fid) {
         Map<String, String> h = new HashMap<>();
         h.put("Access-Control-Allow-Origin", "*");
@@ -1364,7 +1391,32 @@ public class MainActivity extends Activity {
         if (src == null) return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, null);
         byte[] bytes = null;
         String mimeType = "image/jpeg";
+        // Bộ nhớ đệm ảnh bìa trên đĩa (giới hạn theo cài đặt "Giới hạn bộ nhớ đệm ảnh bìa"): bài đã đọc rồi thì khỏi mở lại tệp nhạc
+        File artFile = null;
+        try {
+            String keySrc = (servedLocations.get(fid) != null ? servedLocations.get(fid) : String.valueOf(src));
+            long stamp = 0L;
+            try { File kf = new File(keySrc); if (kf.exists()) stamp = kf.lastModified() ^ kf.length(); } catch (Throwable ignored) {}
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-1");
+            byte[] dg = md.digest((keySrc + "|" + stamp).getBytes("UTF-8"));
+            StringBuilder hx = new StringBuilder();
+            for (int i = 0; i < 10; i++) hx.append(String.format("%02x", dg[i]));
+            File dir = new File(getCacheDir(), "art");
+            if (!dir.exists()) dir.mkdirs();
+            artFile = new File(dir, hx.toString());
+            if (artFile.isFile() && artFile.length() > 0) {
+                java.io.FileInputStream fis = new java.io.FileInputStream(artFile);
+                bytes = new byte[(int) artFile.length()];
+                int off = 0, rd;
+                while (off < bytes.length && (rd = fis.read(bytes, off, bytes.length - off)) > 0) off += rd;
+                fis.close();
+                if (off != bytes.length) bytes = null;
+                else { try { artFile.setLastModified(System.currentTimeMillis()); } catch (Throwable ignored) {} }
+            }
+        } catch (Throwable ignored) { bytes = null; }
+        boolean fromArtCache = bytes != null;
         android.media.MediaMetadataRetriever mmr = null;
+        if (!fromArtCache) {
         try {
             mmr = new android.media.MediaMetadataRetriever();
             String directPath = servedLocations.get(fid);
@@ -1377,6 +1429,11 @@ public class MainActivity extends Activity {
         } catch (Throwable ignored) {
         } finally {
             if (mmr != null) { try { mmr.release(); } catch (Throwable ignored) {} }
+        }
+        if (bytes != null && bytes.length > 0 && artFile != null) {
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(artFile)) { fos.write(bytes); } catch (Throwable ignored) {}
+            trimArtCache();
+        }
         }
         if (bytes != null && bytes.length > 0) {
             if (bytes.length >= 4 && bytes[0] == (byte) 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
@@ -1427,6 +1484,10 @@ public class MainActivity extends Activity {
             if (t != null && !t.trim().isEmpty()) o.put("title", t.trim());
             if (ar != null && !ar.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(ar.trim())) o.put("artist", ar.trim());
             if (al != null && !al.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(al.trim())) o.put("album", al.trim());
+            try {
+                String aa0 = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
+                if (aa0 != null && !aa0.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(aa0.trim())) o.put("albumArtist", aa0.trim());
+            } catch (Throwable ignored) {}
             if (yr != null && !yr.trim().isEmpty()) o.put("year", yr.trim());
             if (gn != null && !gn.trim().isEmpty()) o.put("genre", gn.trim());
             if (cp != null && !cp.trim().isEmpty()) o.put("composer", cp.trim());
@@ -2248,6 +2309,11 @@ public class MainActivity extends Activity {
                         android.provider.MediaStore.Audio.Media.ALBUM_ID,
                         android.provider.MediaStore.Audio.Media.YEAR
                 };
+                if (Build.VERSION.SDK_INT >= 30) {
+                    // ALBUM_ARTIST chỉ có trong MediaStore từ Android 11
+                    proj = java.util.Arrays.copyOf(proj, proj.length + 1);
+                    proj[proj.length - 1] = "album_artist";
+                }
                 String sel = android.provider.MediaStore.Audio.Media.DATA + " IS NOT NULL";
                 try (Cursor c = getContentResolver().query(audioUri, proj, sel, null,
                         android.provider.MediaStore.Audio.Media.DATE_ADDED + " DESC")) {
@@ -2263,6 +2329,7 @@ public class MainActivity extends Activity {
                         int artistCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ARTIST);
                         int albumCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ALBUM);
                         int albumIdCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ALBUM_ID);
+                        int albumArtistCol = c.getColumnIndex("album_artist");
                         int yearCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.YEAR);
                         while (c.moveToNext()) {
                             long audioId = c.getLong(idCol);
@@ -2309,6 +2376,10 @@ public class MainActivity extends Activity {
                             if (mTitle != null && !mTitle.trim().isEmpty()) o.put("title", mTitle.trim());
                             if (!mArtist.trim().isEmpty()) o.put("artist", mArtist.trim());
                             if (!mAlbum.trim().isEmpty()) o.put("album", mAlbum.trim());
+                            if (albumArtistCol >= 0) {
+                                String aa = c.getString(albumArtistCol);
+                                if (aa != null && !aa.trim().isEmpty() && !"<unknown>".equalsIgnoreCase(aa.trim())) o.put("albumArtist", aa.trim());
+                            }
                             if (mYear > 0) o.put("year", String.valueOf(mYear));
                             String mime = mimeCol >= 0 ? c.getString(mimeCol) : "";
                             o.put("type", (mime == null || mime.isEmpty()) ? guessAudioMime(ln) : mime);
@@ -3935,6 +4006,13 @@ public class MainActivity extends Activity {
                     .putInt("min_duration_sec", Math.max(0, minDurationSec))
                     .putBoolean("auto_scan_lrc", autoScanLrc)
                     .apply();
+        }
+
+        /** Giới hạn bộ nhớ đệm ảnh bìa (MB); vượt thì xóa ảnh cũ nhất. */
+        @JavascriptInterface
+        public void setArtCacheLimit(int mb) {
+            getSharedPreferences("app", MODE_PRIVATE).edit().putInt("art_cache_mb", Math.max(50, Math.min(1000, mb))).apply();
+            new Thread(() -> { lastArtTrimAt = 0; trimArtCache(); }, "art-trim").start();
         }
 
         @JavascriptInterface

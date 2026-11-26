@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Tab Nghệ sĩ giờ tách nhiều nghệ sĩ theo cài đặt (ký tự / từ phân cách, feat. trong tiêu đề, Group by Album Artist); Giới hạn bộ nhớ đệm ảnh bìa hoạt động thật",
+      "icon": "artist"
+    },
+    {
       "content": "Android: Đặt lại cài đặt gốc giờ xóa toàn bộ dữ liệu ứng dụng (PC/web vẫn chỉ xóa dữ liệu trang)",
       "icon": "delete_forever"
     },
@@ -147,6 +151,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Artists tab now splits multiple artists using your settings (character / word delimiters, feat. in titles, Group by Album Artist); Album Art Cache Limit now works",
+      "icon": "artist"
+    },
     {
       "content": "Android: Factory reset now erases all app data (PC/web still only clears page data)",
       "icon": "delete_forever"

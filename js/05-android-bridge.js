@@ -49,6 +49,7 @@
                             f.__metaTitle = it.title || '';
                             f.__metaArtist = it.artist || '';
                             f.__metaAlbum = it.album || '';
+                            f.__metaAlbumArtist = it.albumArtist || '';
                             f.__metaYear = it.year || '';
                             f.__nativeId = it.id || ((it.url || '').match(/\/f\/([^/?#]+)/) || [])[1] || null;
                             f.__nativeLocation = it.location || it.uri || '';
@@ -1294,7 +1295,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_26_qp_seamless_devi18n_wipe', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_26_qp_seamless_devi18n_wipe_artists', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
