@@ -218,15 +218,13 @@ final class NativeAudio {
             NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
             boolean isEn = "en".equalsIgnoreCase(ctx.getSharedPreferences("app", Context.MODE_PRIVATE).getString("lang", "vi"));
-            if (Build.VERSION.SDK_INT >= 26) {
-                NotificationChannel ch = new NotificationChannel(
-                        SLEEP_NOTIF_CHANNEL,
-                        isEn ? "Sleep timer" : "Hẹn giờ ngủ",
-                        NotificationManager.IMPORTANCE_HIGH
-                );
-                ch.setShowBadge(true);
-                nm.createNotificationChannel(ch);
-            }
+            NotificationChannel ch = new NotificationChannel(
+                    SLEEP_NOTIF_CHANNEL,
+                    isEn ? "Sleep timer" : "Hẹn giờ ngủ",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            ch.setShowBadge(true);
+            nm.createNotificationChannel(ch);
             String title = isEn ? "Sleep timer" : "Đã tạm dừng theo hẹn giờ";
             String body = "tracks".equals(type)
                     ? (isEn
@@ -241,9 +239,7 @@ final class NativeAudio {
                     new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP),
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
             );
-            Notification.Builder b = Build.VERSION.SDK_INT >= 26
-                    ? new Notification.Builder(ctx, SLEEP_NOTIF_CHANNEL)
-                    : new Notification.Builder(ctx);
+            Notification.Builder b = new Notification.Builder(ctx, SLEEP_NOTIF_CHANNEL);
             b.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                     .setContentTitle(title)
                     .setContentText(body)
