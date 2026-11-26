@@ -106,8 +106,23 @@
                         } else if (isExternalBatch && document.documentElement.classList.contains('m-ui')) {
                             document.body.classList.remove('m-early-card');
                             document.body.classList.add('m-mini-visible');
+                            const wantsExpand = (list || []).some(x => x && x.expandPlayer);
+                            if (wantsExpand) {
+                                document.body.classList.remove('m-playlist-open', 'lyrics-open', 'm-more-open');
+                                document.body.classList.add('m-player-expanded');
+                                try { if (typeof updateFsUI === 'function') updateFsUI(); } catch (e) {}
+                                try {
+                                    if (AB && typeof AB.onQpTransitionReady === 'function') {
+                                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                                            try { AB.onQpTransitionReady(); } catch (e) {}
+                                        }));
+                                    }
+                                } catch (e) {}
+                            }
                             if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
                         }
+                    } else if (isExternalBatch && (list || []).some(x => x && x.expandPlayer)) {
+                        try { if (AB && typeof AB.onQpTransitionReady === 'function') AB.onQpTransitionReady(); } catch (e) {}
                     }
                 } catch (e) { console.log('native-open failed', e); }
                 finally { window.__ingestBusy = Math.max(0, (window.__ingestBusy || 1) - 1); }
@@ -1279,7 +1294,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_26_openfiles_del', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_26_qp_seamless', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
