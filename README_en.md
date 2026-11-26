@@ -1,108 +1,134 @@
 # 🎵 Media Player
 
-> A modern, smooth, and feature-rich local (client-side) **audio and video** player built on top of **Material Design 3 Expressive**. Experience high-quality music and video playback directly in your browser without complex software installation or privacy concerns.
+[🇻🇳 Tiếng Việt](README.md) | 🌐 **English**
+
+> A modern, smooth, and feature-rich local (client-side & hybrid Android) **audio and video** player built on top of **Material Design 3 Expressive**. Engineered for a seamless experience across both **desktop browsers (Web / PWA)** and **Android 8.0+ phones & tablets (native APK)**.
 
 ---
 
-## 📸 Experience
+## 📸 Experience & Downloads
 
-* 🌐 **Live App:** [Media Player](https://tuanphong3108.github.io/music-player/) *(Works 100% Offline after loading)*
+* 🌐 **Web / PWA (Desktop):** [tuanphong3108.github.io/music-player](https://tuanphong3108.github.io/music-player/) *(Works 100% offline after initial load)*
+* 📱 **Android App (APK):** Download the latest `MediaPlayer.apk` from [GitHub Releases](https://github.com/Tuanphong3108/music-player/releases/) *(Requires Android 8.0 Oreo / API 26 or higher)*
 
-> ⚠️ **Minimum requirement:** a Chromium-based browser (Chrome, Edge...) on a desktop/laptop PC (touch PCs such as Surface and Googlebook laptops are fine; mobile devices are not blocked but not optimized), so the File System Access API and opening files directly in the app work fully. Phones are not supported.
+> 💡 **Recommended setups:**
+> * **On PC / Laptop:** Use a Chromium-based browser (Chrome, Edge, Brave...) and install it as a **PWA** for full *File System Access API* support, folder drag-and-drop, and direct file opening from your OS.
+> * **On Android Phones & Tablets:** Install the **official Android APK** for background playback powered by native Media3/ExoPlayer, one-handed touch layouts, the QuickPlay bottom sheet, 4 home-screen widgets, and direct ID3 tag overwriting on device storage.
 
 ---
 
-## Preview
+## 🖼️ Preview
 
 ![Media Player Interface](screenshots/1.png)
 ![Metadata Editor Interface](screenshots/2.png)
-![Lyrics Interface](screenshots/3.jpg)
+![Synchronized Lyrics Interface](screenshots/3.jpg)
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Features (Shared & Web / PWA)
 
-### 🎧 Player & Playlist Management
-* **100% Offline & Client-side:** All tracks, videos, metadata, and lyrics are processed directly on your device, ensuring maximum privacy.
-* **Drag & Drop:** Quickly add tracks, videos, or entire folders with simple drag-and-drop actions.
-* **PWA Support (Progressive Web App):** Install directly onto Windows, macOS, or Linux as a standalone app; double-click a music/video file to open it straight in the app.
-* **Smart Filter & Search:** Lightning-fast searching across songs, artists, albums, genres, and composers with automatic diacritics and special character stripping.
-* **Smart Shuffle:** With Shuffle on, Previous goes back to the previous track within the first 5 seconds, and restarts the song at 0:00 after that.
+### 🎧 Player & Library Management
+* **100% Local & Private (Offline-first):** All tracks, videos, cover artwork, and lyrics are processed directly on your device—nothing is uploaded to external servers.
+* **Smart Library Organization:** Dedicated views for **Songs**, **Custom Playlists**, **Liked Songs**, and the **Active Queue** (with drag-and-drop reordering).
+* **Fast Search & Filtering:** Search across titles, artists, albums, genres, and composers with automatic diacritics and special-character stripping, plus a one-tap locate button to jump straight to the active track.
+* **Flexible Playback Controls:**
+  * **Smart Shuffle:** With Shuffle enabled, pressing *Previous* within the first 5 seconds goes back to the previous track; after 5 seconds, it restarts at `0:00`.
+  * **Adjustable Playback Speed** with smooth transitions.
+  * **Sleep Timer:** Automatically pause playback after a custom number of minutes or after `N` tracks (with a completion alert).
+  * **Audio Output Switcher:** Switch between built-in speaker, wired headphones, and Bluetooth audio devices.
 
-### 🎬 Video Playback
-* **Video support:** mp4, m4v, webm, mkv, mov, ogv, 3gp, avi (depending on the codecs your browser can decode).
-* **Picture right in the main stage** and in Full Screen; playlist thumbnails are captured automatically from a video frame.
-* **Full Screen for video:** click once on the picture to hide the control bar and cursor, move the mouse to bring them back.
-* **PiP for video:** the floating window follows the video's aspect ratio, controls auto-hide and reappear on hover; opening the playlist temporarily swaps the video for the cover.
-* **Subtitle Embed:** for videos, the editor shows only the subtitle (LRC) box, saved inside the app and re-applied whenever you open the same file.
+### 🎬 Video Playback (Web / Desktop)
+* **Broad Format Support:** Plays `mp4`, `m4v`, `webm`, `mkv`, `mov`, `ogv`, `3gp`, and `avi` (depending on browser codec support), automatically capturing a video frame for playlist thumbnails.
+* **Immersive Full Screen & PiP:** Picture-in-Picture floating window matches the video aspect ratio, auto-hides controls when idle, and swaps to cover art while browsing the playlist.
+* **Embedded Subtitles (LRC):** Saves and automatically reapplies `.lrc` subtitles whenever you reopen the same video file.
 
-### 🎚️ Audio Mixer
-* **Preamp** from -12 to +12 dB.
-* **5-band Equalizer** with presets (Flat, Bass boost, Bright treble, Vocal boost, Rock, Pop).
-* **Left/right balance**, **Mono**, and **Volume normalization** (squeezes loud/quiet gaps and helps prevent distortion).
-* **Visualizer** follows your current Accent Color.
+### 🎚️ Audio Mixer & Visualizer
+* **Preamp:** Gain boost/cut from `-12 dB` to `+12 dB`.
+* **5-Band Equalizer (`60Hz`, `230Hz`, `910Hz`, `3.6kHz`, `14kHz`):** Includes built-in presets (*Flat, Bass Boost, Bright Treble, Vocal Boost, Rock, Pop*).
+* **DSP Enhancements:** **Left/Right Balance**, **Mono downmix**, and **Volume Normalization (Compressor)** to even out loudness differences and prevent clipping.
+* **Audio Visualizer:** Real-time spectrum visualization styled dynamically with your active Accent Color.
 
-### 📝 Powerful MP3 Tag & Metadata Editor
-* **Direct Editing:** Song Title, Artist, Album, Genre, Composer, and Lyric Embed.
-* **Search lyrics on lrclib.net** right inside the editor, with a preview before inserting; empty fields can be filled from the lyric's tags (with a confirmation and preview).
+### 📝 Powerful Tag & Metadata Editor
+* **Multi-Format Read & Write:** Reads tags from `MP3`, `FLAC`, `M4A`, `OGG`, `OPUS`, `WAV`, and more; edits **Title, Artist, Album, Year, Genre, Composer, and Embedded Lyrics**.
+* **Built-in LRCLIB (`lrclib.net`) Search:** Search synchronized lyrics directly inside the editor, preview before inserting, and auto-fill missing metadata fields from lyric tags.
 * **Cover Art Management:** View, download, replace, crop to square, or rotate album artwork directly.
-* **Real File Overwriting:** Integrated with the *File System Access API* to save and overwrite updated ID3 tags directly back to `.mp3` files on your storage without downloading new copies.
+* **Direct File Overwriting:** Writes updated ID3 tags straight back into the original file on disk (via *File System Access API* on desktop or native storage permissions on Android) without creating duplicate downloads.
 
-### 🎤 Synchronized Lyrics & View Modes
-* **Karaoke Sync (LRC Format):** Real-time lyric synchronization and auto-scrolling with smooth visual effects; shows the lyric author and LRCLIB credit.
-* **Picture-in-Picture (PiP):** Floating media window with a time slider, playlist, and lyrics to monitor playback/video while working in other apps.
-* **Full Screen Mode:** Minimalist full-screen view designed to keep your focus on the music and visualizer, with the screen kept awake (Wake Lock).
+### 🎤 Synchronized Lyrics & 🤖 AI Playlist
+* **Karaoke Sync (`.lrc`):** Smooth real-time scrolling lyrics displaying lyricist and LRCLIB credits, plus automatic `.lrc` matching from the same folder.
+* **AI Integration (β):** Generate smart playlists from your local music library using AI (configurable AI provider, API key, model, and custom prompt).
 
-### 🎨 Design & Performance Optimized
-* **Material Design 3 Expressive:** Modern aesthetics featuring dynamic colors (optionally taken from the cover art), rich interactions (Ripple Effects, Overshoot Animations).
-* **Customization:** Dark/Light/System theme, Accent Color, 20+ fonts (plus Google Fonts / your own files), UI scale and font scale.
-* **Multilingual:** Vietnamese and English.
-* **Low-end Device Optimization:** Presets (Full / Balanced / Power saver / Maximum) and per-element switches for motion, frosted glass, blurred cover background, and visualizer for fluid performance across all hardware.
+### 🎨 MD3 Expressive UI & Performance Tuning
+* **Material Design 3 Expressive:** Animated wavy seek progress bar, *Overshoot / Spring* physics, and variable **Google Sans Flex** typography (paired with Minecraft font accents for technical readouts).
+* **Deep Customization:** Light / Dark / System themes, 10 Accent Color palettes or **dynamic color extraction from Album Art**, adjustable UI & font scaling, and **English / Vietnamese** localization.
+* **Low-End Hardware Optimization:** 4 performance presets (*Full / Balanced / Power Saver / Maximum Performance*) plus individual toggles for animations, frosted glass (`backdrop-filter`), blurred cover backdrop, and the visualizer.
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## 📱 Exclusive Android App Features (Native + WebView)
+
+Rather than a basic WebView wrapper, the Android edition pairs the web interface directly with a **native Android Media3 / ExoPlayer engine** for true native reliability and responsiveness:
+
+* **Independent Native Background Playback (`NativeAudio` + `MediaService`):**
+  * Audio plays directly through **Media3 ExoPlayer** on a dedicated high-priority audio thread—eliminating stutters and preventing Android from freezing playback when the screen turns off or the WebView sleeps.
+  * Built-in native **DSP `MixerProcessor`** running inside the ExoPlayer audio pipeline (5-band EQ, Preamp, Mono, Compressor, Balance, and 128-band FFT spectrum streaming back to the UI).
+  * Automatic **WebM/MKV Cue Indexer** that builds seek tables on the fly for files missing cue metadata without re-encoding or losing audio quality.
+  * Automatic session/queue/shuffle/repeat persistence and clean recovery if the background process is reclaimed by the OS.
+* **QuickPlay Bottom Sheet (`QuickPlayActivity`):**
+  * Opening an audio file from any file manager or external app launches a **floating Bottom Sheet** near-instantly (without waiting for WebView initialization).
+  * Dynamically adapts its palette to the track's Album Art, features a wavy seek bar, provides full **OPTIONS / INFO** tabs, and smoothly expands into the main app's **Full Player**.
+* **4 Home-Screen Widgets:**
+  * **3 Media Player Widgets:** Responsive (`4×2`), Compact Square (`2×2`), and Full Controls (`4×2` with Shuffle & Repeat toggles).
+  * **Queue Widget:** Displays upcoming tracks in the queue and lets you tap any track to play immediately from the home screen.
+  * Automatically tinted to match **Material You** or the current track's dynamic colors (Android 12+).
+* **Mobile & Tablet Adaptive Layouts:**
+  * One-handed mobile layout with a floating **pill Mini Player** (swipe horizontally to stop and dismiss, tap to expand to Full Player), a dedicated mobile library home screen, and a **two-column split layout** on landscape tablets.
+  * Full support for **Predictive Back** gestures (Android 13/14+) and **Edge-to-Edge** display insets (Android 15/16).
+* **System Utilities & In-App Updates:**
+  * Scans device audio via MediaStore with **folder exclusion**, reads embedded lyrics across `ID3v2`, `MP4/M4A`, and `Vorbis Comment`, sets tracks as **Ringtone / Notification / Alarm**, shares multiple files at once, and **checks/downloads APK updates** directly from GitHub Releases.
+  * **Developer Features:** Toggleable docked **Native Console** window at the bottom of the screen (pushing the WebView upward) to capture JS logs, run commands, inspect touch layers, and view app logcat output.
+
+---
+
+## ⌨️ Keyboard Shortcuts (Desktop)
 
 | Shortcut | Action |
 | :--- | :--- |
 | **`Space`** | Play / Pause playback |
 | **`←` / `→`** | Seek backward / forward 5 seconds |
 | **`Ctrl` + `←` / `→`** | Previous / Next track |
-| **`↑` / `↓`** | Volume Up / Down by 5% |
-| **`Ctrl` + `O`** | Open the music/video file picker |
+| **`↑` / `↓`** | Increase / Decrease volume by 5% |
+| **`Ctrl` + `O`** | Open music/video file picker |
 | **`M`** | Mute / Unmute audio |
 | **`F11`** | Toggle Full Screen mode |
 
 ---
 
-## 🛠️ Built With
+## 🛠️ Tech Stack
 
-* **UI Framework & Core:** HTML5, Tailwind CSS, Google Sans Flex Font.
-* **Design System:** Material Web Components (`@material/web` - MD3 Expressive).
-* **Metadata Processor:** `jsmediatags` (read ID3 tags) & `browser-id3-writer` (write & edit ID3 tags).
-* **Audio/Video Engine:** Web Audio API (mixer, visualizer) & HTML5 Media.
+* **Frontend & Design System:** HTML5, CSS3, Tailwind CSS, Material Web Components (`@material/web` — MD3 Expressive), Google Sans Flex.
+* **Metadata & Lyrics:** `jsmediatags`, `browser-id3-writer`, LRCLIB API, plus native Java embedded lyrics parser and WebM cue indexer.
+* **Audio Engine:** Web Audio API (Web/Desktop) & **AndroidX Media3 ExoPlayer 1.4.1** with custom DSP `AudioProcessor` (Android).
+* **Android Platform:** Java 17, `compileSdk 36`, `targetSdk 36`, `minSdk 26` (Android 8.0+), AndroidX Core & WebKit, automated APK builds via GitHub Actions.
 
 ---
 
 ## 🚀 Installation Guide
 
-No Node.js or complex build tools required! You can run and install the app in seconds:
-- Visit [Media Player](https://tuanphong3108.github.io/music-player/)
-- Look next to the Settings button in the top bar for the Install icon
-- Click the **Install** icon > Confirm Install
-- Done! You can now use it natively offline.
+### 1. Desktop (PWA)
+1. Open [Media Player](https://tuanphong3108.github.io/music-player/) in Chrome or Edge.
+2. Click the **Install** icon in the address bar or next to the Settings button in the top-right corner.
+3. Confirm **Install** to run it as a standalone offline-ready desktop app.
+
+### 2. Android (APK)
+1. Download the latest `MediaPlayer.apk` from the [Releases](https://github.com/Tuanphong3108/music-player/releases/) page.
+2. Open the downloaded APK and allow installation from this source if prompted.
+3. Launch the app and grant audio/media file permissions during the initial setup guide.
 
 ---
 
 ## 📝 License
 
-Distributed under the [MIT License](https://github.com/Tuanphong3108/music-player/blob/main/LICENSE).
+Distributed under the open-source [MIT License](https://github.com/Tuanphong3108/music-player/blob/main/LICENSE).
 
-### Free and Open-Source Software (FOSS) Project
-
-This is a free and open-source project created by Phong VN. Check out the project repository here: [Media Player Repository](https://github.com/Tuanphong3108/music-player)
-
-Built with ❤️ by [Phong VN](https://tuanphong3108.github.io).
-
-## 📱 Android build (WebView)
-Download `MediaPlayer.apk` from [Releases](https://github.com/Tuanphong3108/music-player/releases/). The app wraps the site in a WebView, so it **updates automatically with the repo** and works **offline** (after the first online launch). Supports "Open with"/"Share" for audio files and background playback with a notification.
+Built with ❤️ by **[Phong VN](https://tuanphong3108.github.io)** — [Tuanphong3108/music-player](https://github.com/Tuanphong3108/music-player).
