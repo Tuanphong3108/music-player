@@ -56,10 +56,10 @@
         const $ = (id) => root.querySelector('#' + id);
         const scrim = $('ss-scrim');
         const boxEl = $('ss-box');
-        // Chặn sự kiện chạm/nhấn xuyên xuống thanh seek hoặc giao diện phía sau
+        // Chặn sự kiện chạm/nhấn xuyên xuống thanh seek hoặc giao diện phía sau (không gọi preventDefault ở touchstart để chạm ra ngoài vẫn bắn click đóng sheet trên mobile)
         ['pointerdown', 'touchstart', 'mousedown'].forEach(ev => {
-            scrim.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); }, { passive: false });
-            boxEl.addEventListener(ev, (e) => { e.stopPropagation(); });
+            scrim.addEventListener(ev, (e) => { e.stopPropagation(); }, { passive: true });
+            boxEl.addEventListener(ev, (e) => { e.stopPropagation(); }, { passive: true });
         });
         scrim.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); close(); });
         boxEl.addEventListener('click', (e) => { e.stopPropagation(); });
