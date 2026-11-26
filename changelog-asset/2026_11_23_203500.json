@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Thêm tab Album: phân loại theo tag Album trong metadata, ẩn album ít bài hơn mức tối thiểu trong Quản lý nhạc",
+      "icon": "album"
+    },
+    {
       "content": "Tab Nghệ sĩ giờ tách nhiều nghệ sĩ theo cài đặt (ký tự / từ phân cách, feat. trong tiêu đề, Group by Album Artist); Giới hạn bộ nhớ đệm ảnh bìa hoạt động thật",
       "icon": "artist"
     },
@@ -151,6 +155,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Added an Albums tab: grouped by the Album tag in metadata, hides albums below the minimum track count set in Music Management",
+      "icon": "album"
+    },
     {
       "content": "Artists tab now splits multiple artists using your settings (character / word delimiters, feat. in titles, Group by Album Artist); Album Art Cache Limit now works",
       "icon": "artist"
