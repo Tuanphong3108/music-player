@@ -149,10 +149,10 @@ public class MediaWidgetProvider extends AppWidgetProvider {
             AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             if (am == null) return;
             Intent i = new Intent(context, MediaWidgetProvider.class).setAction(ACTION_STALE);
-            int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
             PendingIntent pi = PendingIntent.getBroadcast(context, 77, i, flags);
             long at = System.currentTimeMillis() + 30000L;
-            if (Build.VERSION.SDK_INT >= 23) am.setAndAllowWhileIdle(AlarmManager.RTC, at, pi); else am.set(AlarmManager.RTC, at, pi);
+            am.setAndAllowWhileIdle(AlarmManager.RTC, at, pi);
         } catch (Throwable ignored) {}
     }
 
@@ -378,7 +378,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent openPi = PendingIntent.getActivity(
                 context, 100, openIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.widget_root, openPi);
         views.setOnClickPendingIntent(R.id.widget_art_box, openPi);
         if (large || full) views.setOnClickPendingIntent(R.id.widget_meta_box, openPi);
@@ -408,7 +408,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         i.putExtra(EXTRA_CMD, cmd);
         return PendingIntent.getBroadcast(
                 context, reqCode, i,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private static Bitmap getRoundedCornerBitmap(Bitmap bitmap, int radiusPx) {
