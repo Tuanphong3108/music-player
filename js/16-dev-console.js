@@ -40,6 +40,13 @@
     }
 
     function init() {
+        // Console gốc chỉ có trong app Android; PC/PWA đã có F12 nên ẩn hẳn tab, nút và không bật
+        if (!window.IS_ANDROID_APP) {
+            document.querySelectorAll('.st-tab[data-tab="developer"], .st-pane[data-pane="developer"], #dev-console-btn')
+                .forEach(el => el.style.setProperty('display', 'none', 'important'));
+            document.body.classList.remove('dev-console-on');
+            return;
+        }
         const on = isEnabled();
         applyDevState(on);
 
