@@ -11,7 +11,7 @@
     const sameTrack = (a, b) => !!a && !!b && (a === b || (keyOf(a) && keyOf(a) === keyOf(b)));
     const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-    let root = null, track = null, tab = 'options';
+    let root = null, track = null, tab = 'options', infoSeq = 0;
 
     function icon(name, fill) { return '<span class="material-symbols-rounded"' + (fill ? ' style="font-variation-settings:\'FILL\' 1;"' : '') + '>' + name + '</span>'; }
 
@@ -24,9 +24,9 @@
             '<div class="ss-box" id="ss-box">' +
             '<div class="ss-grip"></div>' +
             '<div class="ss-body">' +
-            '<div class="ss-pane" id="ss-pane-options">' +
             '<div class="ss-head"><div class="ss-art" id="ss-art"></div><div class="ss-title" id="ss-title"></div>' +
             '<button type="button" class="ss-edit" id="ss-edit" title="Metadata">' + icon('edit') + '</button></div>' +
+            '<div class="ss-pane active" id="ss-pane-options">' +
             '<div class="ss-row">' +
             '<button type="button" class="ss-btn ss-play" id="ss-play">' + icon('play_arrow', true) + '<span>' + T('ss.play', 'Phát') + '</span></button>' +
             '<button type="button" class="ss-btn ss-like" id="ss-like">' + icon('favorite', true) + '</button>' +
@@ -89,18 +89,49 @@
     function setTab(t) {
         tab = t;
         root.querySelectorAll('.ss-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
-        root.querySelector('#ss-pane-options').style.display = t === 'options' ? '' : 'none';
-        root.querySelector('#ss-pane-info').style.display = t === 'info' ? '' : 'none';
+        const pOpt = root.querySelector('#ss-pane-options');
+        const pInf = root.querySelector('#ss-pane-info');
+        pOpt.classList.toggle('active', t === 'options');
+        pInf.classList.toggle('active', t === 'info');
+        pOpt.style.display = t === 'options' ? 'block' : 'none';
+        pInf.style.display = t === 'info' ? 'block' : 'none';
+        const body = root.querySelector('.ss-body');
+        if (body) body.scrollTop = 0;
         if (t === 'info') loadInfo();
+    }
+
+    function renderInfoCards(items) {
+        if (!Array.isArray(items) || !items.length) return '';
+        return '<div class="ss-info-group">' + items.map(it =>
+            '<div class="ss-info-card">' +
+            '<span class="material-symbols-rounded ss-info-ic">' + esc(it.icon || 'info') + '</span>' +
+            '<div class="ss-info-txt">' +
+            '<div class="ss-info-lbl">' + esc(it.label || '') + '</div>' +
+            '<div class="ss-info-val">' + esc(it.value || '') + '</div>' +
+            '</div></div>'
+        ).join('') + '</div>';
     }
 
     async function loadInfo() {
         const el = root.querySelector('#ss-info');
+        const curTrack = track;
+        const seq = ++infoSeq;
         el.innerHTML = '';
-        if (!track) return;
+        if (!curTrack) return;
         try {
-            const rows = await window.__buildMoreInfoRows(track);
-            if (root.classList.contains('open')) el.innerHTML = rows.join('');
+            if (typeof window.__buildMoreInfoData === 'function') {
+                const data = await window.__buildMoreInfoData(curTrack);
+                if (seq !== infoSeq || track !== curTrack) return;
+                let html = renderInfoCards(data.items);
+                if (data.lyricItems && data.lyricItems.length) {
+                    html += '<div class="ss-info-sec">' + esc(data.lyricTitle || 'Lyric Information') + '</div>' + renderInfoCards(data.lyricItems);
+                }
+                el.innerHTML = html;
+            } else if (typeof window.__buildMoreInfoRows === 'function') {
+                const rows = await window.__buildMoreInfoRows(curTrack);
+                if (seq !== infoSeq || track !== curTrack) return;
+                el.innerHTML = rows.join('');
+            }
         } catch (e) {}
     }
 
