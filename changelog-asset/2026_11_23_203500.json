@@ -2,6 +2,18 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "INFO: thêm nút \"Mở trong Thư mục\" cạnh File Path, nhảy thẳng tới thư mục chứa bài trong tab Thư mục",
+      "icon": "folder_open"
+    },
+    {
+      "content": "Danh sách chính giữ nguyên vị trí cuộn khi cập nhật (đổi sắp xếp, đổi bài đang phát) thay vì nhảy về đầu",
+      "icon": "swap_vert"
+    },
+    {
+      "content": "Cho phép xóa bài đang phát: tự chuyển sang bài kế tiếp",
+      "icon": "delete"
+    },
+    {
       "content": "Developer Features: xem log native ngay trong app (lọc mức độ / tag / tìm kiếm) và Xuất chẩn đoán (trạng thái + log, đã che đường dẫn)",
       "icon": "receipt_long"
     },
@@ -131,6 +143,18 @@
     }
   ],
   "en": [
+    {
+      "content": "INFO: added an \"Open in Files\" button next to File Path that jumps to the song's folder in the Folders tab",
+      "icon": "folder_open"
+    },
+    {
+      "content": "The main list keeps its scroll position on updates (sort changes, playing track changes) instead of jumping to the top",
+      "icon": "swap_vert"
+    },
+    {
+      "content": "You can now delete the currently playing song: playback moves on to the next track",
+      "icon": "delete"
+    },
     {
       "content": "Developer Features: in-app native log viewer (level / tag / search filters) and Export diagnostics (state + logs, paths redacted)",
       "icon": "receipt_long"

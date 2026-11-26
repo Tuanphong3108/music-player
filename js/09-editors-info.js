@@ -394,7 +394,8 @@
                 items.push({
                     icon: 'folder',
                     label: currentLangDict['moreinfo.file_path'] || 'File Path',
-                    value: rawFilePath
+                    value: rawFilePath,
+                    action: track.nativeLocation ? 'open-folder' : ''
                 });
             }
             if (tech && (tech.rate || tech.kbps)) {

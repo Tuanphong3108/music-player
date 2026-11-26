@@ -2423,3 +2423,5 @@ html.m-ui #m-lib-list.m-locating .m-lib-item { content-visibility: visible; }
         .dev-tools .dev-chip.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-color: transparent; }
         .dev-tools .dev-chip.act { border-color: transparent; background: var(--md-sys-color-surface-container-highest, rgba(255,255,255,.08)); }
         .dev-tools .dev-log-q { width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--md-sys-color-outline-variant, #666); background: transparent; color: var(--md-sys-color-on-surface); font: inherit; font-size: calc(14px * var(--font-scale-factor, 1)); }
+        #ss-root .ss-info-act { margin-top: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 16px; font: inherit; font-weight: 700; font-size: calc(13px * var(--font-scale-factor, 1)); background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+        #ss-root .ss-info-act .material-symbols-rounded { font-size: 18px; }

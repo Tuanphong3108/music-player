@@ -116,6 +116,7 @@
             '<div class="ss-info-txt">' +
             '<div class="ss-info-lbl">' + esc(it.label || '') + '</div>' +
             '<div class="ss-info-val">' + esc(it.value || '') + '</div>' +
+            (it.action === 'open-folder' ? '<button type="button" class="ss-info-act" data-act="open-folder"><span class="material-symbols-rounded">folder_open</span><span>' + esc(T('ss.open_files', 'Mở trong Thư mục')) + '</span></button>' : '') +
             '</div></div>'
         ).join('') + '</div>';
     }
@@ -135,6 +136,11 @@
                     html += '<div class="ss-info-sec">' + esc(data.lyricTitle || 'Lyric Information') + '</div>' + renderInfoCards(data.lyricItems);
                 }
                 el.innerHTML = html;
+                el.querySelectorAll('[data-act="open-folder"]').forEach(b => b.addEventListener('click', () => {
+                    const t = curTrack;
+                    close();
+                    setTimeout(() => { if (typeof window.__openTrackInFolders === 'function') window.__openTrackInFolders(t); }, 120);
+                }));
             } else if (typeof window.__buildMoreInfoRows === 'function') {
                 const rows = await window.__buildMoreInfoRows(curTrack);
                 if (seq !== infoSeq || track !== curTrack) return;

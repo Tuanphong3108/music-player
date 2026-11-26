@@ -600,12 +600,6 @@
                 if (!list || !list.length) return;
                 const AB = window.AndroidBridge;
                 if (!AB || typeof AB.deleteNativeFiles !== 'function') { showToast(tr2('sel.unsupported', 'Chức năng này cần app Android'), 'info'); return; }
-                const cur = (typeof currentIndex === 'number' && currentIndex >= 0 && Array.isArray(playlist)) ? playlist[currentIndex] : null;
-                const curId = cur ? mLibTrackId(cur) : '';
-                if (cur && list.some(t => t && (t === cur || (curId && mLibTrackId(t) === curId)))) {
-                    showToast(tr2('sel.del_playing', 'Không thể xóa bài đang phát'), 'block');
-                    return;
-                }
                 const ok = await confirmDialog(tr2('sel.del_msg', 'Xóa vĩnh viễn {n} tệp khỏi máy? Hành động này không thể hoàn tác.').replace('{n}', list.length),
                     tr2('sel.del_ok', 'Xóa'), tr2('sel.del_title', 'Xóa khỏi máy'));
                 if (!ok) return;
@@ -620,9 +614,19 @@
                     const gone = new Set((res && res.deleted || []).map(k => list[k]).filter(Boolean));
                     if (gone.size) {
                         const cur = playlist[currentIndex] || null;
-                        const playingGone = cur && gone.has(cur);
+                        const curId = cur ? mLibTrackId(cur) : '';
+                        const playingGone = !!(cur && (gone.has(cur) || (curId && Array.from(gone).some(g => mLibTrackId(g) === curId))));
+                        // Bài đang phát bị xóa: chọn trước bài kế (theo đúng thứ tự Playlist/Shuffle) để phát tiếp sau khi dọn hàng đợi
+                        let nextTr = null;
                         if (playingGone) {
-                            try { audio.pause(); audio.src = ''; } catch (e) {}
+                            const useShuf = !!(isShuffle && shuffleInitialized && shuffleOrder.length === playlist.length);
+                            const order = useShuf ? shuffleOrder : playlist.map((_, i) => i);
+                            const pos = order.indexOf(currentIndex);
+                            for (let st = 1; st < order.length; st++) {
+                                const t = playlist[order[(pos + st) % order.length]];
+                                if (t && !gone.has(t) && !(curId && mLibTrackId(t) === curId)) { nextTr = t; break; }
+                            }
+                            if (!nextTr) { try { audio.pause(); audio.src = ''; } catch (e) {} }
                         }
                         for (let i = playlist.length - 1; i >= 0; i--) {
                             if (gone.has(playlist[i])) { playlist.splice(i, 1); if (currentIndex > i) currentIndex--; else if (currentIndex === i) currentIndex = -1; }
@@ -634,6 +638,10 @@
                         renderMobileLibrary();
                         try { if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews(); } catch (e) {}
                         try { syncMobileMiniPlayer(); } catch (e) {}
+                        if (playingGone && nextTr) {
+                            const ni = playlist.indexOf(nextTr);
+                            if (ni >= 0) playTrack(ni);
+                        }
                         showToast(tr2('sel.del_done', 'Đã xóa {n} tệp').replace('{n}', gone.size), 'delete');
                     }
                     if (res && res.failed > 0) showToast(tr2('sel.del_fail', 'Không xóa được {n} tệp').replace('{n}', res.failed), 'error');
@@ -644,6 +652,10 @@
                 if (!document.documentElement.classList.contains('m-ui') || !mLibList) return;
                 if (!window.__mobileLibrary.length && playlist.length) syncMobileLibraryFromPlaylist();
                 sortMobileLib0Z(window.__mobileLibrary);
+                // Dựng lại (đổi sắp xếp, bài đang phát đổi...) không được đẩy danh sách về đầu: nhớ vị trí cuộn, chỉ về đầu khi người dùng đổi từ khóa tìm kiếm
+                let keepScroll = mLibList.scrollTop;
+                if (renderMobileLibrary._q !== mLibQuery) keepScroll = 0;
+                renderMobileLibrary._q = mLibQuery;
                 mLibList.innerHTML = '';
                 mLibRowMap.clear();
                 const q = mLibQuery;
@@ -707,7 +719,7 @@
                     return row;
                 };
                 // Hàng đầu hiện ngay, phần còn lại dựng dần theo từng đợt để không đứng khựng khi thư viện lớn
-                let idx = 0;
+                let idx = 0, restoredAt = 0;
                 const step = (limit) => {
                     if (seq !== renderMobileLibrary._seq) return;
                     const frag = document.createDocumentFragment();
@@ -722,9 +734,22 @@
                         frag.appendChild(makeRow(tr)); n++;
                     }
                     mLibList.appendChild(frag);
+                    if (keepScroll > 0 && (mLibList.scrollHeight >= keepScroll + mLibList.clientHeight || idx >= lib.length)) {
+                        const prevSB = mLibList.style.scrollBehavior;
+                        mLibList.style.scrollBehavior = 'auto';
+                        mLibList.scrollTop = keepScroll;
+                        mLibList.style.scrollBehavior = prevSB;
+                        restoredAt = keepScroll; keepScroll = 0;
+                    }
+                    // Chiều cao hàng chỉ là ước lượng tới khi dựng xong: chốt lại vị trí lần cuối nếu người dùng chưa tự cuộn
+                    if (restoredAt > 0 && idx >= lib.length) {
+                        if (Math.abs(mLibList.scrollTop - restoredAt) < 400) { mLibList.style.scrollBehavior = 'auto'; mLibList.scrollTop = restoredAt; mLibList.style.scrollBehavior = ''; }
+                        restoredAt = 0;
+                    }
                     if (idx < lib.length) requestAnimationFrame(() => step(100));
                 };
-                step(40);
+                // Đang ở giữa danh sách dài: dựng đủ số hàng để tới được vị trí cũ ngay trong lần đầu (khỏi nháy về đầu rồi nhảy xuống)
+                step(keepScroll > 0 ? Math.min(2000, Math.ceil((keepScroll + mLibList.clientHeight) / 60) + 20) : 40);
             }
             // Nhiều nơi gọi dồn dập khi nạp thư viện -> gộp thành một lần dựng
             let mLibRenderT = null;
@@ -1230,7 +1255,11 @@
                         for (let i = 0; i < foldPath.length - 1; i++) mk('', foldPath[i], i + 1);
                         titleEl.textContent = foldPath[foldPath.length - 1];
                     }
+                    const foldKey = foldPath.join('/');
+                    const keepFold = (renderMobileFolders._k === foldKey) ? listEl.scrollTop : 0;
+                    renderMobileFolders._k = foldKey;
                     listEl.innerHTML = '';
+                    if (keepFold) requestAnimationFrame(() => { listEl.scrollTop = keepFold; });
                     const subs = Array.from(node.children.values()).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
                     if (!subs.length && !node.tracks.length) { listEl.innerHTML = emptyHtml('folder_off', tr2('pl.folders_empty', 'Chưa có thư mục nào.')); return; }
                     subs.forEach(sub => {
@@ -1259,6 +1288,24 @@
                     });
                 }
                 // Back trong tab Thư mục: lên một cấp
+                // "Open in Files": thu player, sang tab Thư mục và mở đúng thư mục chứa bài
+                window.__openTrackInFolders = function (t) {
+                    if (!document.documentElement.classList.contains('m-ui') || !t) return false;
+                    const segs = trackFolderSegs(t) || [tr2('pl.folder_other', 'Khác')];
+                    document.body.classList.remove('m-player-expanded');
+                    if (currentIndex >= 0 && playlist[currentIndex]) document.body.classList.add('m-mini-visible');
+                    document.body.classList.remove('m-more-open');
+                    foldPath = segs.slice();
+                    setMobileLibTab('folders');
+                    renderMobileFolders();
+                    const l = document.getElementById('m-fold-list'); if (l) l.scrollTop = 0;
+                    const k = trackKeyOf(t);
+                    requestAnimationFrame(() => {
+                        const row = Array.from((l || document).querySelectorAll('.m-lib-item[data-key]')).find(r => r.dataset.key === k);
+                        if (row) { row.scrollIntoView({ block: 'center' }); row.classList.remove('m-locate-flash'); void row.offsetWidth; row.classList.add('m-locate-flash'); setTimeout(() => row.classList.remove('m-locate-flash'), 1400); }
+                    });
+                    return true;
+                };
                 window.__mobileFoldersBack = function () {
                     if (activeTab === 'folders' && !openedPlId && foldPath.length) { foldPath = foldPath.slice(0, -1); renderMobileFolders(); return true; }
                     return false;
@@ -1268,7 +1315,9 @@
                 function renderMobileLiked() {
                     if (!likedListEl) return;
                     const liked = getLibPool().filter(t => t && window.__isLiked && window.__isLiked(t));
+                    const keepLiked = likedListEl.scrollTop;
                     likedListEl.innerHTML = '';
+                    if (keepLiked) requestAnimationFrame(() => { likedListEl.scrollTop = keepLiked; });
                     if (!liked.length) { likedListEl.innerHTML = emptyHtml('favorite', tr2('pl.liked_empty', 'Chưa có bài hát yêu thích nào.')); return; }
                     const activeTr = playlist[currentIndex] || null;
                     const activeKey = activeTr ? trackKeyOf(activeTr) : '';
