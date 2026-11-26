@@ -2232,6 +2232,22 @@
             if (hasChanges()) document.getElementById('overlayUnsaved').classList.remove('hidden');
             else sendClose();
           }
+          function handleMetaBack() {
+            if (document.getElementById('savingScreen').classList.contains('active')) return true;
+            const ovOk = document.getElementById('overlaySuccess');
+            if (ovOk && !ovOk.classList.contains('hidden')) { document.getElementById('btnOK').click(); return true; }
+            const ovFail = document.getElementById('overlayFail');
+            if (ovFail && !ovFail.classList.contains('hidden')) { document.getElementById('btnFailOK').click(); return true; }
+            const ovUnsaved = document.getElementById('overlayUnsaved');
+            if (ovUnsaved && !ovUnsaved.classList.contains('hidden')) { document.getElementById('btnStay').click(); return true; }
+            const ovFill = document.getElementById('overlayLrcFill');
+            if (ovFill && !ovFill.classList.contains('hidden')) { fillPending = null; ovFill.classList.add('hidden'); return true; }
+            if (lrcPreview && !lrcPreview.classList.contains('hidden')) { lrcPreview.classList.add('hidden'); return true; }
+            if (lrcSearch && !lrcSearch.classList.contains('hidden')) { document.getElementById('btnLrcCancel').click(); return true; }
+            tryClose();
+            return true;
+          }
+          window.__metaAndroidBack = handleMetaBack;
           document.getElementById('btnBack').addEventListener('click', tryClose);
           document.getElementById('btnCancel').addEventListener('click', tryClose);
 
