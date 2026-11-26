@@ -709,4 +709,5 @@ ai.err_no_model=Không tìm thấy mô hình Gemini khả dụng cho API Key nà
 ai.err_no_valid_tracks=AI không trả về bài hát hợp lệ nào trong thư viện.
 ai.err_no_lyric_content=Lời bài hát không có nội dung để dịch.
 ai.err_no_valid_trans=AI không trả về dòng dịch hợp lệ.
+sel.del_playing=Không thể xóa bài đang phát
 
