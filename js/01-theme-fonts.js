@@ -1112,3 +1112,36 @@
             return str;
         }
 
+
+// ===== Flags / Experimental: bật giao diện cũ trên Android, giao diện mới trên PC (lưu localStorage, áp dụng ngay) =====
+window.__flags = (function () {
+    const KEYS = { oldInfo: 'mp_flag_old_info', oldSettings: 'mp_flag_old_settings', newInfo: 'mp_exp_new_info', newSettings: 'mp_exp_new_settings' };
+    const root = document.documentElement;
+    const get = (k) => { try { return localStorage.getItem(KEYS[k]) === '1'; } catch (e) { return false; } };
+    const isM = () => root.classList.contains('m-ui');
+    function setCls(name, on) { if (root.classList.contains(name) !== !!on) root.classList.toggle(name, !!on); }
+    function apply() {
+        const m = isM();
+        setCls('st-mui', m ? !get('oldSettings') : get('newSettings'));   // layout Settings kiểu điện thoại (danh sách thẻ / 2 cột)
+        setCls('st-pc', !m && get('newSettings'));
+        try {
+            const ab = window.AndroidBridge, v = !!(m && get('oldInfo'));
+            if (ab && typeof ab.setUiFlags === 'function' && api._sent !== v) { api._sent = v; ab.setUiFlags(v); }
+        } catch (e) {}
+    }
+    const api = {
+        get: (k) => get(k),
+        set: (k, v) => {
+            try { localStorage.setItem(KEYS[k], v ? '1' : '0'); } catch (e) {}
+            apply();
+            try { window.dispatchEvent(new CustomEvent('mp-flags-changed', { detail: { key: k, value: !!v } })); } catch (e) {}
+        },
+        // true = dùng bottom sheet "Thông tin khác" kiểu điện thoại; false = hộp thoại Info kiểu PC
+        useSheet: () => isM() ? !get('oldInfo') : get('newInfo'),
+        apply
+    };
+    apply();
+    document.addEventListener('DOMContentLoaded', apply);
+    try { new MutationObserver(apply).observe(root, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+    return api;
+})();

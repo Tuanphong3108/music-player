@@ -121,6 +121,17 @@
             'android.download_btn': 'Download',
             'android.no_video_note': 'Note: The Android version of Media Player does not support video playback (audio and lyrics only).',
             'android.github_note': 'Opens the official GitHub Releases page to download MediaPlayer.apk',
+            'settings.cat_experimental': 'Experimental',
+            'settings.desc_experimental': 'Experimental interface options',
+            'exp.new_info': 'New Other Info menu',
+            'exp.new_info_desc': 'Use the phone song info sheet (bottom sheet, without the Options tab).',
+            'exp.new_settings': 'New Settings menu',
+            'exp.new_settings_desc': 'Use the phone Material 3 Expressive Settings layout (card list + two columns).',
+            'dev.flags': 'Flags',
+            'dev.flag_old_info': 'Old Other Info menu',
+            'dev.flag_old_info_desc': 'Use the PC Info dialog (also in QuickPlay).',
+            'dev.flag_old_settings': 'Old Settings menu',
+            'dev.flag_old_settings_desc': 'Use the PC Settings layout.',
             'getapp.title': 'Listen better with the Android app',
             'getapp.desc': 'You are using Media Player in a browser. The app plays reliably in the background, has media notification controls and scans music on your device.',
             'getapp.f1_t': 'Reliable background playback',
@@ -597,6 +608,7 @@
                 setTimeout(() => document.body.classList.remove('screen-animating'), 480);
             }
             settingsOverlay.classList.add('open');
+            try { if (window.__stAutoDetail) window.__stAutoDetail(); } catch (e) {}
         });
 
         settingsCloseBtn.addEventListener('click', () => {
@@ -904,6 +916,7 @@
                 mixer: ['#3fae86', 'settings.desc_mixer', 'Equalizer, preamp, cân bằng trái/phải'],
                 performance: ['#9b72e0', 'settings.desc_performance', 'Hiệu ứng và hiệu năng'],
                 ai: ['#8b5cf6', 'settings.desc_ai', 'Nhà cung cấp AI, API Key, model và prompt tạo playlist'],
+                experimental: ['#ff7043', 'settings.desc_experimental', 'Tùy chọn giao diện thử nghiệm'],
                 developer: ['#00b894', 'settings.desc_developer', 'Bảng điều khiển (Console) và công cụ gỡ lỗi'],
                 android: ['#3ddc84', 'settings.desc_android', 'Tải ứng dụng Android'],
                 about: ['#7a8794', 'settings.desc_about', 'Thông tin về Media Player']
@@ -934,10 +947,17 @@
                 dlg.classList.add('st-m-detail');
                 mTitle.textContent = paneTitle(key);
                 content.scrollTop = 0; dlg.classList.remove('st-m-scrolled');
+                list.querySelectorAll('.st-m-card').forEach(c => c.classList.toggle('on', c.dataset.tab === key));
                 refreshPills();
             }
+            // Bố cục 2 cột (máy tính bảng / PC bật New Settings): mở sẵn mục đầu tiên cho khung bên phải khỏi trống
+            window.__stAutoDetail = function () {
+                if (document.documentElement.classList.contains('st-mui') && !dlg.classList.contains('st-m-detail')
+                    && window.matchMedia('(orientation: landscape) and (min-width: 600px)').matches) openDetail('general');
+            };
             function closeDetail() {
                 dlg.classList.remove('st-m-detail', 'st-m-scrolled');
+                list.querySelectorAll('.st-m-card.on').forEach(c => c.classList.remove('on'));
                 content.scrollTop = 0;
             }
             window.__stMobileReset = closeDetail;

@@ -349,6 +349,7 @@
                     <div class="st-tab-spacer"></div>
                     <button class="st-tab" data-tab="ai"><span class="material-symbols-rounded">auto_awesome</span><span data-i18n="settings.cat_ai">AI Integration (β)</span></button>
                     <button class="st-tab" data-tab="developer"><span class="material-symbols-rounded">code</span><span data-i18n="settings.cat_developer">Developer Features</span></button>
+                    <button class="st-tab" data-tab="experimental"><span class="material-symbols-rounded">science</span><span data-i18n="settings.cat_experimental">Experimental</span></button>
                     <button class="st-tab st-tab-link" id="st-android-apk-btn" data-tab="android"><span class="material-symbols-rounded">android</span><span data-i18n="settings.download_android">Tải bản Android</span></button>
                     <button class="st-tab" data-tab="about"><span class="material-symbols-rounded">info</span><span data-i18n="about.title">About</span></button>
                 </nav>
@@ -759,6 +760,29 @@
                         </md-switch>
                     </div>
                     <div id="dev-tools" class="dev-tools"></div>
+                </div>
+                <div class="st-pane" data-pane="experimental">
+                    <h3 class="st-pane-title" data-i18n="settings.cat_experimental">Experimental</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="exp.new_info">New Other Info menu</span>
+                            <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="exp.new_info_desc">Dùng menu thông tin bài hát của điện thoại (bottom sheet, không có tab Options).</span>
+                        </div>
+                        <md-switch icons id="setting-exp-info">
+                            <span class="material-symbols-rounded" slot="on-icon">check</span>
+                            <span class="material-symbols-rounded" slot="off-icon">close</span>
+                        </md-switch>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 24px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: calc(16px * var(--font-scale-factor, 1)); font-weight: 700;" data-i18n="exp.new_settings">New Settings menu</span>
+                            <span style="font-size: calc(12px * var(--font-scale-factor, 1)); opacity: 0.6;" data-i18n="exp.new_settings_desc">Dùng giao diện Cài đặt Material 3 Expressive của điện thoại (danh sách thẻ + 2 cột).</span>
+                        </div>
+                        <md-switch icons id="setting-exp-settings">
+                            <span class="material-symbols-rounded" slot="on-icon">check</span>
+                            <span class="material-symbols-rounded" slot="off-icon">close</span>
+                        </md-switch>
+                    </div>
                 </div>
                 <div class="st-pane" data-pane="android">
                     <h3 class="st-pane-title" data-i18n="settings.download_android">Tải bản Android</h3>

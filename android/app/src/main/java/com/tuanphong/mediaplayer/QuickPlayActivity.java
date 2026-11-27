@@ -717,6 +717,12 @@ public class QuickPlayActivity extends Activity {
         LinearLayout.LayoutParams tblp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         tblp.topMargin = dp(12);
         detailsPane.addView(detailsTabBar, tblp);
+        // Flag "Old Other Info menu": chỉ hiện INFO kiểu cũ, không có tab OPTIONS
+        if (getSharedPreferences("app", MODE_PRIVATE).getBoolean("old_info", false)) {
+            detailsTabBar.setVisibility(View.GONE);
+            detailsShowInfo = true;
+            if (optionsPane != null) optionsPane.setVisibility(View.GONE);
+        }
         syncDetailsStyles();
 
         outerRoot = new FrameLayout(this);

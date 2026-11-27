@@ -186,7 +186,9 @@
         root.querySelector('#ss-del').style.display = (AB() && typeof AB().deleteNativeFiles === 'function') ? '' : 'none';
         root.querySelector('#ss-sound').style.display = (AB() && typeof AB().setAsSound === 'function') ? '' : 'none';
         syncLike(); syncPlayBtn();
-        setTab(startTab || 'options');
+        const infoOnly = !document.documentElement.classList.contains('m-ui');   // PC (Experimental): chỉ có tab INFO
+        root.classList.toggle('ss-info-only', infoOnly);
+        setTab(infoOnly ? 'info' : (startTab || 'options'));
         // Gỡ focus khỏi thanh seek / nút nền rồi khóa nền & chuyển focus thẳng vào sheet
         try {
             if (document.activeElement && !root.contains(document.activeElement) && typeof document.activeElement.blur === 'function') {
@@ -457,7 +459,9 @@
             const cm = document.getElementById('context-menu');
             const tr = (typeof targetMenuIndex === 'number' && targetMenuIndex > -1 && playlist[targetMenuIndex]) || window.__lrcFallbackTrack || null;
             if (cm) cm.style.display = 'none';
-            if (tr) open(tr);
+            if (!tr) return;
+            if (window.__flags && !window.__flags.useSheet() && typeof window.__openMoreInfoModal === 'function') window.__openMoreInfoModal(tr);
+            else open(tr);
         });
     }
     // Đồng bộ nút Play khi trạng thái phát thay đổi lúc sheet đang mở

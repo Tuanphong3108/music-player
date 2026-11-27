@@ -446,9 +446,10 @@
             return rows;
         }
         window.__buildMoreInfoRows = buildMoreInfoRows;
+        window.__openMoreInfoModal = (tr) => openMoreInfoModal(tr);
 
-        async function openMoreInfoModal() {
-            const track = playlist[currentIndex];
+        async function openMoreInfoModal(tr) {
+            const track = (tr && tr.name !== undefined) ? tr : playlist[currentIndex];
             if (!track) return;
             const rows = await buildMoreInfoRows(track);
             moreInfoBody.innerHTML = rows.join('');
@@ -464,7 +465,7 @@
 
         moreInfoBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (document.documentElement.classList.contains('m-ui') && typeof window.__openSongSheet === 'function') { window.__openSongSheet(playlist[currentIndex]); return; }
+            if (window.__flags && window.__flags.useSheet() && typeof window.__openSongSheet === 'function') { window.__openSongSheet(playlist[currentIndex]); return; }
             openMoreInfoModal();
         });
         moreInfoClose.addEventListener('click', () => moreInfoModal.classList.remove('open'));

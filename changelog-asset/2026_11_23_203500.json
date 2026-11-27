@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Flags (Android, trong Developer Features): bật lại menu Thông tin & Cài đặt kiểu cũ. PC có tab Experimental để dùng thử menu Thông tin và Cài đặt kiểu điện thoại",
+      "icon": "science"
+    },
+    {
       "content": "Khi bài lỗi phát, ẩn thẻ bìa album / nốt nhạc để không đè lên khung báo lỗi",
       "icon": "error"
     },
@@ -171,6 +175,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Flags (Android, in Developer Features): switch back to the old Info and Settings menus. PC gets an Experimental tab to try the phone-style Info and Settings menus",
+      "icon": "science"
+    },
     {
       "content": "When a track fails to play, the album art card is hidden so it no longer overlaps the error message",
       "icon": "error"

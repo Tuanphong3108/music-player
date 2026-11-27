@@ -4400,6 +4400,12 @@ public class MainActivity extends Activity {
             } catch (Throwable ignored) {}
         }
 
+        /** Flags giao diện từ WebView: oldInfo = QuickPlay chỉ hiện INFO kiểu cũ (không có tab OPTIONS). */
+        @JavascriptInterface
+        public void setUiFlags(boolean oldInfo) {
+            getSharedPreferences("app", MODE_PRIVATE).edit().putBoolean("old_info", oldInfo).apply();
+        }
+
         /** Giới hạn bộ nhớ đệm ảnh bìa (MB); vượt thì xóa ảnh cũ nhất. */
         @JavascriptInterface
         public void setArtCacheLimit(int mb) {

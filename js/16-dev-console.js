@@ -200,6 +200,21 @@
             info.textContent = 'URL: ' + location.href + '\n' + 'SW: ' + (sw.controller ? T('dev.sw_active', 'đang điều khiển') : T('dev.sw_inactive', 'chưa điều khiển')) + ' • cache: ' + (sw.caches.join(', ') || '-') +
                 (AB && AB.getAppVersion ? '\nAPK: ' + safe(() => AB.getAppVersion()) : '');
         };
+        // Flags: 2 công tắc đưa giao diện cũ trở lại (lưu localStorage, áp dụng ngay)
+        const flags = document.createElement('div'); flags.className = 'dev-flags'; flags.style.display = 'none';
+        const flagRow = (key, tk, td, dk, dd) => {
+            const row = document.createElement('div'); row.className = 'dev-flag-row';
+            row.innerHTML = '<div class="dev-flag-tx"><b></b><span></span></div>';
+            row.querySelector('b').textContent = T(tk, td); row.querySelector('span').textContent = T(dk, dd);
+            const sw = document.createElement('md-switch'); sw.setAttribute('icons', '');
+            sw.innerHTML = '<span class="material-symbols-rounded" slot="on-icon">check</span><span class="material-symbols-rounded" slot="off-icon">close</span>';
+            sw.selected = !!(window.__flags && window.__flags.get(key));
+            sw.addEventListener('change', () => { if (window.__flags) window.__flags.set(key, !!sw.selected); });
+            row.appendChild(sw); flags.appendChild(row);
+        };
+        flagRow('oldInfo', 'dev.flag_old_info', 'Old Other Info menu', 'dev.flag_old_info_desc', 'Dùng hộp thoại Info kiểu PC (áp dụng cả QuickPlay).');
+        flagRow('oldSettings', 'dev.flag_old_settings', 'Old Settings menu', 'dev.flag_old_settings_desc', 'Dùng giao diện Cài đặt kiểu PC.');
+        btn('flag', 'dev.flags', 'Flags', () => { flags.style.display = flags.style.display === 'none' ? 'flex' : 'none'; });
         btn('content_copy', 'dev.copy_state', 'Sao chép trạng thái app', async () => { const t = await buildAppState(); show(t); copyText(t); });
         btn('settings_ethernet', 'dev.bridge_test', 'Kiểm tra Bridge', async () => show(await bridgeTest()));
         const lv = buildLogViewer(host);
@@ -212,14 +227,24 @@
         btn('refresh', 'dev.reload', 'Tải lại trang', () => location.reload());
         btn('cleaning_services', 'dev.clear_reload', 'Xóa cache & tải lại', () => clearCacheAndReload());
         btn('restart_alt', 'dev.reset', 'Đặt lại cài đặt Developer', () => { resetDevSettings(); show(T('dev.reset_done', 'Đã đặt lại cài đặt Developer về mặc định.')); }, 'danger');
-        host.insertBefore(info, host.firstChild); host.insertBefore(grid, info.nextSibling); host.appendChild(out);
+        host.insertBefore(info, host.firstChild); host.insertBefore(grid, info.nextSibling); host.insertBefore(flags, grid.nextSibling); host.appendChild(out);
         refreshInfo();
     }
 
+    // Tab Experimental (PC): công tắc giao diện mới của điện thoại
+    function bindExperimental() {
+        [['setting-exp-info', 'newInfo'], ['setting-exp-settings', 'newSettings']].forEach(([id, key]) => {
+            const sw = document.getElementById(id); if (!sw || !window.__flags) return;
+            sw.selected = window.__flags.get(key);
+            sw.addEventListener('change', () => window.__flags.set(key, !!sw.selected));
+        });
+    }
+
     function init() {
+        bindExperimental();
         // Console gốc chỉ có trong app Android; PC/PWA đã có F12 nên ẩn hẳn tab, nút và không bật
         if (!window.IS_ANDROID_APP) {
-            document.querySelectorAll('.st-tab[data-tab="developer"], .st-pane[data-pane="developer"], #dev-console-btn')
+            document.querySelectorAll('.st-tab[data-tab="developer"], .st-pane[data-pane="developer"], .st-m-card[data-tab="developer"], #dev-console-btn')
                 .forEach(el => el.style.setProperty('display', 'none', 'important'));
             document.body.classList.remove('dev-console-on');
             return;
