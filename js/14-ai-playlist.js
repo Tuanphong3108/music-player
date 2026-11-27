@@ -173,13 +173,13 @@
           html:not(.m-ui) .ai-sr md-text-button{--md-text-button-label-text-font:var(--app-font);font-family:var(--app-font);flex-shrink:0;}
           html.m-ui .ai-sr md-outlined-select.m3-select{display:none !important;}
           html.m-ui .ai-key-ctrl{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%;}
-          html.m-ui .st-pane > #ai-settings-host{display:flex;flex-direction:column;gap:2px;background:none !important;padding:0 !important;border-radius:0 !important;border:none !important;}
-          html.m-ui .ai-sr:not(.ai-sr-banner){background:var(--md-sys-color-surface-container, color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface)));padding:18px 20px;border:none;border-radius:8px;}
-          html.m-ui #ai-settings-host > .ai-sr:first-child{border-radius:28px 28px 8px 8px;}
-          html.m-ui #ai-settings-host > .ai-sr:last-child{border-radius:8px 8px 28px 28px;padding-bottom:18px;}
-          html.m-ui #ai-settings-host > .ai-sr:only-child{border-radius:28px;}
-          html.m-ui .ai-sr-banner{margin-bottom:10px;}
-          html.m-ui .ai-sr-banner + .ai-sr{border-radius:28px 28px 8px 8px !important;}
+          html.st-mui .st-pane > #ai-settings-host{display:flex;flex-direction:column;gap:2px;background:none !important;padding:0 !important;border-radius:0 !important;border:none !important;}
+          html.st-mui .ai-sr:not(.ai-sr-banner){background:var(--md-sys-color-surface-container, color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface)));padding:18px 20px;border:none;border-radius:8px;}
+          html.st-mui #ai-settings-host > .ai-sr:first-child{border-radius:28px 28px 8px 8px;}
+          html.st-mui #ai-settings-host > .ai-sr:last-child{border-radius:8px 8px 28px 28px;padding-bottom:18px;}
+          html.st-mui #ai-settings-host > .ai-sr:only-child{border-radius:28px;}
+          html.st-mui .ai-sr-banner{margin-bottom:10px;}
+          html.st-mui .ai-sr-banner + .ai-sr{border-radius:28px 28px 8px 8px !important;}
           .ai-st-group{display:flex;flex-direction:column;gap:2px;margin-bottom:20px;}
           .ai-st-sec{font-size:calc(12px * var(--font-scale-factor, 1));font-weight:700;letter-spacing:.4px;color:var(--md-sys-color-primary);margin:0 0 8px;padding:0 4px;text-transform:uppercase;}
           .ai-st-card{background:var(--md-sys-color-surface-container, color-mix(in srgb, var(--md-sys-color-surface-variant) 60%, var(--md-sys-color-surface)));border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:14px;border:none;}
