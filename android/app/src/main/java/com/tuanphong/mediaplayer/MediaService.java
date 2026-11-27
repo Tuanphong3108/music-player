@@ -231,6 +231,24 @@ public class MediaService extends Service {
         }, "media-service-art").start();
     }
 
+    /** Ảnh bìa do WebView gửi xuống (fallback khi native không đọc được từ tệp). */
+    static void provideArt(final String id, final byte[] raw) {
+        final MediaService s = inst;
+        if (s == null || raw == null || raw.length == 0) return;
+        s.fgHandler.post(() -> {
+            try {
+                Bitmap b = BitmapFactory.decodeByteArray(raw, 0, raw.length);
+                if (b == null) return;
+                s.artMemCache.put(id, b);
+                if (id.equals(s.curTrackId) && s.art == null) {
+                    s.art = b;
+                    s.artDirty = false;
+                    s.publish();
+                }
+            } catch (Throwable ignored) {}
+        });
+    }
+
     private int artRetries = 0;
     private void scheduleArtRetry(final String nativeId, final String expectedTitle) {
         fgHandler.post(() -> {

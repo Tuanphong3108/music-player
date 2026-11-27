@@ -4390,6 +4390,16 @@ public class MainActivity extends Activity {
                     .apply();
         }
 
+        /** Web đẩy ảnh bìa (JPEG base64) xuống MediaSession khi native không tự trích được (vd. mở bằng Open with). */
+        @JavascriptInterface
+        public void setSessionArtwork(String id, String b64) {
+            try {
+                if (id == null || id.isEmpty() || b64 == null || b64.isEmpty()) return;
+                byte[] raw = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+                MediaService.provideArt(id, raw);
+            } catch (Throwable ignored) {}
+        }
+
         /** Giới hạn bộ nhớ đệm ảnh bìa (MB); vượt thì xóa ảnh cũ nhất. */
         @JavascriptInterface
         public void setArtCacheLimit(int mb) {

@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Android: ảnh bìa hiện trên thông báo / màn hình khóa / widget cả khi mở nhạc bằng Open with",
+      "icon": "image"
+    },
+    {
       "content": "Android: nâng target lên Android 17, icon thông báo là nốt nhạc của Media Player; nút tải app dẫn tới trang GitHub Releases",
       "icon": "android"
     },
@@ -163,6 +167,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Android: album art now shows on the notification, lock screen and widgets even for tracks opened with Open with",
+      "icon": "image"
+    },
     {
       "content": "Android: now targets Android 17, notification icon is the Media Player music note; the download button opens the GitHub Releases page",
       "icon": "android"

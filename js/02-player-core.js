@@ -2054,10 +2054,34 @@
         ['play', 'playing', 'pause', 'ended', 'loadedmetadata', 'durationchange', 'seeked', 'ratechange', 'emptied'].forEach(ev => audio.addEventListener(ev, syncMediaSessionState));
         setInterval(() => { if (!audio.paused && !audio.ended) syncMediaSessionState(); }, 1000);
 
+        // Android: nếu native không tự trích được ảnh bìa (vd. mở bằng Open with), gửi ảnh JS đã đọc xuống MediaSession/thông báo
+        let __lastNativeArtKey = '';
+        function pushArtToNative(track) {
+            const AB = window.AndroidBridge;
+            if (!window.IS_ANDROID_APP || !AB || typeof AB.setSessionArtwork !== 'function') return;
+            if (!track || !track.cover || !track.nativeId) return;
+            const key = track.nativeId + '|' + track.cover.length;
+            if (key === __lastNativeArtKey) return;
+            __lastNativeArtKey = key;
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const S = 320, c = document.createElement('canvas');
+                    const side = Math.min(img.naturalWidth, img.naturalHeight);
+                    if (!side) return;
+                    c.width = c.height = S;
+                    c.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, S, S);
+                    AB.setSessionArtwork(String(track.nativeId), c.toDataURL('image/jpeg', 0.88).split(',')[1]);
+                } catch (e) {}
+            };
+            img.src = track.cover;
+        }
+
         function updateMediaSession() {
             if ('mediaSession' in navigator) {
                 const track = playlist[currentIndex];
                 if (!track) return;
+                try { pushArtToNative(track); } catch (e) {}
 
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: track.name,
