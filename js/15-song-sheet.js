@@ -330,10 +330,34 @@
         playTrack(idx);
     }
 
-    // ---------- Màn "Chọn danh sách phát" ----------
+    // ---------- Màn "Chọn danh sách phát" (hỗ trợ cả 1 bài lẫn nhiều bài) ----------
+    function closePlaylistPicker(scr) {
+        scr = scr || document.getElementById('ss-pl-screen');
+        if (!scr) return;
+        scr.classList.remove('open');
+        scr.style.transform = '';
+        setTimeout(() => { if (!scr.classList.contains('open')) scr.style.display = 'none'; }, 310);
+    }
+
     function openPlaylistPicker() {
-        if (!track || !window.__plApi) return;
+        if (!track) return;
+        openPlaylistPickerForTracks([track]);
+    }
+
+    function openPlaylistPickerForTracks(tracksList) {
+        if (!window.__plApi) return;
         const api = window.__plApi;
+        const targetTracks = Array.isArray(tracksList) ? tracksList.filter(Boolean) : [];
+        if (!targetTracks.length) return;
+        const tks = [];
+        const tkSet = new Set();
+        targetTracks.forEach(t => {
+            const k = keyOf(t);
+            if (k && !tkSet.has(k)) { tkSet.add(k); tks.push(k); }
+        });
+        if (!tks.length) return;
+        const isSingle = tks.length === 1;
+
         let scr = document.getElementById('ss-pl-screen');
         if (!scr) {
             scr = document.createElement('div');
@@ -345,6 +369,21 @@
                 '<div class="ssp-list" id="ssp-list"></div>' +
                 '<button type="button" class="ssp-save" id="ssp-save">' + icon('save', true) + '<span></span></button>';
             document.body.appendChild(scr);
+            // Vuốt xuống ở tay nắm để đóng màn chọn danh sách phát
+            const grip = scr.querySelector('.ssp-grip');
+            if (grip) {
+                let py0 = null;
+                grip.addEventListener('pointerdown', (e) => { py0 = e.clientY; try { grip.setPointerCapture(e.pointerId); } catch (er) {} });
+                grip.addEventListener('pointermove', (e) => { if (py0 == null) return; const dy = Math.max(0, e.clientY - py0); scr.style.transition = 'none'; scr.style.transform = 'translateY(' + dy + 'px)'; });
+                const endDrag = (e) => {
+                    if (py0 == null) return;
+                    const dy = Math.max(0, e.clientY - py0); py0 = null;
+                    scr.style.transition = '';
+                    if (dy > 90) closePlaylistPicker(scr); else scr.style.transform = '';
+                };
+                grip.addEventListener('pointerup', endDrag);
+                grip.addEventListener('pointercancel', endDrag);
+            }
         }
         scr.querySelector('.ssp-title').textContent = T('ss.select_playlists', 'Chọn danh sách phát');
         const q = scr.querySelector('#ssp-q');
@@ -352,10 +391,17 @@
         q.value = '';
         scr.querySelector('#ssp-new span:last-child').textContent = T('ss.new', 'Mới');
         scr.querySelector('#ssp-save span:last-child').textContent = T('ss.save', 'Lưu');
-        const tk = keyOf(track);
+
         const pls = api.load().filter(p => p && p.mode !== 'smart' && p.mode !== 'virtual');
-        const want = new Map(pls.map(p => [p.id, (p.trackKeys || []).some(k => String(k).toLowerCase() === tk)]));
-        const orig = new Map(want);
+        const want = new Map();
+        const orig = new Map();
+        pls.forEach(p => {
+            const pSet = new Set((p.trackKeys || []).map(k => String(k).toLowerCase()));
+            const allIn = tks.every(k => pSet.has(k));
+            want.set(p.id, allIn);
+            orig.set(p.id, allIn);
+        });
+
         const list = scr.querySelector('#ssp-list');
         const render = () => {
             const term = (typeof removeVietnameseTones === 'function' ? removeVietnameseTones(q.value) : q.value).toLowerCase().trim();
@@ -378,8 +424,9 @@
         q.oninput = render;
         render();
         scr.querySelector('#ssp-new').onclick = () => {
-            scr.classList.remove('open'); close();
-            if (typeof window.__openCreatePlaylistFromTracks === 'function') window.__openCreatePlaylistFromTracks([track]);
+            closePlaylistPicker(scr);
+            if (root && root.classList.contains('open')) close();
+            if (typeof window.__openCreatePlaylistFromTracks === 'function') window.__openCreatePlaylistFromTracks(targetTracks);
         };
         scr.querySelector('#ssp-save').onclick = () => {
             const all = api.load();
@@ -387,12 +434,21 @@
             all.forEach(p => {
                 if (!want.has(p.id) || want.get(p.id) === orig.get(p.id)) return;
                 p.trackKeys = Array.isArray(p.trackKeys) ? p.trackKeys : [];
-                const has = p.trackKeys.findIndex(k => String(k).toLowerCase() === tk);
-                if (want.get(p.id) && has < 0) { p.trackKeys.push(tk); changed++; }
-                else if (!want.get(p.id) && has >= 0) { p.trackKeys.splice(has, 1); changed++; }
+                const pSet = new Set(p.trackKeys.map(k => String(k).toLowerCase()));
+                if (want.get(p.id)) {
+                    // Chỉ thêm các bài chưa có sẵn trong danh sách phát (không thêm trùng)
+                    tks.forEach(k => {
+                        if (!pSet.has(k)) { p.trackKeys.push(k); pSet.add(k); changed++; }
+                    });
+                } else {
+                    const before = p.trackKeys.length;
+                    p.trackKeys = p.trackKeys.filter(k => !tkSet.has(String(k).toLowerCase()));
+                    changed += (before - p.trackKeys.length);
+                }
             });
             if (changed) { api.save(all); api.rerender(); }
-            scr.classList.remove('open'); close();
+            closePlaylistPicker(scr);
+            if (root && root.classList.contains('open')) close();
             toast(changed ? T('ss.pl_saved', 'Đã cập nhật danh sách phát') : T('ss.pl_nochange', 'Không có thay đổi'), 'playlist_add_check');
         };
         scr.style.display = 'flex';
@@ -462,6 +518,7 @@
     };
 
     window.__openSongSheet = open;
+    window.__openPlaylistPicker = openPlaylistPickerForTracks;
 
     // Dấu ⋮ của một bài > Info
     document.addEventListener('DOMContentLoaded', hook);
