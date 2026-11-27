@@ -21,15 +21,13 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: '8.7' }
+        with: { gradle-version: '9.6.0' }
       - name: Install Android SDK platform 37
         run: |
           SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$SDKM" --licenses >/dev/null 2>&1 || true
           "$SDKM" --list 2>/dev/null | grep -E "platforms;android-3[67]" || true
           "$SDKM" "platforms;android-37.0" || "$SDKM" "platforms;android-37"
-          # AGP 8.5 tìm thư mục platforms/android-37 (SDK mới đặt tên android-37.0)
-          [ -e "$ANDROID_HOME/platforms/android-37" ] || ln -s "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
           ls "$ANDROID_HOME/platforms"
       - name: Compute version
         id: ver
