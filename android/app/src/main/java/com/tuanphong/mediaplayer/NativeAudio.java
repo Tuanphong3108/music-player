@@ -473,9 +473,9 @@ final class NativeAudio {
         p.setVolume(vol);
         p.setPlaybackParameters(new PlaybackParameters(rate));
         p.setMediaItem(MediaItem.fromUri(u), Math.max(0, startMs));
+        p.setPlayWhenReady(play);
         p.prepare();
         fetchFallbackDuration(id, u);
-        p.setPlayWhenReady(play);
         emit("load");
         ph.removeCallbacks(ticker);
         ph.postDelayed(ticker, 500);
