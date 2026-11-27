@@ -1712,7 +1712,32 @@
         html.m-ui body:not(.m-player-expanded):not(.no-track:not(.m-early-card)) .visual-stage,
         html.m-ui body:not(.m-player-expanded):not(.no-track:not(.m-early-card)) .player-shell { display: none !important; }
         html.m-ui body:not(.m-player-expanded):not(.no-track:not(.m-early-card)) #m-library-home {
-            display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 10px; padding: 2px 0 4px;
+            display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 10px; padding: 2px 0 4px; position: relative;
+        }
+        /* Pull-to-Refresh (Material Design 3 / Android SwipeRefreshLayout) */
+        html.m-ui .m-ptr-ind {
+            position: absolute; top: 0; left: 50%; z-index: 45; pointer-events: none;
+            width: 44px; height: 44px; border-radius: 50%;
+            display: grid; place-items: center;
+            background: var(--md-sys-color-surface-container-high, var(--md-sys-color-surface));
+            color: var(--md-sys-color-primary);
+            box-shadow: 0 4px 16px rgba(0,0,0,.28);
+            opacity: 0; transform: translate(-50%, -48px) scale(.65);
+            will-change: transform, opacity;
+        }
+        html.m-ui .m-ptr-ind.anim {
+            transition: transform .26s cubic-bezier(.2,0,0,1), opacity .22s ease, background .2s ease, color .2s ease;
+        }
+        html.m-ui .m-ptr-ind.ready {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+        }
+        html.m-ui .m-ptr-ind .material-symbols-rounded {
+            font-size: 24px; font-weight: 600; display: block;
+            will-change: transform;
+        }
+        html.m-ui .m-ptr-ind.refreshing .material-symbols-rounded {
+            animation: mArtSpin .85s linear infinite;
         }
         html.m-ui body.m-mini-visible:not(.m-player-expanded):not(.no-track:not(.m-early-card)) #m-lib-list {
             padding-bottom: 84px;
@@ -1826,7 +1851,7 @@
         html.m-ui .m-sel-btn:active { transform: scale(.94); }
         html.m-ui #m-sel-delete { color: var(--md-sys-color-error, #ff5a5f); }
         html.m-ui body.m-selecting .m-lib-more { display: none; }
-        html.m-ui #m-lib-list .m-lib-item { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        html.m-ui #m-library-home .m-lib-item { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         html.m-ui .m-lib-item.selected { background: color-mix(in srgb, var(--md-sys-color-primary) 22%, var(--md-sys-color-surface)); }
         html.m-ui .m-lib-item.selected .m-lib-art { position: relative; }
         html.m-ui .m-lib-item.selected .m-lib-art::after {
