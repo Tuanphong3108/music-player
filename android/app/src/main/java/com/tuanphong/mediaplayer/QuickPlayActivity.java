@@ -954,10 +954,32 @@ public class QuickPlayActivity extends Activity {
         tv.setCompoundDrawablePadding(tv.getText() != null && tv.getText().length() > 0 ? dp(10) : 0);
     }
 
+    /** Nút Options: icon (bên trái chữ) + chữ được căn giữa CÙNG NHAU; nút chỉ có icon thì icon nằm chính giữa. */
+    private static class IconPill extends TextView {
+        IconPill(android.content.Context c) { super(c); }
+        @Override protected void onDraw(android.graphics.Canvas canvas) {
+            android.graphics.drawable.Drawable d = getCompoundDrawablesRelative()[0];
+            float dw = d != null ? d.getBounds().width() : 0f;
+            CharSequence t = getText();
+            float tw = (t != null && t.length() > 0) ? getPaint().measureText(t.toString()) : 0f;
+            float cw = tw + dw + ((d != null && tw > 0f) ? getCompoundDrawablePadding() : 0f);
+            float avail = getWidth() - getPaddingLeft() - getPaddingRight();
+            float shift = Math.max(0f, (avail - cw) / 2f);
+            canvas.save();
+            canvas.translate(shift, 0f);
+            super.onDraw(canvas);
+            canvas.restore();
+        }
+    }
+
     private TextView makeOptionPill(String label, int heightDp, boolean roundedFont) {
-        TextView tv = text(15, cOnSecBtn, true, roundedFont);
+        TextView base = text(15, cOnSecBtn, true, roundedFont);
+        IconPill tv = new IconPill(this);
+        tv.setTypeface(base.getTypeface());
+        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+        tv.setTextColor(cOnSecBtn);
         tv.setText(label);
-        tv.setGravity(Gravity.CENTER);
+        tv.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         tv.setSingleLine(true);
         tv.setEllipsize(TextUtils.TruncateAt.END);
         tv.setPadding(dp(14), 0, dp(14), 0);
@@ -1004,7 +1026,8 @@ public class QuickPlayActivity extends Activity {
             setPillIcon(optSoundBtn, R.drawable.ic_opt_sound, cOnSecBtn);
         }
         if (optDeleteBtn != null) {
-            int dBg = dark ? 0xFF5C1A1A : 0xFFFFDAD6, dFg = dark ? 0xFFFFB4AB : 0xFF93000A;
+            int dFg = dark ? 0xFFFFB4AB : 0xFFBA1A1A;
+            int dBg = blendColors(cSecBtn, dark ? 0xFF8C1D18 : 0xFFFFDAD6, 0.28f);
             optDeleteBtn.setBackground(round(dBg, 26));
             optDeleteBtn.setTextColor(dFg);
             setPillIcon(optDeleteBtn, R.drawable.ic_opt_delete, dFg);
@@ -1047,6 +1070,65 @@ public class QuickPlayActivity extends Activity {
         return n;
     }
 
+    /** Hộp thoại theo màu của sheet (nền surface, nút accent) thay cho AlertDialog mặc định của hệ thống. */
+    private void showQpDialog(String title, String message, String[] items, java.util.function.IntConsumer onItem, String positive, Runnable onPositive) {
+        final android.app.Dialog dlg = new android.app.Dialog(this);
+        dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(24), dp(22), dp(24), dp(12));
+        box.setBackground(round(blendColors(cSurface, cTrack, 0.18f), 28));
+        TextView tt = text(20, cOnSurface, true, true);
+        tt.setText(title);
+        box.addView(tt, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        if (!empty(message)) {
+            TextView mm = text(14, cOnVariant, false, false);
+            mm.setText(message);
+            LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            ml.topMargin = dp(10);
+            box.addView(mm, ml);
+        }
+        if (items != null) {
+            for (int i = 0; i < items.length; i++) {
+                final int idx = i;
+                TextView it = text(16, cOnSecBtn, false, false);
+                it.setText(items[i]);
+                it.setGravity(Gravity.CENTER_VERTICAL);
+                it.setPadding(dp(18), 0, dp(18), 0);
+                it.setBackground(round(cSecBtn, 18));
+                it.setClickable(true);
+                it.setOnClickListener(v -> { dlg.dismiss(); if (onItem != null) onItem.accept(idx); });
+                LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52));
+                il.topMargin = dp(i == 0 ? 16 : 8);
+                box.addView(it, il);
+            }
+        }
+        LinearLayout btns = new LinearLayout(this);
+        btns.setOrientation(LinearLayout.HORIZONTAL);
+        btns.setGravity(Gravity.END);
+        TextView cancel = text(15, cPrimary, true, true);
+        cancel.setText(vi ? "Hủy" : "Cancel");
+        cancel.setPadding(dp(16), dp(10), dp(16), dp(10));
+        cancel.setOnClickListener(v -> dlg.dismiss());
+        btns.addView(cancel);
+        if (!empty(positive)) {
+            TextView ok = text(15, dark ? 0xFFFFB4AB : 0xFFBA1A1A, true, true);
+            ok.setText(positive);
+            ok.setPadding(dp(16), dp(10), dp(16), dp(10));
+            ok.setOnClickListener(v -> { dlg.dismiss(); if (onPositive != null) onPositive.run(); });
+            btns.addView(ok);
+        }
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        bl.topMargin = dp(14);
+        box.addView(btns, bl);
+        dlg.setContentView(box);
+        if (dlg.getWindow() != null) {
+            dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
+            dlg.getWindow().setLayout((int) (getResources().getDisplayMetrics().widthPixels * 0.88f), ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        dlg.show();
+    }
+
     private void showSoundDialog() {
         if (uri == null) return;
         if (!android.provider.Settings.System.canWrite(this)) {
@@ -1061,11 +1143,7 @@ public class QuickPlayActivity extends Activity {
         final String[] types = {"ringtone", "notification", "alarm"};
         final String[] labels = vi ? new String[]{"Nhạc chuông", "Âm thông báo", "Âm báo thức"} : new String[]{"Ringtone", "Notification sound", "Alarm sound"};
         try {
-            new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(vi ? "Đặt làm âm thanh" : "Set as sound")
-                    .setItems(labels, (d, w) -> setSoundImpl(types[w], labels[w]))
-                    .setNegativeButton(vi ? "Hủy" : "Cancel", null)
-                    .show();
+            showQpDialog(vi ? "Đặt làm âm thanh" : "Set as sound", null, labels, w -> setSoundImpl(types[w], labels[w]), null, null);
         } catch (Throwable ignored) {}
     }
 
@@ -1146,12 +1224,9 @@ public class QuickPlayActivity extends Activity {
     private void confirmDelete() {
         if (uri == null) return;
         try {
-            new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(vi ? "Xóa tệp này?" : "Delete this file?")
-                    .setMessage(vi ? "Tệp sẽ bị xóa khỏi thiết bị và không thể khôi phục." : "The file will be deleted from your device and cannot be restored.")
-                    .setPositiveButton(vi ? "Xóa" : "Delete", (d, w) -> deleteCurrent())
-                    .setNegativeButton(vi ? "Hủy" : "Cancel", null)
-                    .show();
+            showQpDialog(vi ? "Xóa tệp này?" : "Delete this file?",
+                    vi ? "Tệp sẽ bị xóa khỏi thiết bị và không thể khôi phục." : "The file will be deleted from your device and cannot be restored.",
+                    null, null, vi ? "Xóa" : "Delete", this::deleteCurrent);
         } catch (Throwable ignored) {}
     }
 
