@@ -514,6 +514,7 @@
                 reader.onload = (ev) => {
                     playlist[targetMenuIndex].lyrics = parseLRC(ev.target.result);
                     playlist[targetMenuIndex].lyricsRaw = ev.target.result;
+                    playlist[targetMenuIndex]._manualLyrics = true;
                     if (currentIndex === targetMenuIndex) renderLyrics();
                     lrcManualInput.value = ""; 
                 };
@@ -754,6 +755,7 @@
                         ext: file.name.split('.').pop().toUpperCase(),
                         lyrics: lyricsRaw ? parseLRC(lyricsRaw) : null,
                         lyricsRaw: lyricsRaw || "",
+                        _embeddedLyricsRaw: lyricsRaw || "",
                         file: file,
                         fileHandle: file.fileHandle || null,
                         nativeId: file.__nativeId || null,
@@ -1742,8 +1744,50 @@
         }
         window.__readCompleteTrackTags = readCompleteTrackTags;
 
-        async function hydrateTrackTags(track, index, src, onFail) {
+        function getLyricsPref() {
+            try {
+                const raw = JSON.parse(localStorage.getItem('settings_mobile_library_v1') || '{}');
+                const priority = raw.lyricsPriority === 'local' ? 'local' : 'embedded';
+                const autoScanLrc = priority === 'local' ? true : (raw.autoScanLrc !== false);
+                return { priority, autoScanLrc };
+            } catch (e) {
+                return { priority: 'embedded', autoScanLrc: true };
+            }
+        }
+        window.__getLyricsPref = getLyricsPref;
+
+        async function fetchLocalLrcText(track) {
+            if (!track || !track.nativeLrcUrl) return '';
+            if (track._localLrcLoaded) return track._localLrcRaw || '';
+            try {
+                const r = await fetch(track.nativeLrcUrl);
+                const txt = (r && r.ok) ? await r.text() : '';
+                track._localLrcRaw = txt && txt.trim() ? txt : '';
+                track._localLrcLoaded = true;
+                return track._localLrcRaw;
+            } catch (e) {
+                track._localLrcRaw = '';
+                track._localLrcLoaded = true;
+                return '';
+            }
+        }
+
+        function applyResolvedTrackLyrics(track, rawText) {
+            if (!track || track._manualLyrics) return;
+            const nextRaw = (rawText && String(rawText).trim()) ? String(rawText) : '';
+            if ((track.lyricsRaw || '') === nextRaw) return;
+            track.lyricsRaw = nextRaw;
+            track.lyrics = nextRaw ? parseLRC(nextRaw) : null;
+            if (playlist[currentIndex] === track) {
+                renderLyrics();
+                if (typeof syncLyrics === 'function') syncLyrics();
+                updatePlaylistUI();
+            }
+        }
+
+        async function hydrateTrackTags(track, index, src, onFail, opts) {
             if (!track) return;
+            const skipApplyLyrics = !!(opts && opts.skipApplyLyrics);
             window.__enterPriorityMeta();
             try {
                 const meta = await readCompleteTrackTags(track, { includeLyrics: true, preferThumb: false });
@@ -1759,10 +1803,16 @@
                 if (meta.year && !track.year) { track.year = meta.year; changed = true; }
                 if (meta.genre && !track.genre) { track.genre = meta.genre; changed = true; }
                 if (meta.composer && !track.composer) { track.composer = meta.composer; changed = true; }
-                if (meta.lyrics && !track.lyricsRaw) {
-                    track.lyricsRaw = meta.lyrics;
-                    track.lyrics = parseLRC(meta.lyrics);
-                    changed = true;
+                if (meta.lyrics) {
+                    track._embeddedLyricsRaw = meta.lyrics;
+                }
+                if (!skipApplyLyrics && !track._manualLyrics && meta.lyrics && !track.lyricsRaw) {
+                    const pref = getLyricsPref();
+                    if (pref.priority !== 'local' || !track.nativeLrcUrl) {
+                        track.lyricsRaw = meta.lyrics;
+                        track.lyrics = parseLRC(meta.lyrics);
+                        changed = true;
+                    }
                 }
                 if (meta.pictureDataUrl) {
                     if (track.cover !== meta.pictureDataUrl || !track._hasRealCover) {
@@ -1800,6 +1850,58 @@
             }
         }
 
+        async function resolveTrackLyricsByPriority(track, index, seq) {
+            if (!track) return;
+            const stillCurrent = () => (seq == null || seq === libraryPlaySeq) && playlist[currentIndex] === track;
+            const ensureMetadata = async () => {
+                if (!track._fullTagsHydrated || !track._lyricNativeTried) {
+                    track._tagsHydrated = true;
+                    track._lyricNativeTried = true;
+                    await hydrateTrackTags(track, index, null, null, { skipApplyLyrics: true });
+                }
+            };
+            if (track._manualLyrics) {
+                if (!track._fullTagsHydrated) await ensureMetadata();
+                return;
+            }
+            const { priority, autoScanLrc } = getLyricsPref();
+            if (priority === 'local') {
+                // Local .lrc first: thử đọc tệp .lrc trước; nếu không có mới fallback về lời nhúng (Embed)
+                const localTxt = track.nativeLrcUrl ? await fetchLocalLrcText(track) : '';
+                if (!stillCurrent()) return;
+                if (localTxt) {
+                    applyResolvedTrackLyrics(track, localTxt);
+                    if (!track._fullTagsHydrated) {
+                        hydrateTrackTags(track, index, null, null, { skipApplyLyrics: true });
+                    }
+                    return;
+                }
+                await ensureMetadata();
+                if (!stillCurrent()) return;
+                applyResolvedTrackLyrics(track, track._embeddedLyricsRaw || '');
+            } else {
+                // Embedded first: quét metadata trước để tìm lời nhúng; không có thì fallback về tệp .lrc (chỉ khi bật Tự động quét tệp .lrc)
+                await ensureMetadata();
+                if (!stillCurrent()) return;
+                if (track._embeddedLyricsRaw) {
+                    applyResolvedTrackLyrics(track, track._embeddedLyricsRaw);
+                    return;
+                }
+                if (autoScanLrc && track.nativeLrcUrl) {
+                    const localTxt = await fetchLocalLrcText(track);
+                    if (!stillCurrent()) return;
+                    applyResolvedTrackLyrics(track, localTxt);
+                } else {
+                    applyResolvedTrackLyrics(track, '');
+                }
+            }
+        }
+        window.__reloadTrackLyricsByPriority = function () {
+            const cur = (typeof playlist !== 'undefined' && currentIndex >= 0) ? playlist[currentIndex] : null;
+            if (!cur || cur._manualLyrics) return;
+            resolveTrackLyricsByPriority(cur, currentIndex, libraryPlaySeq);
+        };
+
         let libraryPlaySeq = 0;
         let lastLibraryBlobTrack = null;
 
@@ -1836,20 +1938,8 @@
                 }
                 audio.play().catch(() => {});
 
-                // Nạp thêm thẻ nhúng (USLT lyrics, genre, composer, cover) & tệp .lrc cùng thư mục ở nền (không chặn phát nhạc)
-                if (!track._tagsHydrated) {
-                    track._tagsHydrated = true;
-                    hydrateTrackTags(track, index, realFile);
-                    if (track.nativeLrcUrl && !track.lyricsRaw) {
-                        fetch(track.nativeLrcUrl).then(r => r.ok ? r.text() : '').then(txt => {
-                            if (txt && !track.lyricsRaw) {
-                                track.lyricsRaw = txt;
-                                track.lyrics = parseLRC(txt);
-                                if (playlist[currentIndex] === track) { renderLyrics(); updatePlaylistUI(); }
-                            }
-                        }).catch(() => {});
-                    }
-                }
+                // Nạp thêm thẻ nhúng (USLT lyrics, genre, composer, cover) & tệp .lrc cùng thư mục theo đúng thứ tự ưu tiên lời bài hát
+                resolveTrackLyricsByPriority(track, index, seq);
             } catch (err) {
                 if (seq === libraryPlaySeq && playlist[currentIndex] === track) {
                     setPlayBtnLoading(false);
@@ -1916,27 +2006,10 @@
                     hydrateAndPlayLibraryTrack(track, index, mySeq);
                 };
                 audio.addEventListener('error', onStreamErr, { once: true });
-                if (!track._fullTagsHydrated || (!track.lyricsRaw && !track._lyricNativeTried)) {
-                    track._tagsHydrated = true;
-                    track._lyricNativeTried = true;
-                    // Khi bài được chọn -> tạm nhường quét nền để dồn sức đọc full metadata (kể cả lyric embed + ảnh gốc) cho bài này trước
-                    setTimeout(() => {
-                        if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track) return;
-                        hydrateTrackTags(track, index);
-                    }, 0);
-                }
-                if (track.nativeLrcUrl && !track.lyricsRaw && !track._lrcTried) {
-                    track._lrcTried = true;
-                    setTimeout(() => {
-                        fetch(track.nativeLrcUrl).then(r => r.ok ? r.text() : '').then(txt => {
-                            if (txt && !track.lyricsRaw) {
-                                track.lyricsRaw = txt;
-                                track.lyrics = parseLRC(txt);
-                                if (playlist[currentIndex] === track) { renderLyrics(); updatePlaylistUI(); }
-                            }
-                        }).catch(() => {});
-                    }, 200);
-                }
+                setTimeout(() => {
+                    if (mySeq !== libraryPlaySeq || playlist[currentIndex] !== track) return;
+                    resolveTrackLyricsByPriority(track, index, mySeq);
+                }, 0);
             }
             trackNameEl.innerText = track.name;
             trackArtistEl.innerText = `${track.artist} | ${track.ext}`;
