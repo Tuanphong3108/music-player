@@ -597,20 +597,82 @@
             function exitSelect() {
                 mSel.clear();
                 document.body.classList.remove('m-selecting');
-                mLibList.querySelectorAll('.m-lib-item.selected').forEach(r => r.classList.remove('selected'));
+                document.querySelectorAll('#m-library-home .m-lib-item.selected').forEach(r => r.classList.remove('selected'));
+            }
+            function syncSelectedRowsFor(tr, isSel, fallbackRow) {
+                const tid = mLibTrackId(tr);
+                if (fallbackRow) fallbackRow.classList.toggle('selected', isSel);
+                if (tid) {
+                    document.querySelectorAll('#m-library-home .m-lib-item[data-tid]').forEach(r => {
+                        if (r.dataset.tid === tid) r.classList.toggle('selected', isSel);
+                    });
+                }
             }
             function toggleSelect(tr, row, forceOn) {
-                row = mLibRowMap.get(mLibTrackId(tr)) || row;   // hàng có thể đã được dựng lại trong lúc nhấn giữ
-                if (forceOn || !mSel.has(tr)) { mSel.add(tr); row && row.classList.add('selected'); }
-                else { mSel.delete(tr); row && row.classList.remove('selected'); }
+                const on = forceOn || !mSel.has(tr);
+                if (on) mSel.add(tr);
+                else mSel.delete(tr);
+                syncSelectedRowsFor(tr, on, row);
                 updateSelCount();
                 if (!mSel.size) exitSelect();
+            }
+            function openTrackLongPressSheet(tr, row) {
+                if (!tr) return;
+                if (typeof window.__openSheetItems !== 'function') {
+                    if (!document.body.classList.contains('m-selecting')) enterSelect();
+                    toggleSelect(tr, row, true);
+                    return;
+                }
+                window.__openSheetItems(tr.name || '', [
+                    {
+                        label: tr2('sel.song_info', 'Thông tin bài hát'),
+                        icon: 'info',
+                        pick: () => {
+                            if (window.__flags && !window.__flags.useSheet() && typeof window.__openMoreInfoModal === 'function') {
+                                window.__openMoreInfoModal(tr);
+                            } else if (typeof window.__openSongSheet === 'function') {
+                                window.__openSongSheet(tr);
+                            }
+                        }
+                    },
+                    {
+                        label: tr2('sel.select', 'Chọn'),
+                        icon: 'check_circle',
+                        pick: () => {
+                            if (!document.body.classList.contains('m-selecting')) enterSelect();
+                            toggleSelect(tr, row, true);
+                        }
+                    }
+                ]);
+            }
+            function bindTrackLongPress(row, tr, canTrigger) {
+                let lpT = null, sx = 0, sy = 0;
+                const cancel = () => { clearTimeout(lpT); lpT = null; };
+                row.addEventListener('pointerdown', (e) => {
+                    if (e.target.closest('.m-lib-more, .m-pld-row-act, .pld-handle') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+                    if (typeof canTrigger === 'function' && !canTrigger()) return;
+                    sx = e.clientX; sy = e.clientY; cancel();
+                    lpT = setTimeout(() => {
+                        lpT = null; row._lpFired = true;
+                        try { if (navigator.vibrate) navigator.vibrate(18); } catch (er) {}
+                        openTrackLongPressSheet(tr, row);
+                    }, 450);
+                });
+                row.addEventListener('pointermove', (e) => { if (lpT && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) cancel(); });
+                ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => row.addEventListener(ev, cancel));
+                row.addEventListener('contextmenu', (e) => e.preventDefault());
             }
             window.__exitMobileSelect = function () {
                 if (!document.body.classList.contains('m-selecting')) return false;
                 exitSelect(); return true;
             };
-            const selTracks = () => (window.__mobileLibrary || []).filter(t => mSel.has(t));
+            const selTracks = () => {
+                const lib = (window.__mobileLibrary || []).filter(t => mSel.has(t));
+                if (lib.length === mSel.size) return lib;
+                const seen = new Set(lib);
+                mSel.forEach(t => { if (t && !seen.has(t)) lib.push(t); });
+                return lib;
+            };
             document.getElementById('m-sel-cancel')?.addEventListener('click', exitSelect);
             document.getElementById('m-sel-playlist')?.addEventListener('click', () => {
                 const list = selTracks();
@@ -723,24 +785,8 @@
                         // Chọn bài từ màn hình chính -> tự reset hàng đợi tạm về toàn bộ thư viện 0–Z
                         replaceQueueAndPlay(window.__mobileLibrary, tr);
                     });
-                    // Nhấn giữ -> vào chế độ chọn nhiều
-                    (function () {
-                        let lpT = null, sx = 0, sy = 0;
-                        const cancel = () => { clearTimeout(lpT); lpT = null; };
-                        row.addEventListener('pointerdown', (e) => {
-                            if (e.target.closest('.m-lib-more') || (e.pointerType === 'mouse' && e.button !== 0)) return;
-                            sx = e.clientX; sy = e.clientY; cancel();
-                            lpT = setTimeout(() => {
-                                lpT = null; row._lpFired = true;
-                                try { if (navigator.vibrate) navigator.vibrate(18); } catch (er) {}
-                                if (!document.body.classList.contains('m-selecting')) enterSelect();
-                                toggleSelect(tr, row, true);
-                            }, 450);
-                        });
-                        row.addEventListener('pointermove', (e) => { if (lpT && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) cancel(); });
-                        ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => row.addEventListener(ev, cancel));
-                        row.addEventListener('contextmenu', (e) => e.preventDefault());
-                    })();
+                    // Nhấn giữ -> mở Bottom Sheet ("Thông tin bài hát" & "Chọn")
+                    bindTrackLongPress(row, tr);
                     const mb = row.querySelector('.m-lib-more');
                     mb.addEventListener('click', (ev) => {
                         ev.stopPropagation();
@@ -880,6 +926,134 @@
                     }
                 });
             }
+
+            // --- PULL-TO-REFRESH (Material Design 3 / Android SwipeRefreshLayout) ---
+            (function initMobilePullToRefresh() {
+                const home = document.getElementById('m-library-home');
+                if (!home) return;
+                const ind = document.createElement('div');
+                ind.className = 'm-ptr-ind';
+                ind.setAttribute('aria-hidden', 'true');
+                ind.innerHTML = '<span class="material-symbols-rounded">refresh</span>';
+                home.appendChild(ind);
+                const ico = ind.firstElementChild;
+
+                const THRESHOLD = 72;   // ngưỡng thả để kích hoạt quét lại (px)
+                const MAX_PULL = 128;   // biên kéo tối đa có giảm chấn
+                const REST_Y = 52;      // vị trí dừng khi đang xoay refresh
+                let activeList = null, startX = 0, startY = 0, pulling = false, pullY = 0, crossed = false;
+                let refreshing = false, refreshStartedAt = 0, safetyT = null;
+
+                const setVisual = (y, anim) => {
+                    ind.classList.toggle('anim', !!anim);
+                    if (y <= 0 && !refreshing) {
+                        ind.classList.remove('ready', 'refreshing');
+                        ind.style.opacity = '0';
+                        ind.style.transform = 'translate(-50%, -48px) scale(.65)';
+                        if (ico) ico.style.transform = '';
+                        return;
+                    }
+                    const prog = Math.min(1, y / THRESHOLD);
+                    const sc = refreshing ? 1 : (0.65 + 0.35 * prog + (y >= THRESHOLD ? 0.08 : 0));
+                    ind.style.opacity = String(Math.min(1, prog * 1.25));
+                    ind.style.transform = `translate(-50%, ${(y - 44).toFixed(1)}px) scale(${sc.toFixed(3)})`;
+                    if (!refreshing && ico) {
+                        ico.style.transform = `rotate(${Math.round(prog * 270)}deg)`;
+                    }
+                };
+
+                const finishRefresh = () => {
+                    if (!refreshing) return;
+                    const left = Math.max(0, 650 - (Date.now() - refreshStartedAt));
+                    clearTimeout(safetyT);
+                    safetyT = setTimeout(() => {
+                        refreshing = false;
+                        ind.classList.remove('refreshing', 'ready');
+                        setVisual(0, true);
+                    }, left);
+                };
+                window.__finishMobilePtr = finishRefresh;
+
+                const canStartPtr = () => {
+                    if (refreshing || !document.documentElement.classList.contains('m-ui')) return false;
+                    const b = document.body.classList;
+                    if (b.contains('m-player-expanded') || b.contains('m-playlist-open') || b.contains('lyrics-open') || b.contains('m-selecting')) return false;
+                    return true;
+                };
+
+                home.addEventListener('touchstart', (e) => {
+                    if (!e.touches || e.touches.length !== 1 || !canStartPtr()) return;
+                    const list = e.target.closest && e.target.closest('.m-lib-list');
+                    if (!list || list.classList.contains('m-reordering') || list.scrollTop > 1) return;
+                    activeList = list;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    pulling = false;
+                    pullY = 0;
+                    crossed = false;
+                }, { passive: true });
+
+                home.addEventListener('touchmove', (e) => {
+                    if (!activeList || !e.touches || e.touches.length !== 1) return;
+                    if (activeList.scrollTop > 1 || activeList.classList.contains('m-reordering')) {
+                        if (pulling) { pulling = false; setVisual(0, true); }
+                        activeList = null;
+                        return;
+                    }
+                    const dx = e.touches[0].clientX - startX;
+                    const dy = e.touches[0].clientY - startY;
+                    if (!pulling) {
+                        if (dy < 8) return;
+                        if (Math.abs(dx) > Math.abs(dy)) { activeList = null; return; }
+                        pulling = true;
+                        ind.classList.remove('anim');
+                    }
+                    e.preventDefault();
+                    // Đường cong giảm chấn kiểu Android SwipeRefreshLayout
+                    const damp = dy > 0 ? Math.min(MAX_PULL, MAX_PULL * (1 - Math.exp(-dy / 220))) : 0;
+                    pullY = damp;
+                    const isReady = pullY >= THRESHOLD;
+                    if (isReady && !crossed) {
+                        crossed = true;
+                        try { if (navigator.vibrate) navigator.vibrate(12); } catch (er) {}
+                    } else if (!isReady) {
+                        crossed = false;
+                    }
+                    ind.classList.toggle('ready', isReady);
+                    setVisual(pullY, false);
+                }, { passive: false });
+
+                const endPull = () => {
+                    if (!activeList) return;
+                    const wasPulling = pulling;
+                    const y = pullY;
+                    activeList = null; pulling = false; pullY = 0; crossed = false;
+                    if (!wasPulling) return;
+                    if (y >= THRESHOLD) {
+                        refreshing = true;
+                        refreshStartedAt = Date.now();
+                        ind.classList.add('ready', 'refreshing');
+                        if (ico) ico.style.transform = '';
+                        setVisual(REST_Y, true);
+                        clearTimeout(safetyT);
+                        safetyT = setTimeout(finishRefresh, 3500);
+                        try {
+                            if (window.AndroidBridge && typeof window.AndroidBridge.scanAllDeviceAudio === 'function') {
+                                window.AndroidBridge.scanAllDeviceAudio(true);
+                            } else {
+                                renderMobileLibrary();
+                                if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
+                                finishRefresh();
+                            }
+                        } catch (er) { finishRefresh(); }
+                    } else {
+                        ind.classList.remove('ready');
+                        setVisual(0, true);
+                    }
+                };
+                home.addEventListener('touchend', endPull, { passive: true });
+                home.addEventListener('touchcancel', endPull, { passive: true });
+            })();
             if (mCollapseBtn) {
                 mCollapseBtn.addEventListener('click', () => {
                     document.body.classList.remove('m-player-expanded');
@@ -1526,12 +1700,19 @@
                     const tracks = node.tracks.slice().sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' }));
                     tracks.forEach(tr => {
                         const row = document.createElement('div');
-                        row.className = 'm-lib-item' + (activeKey && trackKeyOf(tr) === activeKey ? ' active' : '');
+                        const tid = mLibTrackId(tr);
+                        row.className = 'm-lib-item' + (activeKey && trackKeyOf(tr) === activeKey ? ' active' : '') + (mSel.has(tr) ? ' selected' : '');
                         row.dataset.key = trackKeyOf(tr);
+                        row.dataset.tid = tid;
                         row.innerHTML = rowArtHtml(tr) + '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>';
                         row.querySelector('.m-lib-title').textContent = tr.name || '';
                         row.querySelector('.m-lib-artist').textContent = tr.artist || '';
-                        row.addEventListener('click', () => replaceQueueAndPlay(tracks, tr));
+                        row.addEventListener('click', () => {
+                            if (row._lpFired) { row._lpFired = false; return; }
+                            if (document.body.classList.contains('m-selecting')) { toggleSelect(tr, row); return; }
+                            replaceQueueAndPlay(tracks, tr);
+                        });
+                        bindTrackLongPress(row, tr);
                         listEl.appendChild(row);
                     });
                 }
@@ -1571,14 +1752,21 @@
                     const activeKey = activeTr ? trackKeyOf(activeTr) : '';
                     liked.forEach(tr => {
                         const row = document.createElement('div');
-                        row.className = 'm-lib-item' + (activeKey && trackKeyOf(tr) === activeKey ? ' active' : '');
+                        const tid = mLibTrackId(tr);
+                        row.className = 'm-lib-item' + (activeKey && trackKeyOf(tr) === activeKey ? ' active' : '') + (mSel.has(tr) ? ' selected' : '');
                         row.dataset.key = trackKeyOf(tr);
+                        row.dataset.tid = tid;
                         row.innerHTML = rowArtHtml(tr) +
                             '<div class="m-lib-meta"><div class="m-lib-title"></div><div class="m-lib-artist"></div></div>' +
                             '<button type="button" class="m-lib-more" aria-label="Unlike"><span class="material-symbols-rounded" style="font-size:20px;color:#ff5a7a;">favorite</span></button>';
                         row.querySelector('.m-lib-title').textContent = tr.name || '';
                         row.querySelector('.m-lib-artist').textContent = tr.artist || '';
-                        row.addEventListener('click', () => replaceQueueAndPlay(liked, tr));
+                        row.addEventListener('click', () => {
+                            if (row._lpFired) { row._lpFired = false; return; }
+                            if (document.body.classList.contains('m-selecting')) { toggleSelect(tr, row); return; }
+                            replaceQueueAndPlay(liked, tr);
+                        });
+                        bindTrackLongPress(row, tr);
                         row.querySelector('.m-lib-more').addEventListener('click', (ev) => { ev.stopPropagation(); window.__toggleLiked(tr); });
                         likedListEl.appendChild(row);
                     });
@@ -1781,8 +1969,10 @@
                         if (!tr) return;
                         const row = document.createElement('div');
                         const key = trackKeyOf(tr);
-                        row.className = 'm-lib-item' + (activeKey && key === activeKey ? ' active' : '');
+                        const tid = mLibTrackId(tr);
+                        row.className = 'm-lib-item' + (activeKey && key === activeKey ? ' active' : '') + (mSel.has(tr) ? ' selected' : '');
                         row.dataset.key = key;
+                        row.dataset.tid = tid;
                         let leftHtml = pldReorderMode ? '<span class="material-symbols-rounded pld-handle" style="opacity:.7;font-size:24px;">drag_indicator</span>' : '';
                         let rightHtml = '';
                         if (pldRemoveMode) {
@@ -1796,10 +1986,13 @@
                         row.querySelector('.m-lib-title').textContent = tr.name || '';
                         row.querySelector('.m-lib-artist').textContent = tr.artist || '';
                         row.addEventListener('click', () => {
+                            if (row._lpFired) { row._lpFired = false; return; }
                             if (pldRemoveMode || pldReorderMode) return;
+                            if (document.body.classList.contains('m-selecting')) { toggleSelect(tr, row); return; }
                             // Phát từ danh sách phát đã tạo -> hàng đợi tạm chỉ chứa các bài trong danh sách phát này
                             replaceQueueAndPlay(plTracks, tr);
                         });
+                        bindTrackLongPress(row, tr, () => !pldRemoveMode && !pldReorderMode);
                         row.querySelector('.pld-del')?.addEventListener('click', (ev) => {
                             ev.stopPropagation();
                             const pls = loadPls();
