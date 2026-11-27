@@ -1077,12 +1077,16 @@ public class QuickPlayActivity extends Activity {
             try {
                 String base = rawDisplayName(src).replaceAll("[\\\\/:*?\"<>|]", "_");
                 if (base.lastIndexOf('.') < 1) base = base + ".mp3";
+                String lowBase = base.toLowerCase(Locale.US);
                 String mime = !empty(metaMime) ? metaMime : "audio/mpeg";
-                int rtType; String relDir;
+                boolean isMp3 = lowBase.endsWith(".mp3") || "audio/mpeg".equalsIgnoreCase(mime);
+                int rtType; String relDir; String typeLabel;
                 boolean isRing = false, isNotif = false, isAlarm = false;
-                if ("notification".equals(type)) { rtType = android.media.RingtoneManager.TYPE_NOTIFICATION; relDir = android.os.Environment.DIRECTORY_NOTIFICATIONS; isNotif = true; }
-                else if ("alarm".equals(type)) { rtType = android.media.RingtoneManager.TYPE_ALARM; relDir = android.os.Environment.DIRECTORY_ALARMS; isAlarm = true; }
-                else { rtType = android.media.RingtoneManager.TYPE_RINGTONE; relDir = android.os.Environment.DIRECTORY_RINGTONES; isRing = true; }
+                if ("notification".equals(type)) { rtType = android.media.RingtoneManager.TYPE_NOTIFICATION; relDir = android.os.Environment.DIRECTORY_NOTIFICATIONS; typeLabel = "Notification"; isNotif = true; }
+                else if ("alarm".equals(type)) { rtType = android.media.RingtoneManager.TYPE_ALARM; relDir = android.os.Environment.DIRECTORY_ALARMS; typeLabel = "Alarm"; isAlarm = true; }
+                else { rtType = android.media.RingtoneManager.TYPE_RINGTONE; relDir = android.os.Environment.DIRECTORY_RINGTONES; typeLabel = "Ringtone"; isRing = true; }
+                String soundId = String.valueOf(System.currentTimeMillis());
+                String albumTag = "Media Player " + typeLabel + " " + soundId;
                 android.content.ContentResolver cr = getContentResolver();
                 android.content.ContentValues cv = new android.content.ContentValues();
                 cv.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, base);
@@ -1093,30 +1097,42 @@ public class QuickPlayActivity extends Activity {
                 cv.put(android.provider.MediaStore.Audio.Media.IS_ALARM, isAlarm);
                 cv.put(android.provider.MediaStore.Audio.Media.IS_MUSIC, false);
                 Uri out;
+                String outPath = "";
                 if (Build.VERSION.SDK_INT >= 29) {
                     cv.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, relDir);
                     try { cr.delete(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                             android.provider.MediaStore.MediaColumns.DISPLAY_NAME + "=? AND " + android.provider.MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ?",
                             new String[]{base, relDir + "%"}); } catch (Throwable ignored) {}
-                    out = cr.insert(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cv);
+                    try {
+                        android.content.ContentValues cvWithAlbum = new android.content.ContentValues(cv);
+                        cvWithAlbum.put(android.provider.MediaStore.Audio.Media.ALBUM, albumTag);
+                        out = cr.insert(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cvWithAlbum);
+                    } catch (Throwable ignored) {
+                        out = cr.insert(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cv);
+                    }
                     if (out == null) throw new Exception("INSERT_FAILED");
                     try (InputStream in = cr.openInputStream(src); java.io.OutputStream os = cr.openOutputStream(out)) {
                         if (in == null || os == null) throw new Exception("IO");
-                        byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush();
+                        MainActivity.copySoundStreamWithAlbum(in, os, albumTag, isMp3);
                     }
+                    outPath = MainActivity.resolveUriPathSimple(this, out);
                 } else {
                     File dir = android.os.Environment.getExternalStoragePublicDirectory(relDir);
                     if (!dir.exists()) dir.mkdirs();
                     File dst = new File(dir, base);
                     try (InputStream in = cr.openInputStream(src); FileOutputStream os = new FileOutputStream(dst)) {
                         if (in == null) throw new Exception("IO");
-                        byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush();
+                        MainActivity.copySoundStreamWithAlbum(in, os, albumTag, isMp3);
                     }
-                    cv.put(android.provider.MediaStore.MediaColumns.DATA, dst.getAbsolutePath());
-                    out = cr.insert(android.provider.MediaStore.Audio.Media.getContentUriForPath(dst.getAbsolutePath()), cv);
+                    outPath = dst.getAbsolutePath();
+                    cv.put(android.provider.MediaStore.MediaColumns.DATA, outPath);
+                    cv.put(android.provider.MediaStore.Audio.Media.ALBUM, albumTag);
+                    out = cr.insert(android.provider.MediaStore.Audio.Media.getContentUriForPath(outPath), cv);
                     if (out == null) throw new Exception("INSERT_FAILED");
                 }
                 android.media.RingtoneManager.setActualDefaultRingtoneUri(this, rtType, out);
+                MainActivity.recordManagedSound(this, typeLabel, rtType, soundId, albumTag, out, outPath);
+                MainActivity.cleanupUnusedManagedSoundsSync(this, soundId);
             } catch (Throwable t) {
                 err = String.valueOf(t.getMessage() != null ? t.getMessage() : t);
             }
