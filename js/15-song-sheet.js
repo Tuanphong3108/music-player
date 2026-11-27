@@ -22,6 +22,7 @@
         root.innerHTML =
             '<div class="ss-scrim" id="ss-scrim"></div>' +
             '<div class="ss-box" id="ss-box" role="dialog" aria-modal="true" tabindex="-1">' +
+            '<button type="button" class="ss-pc-close" id="ss-pc-close" title="' + esc(T('misc.close', 'Đóng')) + '" aria-label="' + esc(T('misc.close', 'Đóng')) + '">' + icon('close') + '</button>' +
             '<div class="ss-grip"></div>' +
             '<div class="ss-body">' +
             '<div class="ss-head"><div class="ss-art" id="ss-art"></div><div class="ss-title" id="ss-title"></div>' +
@@ -63,6 +64,14 @@
         });
         scrim.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); close(); });
         boxEl.addEventListener('click', (e) => { e.stopPropagation(); });
+        const pcCloseBtn = $('ss-pc-close');
+        if (pcCloseBtn) pcCloseBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); close(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && root && root.classList.contains('open')) {
+                if (typeof window.__closeSongSheet === 'function') window.__closeSongSheet();
+                else close();
+            }
+        });
         root.querySelectorAll('.ss-tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
         $('ss-edit').addEventListener('click', editMetadata);
         $('ss-play').addEventListener('click', playNow);
@@ -186,6 +195,12 @@
         root.querySelector('#ss-del').style.display = (AB() && typeof AB().deleteNativeFiles === 'function') ? '' : 'none';
         root.querySelector('#ss-sound').style.display = (AB() && typeof AB().setAsSound === 'function') ? '' : 'none';
         syncLike(); syncPlayBtn();
+        const pcCloseBtn = root.querySelector('#ss-pc-close');
+        if (pcCloseBtn) {
+            const closeLbl = T('misc.close', 'Đóng');
+            pcCloseBtn.title = closeLbl;
+            pcCloseBtn.setAttribute('aria-label', closeLbl);
+        }
         const infoOnly = !document.documentElement.classList.contains('m-ui');   // PC (Experimental): chỉ có tab INFO
         root.classList.toggle('ss-info-only', infoOnly);
         setTab(infoOnly ? 'info' : (startTab || 'options'));
