@@ -701,13 +701,74 @@
             return 'eng';
         }
 
+        // Gỡ bỏ toàn bộ thẻ ID3v2 cũ ở đầu tệp (kể cả khi trước đó bị chồng nhiều lớp) trước khi ghi thẻ mới bằng ID3Writer
+        function stripId3v2Headers(arrayBuffer) {
+            const bytes = new Uint8Array(arrayBuffer);
+            let offset = 0;
+            while (offset + 10 <= bytes.length
+                && bytes[offset] === 0x49 && bytes[offset + 1] === 0x44 && bytes[offset + 2] === 0x33) {
+                const ver = bytes[offset + 3];
+                const flags = bytes[offset + 5];
+                if (ver < 2 || ver > 4) break;
+                const b6 = bytes[offset + 6], b7 = bytes[offset + 7], b8 = bytes[offset + 8], b9 = bytes[offset + 9];
+                if ((b6 | b7 | b8 | b9) & 0x80) break;
+                const tagSize = (b6 << 21) | (b7 << 14) | (b8 << 7) | b9;
+                const footerSize = (ver === 4 && (flags & 0x10)) ? 10 : 0;
+                const next = offset + 10 + tagSize + footerSize;
+                if (next <= offset || next > bytes.length) break;
+                offset = next;
+            }
+            return offset > 0 ? arrayBuffer.slice(offset) : arrayBuffer;
+        }
+
+        function syncUpdatedTrackToLibraries(track) {
+            if (!track) return;
+            const matchId = (t) => (t && (t.nativeLocation || t.rawName || t.name || '')).toLowerCase();
+            const tid = matchId(track);
+            const nid = track.nativeId ? String(track.nativeId) : '';
+            const pools = [];
+            if (Array.isArray(window.__mobileLibrary)) pools.push(window.__mobileLibrary);
+            if (Array.isArray(playlist)) pools.push(playlist);
+            pools.forEach(arr => {
+                arr.forEach(item => {
+                    if (!item || item === track) return;
+                    const same = (nid && item.nativeId && String(item.nativeId) === nid)
+                        || (tid && matchId(item) === tid);
+                    if (!same) return;
+                    item.file = track.file;
+                    item.name = track.name;
+                    item.artist = track.artist;
+                    item.album = track.album;
+                    item.genre = track.genre;
+                    item.composer = track.composer;
+                    item.cover = track.cover;
+                    item._hasRealCover = track._hasRealCover;
+                    item.lyrics = track.lyrics;
+                    item.lyricsRaw = track.lyricsRaw;
+                    item._embeddedLyricsRaw = track._embeddedLyricsRaw;
+                    item._fullTagsHydrated = true;
+                    item._tagsHydrated = true;
+                    item._lyricNativeTried = true;
+                    item._metaLoading = false;
+                    item._metaLoaded = true;
+                    item._bgCoverChecked = true;
+                    item._metaFromCache = true;
+                    item._unsavedLocalEdit = track._unsavedLocalEdit;
+                    item._tech = null;
+                    item.url = track.url;
+                    item._blobLoaded = track._blobLoaded;
+                });
+            });
+        }
+
         async function writeAudioMetadata(meta) {
             const track = playlist[currentIndex];
             if (!track || !track.file) return { ok: false, persisted: false };
 
             try {
-                const arrayBuffer = await track.file.arrayBuffer();
-                const writer = new ID3Writer(arrayBuffer);
+                const rawBuffer = await track.file.arrayBuffer();
+                const cleanBuffer = stripId3v2Headers(rawBuffer);
+                const writer = new ID3Writer(cleanBuffer);
 
                 if (!meta.title) meta.title = (track.file && track.file.name ? track.file.name : track.name).replace(/\.[^/.]+$/, '');
                 writer.setFrame('TIT2', meta.title || '')
@@ -802,30 +863,74 @@
                     }
                 }
 
-                const newFile = new File([taggedBlob], (meta.title || track.name) + ".mp3", { type: 'audio/mpeg' });
+                const wasPlaying = !audio.paused && !audio.ended;
+                const prevTime = (isFinite(audio.currentTime) && audio.currentTime > 0) ? audio.currentTime : 0;
+
+                const origFileName = track.nativeName || (track.file && track.file.name) || ((meta.title || track.name) + ".mp3");
+                const newFile = new File([taggedBlob], origFileName, { type: 'audio/mpeg', lastModified: Date.now() });
                 newFile.__nativeId = track.nativeId || null;
                 newFile.__nativeLocation = track.nativeLocation || '';
-                newFile.__nativeName = track.nativeName || (track.file && track.file.name) || newFile.name;
+                newFile.__nativeName = origFileName;
+                newFile.__fromLibrary = !!track.fromLibrary;
+                delete track.newCoverBuffer;
                 track.file = newFile;
                 track.name = meta.title || track.name;
                 track.artist = meta.artist || 'UNKNOWN ARTIST';
                 track.album = meta.album || 'Unknown Album';
                 track.genre = meta.genre || '';       // Trống -> để trắng thật sự, không giữ lại giá trị cũ
                 track.composer = meta.composer || ''; // Trống -> để trắng thật sự, không giữ lại giá trị cũ
+                track._hasRealCover = !!track.cover;
                 track.lyrics = meta.lyric ? parseLRC(meta.lyric) : null;
                 track.lyricsRaw = meta.lyric || "";
+                track._embeddedLyricsRaw = meta.lyric || "";
+                track._fullTagsHydrated = true;
+                track._tagsHydrated = true;
+                track._lyricNativeTried = true;
                 track._metaLoading = false;
                 track._metaLoaded = true;
                 track._bgCoverChecked = true;
                 track._metaFromCache = true;
                 track._unsavedLocalEdit = !persisted;
+                track._tech = null;
+
+                if (persisted && window.IS_ANDROID_APP && track.fromLibrary && track.nativeStreamUrl) {
+                    // Đã ghi đè thẳng xuống tệp gốc trên Android -> giữ nguyên luồng Native ExoPlayer và nạp lại metadata mới tại đúng vị trí đang nghe
+                    if (track.url && track.url.startsWith('blob:')) {
+                        try { URL.revokeObjectURL(track.url); } catch (e) {}
+                    }
+                    track.url = track.nativeStreamUrl;
+                    track._blobLoaded = false;
+                    if (prevTime > 0) window.__restoreStartMs = Math.round(prevTime * 1000);
+                    audio.src = track.nativeStreamUrl;
+                    if (wasPlaying) audio.play().catch(() => {});
+                } else {
+                    if (track.url && track.url.startsWith('blob:')) {
+                        try { URL.revokeObjectURL(track.url); } catch (e) {}
+                    }
+                    track.url = URL.createObjectURL(newFile);
+                    track._blobLoaded = true;
+                    audio.src = track.url;
+                    if (prevTime > 0) {
+                        audio.addEventListener('loadedmetadata', () => {
+                            try { audio.currentTime = Math.min(prevTime, isFinite(audio.duration) ? audio.duration : prevTime); } catch (e) {}
+                        }, { once: true });
+                    }
+                    if (wasPlaying) audio.play().catch(() => {});
+                }
+
+                syncUpdatedTrackToLibraries(track);
                 if (typeof window.__saveTrackMetaToCache === 'function') {
                     try { window.__saveTrackMetaToCache(track); } catch (e) {}
                 }
-
-                URL.revokeObjectURL(track.url);
-                track.url = URL.createObjectURL(newFile);
-                audio.src = track.url;
+                if (typeof window.__renderMobileLibrary === 'function') {
+                    try { window.__renderMobileLibrary(); } catch (e) {}
+                }
+                if (typeof window.__refreshMobileLibraryViews === 'function') {
+                    try { window.__refreshMobileLibraryViews(); } catch (e) {}
+                }
+                if (typeof window.__syncMobileMiniPlayer === 'function') {
+                    try { window.__syncMobileMiniPlayer(); } catch (e) {}
+                }
 
                 // Không ghi thẳng được vào file gốc -> tự động tải file đã cập nhật thẻ về
                 // máy, để người dùng không mất thay đổi khi tải lại trang / mở lại file gốc.
