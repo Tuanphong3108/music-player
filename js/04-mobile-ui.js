@@ -678,7 +678,8 @@
                 const list = selTracks();
                 if (!list.length) return;
                 exitSelect();
-                if (typeof window.__openCreatePlaylistFromTracks === 'function') window.__openCreatePlaylistFromTracks(list);
+                if (typeof window.__openPlaylistPicker === 'function') window.__openPlaylistPicker(list);
+                else if (typeof window.__openCreatePlaylistFromTracks === 'function') window.__openCreatePlaylistFromTracks(list);
             });
             document.getElementById('m-sel-share')?.addEventListener('click', () => {
                 const list = selTracks();
@@ -1185,7 +1186,9 @@
                 e.stopPropagation();
                 mPlMorePopup?.classList.remove('open');
                 if (!playlist.length) return;
-                if (typeof window.__openCreatePlaylistFromTracks === 'function') {
+                if (typeof window.__openPlaylistPicker === 'function') {
+                    window.__openPlaylistPicker(playlist.slice());
+                } else if (typeof window.__openCreatePlaylistFromTracks === 'function') {
                     window.__openCreatePlaylistFromTracks(playlist);
                 }
             });
@@ -1222,7 +1225,7 @@
                 // API cho bottom sheet tùy chọn bài hát (js/15-song-sheet.js)
                 window.__plApi = {
                     load: loadPls, save: savePls, key: trackKeyOf,
-                    rerender: () => { try { renderMobilePlaylists(); } catch (e) {} },
+                    rerender: () => { try { renderMobilePlaylists(); if (openedPlId) openPlaylistDetail(openedPlId, true); } catch (e) {} },
                     cover: (pl, size, tracks) => renderPlCoverHtml(pl, size, tracks),
                     resolve: (pl) => resolvePlaylistTracks(pl),
                     isAi: (pl) => isAiPl(pl),
