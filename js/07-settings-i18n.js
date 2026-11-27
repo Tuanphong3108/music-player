@@ -1158,7 +1158,11 @@
                 };
                 let libCfg = Object.assign({}, defLib);
                 try { Object.assign(libCfg, JSON.parse(localStorage.getItem(LIB_KEY) || '{}')); } catch (e) {}
+                if (libCfg.lyricsPriority !== 'local') libCfg.lyricsPriority = 'embedded';
+                if (libCfg.lyricsPriority === 'local') libCfg.autoScanLrc = true;
                 const saveLibCfg = () => {
+                    if (libCfg.lyricsPriority !== 'local') libCfg.lyricsPriority = 'embedded';
+                    if (libCfg.lyricsPriority === 'local') libCfg.autoScanLrc = true;
                     try { localStorage.setItem(LIB_KEY, JSON.stringify(libCfg)); } catch (e) {}
                     clearTimeout(saveLibCfg._t);
                     saveLibCfg._t = setTimeout(() => { try { window.dispatchEvent(new Event('library-cfg-changed')); } catch (e) {} }, 250);
@@ -1177,9 +1181,23 @@
                 const minTrSl = document.getElementById('lib-min-tracks'), minTrVal = document.getElementById('lib-min-tracks-val');
                 const cacheSl = document.getElementById('lib-art-cache'), cacheVal = document.getElementById('lib-art-cache-val');
                 const autoLrcSw = document.getElementById('lib-auto-scan-lrc');
+                const autoLrcRow = document.getElementById('lib-auto-scan-lrc-row');
                 const prioSel = document.getElementById('lib-lyrics-priority');
                 const charIn = document.getElementById('lib-char-delims'), wordIn = document.getElementById('lib-word-delims');
                 const extSw = document.getElementById('lib-extract-title'), grpSw = document.getElementById('lib-group-album-artist');
+
+                const syncAutoLrcLock = () => {
+                    const isLocal = libCfg.lyricsPriority === 'local';
+                    if (isLocal) libCfg.autoScanLrc = true;
+                    if (autoLrcSw) {
+                        autoLrcSw.selected = !!libCfg.autoScanLrc;
+                        autoLrcSw.disabled = isLocal;
+                    }
+                    if (autoLrcRow) {
+                        autoLrcRow.style.opacity = isLocal ? '0.48' : '';
+                        autoLrcRow.style.pointerEvents = isLocal ? 'none' : '';
+                    }
+                };
 
                 if (minDurSl && minDurVal) {
                     minDurSl.value = libCfg.minDur; minDurVal.textContent = libCfg.minDur + 's';
@@ -1194,13 +1212,24 @@
                     cacheSl.addEventListener('input', () => { libCfg.artCache = +cacheSl.value; cacheVal.textContent = libCfg.artCache + ' MB'; saveLibCfg(); });
                 }
                 if (autoLrcSw) {
-                    autoLrcSw.selected = !!libCfg.autoScanLrc;
-                    autoLrcSw.addEventListener('change', () => { libCfg.autoScanLrc = !!autoLrcSw.selected; saveLibCfg(); });
+                    autoLrcSw.addEventListener('change', () => {
+                        if (libCfg.lyricsPriority === 'local') { syncAutoLrcLock(); return; }
+                        libCfg.autoScanLrc = !!autoLrcSw.selected;
+                        saveLibCfg();
+                        if (typeof window.__reloadTrackLyricsByPriority === 'function') window.__reloadTrackLyricsByPriority();
+                    });
                 }
                 if (prioSel) {
-                    prioSel.value = libCfg.lyricsPriority || 'embedded';
-                    prioSel.addEventListener('change', () => { libCfg.lyricsPriority = prioSel.value; saveLibCfg(); refreshPills(); });
+                    prioSel.value = libCfg.lyricsPriority;
+                    prioSel.addEventListener('change', () => {
+                        libCfg.lyricsPriority = prioSel.value === 'local' ? 'local' : 'embedded';
+                        syncAutoLrcLock();
+                        saveLibCfg();
+                        refreshPills();
+                        if (typeof window.__reloadTrackLyricsByPriority === 'function') window.__reloadTrackLyricsByPriority();
+                    });
                 }
+                syncAutoLrcLock();
                 if (charIn) { charIn.value = libCfg.charDelims; charIn.addEventListener('input', () => { libCfg.charDelims = charIn.value; saveLibCfg(); }); }
                 if (wordIn) { wordIn.value = libCfg.wordDelims; wordIn.addEventListener('input', () => { libCfg.wordDelims = wordIn.value; saveLibCfg(); }); }
                 if (extSw) { extSw.selected = !!libCfg.extractTitle; extSw.addEventListener('change', () => { libCfg.extractTitle = !!extSw.selected; saveLibCfg(); }); }
@@ -1315,7 +1344,7 @@
                         tr('lib.reset_lyrics', 'Đặt lại lời bài hát đã nạp')
                     );
                     if (!ok) return;
-                    playlist.forEach(t => { if (t) { t.lyrics = null; t.lyricsRaw = ''; } });
+                    playlist.forEach(t => { if (t) { t.lyrics = null; t.lyricsRaw = ''; t._manualLyrics = false; } });
                     renderLyrics();
                     updatePlaylistUI();
                     showToast(tr('lib.lyrics_reset_done', 'Đã đặt lại lời bài hát đã nạp!'), 'check_circle', 3000);
