@@ -1296,7 +1296,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_27_select_pl_cancel', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_27_meta_overwrite_fix', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
