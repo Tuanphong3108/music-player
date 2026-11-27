@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Sửa lỗi thỉnh thoảng tự tạm dừng khi chuyển bài trên Android: bỏ lệnh pause() thừa trước khi đổi bài native (tránh nhả Audio Focus), bật khiên playGuard & xóa cờ userPaused khi nạp bài mới, và đặt playWhenReady trước prepare() trong ExoPlayer",
+      "icon": "skip_next"
+    },
+    {
       "content": "Sửa lỗi cập nhật Metadata xong phát lại vẫn hiện thông tin cũ: tự cắt sạch lớp thẻ ID3v2 cũ trước khi ghi thẻ mới (hết chồng tag), đồng bộ ngay lời bài hát nhúng / cache / thư viện / trình phát native và gọi MediaScanner quét lại MediaStore trên Android",
       "icon": "edit_note"
     },
@@ -211,6 +215,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Fixed intermittent auto-pause when switching tracks on Android: skipped redundant pause() between native tracks (avoiding Audio Focus drop), armed playGuard & reset userPaused on load, and moved setPlayWhenReady before prepare() in ExoPlayer",
+      "icon": "skip_next"
+    },
     {
       "content": "Fixed updated metadata reverting to old tags on replay: strips old ID3v2 headers before writing new tags (no stacked tags), syncs embedded lyrics / cache / library / native player immediately, and triggers Android MediaScanner to refresh MediaStore",
       "icon": "edit_note"
