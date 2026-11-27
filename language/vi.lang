@@ -763,3 +763,5 @@ dev.flag_old_info=Menu Thông tin khác cũ
 dev.flag_old_info_desc=Dùng hộp thoại Thông tin kiểu PC (áp dụng cả QuickPlay).
 dev.flag_old_settings=Menu Cài đặt cũ
 dev.flag_old_settings_desc=Dùng giao diện Cài đặt kiểu PC.
+sel.song_info=Thông tin bài hát
+sel.select=Chọn
