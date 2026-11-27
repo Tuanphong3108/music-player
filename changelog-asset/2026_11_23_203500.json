@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Khi bài lỗi phát, ẩn thẻ bìa album / nốt nhạc để không đè lên khung báo lỗi",
+      "icon": "error"
+    },
+    {
       "content": "Android: ảnh bìa hiện trên thông báo / màn hình khóa / widget cả khi mở nhạc bằng Open with",
       "icon": "image"
     },
@@ -167,6 +171,10 @@
     }
   ],
   "en": [
+    {
+      "content": "When a track fails to play, the album art card is hidden so it no longer overlaps the error message",
+      "icon": "error"
+    },
     {
       "content": "Android: album art now shows on the notification, lock screen and widgets even for tracks opened with Open with",
       "icon": "image"

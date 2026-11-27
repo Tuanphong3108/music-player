@@ -2238,7 +2238,7 @@
         /* Khi vào Fullscreen nền luôn tối -> luôn hiện error-dark.png */
         body.fullscreen-active .playback-error-icon.icon-light { display: none !important; }
         body.fullscreen-active .playback-error-icon.icon-dark { display: block !important; }
-        body.fullscreen-active.has-playback-error #fs-stage-overlay { display: none !important; }
+        html body.has-playback-error #fs-stage-overlay, html.m-ui body.has-playback-error #fs-stage-overlay.hidden, html.m-ui body.has-playback-error #fs-stage-overlay { display: none !important; }   /* lỗi phát: ẩn thẻ bìa album/nốt nhạc để không đè lên khung lỗi (cả mobile lẫn fullscreen) */
 
         .playback-error-title {
             margin: 0 0 8px;
