@@ -189,7 +189,7 @@
                     year: tr.year || '',
                     genre: tr.genre || '',
                     composer: tr.composer || '',
-                    lyricsRaw: tr.lyricsRaw || '',
+                    lyricsRaw: (tr._embeddedLyricsRaw != null ? tr._embeddedLyricsRaw : tr.lyricsRaw) || '',
                     fullTags: !!tr._fullTagsHydrated,
                     cover: coverVal,
                     size: (tr.file && tr.file.size) || 0,
@@ -240,6 +240,10 @@
                     tr.cover = null;
                     tr.lyrics = null;
                     tr.lyricsRaw = '';
+                    tr._embeddedLyricsRaw = '';
+                    tr._localLrcRaw = '';
+                    tr._localLrcLoaded = false;
+                    tr._manualLyrics = false;
                 };
                 if (Array.isArray(window.__mobileLibrary)) window.__mobileLibrary.forEach(resetTrackMeta);
                 if (typeof playlist !== 'undefined' && Array.isArray(playlist)) playlist.forEach(resetTrackMeta);
@@ -335,9 +339,13 @@
                     if (tr.year) cur.year = tr.year;
                     if (tr.genre !== undefined) cur.genre = tr.genre;
                     if (tr.composer !== undefined) cur.composer = tr.composer;
-                    if (tr.lyricsRaw && !cur.lyricsRaw) {
-                        cur.lyricsRaw = tr.lyricsRaw;
-                        cur.lyrics = tr.lyrics || parseLRC(tr.lyricsRaw);
+                    if (tr._embeddedLyricsRaw && !cur._embeddedLyricsRaw) cur._embeddedLyricsRaw = tr._embeddedLyricsRaw;
+                    if (tr.lyricsRaw && !cur.lyricsRaw && !cur._manualLyrics) {
+                        const pref = typeof window.__getLyricsPref === 'function' ? window.__getLyricsPref() : { priority: 'embedded' };
+                        if (pref.priority !== 'local' || !cur.nativeLrcUrl) {
+                            cur.lyricsRaw = tr.lyricsRaw;
+                            cur.lyrics = tr.lyrics || parseLRC(tr.lyricsRaw);
+                        }
                     }
                     cur.cover = tr.cover || null;
                     cur._hasRealCover = !!tr._hasRealCover;
@@ -386,9 +394,13 @@
                             if (cached.year) tr.year = cached.year;
                             if (cached.genre !== undefined) tr.genre = cached.genre;
                             if (cached.composer !== undefined) tr.composer = cached.composer;
-                            if (cached.lyricsRaw && !tr.lyricsRaw) {
-                                tr.lyricsRaw = cached.lyricsRaw;
-                                tr.lyrics = parseLRC(cached.lyricsRaw);
+                            if (cached.lyricsRaw) {
+                                tr._embeddedLyricsRaw = cached.lyricsRaw;
+                                const pref = typeof window.__getLyricsPref === 'function' ? window.__getLyricsPref() : { priority: 'embedded' };
+                                if (!tr.lyricsRaw && !tr._manualLyrics && (pref.priority !== 'local' || !tr.nativeLrcUrl)) {
+                                    tr.lyricsRaw = cached.lyricsRaw;
+                                    tr.lyrics = parseLRC(cached.lyricsRaw);
+                                }
                             }
                             if (cached.fullTags) tr._fullTagsHydrated = true;
                             if (cached.cover && cached.cover.startsWith('data:')) {
@@ -470,10 +482,14 @@
                                     if (meta.year && meta.year !== tr.year) { tr.year = meta.year; changed = true; }
                                     if (meta.genre && meta.genre !== tr.genre) { tr.genre = meta.genre; changed = true; }
                                     if (meta.composer && meta.composer !== tr.composer) { tr.composer = meta.composer; changed = true; }
-                                    if (meta.lyrics && !tr.lyricsRaw) {
-                                        tr.lyricsRaw = meta.lyrics;
-                                        tr.lyrics = parseLRC(meta.lyrics);
-                                        changed = true;
+                                    if (meta.lyrics) {
+                                        tr._embeddedLyricsRaw = meta.lyrics;
+                                        const pref = typeof window.__getLyricsPref === 'function' ? window.__getLyricsPref() : { priority: 'embedded' };
+                                        if (!tr.lyricsRaw && !tr._manualLyrics && (pref.priority !== 'local' || !tr.nativeLrcUrl)) {
+                                            tr.lyricsRaw = meta.lyrics;
+                                            tr.lyrics = parseLRC(meta.lyrics);
+                                            changed = true;
+                                        }
                                     }
                                     if (meta.pictureDataUrl) {
                                         // Nếu native đã trả sẵn thumbnail JPEG nhỏ gọn (< 32KB) thì dùng luôn, khỏi vẽ lại qua Canvas
