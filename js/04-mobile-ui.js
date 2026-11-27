@@ -106,6 +106,13 @@
             // Thư viện gốc trên Mobile (luôn giữ đủ bài, sắp xếp 0–Z, không bị xoá khi chỉnh hàng đợi tạm)
             window.__mobileLibrary = window.__mobileLibrary || [];
             const mLibTrackId = (t) => (t && (t.nativeLocation || t.rawName || t.name || '')).toLowerCase();
+            const mLibSearchHay = (t) => {
+                if (!t) return '';
+                return removeVietnameseTones([
+                    t.name, t.artist, t.rawName, t.nativeName,
+                    t.album, t.albumArtist, t.genre, t.composer
+                ].filter(Boolean).join(' ')).toLowerCase();
+            };
             const mLibCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
             const sortMobileLib0Z = (arr) => arr.sort((a, b) =>
                 mLibCollator.compare(String((a && a.name) || ''), String((b && b.name) || ''))
@@ -456,6 +463,7 @@
                         const totalCount = targets.length;
                         let cursor = 0;
                         let doneCount = 0;
+                        let anyMetaTextChanged = false;
                         pushScanNotif(0, totalCount, targets[0] ? (targets[0].name || '') : '', true);
                         const hydrateOne = async (tr) => {
                             if (mySeq !== coverHydrateSeq) return;
@@ -469,19 +477,20 @@
                                 if (mySeq !== coverHydrateSeq) return;
                                 if (meta) {
                                     let changed = false;
+                                    let textChanged = false;
                                     if (meta.title && meta.title !== tr.name && (!tr._metaFromCache || meta.title !== tr.rawName)) {
-                                        tr.name = meta.title; changed = true;
+                                        tr.name = meta.title; changed = true; textChanged = true;
                                     }
                                     if (meta.artist && meta.artist !== tr.artist) {
-                                        tr.artist = meta.artist; changed = true;
+                                        tr.artist = meta.artist; changed = true; textChanged = true;
                                     }
                                     if (meta.album && meta.album !== tr.album) {
-                                        tr.album = meta.album; changed = true;
+                                        tr.album = meta.album; changed = true; textChanged = true;
                                     }
-                                    if (meta.albumArtist && meta.albumArtist !== tr.albumArtist) { tr.albumArtist = meta.albumArtist; changed = true; }
+                                    if (meta.albumArtist && meta.albumArtist !== tr.albumArtist) { tr.albumArtist = meta.albumArtist; changed = true; textChanged = true; }
                                     if (meta.year && meta.year !== tr.year) { tr.year = meta.year; changed = true; }
-                                    if (meta.genre && meta.genre !== tr.genre) { tr.genre = meta.genre; changed = true; }
-                                    if (meta.composer && meta.composer !== tr.composer) { tr.composer = meta.composer; changed = true; }
+                                    if (meta.genre && meta.genre !== tr.genre) { tr.genre = meta.genre; changed = true; textChanged = true; }
+                                    if (meta.composer && meta.composer !== tr.composer) { tr.composer = meta.composer; changed = true; textChanged = true; }
                                     if (meta.lyrics) {
                                         tr._embeddedLyricsRaw = meta.lyrics;
                                         const pref = typeof window.__getLyricsPref === 'function' ? window.__getLyricsPref() : { priority: 'embedded' };
@@ -510,6 +519,16 @@
                                     tr._metaLoaded = true;
                                     saveTrackMetaToCache(tr);
                                     patchMobileLibRowDom(tr);
+                                    if (textChanged) {
+                                        anyMetaTextChanged = true;
+                                        if (mLibQuery) {
+                                            const tid = mLibTrackId(tr);
+                                            const inDom = !!(tid && mLibRowMap.has(tid));
+                                            if (inDom !== mLibSearchHay(tr).includes(mLibQuery)) {
+                                                window.__renderMobileLibrary();
+                                            }
+                                        }
+                                    }
                                     if (changed) {
                                         syncCoverToCurrentTrackIfMatch(tr);
                                         if (typeof window.__syncMobileMiniPlayer === 'function') window.__syncMobileMiniPlayer();
@@ -546,6 +565,10 @@
                         }
                         await Promise.all(workers);
                         pushScanNotif(totalCount, totalCount, '', true);
+                        if (anyMetaTextChanged && mySeq === coverHydrateSeq) {
+                            window.__renderMobileLibrary();
+                            if (typeof window.__refreshMobileLibraryViews === 'function') window.__refreshMobileLibraryViews();
+                        }
                     }
                 } finally {
                     coverHydrateRunning = false;
@@ -744,10 +767,7 @@
                     while (idx < lib.length && n < limit) {
                         const tr = lib[idx++];
                         if (!tr) continue;
-                        if (q) {
-                            const hay = removeVietnameseTones((tr.name || '') + ' ' + (tr.artist || '')).toLowerCase();
-                            if (!hay.includes(q)) continue;
-                        }
+                        if (q && !mLibSearchHay(tr).includes(q)) continue;
                         frag.appendChild(makeRow(tr)); n++;
                     }
                     mLibList.appendChild(frag);
@@ -1987,10 +2007,7 @@
                     });
                     pool.forEach(tr => {
                         if (!tr) return;
-                        if (q) {
-                            const hay = removeVietnameseTones((tr.name || '') + ' ' + (tr.artist || '')).toLowerCase();
-                            if (!hay.includes(q)) return;
-                        }
+                        if (q && !mLibSearchHay(tr).includes(q)) return;
                         const key = trackKeyOf(tr);
                         const picked = plc.pickedKeys.has(key);
                         const row = document.createElement('div');
