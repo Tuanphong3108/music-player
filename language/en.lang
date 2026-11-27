@@ -764,3 +764,5 @@ dev.flag_old_info=Old Other Info menu
 dev.flag_old_info_desc=Use the PC Info dialog (also in QuickPlay).
 dev.flag_old_settings=Old Settings menu
 dev.flag_old_settings_desc=Use the PC Settings layout.
+sel.song_info=Song info
+sel.select=Select
