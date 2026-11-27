@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Các nút thêm vào Danh sách phát (khi chọn nhiều bài hoặc Lưu hàng đợi) giờ mở màn hình Chọn danh sách phát để thêm vào playlist sẵn có hoặc tạo mới, tự động bỏ qua bài đã có trong playlist (không trùng lặp)",
+      "icon": "playlist_add_check"
+    },
+    {
       "content": "Nhấn giữ bài hát ở mọi tab (Bài hát, Thư mục, Yêu thích, chi tiết Playlist/Nghệ sĩ/Album) hiện Bottom Sheet \"Thông tin bài hát\" & \"Chọn\" (không cho chọn thư mục); thêm kéo xuống ở đầu trang (Pull-to-Refresh chuẩn MD3) để quét lại thư viện",
       "icon": "touch_app"
     },
@@ -203,6 +207,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Add-to-playlist buttons (from multi-select or Save queue) now open the Select Playlists screen so you can add to existing playlists or create a new one, automatically skipping tracks already in a playlist",
+      "icon": "playlist_add_check"
+    },
     {
       "content": "Long-pressing a song in any tab (Songs, Folders, Liked, Playlist/Artist/Album details) opens a \"Song info\" & \"Select\" bottom sheet (folders cannot be selected); added MD3 Pull-to-Refresh at the top of lists to rescan the library",
       "icon": "touch_app"
