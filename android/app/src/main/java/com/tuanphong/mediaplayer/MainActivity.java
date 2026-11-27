@@ -1053,6 +1053,328 @@ public class MainActivity extends Activity {
         handleIntent(i);
     }
 
+    private static final String MANAGED_SOUNDS_PREFS = "managed_sounds";
+    private final java.util.concurrent.atomic.AtomicBoolean cleaningManagedSounds = new java.util.concurrent.atomic.AtomicBoolean(false);
+    private volatile long lastManagedSoundCleanupAt = 0L;
+
+    private static boolean isManagedSoundAlbum(String album) {
+        if (album == null) return false;
+        String a = album.trim();
+        return a.startsWith("Media Player Ringtone ")
+                || a.startsWith("Media Player Notification ")
+                || a.startsWith("Media Player Alarm ");
+    }
+
+    private java.util.Set<String> loadManagedSoundKeys() {
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        try {
+            String raw = getSharedPreferences(MANAGED_SOUNDS_PREFS, MODE_PRIVATE).getString("items", "[]");
+            JSONArray arr = new JSONArray(raw == null || raw.isEmpty() ? "[]" : raw);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.optJSONObject(i);
+                if (o == null) continue;
+                String p = o.optString("path", "").trim();
+                String u = o.optString("uri", "").trim();
+                if (!p.isEmpty()) keys.add("p:" + p.toLowerCase(java.util.Locale.US));
+                if (!u.isEmpty()) keys.add("u:" + u.toLowerCase(java.util.Locale.US));
+                long mid = parseMediaStoreId(u);
+                if (mid >= 0) keys.add("id:" + mid);
+            }
+        } catch (Throwable ignored) {}
+        return keys;
+    }
+
+    private static long parseMediaStoreId(String uriStr) {
+        if (uriStr == null || uriStr.isEmpty()) return -1L;
+        try {
+            return android.content.ContentUris.parseId(Uri.parse(uriStr));
+        } catch (Throwable ignored) {
+            return -1L;
+        }
+    }
+
+    private static boolean isManagedSoundTracked(java.util.Set<String> keys, String path, String uriStr, long mediaId) {
+        if (keys == null || keys.isEmpty()) return false;
+        if (mediaId >= 0 && keys.contains("id:" + mediaId)) return true;
+        if (path != null && !path.isEmpty() && keys.contains("p:" + path.toLowerCase(java.util.Locale.US))) return true;
+        if (uriStr != null && !uriStr.isEmpty() && keys.contains("u:" + uriStr.toLowerCase(java.util.Locale.US))) return true;
+        return false;
+    }
+
+    private void recordManagedSound(String typeLabel, int rtType, String soundId, String albumTag, Uri outUri, String outPath) {
+        try {
+            android.content.SharedPreferences sp = getSharedPreferences(MANAGED_SOUNDS_PREFS, MODE_PRIVATE);
+            String raw = sp.getString("items", "[]");
+            JSONArray arr = new JSONArray(raw == null || raw.isEmpty() ? "[]" : raw);
+            JSONObject item = new JSONObject();
+            item.put("type", typeLabel);
+            item.put("rtType", rtType);
+            item.put("id", soundId);
+            item.put("album", albumTag);
+            item.put("uri", outUri != null ? outUri.toString() : "");
+            item.put("path", outPath != null ? outPath : "");
+            item.put("createdAt", System.currentTimeMillis());
+            arr.put(item);
+            sp.edit().putString("items", arr.toString()).apply();
+        } catch (Throwable ignored) {}
+    }
+
+    private static byte[] buildId3TalbFrame(String albumTag, boolean v24) {
+        byte[] textBytes;
+        byte[] payload;
+        if (v24) {
+            textBytes = albumTag.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            payload = new byte[1 + textBytes.length];
+            payload[0] = 0x03; // UTF-8
+            System.arraycopy(textBytes, 0, payload, 1, textBytes.length);
+        } else {
+            textBytes = albumTag.getBytes(java.nio.charset.StandardCharsets.UTF_16LE);
+            payload = new byte[3 + textBytes.length];
+            payload[0] = 0x01; // UTF-16 with BOM
+            payload[1] = (byte) 0xFF;
+            payload[2] = (byte) 0xFE;
+            System.arraycopy(textBytes, 0, payload, 3, textBytes.length);
+        }
+        int sz = payload.length;
+        byte[] frame = new byte[10 + sz];
+        frame[0] = 'T'; frame[1] = 'A'; frame[2] = 'L'; frame[3] = 'B';
+        if (v24) {
+            frame[4] = (byte) ((sz >> 21) & 0x7F);
+            frame[5] = (byte) ((sz >> 14) & 0x7F);
+            frame[6] = (byte) ((sz >> 7) & 0x7F);
+            frame[7] = (byte) (sz & 0x7F);
+        } else {
+            frame[4] = (byte) ((sz >>> 24) & 0xFF);
+            frame[5] = (byte) ((sz >>> 16) & 0xFF);
+            frame[6] = (byte) ((sz >>> 8) & 0xFF);
+            frame[7] = (byte) (sz & 0xFF);
+        }
+        frame[8] = 0; frame[9] = 0;
+        System.arraycopy(payload, 0, frame, 10, sz);
+        return frame;
+    }
+
+    private static int readFullyBytes(InputStream in, byte[] dst, int off, int len) throws java.io.IOException {
+        int total = 0;
+        while (total < len) {
+            int r = in.read(dst, off + total, len - total);
+            if (r < 0) break;
+            total += r;
+        }
+        return total;
+    }
+
+    /** Sao chép tệp âm thanh sang đích; nếu là MP3 thì ghi trực tiếp khung ID3v2 TALB = albumTag để MediaStore và các app khác nhận đúng Album. */
+    private static void copySoundStreamWithAlbum(InputStream in, java.io.OutputStream os, String albumTag, boolean isMp3) throws java.io.IOException {
+        byte[] buf = new byte[65536];
+        if (!isMp3 || albumTag == null || albumTag.isEmpty()) {
+            int r;
+            while ((r = in.read(buf)) != -1) os.write(buf, 0, r);
+            os.flush();
+            return;
+        }
+        byte[] hdr = new byte[10];
+        int hRead = readFullyBytes(in, hdr, 0, 10);
+        if (hRead < 10) {
+            if (hRead > 0) os.write(hdr, 0, hRead);
+            os.flush();
+            return;
+        }
+        if (hdr[0] == 'I' && hdr[1] == 'D' && hdr[2] == '3') {
+            int ver = hdr[3] & 0xFF;
+            int rev = hdr[4] & 0xFF;
+            int flags = hdr[5] & 0xFF;
+            int tagSize = ((hdr[6] & 0x7F) << 21) | ((hdr[7] & 0x7F) << 14) | ((hdr[8] & 0x7F) << 7) | (hdr[9] & 0x7F);
+            if ((ver == 3 || ver == 4) && (flags & 0xC0) == 0 && tagSize >= 0 && tagSize <= 16 * 1024 * 1024) {
+                byte[] tagBody = new byte[tagSize];
+                int bodyRead = readFullyBytes(in, tagBody, 0, tagSize);
+                if (bodyRead == tagSize) {
+                    java.io.ByteArrayOutputStream kept = new java.io.ByteArrayOutputStream(tagSize + 128);
+                    int pos = 0;
+                    boolean v24 = (ver == 4);
+                    while (pos + 10 <= tagBody.length) {
+                        if (tagBody[pos] == 0) break;
+                        boolean validId = true;
+                        for (int k = 0; k < 4; k++) {
+                            int ch = tagBody[pos + k] & 0xFF;
+                            if (!((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9'))) { validId = false; break; }
+                        }
+                        if (!validId) break;
+                        int fsize = v24
+                                ? (((tagBody[pos + 4] & 0x7F) << 21) | ((tagBody[pos + 5] & 0x7F) << 14) | ((tagBody[pos + 6] & 0x7F) << 7) | (tagBody[pos + 7] & 0x7F))
+                                : (((tagBody[pos + 4] & 0xFF) << 24) | ((tagBody[pos + 5] & 0xFF) << 16) | ((tagBody[pos + 6] & 0xFF) << 8) | (tagBody[pos + 7] & 0xFF));
+                        if (fsize < 0 || pos + 10 + fsize > tagBody.length) break;
+                        boolean isTalb = tagBody[pos] == 'T' && tagBody[pos + 1] == 'A' && tagBody[pos + 2] == 'L' && tagBody[pos + 3] == 'B';
+                        if (!isTalb) kept.write(tagBody, pos, 10 + fsize);
+                        pos += 10 + fsize;
+                    }
+                    kept.write(buildId3TalbFrame(albumTag, v24));
+                    byte[] newBody = kept.toByteArray();
+                    int nsz = newBody.length;
+                    byte[] newHdr = new byte[]{
+                            'I', 'D', '3', (byte) ver, (byte) rev, (byte) (flags & 0x3F),
+                            (byte) ((nsz >> 21) & 0x7F), (byte) ((nsz >> 14) & 0x7F),
+                            (byte) ((nsz >> 7) & 0x7F), (byte) (nsz & 0x7F)
+                    };
+                    os.write(newHdr);
+                    os.write(newBody);
+                    int r;
+                    while ((r = in.read(buf)) != -1) os.write(buf, 0, r);
+                    os.flush();
+                    return;
+                }
+                os.write(hdr, 0, hRead);
+                if (bodyRead > 0) os.write(tagBody, 0, bodyRead);
+                int r;
+                while ((r = in.read(buf)) != -1) os.write(buf, 0, r);
+                os.flush();
+                return;
+            }
+            os.write(hdr, 0, hRead);
+            int r;
+            while ((r = in.read(buf)) != -1) os.write(buf, 0, r);
+            os.flush();
+            return;
+        }
+        // MP3 chưa có header ID3v2 -> chèn đầu ID3v2.3 gọn nhẹ chứa TALB
+        byte[] talb = buildId3TalbFrame(albumTag, false);
+        int nsz = talb.length;
+        byte[] newHdr = new byte[]{
+                'I', 'D', '3', 3, 0, 0,
+                (byte) ((nsz >> 21) & 0x7F), (byte) ((nsz >> 14) & 0x7F),
+                (byte) ((nsz >> 7) & 0x7F), (byte) (nsz & 0x7F)
+        };
+        os.write(newHdr);
+        os.write(talb);
+        os.write(hdr, 0, hRead);
+        int r;
+        while ((r = in.read(buf)) != -1) os.write(buf, 0, r);
+        os.flush();
+    }
+
+    /** Kiểm tra âm thanh mặc định của hệ thống; tự xóa các tệp âm thanh do Media Player tạo ra nếu không còn được đặt làm mặc định nữa. */
+    private void cleanupUnusedManagedSoundsAsync() {
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (now - lastManagedSoundCleanupAt < 3000L) return;
+        lastManagedSoundCleanupAt = now;
+        new Thread(() -> cleanupUnusedManagedSoundsSync(null), "cleanup-sounds").start();
+    }
+
+    private void cleanupUnusedManagedSoundsSync(String skipSoundId) {
+        if (!cleaningManagedSounds.compareAndSet(false, true)) return;
+        try {
+            final int[] types = {
+                    android.media.RingtoneManager.TYPE_RINGTONE,
+                    android.media.RingtoneManager.TYPE_NOTIFICATION,
+                    android.media.RingtoneManager.TYPE_ALARM
+            };
+            java.util.Set<String> activeUris = new java.util.HashSet<>();
+            java.util.Set<Long> activeIds = new java.util.HashSet<>();
+            java.util.Set<String> activePaths = new java.util.HashSet<>();
+            boolean allQueriedOk = true;
+            for (int rt : types) {
+                try {
+                    Uri u = android.media.RingtoneManager.getActualDefaultRingtoneUri(this, rt);
+                    if (u != null) {
+                        activeUris.add(u.toString().toLowerCase(java.util.Locale.US));
+                        long mid = parseMediaStoreId(u.toString());
+                        if (mid >= 0) activeIds.add(mid);
+                        String p = resolveUriLocation(u);
+                        if (p != null && !p.isEmpty() && !p.startsWith("content://")) {
+                            activePaths.add(p.toLowerCase(java.util.Locale.US));
+                        }
+                    }
+                } catch (Throwable ignored) {
+                    allQueriedOk = false;
+                }
+            }
+            if (!allQueriedOk) return;
+
+            android.content.ContentResolver cr = getContentResolver();
+            android.content.SharedPreferences sp = getSharedPreferences(MANAGED_SOUNDS_PREFS, MODE_PRIVATE);
+            String raw = sp.getString("items", "[]");
+            JSONArray arr = new JSONArray(raw == null || raw.isEmpty() ? "[]" : raw);
+            JSONArray kept = new JSONArray();
+            long nowWall = System.currentTimeMillis();
+            boolean changed = false;
+
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.optJSONObject(i);
+                if (o == null) continue;
+                String sid = o.optString("id", "");
+                String uStr = o.optString("uri", "");
+                String pStr = o.optString("path", "");
+                long createdAt = o.optLong("createdAt", 0L);
+                long mid = parseMediaStoreId(uStr);
+
+                boolean isFresh = (skipSoundId != null && skipSoundId.equals(sid)) || (nowWall - createdAt < 4000L);
+                boolean isActive = (!uStr.isEmpty() && activeUris.contains(uStr.toLowerCase(java.util.Locale.US)))
+                        || (mid >= 0 && activeIds.contains(mid))
+                        || (!pStr.isEmpty() && activePaths.contains(pStr.toLowerCase(java.util.Locale.US)));
+
+                if (isFresh || isActive) {
+                    kept.put(o);
+                } else {
+                    changed = true;
+                    deleteManagedSoundEntry(cr, uStr, pStr);
+                }
+            }
+            if (changed) {
+                sp.edit().putString("items", kept.toString()).apply();
+            }
+
+            // Quét thêm MediaStore để dọn các tệp mồ côi mang Album "Media Player <loại> <ID>" (vd. sau khi cài lại app)
+            try {
+                android.net.Uri audioUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                String[] proj = new String[]{
+                        android.provider.MediaStore.Audio.Media._ID,
+                        android.provider.MediaStore.Audio.Media.DATA,
+                        android.provider.MediaStore.Audio.Media.ALBUM
+                };
+                String sel = android.provider.MediaStore.Audio.Media.ALBUM + " LIKE 'Media Player Ringtone %' OR "
+                        + android.provider.MediaStore.Audio.Media.ALBUM + " LIKE 'Media Player Notification %' OR "
+                        + android.provider.MediaStore.Audio.Media.ALBUM + " LIKE 'Media Player Alarm %'";
+                try (Cursor c = cr.query(audioUri, proj, sel, null, null)) {
+                    if (c != null) {
+                        int idCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media._ID);
+                        int dataCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DATA);
+                        int albCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ALBUM);
+                        while (c.moveToNext()) {
+                            long mid = idCol >= 0 ? c.getLong(idCol) : -1L;
+                            String pStr = dataCol >= 0 ? c.getString(dataCol) : "";
+                            String alb = albCol >= 0 ? c.getString(albCol) : "";
+                            if (!isManagedSoundAlbum(alb)) continue;
+                            if (skipSoundId != null && alb.endsWith(" " + skipSoundId)) continue;
+                            Uri itemUri = mid >= 0 ? android.content.ContentUris.withAppendedId(audioUri, mid) : null;
+                            String uStr = itemUri != null ? itemUri.toString() : "";
+                            boolean isActive = (mid >= 0 && activeIds.contains(mid))
+                                    || (!uStr.isEmpty() && activeUris.contains(uStr.toLowerCase(java.util.Locale.US)))
+                                    || (pStr != null && !pStr.isEmpty() && activePaths.contains(pStr.toLowerCase(java.util.Locale.US)));
+                            if (!isActive) {
+                                deleteManagedSoundEntry(cr, uStr, pStr);
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        } finally {
+            cleaningManagedSounds.set(false);
+        }
+    }
+
+    private void deleteManagedSoundEntry(android.content.ContentResolver cr, String uriStr, String pathStr) {
+        if (uriStr != null && !uriStr.isEmpty()) {
+            try { cr.delete(Uri.parse(uriStr), null, null); } catch (Throwable ignored) {}
+        }
+        if (pathStr != null && !pathStr.isEmpty() && !pathStr.startsWith("content://")) {
+            try {
+                File f = pathStr.startsWith("file://") ? new File(Uri.parse(pathStr).getPath()) : new File(pathStr);
+                if (f.exists()) f.delete();
+            } catch (Throwable ignored) {}
+        }
+    }
+
     // ===== Chọn nhiều bài ở màn hình chính: chia sẻ / xóa trên máy =====
     private void setAsSoundImpl(final String id, final String loc, final String name, final String type) {
         new Thread(() -> {
@@ -1070,14 +1392,19 @@ public class MainActivity extends Activity {
                 String base = (name == null || name.trim().isEmpty()) ? (direct != null ? direct.getName() : "sound") : name.trim();
                 if (base.lastIndexOf('.') < 1) base = base + ".mp3";
                 base = base.replaceAll("[\\\\/:*?\"<>|]", "_");
-                String mime = guessAudioMime(base.toLowerCase());
-                int rtType; String relDir; boolean isRing = false, isNotif = false, isAlarm = false;
-                if ("notification".equals(type)) { rtType = android.media.RingtoneManager.TYPE_NOTIFICATION; relDir = android.os.Environment.DIRECTORY_NOTIFICATIONS; isNotif = true; }
-                else if ("alarm".equals(type)) { rtType = android.media.RingtoneManager.TYPE_ALARM; relDir = android.os.Environment.DIRECTORY_ALARMS; isAlarm = true; }
-                else { rtType = android.media.RingtoneManager.TYPE_RINGTONE; relDir = android.os.Environment.DIRECTORY_RINGTONES; isRing = true; }
+                String lowBase = base.toLowerCase(java.util.Locale.US);
+                String mime = guessAudioMime(lowBase);
+                boolean isMp3 = lowBase.endsWith(".mp3") || "audio/mpeg".equalsIgnoreCase(mime);
+                int rtType; String relDir; String typeLabel; boolean isRing = false, isNotif = false, isAlarm = false;
+                if ("notification".equals(type)) { rtType = android.media.RingtoneManager.TYPE_NOTIFICATION; relDir = android.os.Environment.DIRECTORY_NOTIFICATIONS; typeLabel = "Notification"; isNotif = true; }
+                else if ("alarm".equals(type)) { rtType = android.media.RingtoneManager.TYPE_ALARM; relDir = android.os.Environment.DIRECTORY_ALARMS; typeLabel = "Alarm"; isAlarm = true; }
+                else { rtType = android.media.RingtoneManager.TYPE_RINGTONE; relDir = android.os.Environment.DIRECTORY_RINGTONES; typeLabel = "Ringtone"; isRing = true; }
+                String soundId = String.valueOf(System.currentTimeMillis());
+                String albumTag = "Media Player " + typeLabel + " " + soundId;
                 String title = base.substring(0, base.lastIndexOf('.'));
                 android.content.ContentResolver cr = getContentResolver();
                 Uri out;
+                String outPath = "";
                 android.content.ContentValues cv = new android.content.ContentValues();
                 cv.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, base);
                 cv.put(android.provider.MediaStore.MediaColumns.TITLE, title);
@@ -1092,13 +1419,20 @@ public class MainActivity extends Activity {
                     try { cr.delete(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                             android.provider.MediaStore.MediaColumns.DISPLAY_NAME + "=? AND " + android.provider.MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ?",
                             new String[]{base, relDir + "%"}); } catch (Throwable ignored) {}
-                    out = cr.insert(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cv);
+                    try {
+                        android.content.ContentValues cvWithAlbum = new android.content.ContentValues(cv);
+                        cvWithAlbum.put(android.provider.MediaStore.Audio.Media.ALBUM, albumTag);
+                        out = cr.insert(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cvWithAlbum);
+                    } catch (Throwable ignored) {
+                        out = cr.insert(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cv);
+                    }
                     if (out == null) throw new Exception("INSERT_FAILED");
                     try (InputStream in = direct != null ? new java.io.FileInputStream(direct) : cr.openInputStream(src);
                          java.io.OutputStream os = cr.openOutputStream(out)) {
                         if (in == null || os == null) throw new Exception("IO");
-                        byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush();
+                        copySoundStreamWithAlbum(in, os, albumTag, isMp3);
                     }
+                    outPath = resolveUriLocation(out);
                 } else {
                     File dir = android.os.Environment.getExternalStoragePublicDirectory(relDir);
                     if (!dir.exists()) dir.mkdirs();
@@ -1106,13 +1440,17 @@ public class MainActivity extends Activity {
                     try (InputStream in = direct != null ? new java.io.FileInputStream(direct) : cr.openInputStream(src);
                          FileOutputStream os = new FileOutputStream(dst)) {
                         if (in == null) throw new Exception("IO");
-                        byte[] buf = new byte[65536]; int r; while ((r = in.read(buf)) != -1) os.write(buf, 0, r); os.flush();
+                        copySoundStreamWithAlbum(in, os, albumTag, isMp3);
                     }
-                    cv.put(android.provider.MediaStore.MediaColumns.DATA, dst.getAbsolutePath());
-                    out = cr.insert(android.provider.MediaStore.Audio.Media.getContentUriForPath(dst.getAbsolutePath()), cv);
+                    outPath = dst.getAbsolutePath();
+                    cv.put(android.provider.MediaStore.MediaColumns.DATA, outPath);
+                    cv.put(android.provider.MediaStore.Audio.Media.ALBUM, albumTag);
+                    out = cr.insert(android.provider.MediaStore.Audio.Media.getContentUriForPath(outPath), cv);
                     if (out == null) throw new Exception("INSERT_FAILED");
                 }
                 android.media.RingtoneManager.setActualDefaultRingtoneUri(this, rtType, out);
+                recordManagedSound(typeLabel, rtType, soundId, albumTag, out, outPath);
+                cleanupUnusedManagedSoundsSync(soundId);
             } catch (Throwable t) {
                 err = String.valueOf(t.getMessage() != null ? t.getMessage() : t);
             }
@@ -2255,6 +2593,9 @@ public class MainActivity extends Activity {
             return;
         }
         new Thread(() -> {
+            // Dọn trước các tệp nhạc chuông/thông báo/báo thức do Media Player tạo ra nếu không còn là mặc định của hệ thống
+            cleanupUnusedManagedSoundsSync(null);
+            java.util.Set<String> managedSoundKeys = loadManagedSoundKeys();
             List<JSONObject> phase1 = new ArrayList<>();
             java.util.Set<String> seenPaths = new java.util.HashSet<>();
             java.util.Set<String> excluded = getExcludedDirsSet();
@@ -2357,9 +2698,10 @@ public class MainActivity extends Activity {
                             int mYear = yearCol >= 0 ? c.getInt(yearCol) : 0;
                             if (mArtist == null || "<unknown>".equalsIgnoreCase(mArtist.trim())) mArtist = "";
                             if (mAlbum == null || "<unknown>".equalsIgnoreCase(mAlbum.trim())) mAlbum = "";
+                            Uri itemUri = android.content.ContentUris.withAppendedId(audioUri, audioId);
+                            if (isManagedSoundAlbum(mAlbum) || isManagedSoundTracked(managedSoundKeys, path, itemUri.toString(), audioId)) continue;
 
                             seenPaths.add(path.toLowerCase());
-                            Uri itemUri = android.content.ContentUris.withAppendedId(audioUri, audioId);
                             String id = String.valueOf(nextId.getAndIncrement());
                             served.put(id, itemUri);
                             servedLocations.put(id, path);
@@ -2758,6 +3100,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        cleanupUnusedManagedSoundsAsync();
         try { if (pageReady && hasNearbyPermissionInternal()) callJs("window.__onNearbyPermResult&&window.__onNearbyPermResult(true)"); } catch (Throwable ignored) {}
         try { if (pageReady) callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")"); } catch (Throwable ignored) {}
         if (waitingUnknownSourcePermission) {
@@ -3934,11 +4277,14 @@ public class MainActivity extends Activity {
         public String listAudioDirectoriesJson() {
             JSONArray arr = new JSONArray();
             java.util.Set<String> excluded = getExcludedDirsSet();
+            java.util.Set<String> managedSoundKeys = loadManagedSoundKeys();
             java.util.Map<String, Integer> countMap = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             try {
                 android.net.Uri audioUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                 String[] proj = new String[]{
+                        android.provider.MediaStore.Audio.Media._ID,
                         android.provider.MediaStore.Audio.Media.DATA,
+                        android.provider.MediaStore.Audio.Media.ALBUM,
                         android.provider.MediaStore.Audio.Media.DURATION,
                         android.provider.MediaStore.Audio.Media.MIME_TYPE
                 };
@@ -3946,10 +4292,15 @@ public class MainActivity extends Activity {
                         + " AND " + android.provider.MediaStore.Audio.Media.DATA + " IS NOT NULL";
                 try (Cursor c = getContentResolver().query(audioUri, proj, sel, null, null)) {
                     if (c != null) {
+                        int idCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media._ID);
                         int dataCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.DATA);
+                        int albCol = c.getColumnIndex(android.provider.MediaStore.Audio.Media.ALBUM);
                         while (c.moveToNext()) {
+                            long aid = idCol >= 0 ? c.getLong(idCol) : -1L;
                             String path = dataCol >= 0 ? c.getString(dataCol) : null;
+                            String alb = albCol >= 0 ? c.getString(albCol) : null;
                             if (path == null || path.isEmpty()) continue;
+                            if (isManagedSoundAlbum(alb) || isManagedSoundTracked(managedSoundKeys, path, null, aid)) continue;
                             File f = new File(path);
                             String parent = f.getParent();
                             if (parent == null || parent.isEmpty() || parent.contains("/.")) continue;
