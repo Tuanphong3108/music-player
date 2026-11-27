@@ -2447,7 +2447,11 @@ html.m-ui #m-lib-list.m-locating .m-lib-item { content-visibility: visible; }
         #ss-pl-screen .ssp-check.on { background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
         #ss-pl-screen .ssp-check .material-symbols-rounded { font-size: 22px; }
         #ss-pl-screen .ssp-empty { padding: 30px 10px; text-align: center; opacity: .7; }
-        #ss-pl-screen .ssp-save { position: absolute; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); height: 60px; padding: 0 28px; border: none; border-radius: 30px; cursor: pointer; display: flex; align-items: center; gap: 10px; font: inherit; font-size: calc(20px * var(--font-scale-factor, 1)); background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+        #ss-pl-screen .ssp-actions { position: absolute; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 10px; }
+        #ss-pl-screen .ssp-cancel, #ss-pl-screen .ssp-save { height: 60px; padding: 0 24px; border: none; border-radius: 30px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: inherit; font-weight: 700; font-size: calc(18px * var(--font-scale-factor, 1)); box-shadow: 0 4px 14px rgba(0,0,0,.35); transition: transform .14s ease, border-radius .2s ease; }
+        #ss-pl-screen .ssp-cancel:active, #ss-pl-screen .ssp-save:active { transform: scale(.96); }
+        #ss-pl-screen .ssp-cancel { background: var(--md-sys-color-surface-container-highest, var(--md-sys-color-surface-variant)); color: var(--md-sys-color-on-surface); }
+        #ss-pl-screen .ssp-save { padding: 0 28px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 
         #ss-sound-dlg { pointer-events: none; display: none; position: fixed; inset: 0; z-index: 9600; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.55); opacity: 0; transition: opacity .2s; }
         #ss-sound-dlg.open { opacity: 1; pointer-events: auto; }
