@@ -1054,7 +1054,7 @@ public class MainActivity extends Activity {
     }
 
     private static final String MANAGED_SOUNDS_PREFS = "managed_sounds";
-    private final java.util.concurrent.atomic.AtomicBoolean cleaningManagedSounds = new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static final java.util.concurrent.atomic.AtomicBoolean cleaningManagedSounds = new java.util.concurrent.atomic.AtomicBoolean(false);
     private volatile long lastManagedSoundCleanupAt = 0L;
 
     private static boolean isManagedSoundAlbum(String album) {
@@ -1101,9 +1101,10 @@ public class MainActivity extends Activity {
         return false;
     }
 
-    private void recordManagedSound(String typeLabel, int rtType, String soundId, String albumTag, Uri outUri, String outPath) {
+    static void recordManagedSound(Context ctx, String typeLabel, int rtType, String soundId, String albumTag, Uri outUri, String outPath) {
+        if (ctx == null) return;
         try {
-            android.content.SharedPreferences sp = getSharedPreferences(MANAGED_SOUNDS_PREFS, MODE_PRIVATE);
+            android.content.SharedPreferences sp = ctx.getSharedPreferences(MANAGED_SOUNDS_PREFS, MODE_PRIVATE);
             String raw = sp.getString("items", "[]");
             JSONArray arr = new JSONArray(raw == null || raw.isEmpty() ? "[]" : raw);
             JSONObject item = new JSONObject();
@@ -1165,7 +1166,7 @@ public class MainActivity extends Activity {
     }
 
     /** Sao chép tệp âm thanh sang đích; nếu là MP3 thì ghi trực tiếp khung ID3v2 TALB = albumTag để MediaStore và các app khác nhận đúng Album. */
-    private static void copySoundStreamWithAlbum(InputStream in, java.io.OutputStream os, String albumTag, boolean isMp3) throws java.io.IOException {
+    static void copySoundStreamWithAlbum(InputStream in, java.io.OutputStream os, String albumTag, boolean isMp3) throws java.io.IOException {
         byte[] buf = new byte[65536];
         if (!isMp3 || albumTag == null || albumTag.isEmpty()) {
             int r;
@@ -1257,11 +1258,11 @@ public class MainActivity extends Activity {
         long now = android.os.SystemClock.elapsedRealtime();
         if (now - lastManagedSoundCleanupAt < 3000L) return;
         lastManagedSoundCleanupAt = now;
-        new Thread(() -> cleanupUnusedManagedSoundsSync(null), "cleanup-sounds").start();
+        new Thread(() -> cleanupUnusedManagedSoundsSync(this, null), "cleanup-sounds").start();
     }
 
-    private void cleanupUnusedManagedSoundsSync(String skipSoundId) {
-        if (!cleaningManagedSounds.compareAndSet(false, true)) return;
+    static void cleanupUnusedManagedSoundsSync(Context ctx, String skipSoundId) {
+        if (ctx == null || !cleaningManagedSounds.compareAndSet(false, true)) return;
         try {
             final int[] types = {
                     android.media.RingtoneManager.TYPE_RINGTONE,
@@ -1274,12 +1275,12 @@ public class MainActivity extends Activity {
             boolean allQueriedOk = true;
             for (int rt : types) {
                 try {
-                    Uri u = android.media.RingtoneManager.getActualDefaultRingtoneUri(this, rt);
+                    Uri u = android.media.RingtoneManager.getActualDefaultRingtoneUri(ctx, rt);
                     if (u != null) {
                         activeUris.add(u.toString().toLowerCase(java.util.Locale.US));
                         long mid = parseMediaStoreId(u.toString());
                         if (mid >= 0) activeIds.add(mid);
-                        String p = resolveUriLocation(u);
+                        String p = resolveUriPathSimple(ctx, u);
                         if (p != null && !p.isEmpty() && !p.startsWith("content://")) {
                             activePaths.add(p.toLowerCase(java.util.Locale.US));
                         }
@@ -1290,8 +1291,8 @@ public class MainActivity extends Activity {
             }
             if (!allQueriedOk) return;
 
-            android.content.ContentResolver cr = getContentResolver();
-            android.content.SharedPreferences sp = getSharedPreferences(MANAGED_SOUNDS_PREFS, MODE_PRIVATE);
+            android.content.ContentResolver cr = ctx.getContentResolver();
+            android.content.SharedPreferences sp = ctx.getSharedPreferences(MANAGED_SOUNDS_PREFS, MODE_PRIVATE);
             String raw = sp.getString("items", "[]");
             JSONArray arr = new JSONArray(raw == null || raw.isEmpty() ? "[]" : raw);
             JSONArray kept = new JSONArray();
@@ -1363,7 +1364,37 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void deleteManagedSoundEntry(android.content.ContentResolver cr, String uriStr, String pathStr) {
+    static String resolveUriPathSimple(Context ctx, Uri u) {
+        if (ctx == null || u == null) return "";
+        try {
+            if ("file".equalsIgnoreCase(u.getScheme())) {
+                String p = u.getPath();
+                return p == null ? "" : p;
+            }
+            String[] proj = (Build.VERSION.SDK_INT >= 29)
+                    ? new String[]{"_data", "relative_path", OpenableColumns.DISPLAY_NAME}
+                    : new String[]{"_data", OpenableColumns.DISPLAY_NAME};
+            try (Cursor c = ctx.getContentResolver().query(u, proj, null, null, null)) {
+                if (c != null && c.moveToFirst()) {
+                    int dataIdx = c.getColumnIndex("_data");
+                    if (dataIdx >= 0 && !c.isNull(dataIdx)) {
+                        String absPath = c.getString(dataIdx);
+                        if (absPath != null && !absPath.trim().isEmpty()) return absPath.trim();
+                    }
+                    if (Build.VERSION.SDK_INT >= 29) {
+                        int relIdx = c.getColumnIndex("relative_path");
+                        int nameIdx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                        String rel = (relIdx >= 0 && !c.isNull(relIdx)) ? c.getString(relIdx) : "";
+                        String disp = (nameIdx >= 0 && !c.isNull(nameIdx)) ? c.getString(nameIdx) : "";
+                        if (rel != null && !rel.isEmpty()) return "/storage/emulated/0/" + rel + (disp != null ? disp : "");
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+        return "";
+    }
+
+    private static void deleteManagedSoundEntry(android.content.ContentResolver cr, String uriStr, String pathStr) {
         if (uriStr != null && !uriStr.isEmpty()) {
             try { cr.delete(Uri.parse(uriStr), null, null); } catch (Throwable ignored) {}
         }
@@ -1449,8 +1480,8 @@ public class MainActivity extends Activity {
                     if (out == null) throw new Exception("INSERT_FAILED");
                 }
                 android.media.RingtoneManager.setActualDefaultRingtoneUri(this, rtType, out);
-                recordManagedSound(typeLabel, rtType, soundId, albumTag, out, outPath);
-                cleanupUnusedManagedSoundsSync(soundId);
+                recordManagedSound(this, typeLabel, rtType, soundId, albumTag, out, outPath);
+                cleanupUnusedManagedSoundsSync(this, soundId);
             } catch (Throwable t) {
                 err = String.valueOf(t.getMessage() != null ? t.getMessage() : t);
             }
@@ -2594,7 +2625,7 @@ public class MainActivity extends Activity {
         }
         new Thread(() -> {
             // Dọn trước các tệp nhạc chuông/thông báo/báo thức do Media Player tạo ra nếu không còn là mặc định của hệ thống
-            cleanupUnusedManagedSoundsSync(null);
+            cleanupUnusedManagedSoundsSync(this, null);
             java.util.Set<String> managedSoundKeys = loadManagedSoundKeys();
             List<JSONObject> phase1 = new ArrayList<>();
             java.util.Set<String> seenPaths = new java.util.HashSet<>();
