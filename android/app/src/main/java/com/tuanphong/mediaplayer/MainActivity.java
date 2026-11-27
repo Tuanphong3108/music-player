@@ -4452,7 +4452,7 @@ public class MainActivity extends Activity {
                     android.app.PendingIntent.FLAG_IMMUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT
             );
             android.app.Notification.Builder b = new android.app.Notification.Builder(this, SCAN_NOTIF_CHANNEL);
-            b.setSmallIcon(android.R.drawable.ic_popup_sync)
+            b.setSmallIcon(R.drawable.ic_stat_music_note)
                     .setContentTitle(title)
                     .setContentText(sub)
                     .setContentIntent(open)

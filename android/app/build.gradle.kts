@@ -1,11 +1,11 @@
 plugins { id("com.android.application") }
 android {
     namespace = "com.tuanphong.mediaplayer"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "com.tuanphong.mediaplayer"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = (System.getenv("VERSION_CODE") ?: "10").toInt()
         versionName = System.getenv("VERSION_NAME") ?: "1.0.10"
     }

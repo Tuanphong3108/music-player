@@ -462,7 +462,7 @@ public class MediaService extends Service {
         PendingIntent open = PendingIntent.getActivity(this, 0,
                 new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE);
         Notification.Builder b = new Notification.Builder(this, CH);
-        b.setSmallIcon(android.R.drawable.ic_media_play)
+        b.setSmallIcon(R.drawable.ic_stat_music_note)
                 .setContentTitle(title.isEmpty() ? "Media Player" : title)
                 .setContentText(artist)
                 .setContentIntent(open)

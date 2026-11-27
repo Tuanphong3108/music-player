@@ -240,7 +240,7 @@ final class NativeAudio {
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
             );
             Notification.Builder b = new Notification.Builder(ctx, SLEEP_NOTIF_CHANNEL);
-            b.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            b.setSmallIcon(R.drawable.ic_stat_music_note)
                     .setContentTitle(title)
                     .setContentText(body)
                     .setStyle(new Notification.BigTextStyle().bigText(body))

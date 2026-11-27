@@ -214,7 +214,7 @@ public class MediaWidgetProvider extends AppWidgetProvider {
                     if (src != lastSrcArt || lastRoundedArt == null) {
                         Bitmap sc = src;
                         int m = Math.max(src.getWidth(), src.getHeight());
-                        if (m > 512) { float f = 512f / m; sc = Bitmap.createScaledBitmap(src, Math.max(1, Math.round(src.getWidth() * f)), Math.max(1, Math.round(src.getHeight() * f)), true); }
+                        if (m > 256) { float f = 256f / m; sc = Bitmap.createScaledBitmap(src, Math.max(1, Math.round(src.getWidth() * f)), Math.max(1, Math.round(src.getHeight() * f)), true); }
                         lastRoundedArt = getRoundedCornerBitmap(sc, 28);
                         lastSrcArt = src;
                     }
@@ -224,7 +224,14 @@ public class MediaWidgetProvider extends AppWidgetProvider {
         } catch (Throwable ignored) {}
         try {
             File f = new File(context.getCacheDir(), "widget_art.png");
-            if (f.exists() && f.length() > 0) return BitmapFactory.decodeFile(f.getAbsolutePath());
+            if (f.exists() && f.length() > 0) {
+                BitmapFactory.Options bo = new BitmapFactory.Options();
+                bo.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(f.getAbsolutePath(), bo);
+                int ss = 1; while (Math.max(bo.outWidth, bo.outHeight) / (ss * 2) >= 256) ss *= 2;   // Android 17: RemoteViews giới hạn bộ nhớ bitmap
+                bo.inJustDecodeBounds = false; bo.inSampleSize = ss;
+                return BitmapFactory.decodeFile(f.getAbsolutePath(), bo);
+            }
         } catch (Throwable ignored) {}
         return null;
     }
