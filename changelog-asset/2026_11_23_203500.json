@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Android: sửa lỗi đổi nhạc chuông / thông báo / báo thức ở Cài đặt máy nhưng tệp cũ chưa tự xóa — thêm ContentObserver theo dõi cài đặt âm thanh hệ thống, kiểm tra lại sau khi quay lại app, chuẩn hóa khớp URI/ID/đường dẫn và double-check dọn tệp cũ ngay trong lúc quét thư viện",
+      "icon": "notifications_active"
+    },
+    {
       "content": "Sửa lỗi thỉnh thoảng tự tạm dừng khi chuyển bài trên Android: bỏ lệnh pause() thừa trước khi đổi bài native (tránh nhả Audio Focus), bật khiên playGuard & xóa cờ userPaused khi nạp bài mới, và đặt playWhenReady trước prepare() trong ExoPlayer",
       "icon": "skip_next"
     },
@@ -215,6 +219,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Android: fixed old ringtone/notification/alarm copies not auto-deleting after changing defaults in system Settings — added a ContentObserver for system sound settings, retried cleanup after resume, normalized URI/ID/path matching, and double-checked stale files during library scans",
+      "icon": "notifications_active"
+    },
     {
       "content": "Fixed intermittent auto-pause when switching tracks on Android: skipped redundant pause() between native tracks (avoiding Audio Focus drop), armed playGuard & reset userPaused on load, and moved setPlayWhenReady before prepare() in ExoPlayer",
       "icon": "skip_next"
