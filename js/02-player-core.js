@@ -1973,16 +1973,19 @@
                     window.__setRestoreDurationHint(track.nativeStreamUrl, restoreOpts.dur);
                 }
             }
-            // Dừng ngay bài đang phát trước khi nạp bài mới
+            // Phát stream trực tiếp ngay lập tức để không bị khựng/load lâu; chỉ fallback sang blob nếu stream báo lỗi
+            const isDirectLibStream = !!(track.fromLibrary && track.nativeStreamUrl && !track._blobLoaded);
+            const keepNativeFlow = !!(isDirectLibStream && window.IS_ANDROID_APP && window.__nativeAudioState && window.__nativeAudioState.mode === 'native' && !(restoreOpts && !restoreOpts.play));
+            // Dừng ngay bài đang phát trước khi nạp bài mới (giữ nguyên luồng Native ExoPlayer khi chuyển giữa 2 bài native để không nhả Audio Focus / bật nhầm userPaused)
             if (prevIdx !== index || !audio.paused) {
                 // Đang chuyển bài: báo cho Android biết là "đang nạp" (không phải tạm dừng) để dịch vụ nền không bị tụt khỏi trạng thái foreground
                 window.__trackSwitchUntil = Date.now() + 6000;
-                try { audio.pause(); } catch (e) {}
+                if (!keepNativeFlow) {
+                    try { audio.pause(); } catch (e) {}
+                }
             }
             document.body.classList.toggle('is-video-track', !!track.isVideo);
             document.body.classList.remove('has-video');   // sẽ bật lại khi loadedmetadata báo tệp có hình
-            // Phát stream trực tiếp ngay lập tức để không bị khựng/load lâu; chỉ fallback sang blob nếu stream báo lỗi
-            const isDirectLibStream = !!(track.fromLibrary && track.nativeStreamUrl && !track._blobLoaded);
             audio.src = isDirectLibStream ? track.nativeStreamUrl : track.url;
             if (isDirectLibStream) {
                 const onStreamErr = () => {
