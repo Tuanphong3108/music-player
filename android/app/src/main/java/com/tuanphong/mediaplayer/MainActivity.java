@@ -2709,9 +2709,10 @@ public class MainActivity extends Activity {
             callJs("window.__onAndroidLibraryScanDone&&window.__onAndroidLibraryScanDone(0, true)");
             return;
         }
-        // Dọn trước các tệp nhạc chuông/thông báo/báo thức do Media Player tạo ra nếu không còn là mặc định của hệ thống
-        cleanupUnusedManagedSoundsSync(this, null);
-        java.util.Set<String> managedSoundKeys = loadManagedSoundKeys();
+        new Thread(() -> {
+            // Dọn trước các tệp nhạc chuông/thông báo/báo thức do Media Player tạo ra nếu không còn là mặc định của hệ thống
+            cleanupUnusedManagedSoundsSync(this, null);
+            java.util.Set<String> managedSoundKeys = loadManagedSoundKeys();
             List<JSONObject> phase1 = new ArrayList<>();
             java.util.Set<String> seenPaths = new java.util.HashSet<>();
             java.util.Set<String> excluded = getExcludedDirsSet();
