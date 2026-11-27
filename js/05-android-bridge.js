@@ -155,6 +155,7 @@
             };
             window.__onAndroidLibraryScanDone = function (count, missingPerm) {
                 try {
+                    if (typeof window.__finishMobilePtr === 'function') window.__finishMobilePtr();
                     if (missingPerm) return;
                     // Sau khi quét xong toàn bộ danh sách, đồng bộ lại playlist tạm nếu chưa phát bài riêng lẻ để không bị thiếu bài
                     if (!window.__queueRestored && !window.__externalOpenActive && Array.isArray(window.__mobileLibrary) && window.__mobileLibrary.length > 0 && playlist.length < window.__mobileLibrary.length) {
@@ -1295,7 +1296,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_27_lib_search_hydrate', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_27_longpress_ptr', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
