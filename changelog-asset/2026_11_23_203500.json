@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Mở bằng trình duyệt trên Android sẽ hiện màn hình gợi ý tải ứng dụng Android (thiết kế Material 3 Expressive), có thể bỏ qua",
+      "icon": "download"
+    },
+    {
       "content": "Thêm tab Album: phân loại theo tag Album trong metadata, ẩn album ít bài hơn mức tối thiểu trong Quản lý nhạc",
       "icon": "album"
     },
@@ -155,6 +159,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Opening in a browser on Android now shows a Material 3 Expressive screen suggesting the Android app (dismissible)",
+      "icon": "download"
+    },
     {
       "content": "Added an Albums tab: grouped by the Album tag in metadata, hides albums below the minimum track count set in Music Management",
       "icon": "album"

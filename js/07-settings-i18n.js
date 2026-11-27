@@ -120,7 +120,19 @@
             'android.f3_desc': 'Automatically adapts to your Android 12+ wallpaper accent color and stays up to date automatically.',
             'android.download_btn': 'Download',
             'android.no_video_note': 'Note: The Android version of Media Player does not support video playback (audio and lyrics only).',
-            'android.github_note': 'Opens the official GitHub Releases page to download MediaPlayer.apk'
+            'android.github_note': 'Opens the official GitHub Releases page to download MediaPlayer.apk',
+            'getapp.title': 'Listen better with the Android app',
+            'getapp.desc': 'You are using Media Player in a browser. The app plays reliably in the background, has media notification controls and scans music on your device.',
+            'getapp.f1_t': 'Reliable background playback',
+            'getapp.f1_d': 'The browser will not pause your music when the screen turns off.',
+            'getapp.f2_t': 'Automatic music library',
+            'getapp.f2_d': 'Add whole folders, use "Open with" and share from other apps.',
+            'getapp.f3_t': 'Material You dynamic color',
+            'getapp.f3_d': 'Follows your Android 12+ wallpaper colors automatically.',
+            'getapp.download': 'Download APK',
+            'getapp.releases': 'View on GitHub',
+            'getapp.continue': 'Continue on web',
+            'getapp.note': 'Requires Android 8.0 or later. Allow installing apps from your browser when asked.'
         };
         async function loadLanguage(lang) {
             try {

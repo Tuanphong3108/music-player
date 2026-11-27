@@ -2431,5 +2431,28 @@
             // Bỏ qua mọi lỗi -> giữ nguyên href tối giản mặc định, nút vẫn mở đúng mailto
         }
     </script>
+    <div id="get-app-overlay" role="dialog" aria-modal="true" aria-labelledby="ga-title" style="display:none;">
+        <div class="ga-bg" aria-hidden="true"><span class="ga-blob ga-b1"></span><span class="ga-blob ga-b2"></span><span class="ga-blob ga-b3"></span></div>
+        <div class="ga-scroll">
+            <div class="ga-hero" aria-hidden="true">
+                <div class="ga-cookie"><span class="material-symbols-rounded">music_note</span></div>
+                <div class="ga-chip ga-chip1"><span class="material-symbols-rounded">lyrics</span></div>
+                <div class="ga-chip ga-chip2"><span class="material-symbols-rounded">equalizer</span></div>
+            </div>
+            <h1 id="ga-title" class="ga-title" data-i18n="getapp.title">Nghe nhạc mượt hơn với ứng dụng Android</h1>
+            <p class="ga-desc" data-i18n="getapp.desc">Bạn đang mở Media Player trong trình duyệt. Bản ứng dụng chạy nền ổn định, có thông báo điều khiển và quét nhạc trong máy.</p>
+            <ul class="ga-feats">
+                <li><span class="material-symbols-rounded">play_circle</span><div><b data-i18n="getapp.f1_t">Phát nhạc nền ổn định</b><small data-i18n="getapp.f1_d">Không bị trình duyệt tạm dừng khi tắt màn hình.</small></div></li>
+                <li><span class="material-symbols-rounded">library_music</span><div><b data-i18n="getapp.f2_t">Tự quét thư viện nhạc</b><small data-i18n="getapp.f2_d">Thêm cả thư mục, mở bằng "Open with" và chia sẻ từ app khác.</small></div></li>
+                <li><span class="material-symbols-rounded">palette</span><div><b data-i18n="getapp.f3_t">Material You động</b><small data-i18n="getapp.f3_d">Tự đổi màu theo hình nền Android 12+.</small></div></li>
+            </ul>
+            <div class="ga-actions">
+                <a id="ga-download" class="ga-btn ga-btn-primary" href="https://github.com/Tuanphong3108/music-player/releases/latest/download/MediaPlayer.apk" rel="noopener"><span class="material-symbols-rounded">download</span><span data-i18n="getapp.download">Tải xuống APK</span></a>
+                <a class="ga-btn ga-btn-tonal" href="https://github.com/Tuanphong3108/music-player/releases/" target="_blank" rel="noopener"><span class="material-symbols-rounded">open_in_new</span><span data-i18n="getapp.releases">Xem trên GitHub</span></a>
+                <button id="ga-continue" class="ga-btn ga-btn-text" type="button" data-i18n="getapp.continue">Tiếp tục dùng web</button>
+            </div>
+            <p class="ga-note" data-i18n="getapp.note">Yêu cầu Android 8.0 trở lên. Cần cho phép cài ứng dụng từ trình duyệt khi được hỏi.</p>
+        </div>
+    </div>
 </body>
 </html>

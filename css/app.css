@@ -2463,3 +2463,40 @@ html.m-ui #m-lib-list.m-locating .m-lib-item { content-visibility: visible; }
         .dev-tools .dev-log-q { width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--md-sys-color-outline-variant, #666); background: transparent; color: var(--md-sys-color-on-surface); font: inherit; font-size: calc(14px * var(--font-scale-factor, 1)); }
         #ss-root .ss-info-act { margin-top: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 16px; font: inherit; font-weight: 700; font-size: calc(13px * var(--font-scale-factor, 1)); background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
         #ss-root .ss-info-act .material-symbols-rounded { font-size: 18px; }
+
+/* --- Màn hình tải app Android (Material 3 Expressive) --- */
+#get-app-overlay{position:fixed;inset:0;width:var(--vw,100vw);height:var(--vh,100vh);z-index:100001;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);overflow:hidden;font-family:inherit}
+#get-app-overlay.ga-show{display:block!important;animation:gaIn .45s cubic-bezier(.2,0,0,1)}
+@keyframes gaIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+.ga-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.ga-blob{position:absolute;display:block;opacity:.55;filter:blur(2px)}
+.ga-b1{width:260px;height:260px;top:-90px;right:-80px;background:var(--md-sys-color-tertiary-container,#FFD8E4);border-radius:62% 38% 55% 45%/48% 58% 42% 52%;animation:gaMorph 14s ease-in-out infinite}
+.ga-b2{width:200px;height:200px;bottom:120px;left:-90px;background:var(--md-sys-color-secondary-container);border-radius:50%;animation:gaMorph 18s ease-in-out infinite reverse}
+.ga-b3{width:120px;height:120px;bottom:-30px;right:30px;background:var(--md-sys-color-primary-container);border-radius:30% 70% 60% 40%/50% 40% 60% 50%;animation:gaMorph 11s ease-in-out infinite}
+@keyframes gaMorph{50%{border-radius:40% 60% 38% 62%/60% 40% 60% 40%;transform:rotate(25deg) scale(1.06)}}
+.ga-scroll{position:relative;height:100%;overflow-y:auto;padding:max(28px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;max-width:520px;margin:0 auto;box-sizing:border-box}
+.ga-hero{position:relative;width:200px;height:200px;margin:12px 0 20px;flex:none}
+.ga-cookie{position:absolute;inset:14px;background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,61% 7%,74% 4%,81% 15%,93% 19%,93% 32%,100% 42%,96% 54%,100% 66%,91% 75%,89% 88%,76% 90%,66% 100%,54% 95%,42% 100%,32% 91%,19% 91%,13% 79%,2% 71%,5% 58%,0% 46%,8% 36%,7% 23%,19% 17%,26% 6%,39% 8%);animation:gaSpin 22s linear infinite}
+.ga-cookie .material-symbols-rounded{font-size:84px;animation:gaSpin 22s linear infinite reverse;font-variation-settings:'FILL' 1,'wght' 500}
+@keyframes gaSpin{to{transform:rotate(360deg)}}
+.ga-chip{position:absolute;width:56px;height:56px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.ga-chip .material-symbols-rounded{font-size:28px}
+.ga-chip1{top:0;right:0;background:var(--md-sys-color-tertiary-container,#FFD8E4);color:var(--md-sys-color-on-tertiary-container,#31111D);transform:rotate(10deg);animation:gaFloat 4s ease-in-out infinite}
+.ga-chip2{bottom:6px;left:0;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);border-radius:50%;animation:gaFloat 5s ease-in-out infinite reverse}
+@keyframes gaFloat{50%{transform:translateY(-8px) rotate(-6deg)}}
+.ga-title{font-size:clamp(28px,8vw,36px);line-height:1.12;font-weight:800;letter-spacing:-.5px;text-align:center;margin:0 0 12px}
+.ga-desc{font-size:15px;line-height:1.5;text-align:center;color:var(--md-sys-color-on-surface-variant);margin:0 0 20px}
+.ga-feats{list-style:none;margin:0 0 22px;padding:0;width:100%;display:flex;flex-direction:column;gap:4px}
+.ga-feats li{display:flex;gap:14px;align-items:center;padding:14px 16px;background:var(--md-sys-color-surface-container,var(--md-sys-color-secondary-container));}
+.ga-feats li:first-child{border-radius:28px 28px 8px 8px}.ga-feats li:last-child{border-radius:8px 8px 28px 28px}
+.ga-feats li>.material-symbols-rounded{flex:none;width:44px;height:44px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)}
+.ga-feats b{display:block;font-size:15px;font-weight:700}.ga-feats small{display:block;font-size:12.5px;line-height:1.35;color:var(--md-sys-color-on-surface-variant);margin-top:2px}
+.ga-actions{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:auto}
+.ga-btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;border:0;border-radius:28px;font:inherit;font-size:16px;font-weight:700;text-decoration:none;cursor:pointer;transition:border-radius .25s cubic-bezier(.2,0,0,1),transform .15s;-webkit-tap-highlight-color:transparent}
+.ga-btn:active{border-radius:16px;transform:scale(.98)}
+.ga-btn .material-symbols-rounded{font-size:24px}
+.ga-btn-primary{background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);min-height:64px;font-size:17px}
+.ga-btn-tonal{background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)}
+.ga-btn-text{background:transparent;color:var(--md-sys-color-primary);min-height:48px}
+.ga-note{font-size:12px;text-align:center;color:var(--md-sys-color-on-surface-variant);opacity:.8;margin:14px 0 0}
+@media (prefers-reduced-motion:reduce){.ga-blob,.ga-cookie,.ga-cookie .material-symbols-rounded,.ga-chip{animation:none!important}}

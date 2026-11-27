@@ -1295,7 +1295,7 @@
                 if (ev && ev.data && ev.data.type === 'SW_UPDATED') triggerSwReload();
             });
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=2026_11_27_folder_crumbs_tree', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./sw.js?v=2026_11_27_folder_crumbs_tree_getapp', { updateViaCache: 'none' })
                     .then(registration => {
                         console.log('SW Registered with scope:', registration.scope);
                         try { registration.update(); } catch (e) {}
@@ -1304,3 +1304,27 @@
             });
         }
 
+
+        // --- Màn hình gợi ý tải app Android (khi dùng trình duyệt trên Android, không phải trong app) ---
+        (function () {
+            const KEY = 'mp_getapp_dismissed_v1', DAYS = 7;
+            function show() {
+                try {
+                    const ua = navigator.userAgent || '';
+                    if (!/Android/i.test(ua) || window.IS_ANDROID_APP || window.AndroidBridge) return;
+                    if (/[?&]android=true/.test(location.search) || document.documentElement.classList.contains('is-android-app')) return;
+                    const force = /[?&]getapp=1/.test(location.search);
+                    let t = 0; try { t = +localStorage.getItem(KEY) || 0; } catch (e) {}
+                    if (!force && t && Date.now() - t < DAYS * 864e5) return;
+                    const ov = document.getElementById('get-app-overlay');
+                    if (!ov) return;
+                    ov.classList.add('ga-show');
+                    const btn = document.getElementById('ga-continue');
+                    if (btn) btn.onclick = function () {
+                        try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+                        ov.classList.remove('ga-show');
+                    };
+                } catch (e) {}
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show); else show();
+        })();
