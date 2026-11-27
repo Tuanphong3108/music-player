@@ -2,6 +2,34 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Nhấn giữ bài hát ở mọi tab (Bài hát, Thư mục, Yêu thích, chi tiết Playlist/Nghệ sĩ/Album) hiện Bottom Sheet \"Thông tin bài hát\" & \"Chọn\" (không cho chọn thư mục); thêm kéo xuống ở đầu trang (Pull-to-Refresh chuẩn MD3) để quét lại thư viện",
+      "icon": "touch_app"
+    },
+    {
+      "content": "Android: Pha 2 luôn quét đầy đủ toàn bộ cây thư mục trên bộ nhớ ở nền (tối đa 24 cấp, chống vòng lặp symlink) để tab Thư mục luôn hiện đủ mọi bài hát trên máy",
+      "icon": "folder_copy"
+    },
+    {
+      "content": "Tìm kiếm màn hình chính tự cập nhật kết quả khi bài mới đọc xong metadata ở nền và mở rộng tìm theo tên tệp gốc, album, thể loại, nhà soạn nhạc",
+      "icon": "search"
+    },
+    {
+      "content": "PC UI (Experimental): thêm nút đóng nổi bên phải ngoài hộp thoại New Other Info (hỗ trợ Esc), giữ nguyên Material Web Dropdown trong New Settings menu, đồng bộ giao diện thẻ tab AI Integration và bổ sung đủ bản dịch vi/en",
+      "icon": "desktop_windows"
+    },
+    {
+      "content": "Ưu tiên nguồn lời bài hát: bỏ Online First; Embedded First quét metadata trước rồi fallback sang .lrc (nếu bật Tự động quét tệp .lrc); Local .lrc First tự bật & khóa xám Tự động quét tệp .lrc rồi fallback về lời nhúng",
+      "icon": "lyrics"
+    },
+    {
+      "content": "Tab Thư mục: thu gọn đường dẫn dài quá 1 dòng thành Home > ... > Thư mục trước (bấm ... mở Bottom Sheet cây thư mục) và giới hạn tên thư mục hiện tại tối đa 2 dòng",
+      "icon": "account_tree"
+    },
+    {
+      "content": "Đặt nhạc chuông / thông báo / báo thức: gắn Album \"Media Player <Loại> <ID>\" cho bản sao, tự loại trừ khỏi danh sách quét và tự xóa bản sao cũ khi âm thanh mặc định hệ thống thay đổi (không ảnh hưởng tệp gốc)",
+      "icon": "notifications_active"
+    },
+    {
       "content": "Flags (Android, trong Developer Features): bật lại menu Thông tin & Cài đặt kiểu cũ. PC có tab Experimental để dùng thử menu Thông tin và Cài đặt kiểu điện thoại",
       "icon": "science"
     },
@@ -175,6 +203,34 @@
     }
   ],
   "en": [
+    {
+      "content": "Long-pressing a song in any tab (Songs, Folders, Liked, Playlist/Artist/Album details) opens a \"Song info\" & \"Select\" bottom sheet (folders cannot be selected); added MD3 Pull-to-Refresh at the top of lists to rescan the library",
+      "icon": "touch_app"
+    },
+    {
+      "content": "Android: Phase 2 now always scans the full device storage tree in the background (up to 24 levels deep, symlink-cycle safe) so the Folders tab displays every audio file on the device",
+      "icon": "folder_copy"
+    },
+    {
+      "content": "Home library search now automatically refreshes results once new tracks finish background metadata hydration and also searches original filenames, albums, genres, and composers",
+      "icon": "search"
+    },
+    {
+      "content": "PC UI (Experimental): added an external right-side close button (plus Esc key) to the New Other Info dialog, kept Material Web dropdowns in the New Settings menu, synced AI Integration tab cards, and added full vi/en translations",
+      "icon": "desktop_windows"
+    },
+    {
+      "content": "Lyrics source priority: removed Online First; Embedded First reads metadata first and falls back to .lrc (when Auto-scan .lrc is on); Local .lrc First auto-enables and locks Auto-scan .lrc, falling back to embedded lyrics",
+      "icon": "lyrics"
+    },
+    {
+      "content": "Folders tab: long breadcrumbs collapse to Home > ... > Parent folder (tapping ... opens a folder-tree bottom sheet) and the current folder title clamps to 2 lines",
+      "icon": "account_tree"
+    },
+    {
+      "content": "Set as ringtone / notification / alarm: tags the copy's Album as \"Media Player <Type> <ID>\", excludes it from library scans, and auto-deletes old copies when the system default changes (original files untouched)",
+      "icon": "notifications_active"
+    },
     {
       "content": "Flags (Android, in Developer Features): switch back to the old Info and Settings menus. PC gets an Experimental tab to try the phone-style Info and Settings menus",
       "icon": "science"
