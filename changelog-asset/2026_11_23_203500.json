@@ -2,7 +2,7 @@
   "date": "2026-11-23",
   "vi": [
     {
-      "content": "Các nút thêm vào Danh sách phát (khi chọn nhiều bài hoặc Lưu hàng đợi) giờ mở màn hình Chọn danh sách phát để thêm vào playlist sẵn có hoặc tạo mới, tự động bỏ qua bài đã có trong playlist (không trùng lặp)",
+      "content": "Các nút thêm vào Danh sách phát (khi chọn nhiều bài hoặc Lưu hàng đợi) giờ mở màn hình Chọn danh sách phát (có cả nút Hủy cạnh nút Lưu) để thêm vào playlist sẵn có hoặc tạo mới, tự động bỏ qua bài đã có trong playlist (không trùng lặp)",
       "icon": "playlist_add_check"
     },
     {
@@ -208,7 +208,7 @@
   ],
   "en": [
     {
-      "content": "Add-to-playlist buttons (from multi-select or Save queue) now open the Select Playlists screen so you can add to existing playlists or create a new one, automatically skipping tracks already in a playlist",
+      "content": "Add-to-playlist buttons (from multi-select or Save queue) now open the Select Playlists screen (with a Cancel button next to Save) so you can add to existing playlists or create a new one, automatically skipping tracks already in a playlist",
       "icon": "playlist_add_check"
     },
     {
