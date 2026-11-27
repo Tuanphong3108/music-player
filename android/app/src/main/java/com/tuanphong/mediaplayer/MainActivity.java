@@ -2578,21 +2578,23 @@ public class MainActivity extends Activity {
 
     private void walkStorageForAudio(File dir, int depth, java.util.Set<String> excluded,
                                      boolean autoScanLrc, java.util.Map<String, String> lrcByStem,
-                                     List<File> outAudio) {
-        if (dir == null || depth > 5 || !dir.isDirectory() || !dir.canRead()) return;
+                                     List<File> outAudio, java.util.Set<String> visitedDirs) {
+        if (dir == null || depth > 24 || !dir.isDirectory() || !dir.canRead()) return;
         String dirPath = dir.getAbsolutePath();
         if (dirPath.contains("/.")) return;
-        if (depth == 1) {
-            String top = dir.getName() == null ? "" : dir.getName().toLowerCase();
-            if ("android".equals(top) || "dcim".equals(top) || "pictures".equals(top)
-                    || "movies".equals(top) || "alarms".equals(top) || "ringtones".equals(top)
-                    || "notifications".equals(top) || "podcasts".equals(top) || "coloros".equals(top)
-                    || "miui".equals(top) || "heytap".equals(top) || "obb".equals(top)) return;
-        }
         String lowPath = dirPath.toLowerCase();
         if (lowPath.endsWith("/android/data") || lowPath.endsWith("/android/obb")
                 || lowPath.contains("/android/data/") || lowPath.contains("/android/obb/")) return;
+        if (depth == 1) {
+            String top = dir.getName() == null ? "" : dir.getName().toLowerCase();
+            if ("android".equals(top) || "obb".equals(top) || "coloros".equals(top)
+                    || "miui".equals(top) || "heytap".equals(top)) return;
+        }
         if (isPathExcluded(dirPath, excluded)) return;
+        try {
+            String canon = dir.getCanonicalPath();
+            if (visitedDirs != null && !visitedDirs.add(canon)) return;
+        } catch (Throwable ignored) {}
         File[] children = dir.listFiles();
         if (children == null) return;
         for (File ch : children) {
@@ -2601,7 +2603,7 @@ public class MainActivity extends Activity {
             if (nm == null || nm.startsWith(".")) continue;
             if (ch.isDirectory()) {
                 if (new File(ch, ".nomedia").exists()) continue;
-                walkStorageForAudio(ch, depth + 1, excluded, autoScanLrc, lrcByStem, outAudio);
+                walkStorageForAudio(ch, depth + 1, excluded, autoScanLrc, lrcByStem, outAudio, visitedDirs);
             } else if (ch.isFile() && ch.length() > 0) {
                 String ln = nm.toLowerCase();
                 if (autoScanLrc && ln.endsWith(".lrc")) {
@@ -2791,13 +2793,12 @@ public class MainActivity extends Activity {
                 });
             }
 
-            // PHA 2 (Chạy nền siêu nhanh): Quét bổ sung các file trên bộ nhớ bị MediaStore bỏ sót (không dùng MediaMetadataRetriever chặn luồng)
+            // PHA 2 (Chạy nền đầy đủ): Luôn quét hết toàn bộ cây thư mục trên bộ nhớ để không bỏ sót bài/thư mục nào (kể cả khi MediaStore chưa kịp cập nhật)
             List<File> fsAudioFiles = new ArrayList<>();
-            // Mở app bình thường: MediaStore đã đủ -> bỏ qua việc duyệt cả bộ nhớ (rất chậm). Chỉ duyệt khi quét lại thủ công hoặc MediaStore trống.
             try {
                 File extRoot = android.os.Environment.getExternalStorageDirectory();
-                if ((clearExisting || phase1.isEmpty()) && extRoot != null && extRoot.exists() && extRoot.canRead()) {
-                    walkStorageForAudio(extRoot, 0, excluded, autoScanLrc, lrcByStem, fsAudioFiles);
+                if (extRoot != null && extRoot.exists() && extRoot.canRead()) {
+                    walkStorageForAudio(extRoot, 0, excluded, autoScanLrc, lrcByStem, fsAudioFiles, new java.util.HashSet<>());
                 }
             } catch (Throwable ignored) {}
 
@@ -2806,12 +2807,13 @@ public class MainActivity extends Activity {
                 try {
                     String path = f.getAbsolutePath();
                     if (seenPaths.contains(path.toLowerCase())) continue;
+                    Uri itemUri = Uri.fromFile(f);
+                    if (isManagedSoundTracked(managedSoundKeys, path, itemUri.toString(), -1L)) continue;
                     String dispName = f.getName();
                     String ln = dispName.toLowerCase();
                     String parent = f.getParent();
 
                     seenPaths.add(path.toLowerCase());
-                    Uri itemUri = Uri.fromFile(f);
                     String id = String.valueOf(nextId.getAndIncrement());
                     served.put(id, itemUri);
                     servedLocations.put(id, path);
