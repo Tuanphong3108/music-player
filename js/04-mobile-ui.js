@@ -1324,6 +1324,129 @@
                     });
                     return root;
                 }
+                function openFolderTreeSheet(root, pathSegs) {
+                    const sheet = document.getElementById('st-sheet');
+                    if (!sheet) return;
+                    const sheetTitle = sheet.querySelector('.st-sheet-title');
+                    const sheetList = sheet.querySelector('.st-sheet-list');
+                    if (!sheetList) return;
+                    const isEn = /^en/i.test(localStorage.getItem('settings_language') || '');
+                    if (sheetTitle) sheetTitle.textContent = isEn ? 'Folder path' : 'Đường dẫn thư mục';
+                    sheetList.innerHTML = '';
+
+                    const tree = document.createElement('div');
+                    tree.className = 'm-ftree';
+                    const nodes = [{ name: isEn ? 'Home' : 'Trang chủ', depth: 0, total: root ? root.total : 0, isRoot: true }];
+                    let cur = root;
+                    for (let i = 0; i < pathSegs.length; i++) {
+                        cur = cur && cur.children ? cur.children.get(pathSegs[i]) : null;
+                        nodes.push({ name: pathSegs[i], depth: i + 1, total: cur ? cur.total : 0, isRoot: false });
+                    }
+                    const lastIdx = nodes.length - 1;
+                    nodes.forEach((nd, idx) => {
+                        const isCur = idx === lastIdx;
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'm-ftree-row' + (isCur ? ' cur' : '');
+                        const indentPx = Math.min(idx, 6) * 18;
+                        btn.style.paddingLeft = (14 + indentPx) + 'px';
+                        const branchHtml = idx > 0 ? '<span class="m-ftree-branch" aria-hidden="true"></span>' : '';
+                        const icoName = nd.isRoot ? 'home' : (isCur ? 'folder_open' : 'folder');
+                        btn.innerHTML = branchHtml +
+                            '<span class="material-symbols-rounded m-ftree-ic">' + icoName + '</span>' +
+                            '<span class="m-ftree-meta"><span class="m-ftree-name"></span><span class="m-ftree-sub"></span></span>' +
+                            (isCur ? '<span class="material-symbols-rounded m-ftree-chk">check</span>' : '');
+                        btn.querySelector('.m-ftree-name').textContent = nd.name;
+                        btn.querySelector('.m-ftree-sub').textContent = tr2('pl.tracks_count', '{n} bài hát').replace('{n}', nd.total);
+                        btn.addEventListener('click', () => {
+                            if (typeof window.__closeSheet === 'function') window.__closeSheet();
+                            else { sheet.classList.remove('show'); setTimeout(() => sheet.classList.remove('open'), 260); }
+                            if (!isCur) {
+                                foldPath = pathSegs.slice(0, nd.depth);
+                                renderMobileFolders();
+                                const l = document.getElementById('m-fold-list');
+                                if (l) l.scrollTop = 0;
+                            }
+                        });
+                        tree.appendChild(btn);
+                    });
+                    sheetList.appendChild(tree);
+                    sheet.classList.add('open');
+                    requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add('show')));
+                }
+
+                let lastFoldRoot = null;
+                function renderFolderCrumbs(crumbsEl, root, pathSegs) {
+                    crumbsEl.innerHTML = '';
+                    if (!pathSegs.length) return;
+                    const appendSep = () => {
+                        const sep = document.createElement('span');
+                        sep.className = 'material-symbols-rounded m-fold-sep';
+                        sep.textContent = 'chevron_right';
+                        crumbsEl.appendChild(sep);
+                    };
+                    const appendCrumb = (icon, text, extraCls, onClick) => {
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.className = 'm-fold-crumb' + (extraCls ? ' ' + extraCls : '');
+                        if (icon) b.innerHTML = '<span class="material-symbols-rounded">' + icon + '</span>';
+                        else { b.innerHTML = '<span class="t"></span>'; b.firstChild.textContent = text; }
+                        b.addEventListener('click', onClick);
+                        crumbsEl.appendChild(b);
+                        appendSep();
+                    };
+                    const goDepth = (depth) => {
+                        foldPath = foldPath.slice(0, depth);
+                        renderMobileFolders();
+                        const l = document.getElementById('m-fold-list');
+                        if (l) l.scrollTop = 0;
+                    };
+                    const buildFull = () => {
+                        crumbsEl.innerHTML = '';
+                        appendCrumb('home', '', 'm-fold-home', () => goDepth(0));
+                        for (let i = 0; i < pathSegs.length - 1; i++) {
+                            const isParent = (i === pathSegs.length - 2);
+                            appendCrumb('', pathSegs[i], isParent ? 'm-fold-parent' : '', () => goDepth(i + 1));
+                        }
+                    };
+                    const buildCollapsed = () => {
+                        crumbsEl.innerHTML = '';
+                        appendCrumb('home', '', 'm-fold-home', () => goDepth(0));
+                        appendCrumb('more_horiz', '', 'm-fold-ellipsis', () => openFolderTreeSheet(root, pathSegs.slice()));
+                        const parentIdx = pathSegs.length - 2;
+                        if (parentIdx >= 0) {
+                            appendCrumb('', pathSegs[parentIdx], 'm-fold-parent', () => goDepth(parentIdx + 1));
+                        }
+                    };
+                    const fitsOneLine = () => {
+                        const cw = crumbsEl.clientWidth;
+                        if (cw <= 0) return true;
+                        if (crumbsEl.scrollWidth > cw + 1) return false;
+                        const texts = crumbsEl.querySelectorAll('.m-fold-crumb span.t');
+                        for (let i = 0; i < texts.length; i++) {
+                            if (texts[i].scrollWidth > texts[i].clientWidth + 1) return false;
+                        }
+                        return true;
+                    };
+                    buildFull();
+                    if (pathSegs.length >= 3) {
+                        if (crumbsEl.clientWidth > 0) {
+                            if (!fitsOneLine()) buildCollapsed();
+                        } else {
+                            requestAnimationFrame(() => {
+                                if (!crumbsEl.isConnected || foldPath.join('/') !== pathSegs.join('/')) return;
+                                if (crumbsEl.clientWidth > 0 && !fitsOneLine()) buildCollapsed();
+                            });
+                        }
+                    }
+                }
+                window.addEventListener('resize', () => {
+                    if (activeTab === 'folders' && foldPath.length >= 3 && lastFoldRoot) {
+                        const crumbsEl = document.getElementById('m-fold-crumbs');
+                        if (crumbsEl) renderFolderCrumbs(crumbsEl, lastFoldRoot, foldPath);
+                    }
+                });
+
                 function renderMobileFolders() {
                     const listEl = document.getElementById('m-fold-list');
                     const headEl = document.getElementById('m-fold-head');
@@ -1331,28 +1454,18 @@
                     const titleEl = document.getElementById('m-fold-title');
                     if (!listEl) return;
                     const root = buildFolderTree();
+                    lastFoldRoot = root;
                     // Đi theo đường dẫn hiện tại; nếu thư mục không còn tồn tại thì lùi lên
                     let node = root; const valid = [];
                     for (const sg of foldPath) { const c = node.children.get(sg); if (!c) break; node = c; valid.push(sg); }
                     foldPath = valid;
                     // Thư mục chỉ có đúng 1 thư mục con và không có bài: không cần dừng ở đó khi ở gốc
                     headEl.classList.toggle('show', foldPath.length > 0);
-                    crumbsEl.innerHTML = '';
                     if (foldPath.length) {
-                        const mk = (icon, text, depth) => {
-                            const b = document.createElement('button');
-                            b.type = 'button'; b.className = 'm-fold-crumb';
-                            if (icon) b.innerHTML = '<span class="material-symbols-rounded">' + icon + '</span>';
-                            else { b.innerHTML = '<span class="t"></span>'; b.firstChild.textContent = text; }
-                            b.addEventListener('click', () => { foldPath = foldPath.slice(0, depth); renderMobileFolders(); });
-                            crumbsEl.appendChild(b);
-                            const sep = document.createElement('span');
-                            sep.className = 'material-symbols-rounded m-fold-sep'; sep.textContent = 'chevron_right';
-                            crumbsEl.appendChild(sep);
-                        };
-                        mk('home', '', 0);
-                        for (let i = 0; i < foldPath.length - 1; i++) mk('', foldPath[i], i + 1);
+                        renderFolderCrumbs(crumbsEl, root, foldPath);
                         titleEl.textContent = foldPath[foldPath.length - 1];
+                    } else {
+                        crumbsEl.innerHTML = '';
                     }
                     const foldKey = foldPath.join('/');
                     const keepFold = (renderMobileFolders._k === foldKey) ? listEl.scrollTop : 0;
