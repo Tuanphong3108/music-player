@@ -367,7 +367,10 @@
                 '<label class="ssp-search"><input id="ssp-q" type="text" autocomplete="off"></label>' +
                 '<div class="ssp-newrow"><button type="button" class="ssp-new" id="ssp-new">' + icon('playlist_add') + '<span></span></button></div>' +
                 '<div class="ssp-list" id="ssp-list"></div>' +
-                '<button type="button" class="ssp-save" id="ssp-save">' + icon('save', true) + '<span></span></button>';
+                '<div class="ssp-actions">' +
+                '<button type="button" class="ssp-cancel" id="ssp-cancel">' + icon('close') + '<span></span></button>' +
+                '<button type="button" class="ssp-save" id="ssp-save">' + icon('save', true) + '<span></span></button>' +
+                '</div>';
             document.body.appendChild(scr);
             // Vuốt xuống ở tay nắm để đóng màn chọn danh sách phát
             const grip = scr.querySelector('.ssp-grip');
@@ -390,6 +393,11 @@
         q.placeholder = T('ss.search_playlists', 'Tìm danh sách phát...');
         q.value = '';
         scr.querySelector('#ssp-new span:last-child').textContent = T('ss.new', 'Mới');
+        const cancelBtn = scr.querySelector('#ssp-cancel');
+        if (cancelBtn) {
+            cancelBtn.querySelector('span:last-child').textContent = T('ss.cancel', 'Hủy');
+            cancelBtn.onclick = () => closePlaylistPicker(scr);
+        }
         scr.querySelector('#ssp-save span:last-child').textContent = T('ss.save', 'Lưu');
 
         const pls = api.load().filter(p => p && p.mode !== 'smart' && p.mode !== 'virtual');
