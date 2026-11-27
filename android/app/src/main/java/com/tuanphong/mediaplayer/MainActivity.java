@@ -3945,6 +3945,20 @@ public class MainActivity extends Activity {
                         }
                     }
                 }
+                // Yêu cầu MediaScanner của Android quét lại tệp vừa ghi đè để MediaStore cập nhật ngay tiêu đề / nghệ sĩ / album / ảnh bìa mới
+                String scanPath = (targetLoc != null && !targetLoc.isEmpty() && !targetLoc.startsWith("content://"))
+                        ? (targetLoc.startsWith("file://") ? Uri.parse(targetLoc).getPath() : targetLoc)
+                        : (targetUri != null ? resolveUriPathSimple(MainActivity.this, targetUri) : "");
+                if (scanPath != null && !scanPath.isEmpty()) {
+                    try {
+                        android.media.MediaScannerConnection.scanFile(
+                                getApplicationContext(),
+                                new String[]{scanPath},
+                                null,
+                                null
+                        );
+                    } catch (Throwable ignored) {}
+                }
                 return "";
             } catch (Throwable e) {
                 try { if (overwriteOut != null) overwriteOut.close(); } catch (Exception ignored) {}
