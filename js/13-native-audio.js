@@ -71,6 +71,8 @@
             window.__restoreHint = null;
         }
         N.loaded = true; N.ended = false; N.err = false; N.hadMeta = false; N.wasReady = false; N.isPlaying = false; N.paused = !play; N.pos = N.startMs; N.stamp = now(); N.dur = 0; N.st = 'buffering'; N.suppressEndedId = ''; N.seekGuard = 0; N.seekable = true;
+        if (play) { N.userPaused = false; N.playGuard = now() + 1800; }
+        else { N.playGuard = 0; }
         syncSeekDisabledUi();
         const t = nativeTrack();
         const ar = ((document.getElementById('track-artist') || {}).textContent || '').split('|')[0].trim();
