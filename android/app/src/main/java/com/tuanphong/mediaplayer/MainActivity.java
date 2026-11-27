@@ -1056,6 +1056,7 @@ public class MainActivity extends Activity {
     private static final String MANAGED_SOUNDS_PREFS = "managed_sounds";
     private static final java.util.concurrent.atomic.AtomicBoolean cleaningManagedSounds = new java.util.concurrent.atomic.AtomicBoolean(false);
     private volatile long lastManagedSoundCleanupAt = 0L;
+    private android.database.ContentObserver systemSoundObserver;
 
     private static boolean isManagedSoundAlbum(String album) {
         if (album == null) return false;
@@ -1255,41 +1256,129 @@ public class MainActivity extends Activity {
 
     /** Kiểm tra âm thanh mặc định của hệ thống; tự xóa các tệp âm thanh do Media Player tạo ra nếu không còn được đặt làm mặc định nữa. */
     private void cleanupUnusedManagedSoundsAsync() {
+        cleanupUnusedManagedSoundsAsync(false);
+    }
+
+    private void cleanupUnusedManagedSoundsAsync(boolean bypassCooldown) {
         long now = android.os.SystemClock.elapsedRealtime();
-        if (now - lastManagedSoundCleanupAt < 3000L) return;
+        if (!bypassCooldown && now - lastManagedSoundCleanupAt < 1200L) return;
         lastManagedSoundCleanupAt = now;
         new Thread(() -> cleanupUnusedManagedSoundsSync(this, null), "cleanup-sounds").start();
+    }
+
+    private void registerSystemSoundObserver() {
+        if (systemSoundObserver != null) return;
+        try {
+            systemSoundObserver = new android.database.ContentObserver(pingHandler) {
+                @Override
+                public void onChange(boolean selfChange, Uri uri) {
+                    pingHandler.postDelayed(() -> cleanupUnusedManagedSoundsAsync(true), 450L);
+                }
+            };
+            android.content.ContentResolver cr = getContentResolver();
+            Uri[] targets = new Uri[]{
+                    android.provider.Settings.System.getUriFor(android.provider.Settings.System.RINGTONE),
+                    android.provider.Settings.System.getUriFor(android.provider.Settings.System.NOTIFICATION_SOUND),
+                    android.provider.Settings.System.getUriFor(android.provider.Settings.System.ALARM_ALERT)
+            };
+            for (Uri tu : targets) {
+                if (tu != null) {
+                    try { cr.registerContentObserver(tu, true, systemSoundObserver); } catch (Throwable ignored) {}
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private void unregisterSystemSoundObserver() {
+        if (systemSoundObserver == null) return;
+        try { getContentResolver().unregisterContentObserver(systemSoundObserver); } catch (Throwable ignored) {}
+        systemSoundObserver = null;
+    }
+
+    private static long extractAudioIdFromUri(Uri u) {
+        if (u == null) return -1L;
+        String s = u.toString();
+        long directId = parseMediaStoreId(s);
+        if (directId >= 0) return directId;
+        try {
+            java.util.List<String> segs = u.getPathSegments();
+            if (segs != null && !segs.isEmpty()) {
+                for (int i = segs.size() - 1; i >= 0; i--) {
+                    String seg = segs.get(i);
+                    if (seg != null && seg.matches("\\d+")) {
+                        return Long.parseLong(seg);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+        return -1L;
+    }
+
+    private static String resolveDefaultSoundUriString(Context ctx, int rtType) {
+        try {
+            Uri u = android.media.RingtoneManager.getActualDefaultRingtoneUri(ctx, rtType);
+            if (u != null) return u.toString();
+        } catch (Throwable ignored) {}
+        String settingKey = (rtType == android.media.RingtoneManager.TYPE_NOTIFICATION)
+                ? android.provider.Settings.System.NOTIFICATION_SOUND
+                : ((rtType == android.media.RingtoneManager.TYPE_ALARM)
+                ? android.provider.Settings.System.ALARM_ALERT
+                : android.provider.Settings.System.RINGTONE);
+        try {
+            String raw = android.provider.Settings.System.getString(ctx.getContentResolver(), settingKey);
+            return raw == null ? "" : raw.trim();
+        } catch (Throwable ignored) {
+            return "";
+        }
+    }
+
+    private static void collectActiveSystemSounds(Context ctx, java.util.Set<String> activeUris,
+                                                 java.util.Set<Long> activeIds, java.util.Set<String> activePaths) {
+        final int[] types = {
+                android.media.RingtoneManager.TYPE_RINGTONE,
+                android.media.RingtoneManager.TYPE_NOTIFICATION,
+                android.media.RingtoneManager.TYPE_ALARM
+        };
+        for (int rt : types) {
+            try {
+                String uStr = resolveDefaultSoundUriString(ctx, rt);
+                if (uStr.isEmpty() || "null".equalsIgnoreCase(uStr)) continue;
+                String low = uStr.toLowerCase(java.util.Locale.US);
+                activeUris.add(low);
+                int qIdx = low.indexOf('?');
+                if (qIdx > 0) activeUris.add(low.substring(0, qIdx));
+                Uri u = Uri.parse(uStr);
+                long mid = extractAudioIdFromUri(u);
+                if (mid >= 0) activeIds.add(mid);
+                String p = resolveUriPathSimple(ctx, u);
+                if (p != null && !p.isEmpty() && !p.startsWith("content://")) {
+                    activePaths.add(p.toLowerCase(java.util.Locale.US));
+                }
+            } catch (Throwable ignored) {}
+        }
+    }
+
+    private static boolean isSoundEntryStillActive(String uStr, String pStr, long mid,
+                                                   java.util.Set<String> activeUris,
+                                                   java.util.Set<Long> activeIds,
+                                                   java.util.Set<String> activePaths) {
+        String lowU = uStr == null ? "" : uStr.trim().toLowerCase(java.util.Locale.US);
+        String baseU = lowU;
+        int qIdx = baseU.indexOf('?');
+        if (qIdx > 0) baseU = baseU.substring(0, qIdx);
+        long resolvedMid = mid >= 0 ? mid : extractAudioIdFromUri(lowU.isEmpty() ? null : Uri.parse(lowU));
+        return (!lowU.isEmpty() && (activeUris.contains(lowU) || activeUris.contains(baseU)))
+                || (resolvedMid >= 0 && activeIds.contains(resolvedMid))
+                || (pStr != null && !pStr.isEmpty() && activePaths.contains(pStr.trim().toLowerCase(java.util.Locale.US)));
     }
 
     static void cleanupUnusedManagedSoundsSync(Context ctx, String skipSoundId) {
         if (ctx == null || !cleaningManagedSounds.compareAndSet(false, true)) return;
         try {
-            final int[] types = {
-                    android.media.RingtoneManager.TYPE_RINGTONE,
-                    android.media.RingtoneManager.TYPE_NOTIFICATION,
-                    android.media.RingtoneManager.TYPE_ALARM
-            };
             java.util.Set<String> activeUris = new java.util.HashSet<>();
             java.util.Set<Long> activeIds = new java.util.HashSet<>();
             java.util.Set<String> activePaths = new java.util.HashSet<>();
-            boolean allQueriedOk = true;
-            for (int rt : types) {
-                try {
-                    Uri u = android.media.RingtoneManager.getActualDefaultRingtoneUri(ctx, rt);
-                    if (u != null) {
-                        activeUris.add(u.toString().toLowerCase(java.util.Locale.US));
-                        long mid = parseMediaStoreId(u.toString());
-                        if (mid >= 0) activeIds.add(mid);
-                        String p = resolveUriPathSimple(ctx, u);
-                        if (p != null && !p.isEmpty() && !p.startsWith("content://")) {
-                            activePaths.add(p.toLowerCase(java.util.Locale.US));
-                        }
-                    }
-                } catch (Throwable ignored) {
-                    allQueriedOk = false;
-                }
-            }
-            if (!allQueriedOk) return;
+            collectActiveSystemSounds(ctx, activeUris, activeIds, activePaths);
 
             android.content.ContentResolver cr = ctx.getContentResolver();
             android.content.SharedPreferences sp = ctx.getSharedPreferences(MANAGED_SOUNDS_PREFS, MODE_PRIVATE);
@@ -1306,12 +1395,10 @@ public class MainActivity extends Activity {
                 String uStr = o.optString("uri", "");
                 String pStr = o.optString("path", "");
                 long createdAt = o.optLong("createdAt", 0L);
-                long mid = parseMediaStoreId(uStr);
+                long mid = extractAudioIdFromUri(uStr.isEmpty() ? null : Uri.parse(uStr));
 
                 boolean isFresh = (skipSoundId != null && skipSoundId.equals(sid)) || (nowWall - createdAt < 4000L);
-                boolean isActive = (!uStr.isEmpty() && activeUris.contains(uStr.toLowerCase(java.util.Locale.US)))
-                        || (mid >= 0 && activeIds.contains(mid))
-                        || (!pStr.isEmpty() && activePaths.contains(pStr.toLowerCase(java.util.Locale.US)));
+                boolean isActive = isSoundEntryStillActive(uStr, pStr, mid, activeUris, activeIds, activePaths);
 
                 if (isFresh || isActive) {
                     kept.put(o);
@@ -1348,10 +1435,7 @@ public class MainActivity extends Activity {
                             if (skipSoundId != null && alb.endsWith(" " + skipSoundId)) continue;
                             Uri itemUri = mid >= 0 ? android.content.ContentUris.withAppendedId(audioUri, mid) : null;
                             String uStr = itemUri != null ? itemUri.toString() : "";
-                            boolean isActive = (mid >= 0 && activeIds.contains(mid))
-                                    || (!uStr.isEmpty() && activeUris.contains(uStr.toLowerCase(java.util.Locale.US)))
-                                    || (pStr != null && !pStr.isEmpty() && activePaths.contains(pStr.toLowerCase(java.util.Locale.US)));
-                            if (!isActive) {
+                            if (!isSoundEntryStillActive(uStr, pStr, mid, activeUris, activeIds, activePaths)) {
                                 deleteManagedSoundEntry(cr, uStr, pStr);
                             }
                         }
@@ -2625,10 +2709,9 @@ public class MainActivity extends Activity {
             callJs("window.__onAndroidLibraryScanDone&&window.__onAndroidLibraryScanDone(0, true)");
             return;
         }
-        new Thread(() -> {
-            // Dọn trước các tệp nhạc chuông/thông báo/báo thức do Media Player tạo ra nếu không còn là mặc định của hệ thống
-            cleanupUnusedManagedSoundsSync(this, null);
-            java.util.Set<String> managedSoundKeys = loadManagedSoundKeys();
+        // Dọn trước các tệp nhạc chuông/thông báo/báo thức do Media Player tạo ra nếu không còn là mặc định của hệ thống
+        cleanupUnusedManagedSoundsSync(this, null);
+        java.util.Set<String> managedSoundKeys = loadManagedSoundKeys();
             List<JSONObject> phase1 = new ArrayList<>();
             java.util.Set<String> seenPaths = new java.util.HashSet<>();
             java.util.Set<String> excluded = getExcludedDirsSet();
@@ -2732,7 +2815,12 @@ public class MainActivity extends Activity {
                             if (mArtist == null || "<unknown>".equalsIgnoreCase(mArtist.trim())) mArtist = "";
                             if (mAlbum == null || "<unknown>".equalsIgnoreCase(mAlbum.trim())) mAlbum = "";
                             Uri itemUri = android.content.ContentUris.withAppendedId(audioUri, audioId);
-                            if (isManagedSoundAlbum(mAlbum) || isManagedSoundTracked(managedSoundKeys, path, itemUri.toString(), audioId)) continue;
+                            if (isManagedSoundAlbum(mAlbum) || isManagedSoundTracked(managedSoundKeys, path, itemUri.toString(), audioId)) {
+                                // Double-check: nếu không còn là âm thanh mặc định của hệ thống thì dọn ngay cả trong lúc quét
+                                cleanupUnusedManagedSoundsSync(MainActivity.this, null);
+                                managedSoundKeys = loadManagedSoundKeys();
+                                if (isManagedSoundAlbum(mAlbum) || isManagedSoundTracked(managedSoundKeys, path, itemUri.toString(), audioId)) continue;
+                            }
 
                             seenPaths.add(path.toLowerCase());
                             String id = String.valueOf(nextId.getAndIncrement());
@@ -3133,7 +3221,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        cleanupUnusedManagedSoundsAsync();
+        registerSystemSoundObserver();
+        cleanupUnusedManagedSoundsAsync(true);
+        pingHandler.postDelayed(() -> cleanupUnusedManagedSoundsAsync(true), 900L);
         try { if (pageReady && hasNearbyPermissionInternal()) callJs("window.__onNearbyPermResult&&window.__onNearbyPermResult(true)"); } catch (Throwable ignored) {}
         try { if (pageReady) callJs("window.__onAndroidPermissionsUpdated&&window.__onAndroidPermissionsUpdated(" + getPermissionsStatusJson() + ")"); } catch (Throwable ignored) {}
         if (waitingUnknownSourcePermission) {
