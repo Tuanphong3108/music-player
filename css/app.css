@@ -2519,11 +2519,6 @@ html:not(.m-ui) #ss-root.open .ss-box { transform: translate(-50%, 0); }
 html:not(.m-ui) #ss-root .ss-box { bottom: 16px; border-radius: 32px; }
 #ss-root.ss-info-only .ss-tabs, #ss-root.ss-info-only #ss-pane-options { display: none !important; }
 
-.dev-flags { flex-direction: column; gap: 8px; margin: 10px 0; padding: 12px 14px; border-radius: 20px; background: color-mix(in srgb, var(--md-sys-color-surface-variant) 55%, var(--md-sys-color-surface)); }
-.dev-flag-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 6px 0; }
-.dev-flag-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.dev-flag-tx b { font-size: calc(15px * var(--font-scale-factor, 1)); }
-.dev-flag-tx span { font-size: calc(12px * var(--font-scale-factor, 1)); opacity: .65; }
 @media (orientation: landscape) and (min-width: 600px) {
     html.st-mui .st-m-card.on { background: var(--md-sys-color-secondary-container) !important; }
     html.st-pc #settings-dialog:not(.searching) #st-m-bigtitle { display: none !important; }

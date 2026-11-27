@@ -128,6 +128,7 @@
             'exp.new_settings': 'New Settings menu',
             'exp.new_settings_desc': 'Use the phone Material 3 Expressive Settings layout (card list + two columns).',
             'dev.flags': 'Flags',
+            'dev.flags_desc': 'Bring back the old interfaces',
             'dev.flag_old_info': 'Old Other Info menu',
             'dev.flag_old_info_desc': 'Use the PC Info dialog (also in QuickPlay).',
             'dev.flag_old_settings': 'Old Settings menu',
