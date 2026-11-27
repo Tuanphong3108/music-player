@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Sửa lỗi cập nhật Metadata xong phát lại vẫn hiện thông tin cũ: tự cắt sạch lớp thẻ ID3v2 cũ trước khi ghi thẻ mới (hết chồng tag), đồng bộ ngay lời bài hát nhúng / cache / thư viện / trình phát native và gọi MediaScanner quét lại MediaStore trên Android",
+      "icon": "edit_note"
+    },
+    {
       "content": "Các nút thêm vào Danh sách phát (khi chọn nhiều bài hoặc Lưu hàng đợi) giờ mở màn hình Chọn danh sách phát (có cả nút Hủy cạnh nút Lưu) để thêm vào playlist sẵn có hoặc tạo mới, tự động bỏ qua bài đã có trong playlist (không trùng lặp)",
       "icon": "playlist_add_check"
     },
@@ -207,6 +211,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Fixed updated metadata reverting to old tags on replay: strips old ID3v2 headers before writing new tags (no stacked tags), syncs embedded lyrics / cache / library / native player immediately, and triggers Android MediaScanner to refresh MediaStore",
+      "icon": "edit_note"
+    },
     {
       "content": "Add-to-playlist buttons (from multi-select or Save queue) now open the Select Playlists screen (with a Cancel button next to Save) so you can add to existing playlists or create a new one, automatically skipping tracks already in a playlist",
       "icon": "playlist_add_check"
