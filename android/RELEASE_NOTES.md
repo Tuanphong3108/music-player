@@ -1,5 +1,6 @@
 # Ghi chú phát hành bản Android
 # (Quy trình GitHub Actions tự động dùng nội dung tệp này làm release notes; để trống thì lấy 20 commit gần nhất.)
+- **Quét đầy đủ toàn bộ cây thư mục trên máy (cho tab Folders)**: Pha 2 quét bộ nhớ giờ luôn chạy nền sau MediaStore (mở rộng độ sâu tới 24 cấp, chống vòng lặp symlink và không bỏ qua các thư mục người dùng như Podcasts/Movies/DCIM...) để tab Thư mục luôn hiện đủ mọi bài hát trên thiết bị.
 - **Quản lý thông minh tệp Nhạc chuông / Thông báo / Báo thức**: khi đặt âm thanh hệ thống từ cả app chính lẫn Sheet phát nhanh, tệp sao chép sẽ tự gắn Album `"Media Player <Ringtone|Notification|Alarm> <ID>"` (ghi thẳng khung ID3v2 `TALB` với MP3 + MediaStore), tự động loại trừ khỏi danh sách quét thư viện/thư mục, và tự xóa tệp cũ ngay khi âm thanh mặc định của hệ thống bị thay đổi.
 - **Nâng cấp nền tảng Android tối thiểu lên Android 8.0 (`minSdk 26`) & vá tương thích Android 8–10**: dọn sạch các nhánh xử lý cũ dưới API 26, bật `requestLegacyExternalStorage` để Android 10 đọc/ghi/xóa tệp mượt mà, và sửa lỗi truy vấn cột `relative_path` trên Android 8–9.
 - **Không hiện bảng báo lỗi nếu nhạc đã Pause trước khi app sập**: ghi nhận trạng thái đang phát tại thời điểm ứng dụng bị đóng/thu hồi ở nền; nếu bài đã tạm dừng từ trước thì lần mở lại sẽ không bật hộp thoại chẩn đoán lỗi nữa.
