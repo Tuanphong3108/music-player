@@ -709,7 +709,7 @@
                             </button>
                         </div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+                    <div id="lib-auto-scan-lrc-row" style="display:flex; justify-content:space-between; align-items:center; gap:16px; transition:opacity .2s ease;">
                         <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0;">
                             <span class="material-symbols-rounded" style="color:var(--md-sys-color-on-surface-variant);">description</span>
                             <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0;">
@@ -731,7 +731,6 @@
                         </div>
                         <md-outlined-select id="lib-lyrics-priority" class="m3-select">
                             <md-select-option value="embedded"><div slot="headline" data-i18n="lib.prio_embedded">Lời nhúng trước (Embedded First)</div></md-select-option>
-                            <md-select-option value="online"><div slot="headline" data-i18n="lib.prio_online">Trực tuyến trước (Online First)</div></md-select-option>
                             <md-select-option value="local"><div slot="headline" data-i18n="lib.prio_local">Tệp .lrc trước (Local .lrc First)</div></md-select-option>
                         </md-outlined-select>
                     </div>
