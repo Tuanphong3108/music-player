@@ -1148,8 +1148,24 @@ public class QuickPlayActivity extends Activity {
         }
         final String[] types = {"ringtone", "notification", "alarm"};
         final String[] labels = vi ? new String[]{"Nhạc chuông", "Âm thông báo", "Âm báo thức"} : new String[]{"Ringtone", "Notification sound", "Alarm sound"};
+        final String[] titleTypes = vi ? new String[]{"Nhạc chuông", "Âm thông báo", "Âm báo thức"} : new String[]{"Ringtone", "Notification", "Alarm"};
+        final String[] lowerTypes = vi ? new String[]{"nhạc chuông", "âm thông báo", "âm báo thức"} : new String[]{"ringtone", "notification sound", "alarm sound"};
         try {
-            showQpDialog(vi ? "Đặt làm âm thanh" : "Set as sound", null, labels, w -> setSoundImpl(types[w], labels[w]), null, null);
+            showQpDialog(vi ? "Đặt làm âm thanh" : "Set as sound", null, labels, w -> confirmSetSound(types[w], labels[w], titleTypes[w], lowerTypes[w]), null, null);
+        } catch (Throwable ignored) {}
+    }
+
+    private void confirmSetSound(final String type, final String label, final String titleType, final String lowerType) {
+        if (uri == null) return;
+        String fileName = rawDisplayName(uri);
+        if (fileName == null || fileName.trim().isEmpty()) fileName = "sound.mp3";
+        else if (fileName.lastIndexOf('.') < 1) fileName = fileName + ".mp3";
+        String title = vi ? ("Đặt làm " + titleType) : ("Set as " + titleType);
+        String msg = vi
+                ? ("Bạn có muốn đặt \"" + fileName + "\" làm " + lowerType + " không?")
+                : ("Do you want to set \"" + fileName + "\" as your " + lowerType + "?");
+        try {
+            showQpDialog(title, msg, null, null, vi ? "Đặt" : "Set", () -> setSoundImpl(type, label));
         } catch (Throwable ignored) {}
     }
 
