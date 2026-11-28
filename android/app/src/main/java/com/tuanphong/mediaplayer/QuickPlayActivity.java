@@ -1135,6 +1135,19 @@ public class QuickPlayActivity extends Activity {
         dlg.show();
     }
 
+    private View buildDialogIconCircle(int iconRes, int sizeDp, int iconSizeDp, int bgColor, int tintColor) {
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.setBackground(round(bgColor, sizeDp / 2f));
+        ImageView iv = new ImageView(this);
+        iv.setImageResource(iconRes);
+        iv.setColorFilter(tintColor);
+        FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(dp(iconSizeDp), dp(iconSizeDp));
+        ilp.gravity = Gravity.CENTER;
+        wrap.addView(iv, ilp);
+        wrap.setLayoutParams(new LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp)));
+        return wrap;
+    }
+
     private void showSoundDialog() {
         if (uri == null) return;
         if (!android.provider.Settings.System.canWrite(this)) {
@@ -1147,15 +1160,109 @@ public class QuickPlayActivity extends Activity {
             return;
         }
         final String[] types = {"ringtone", "notification", "alarm"};
-        final String[] labels = vi ? new String[]{"Nhạc chuông", "Âm thông báo", "Âm báo thức"} : new String[]{"Ringtone", "Notification sound", "Alarm sound"};
-        final String[] titleTypes = vi ? new String[]{"Nhạc chuông", "Âm thông báo", "Âm báo thức"} : new String[]{"Ringtone", "Notification", "Alarm"};
-        final String[] lowerTypes = vi ? new String[]{"nhạc chuông", "âm thông báo", "âm báo thức"} : new String[]{"ringtone", "notification sound", "alarm sound"};
+        final int[] icons = {R.drawable.ic_opt_ringtone, R.drawable.ic_opt_sound, R.drawable.ic_opt_alarm};
+        final String[] names = vi
+                ? new String[]{"Nhạc chuông điện thoại", "Âm thông báo", "Âm báo thức"}
+                : new String[]{"Phone ringtone", "Notification sound", "Alarm sound"};
+        final String[] descs = vi
+                ? new String[]{"Cuộc gọi đến", "Tin nhắn và thông báo ứng dụng", "Báo thức đồng hồ"}
+                : new String[]{"Incoming calls", "Messages and app alerts", "Clock alarms"};
+        final String[] titleTypes = vi
+                ? new String[]{"Nhạc chuông", "Âm thông báo", "Âm báo thức"}
+                : new String[]{"Ringtone", "Notification", "Alarm"};
+        final String[] lowerTypes = vi
+                ? new String[]{"nhạc chuông", "âm thông báo", "âm báo thức"}
+                : new String[]{"ringtone", "notification sound", "alarm sound"};
+
         try {
-            showQpDialog(vi ? "Đặt làm âm thanh" : "Set as sound", null, labels, w -> confirmSetSound(types[w], labels[w], titleTypes[w], lowerTypes[w]), null, null);
+            final android.app.Dialog dlg = new android.app.Dialog(this);
+            dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+            int cardBg = blendColors(cSurface, cTrack, 0.18f);
+            int circleBg = blendColors(cSecBtn, cSurface, 0.35f);
+
+            LinearLayout box = new LinearLayout(this);
+            box.setOrientation(LinearLayout.VERTICAL);
+            box.setPadding(dp(24), dp(24), dp(24), dp(14));
+            box.setBackground(round(cardBg, 32));
+
+            // Header: vòng tròn icon + tiêu đề
+            LinearLayout head = new LinearLayout(this);
+            head.setOrientation(LinearLayout.HORIZONTAL);
+            head.setGravity(Gravity.CENTER_VERTICAL);
+            head.addView(buildDialogIconCircle(R.drawable.ic_opt_sound, 52, 24, circleBg, cOnSurface));
+            TextView tt = text(22, cOnSurface, true, true);
+            tt.setText(vi ? "Dùng bài này làm" : "Use this song as");
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            tlp.leftMargin = dp(16);
+            head.addView(tt, tlp);
+            box.addView(head, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            // Mô tả
+            TextView descTv = text(14.5f, cOnVariant, false, false);
+            descTv.setText(vi ? "Chọn nơi Media Player sẽ cài âm thanh này." : "Choose where Media Player should install this sound.");
+            LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            dlp.topMargin = dp(14);
+            dlp.bottomMargin = dp(14);
+            box.addView(descTv, dlp);
+
+            // 3 thẻ chọn loại âm thanh giống app chính
+            for (int i = 0; i < types.length; i++) {
+                final int idx = i;
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setPadding(dp(14), dp(12), dp(16), dp(12));
+                row.setBackground(round(cSecBtn, 22));
+                row.setClickable(true);
+                row.setOnClickListener(v -> {
+                    dlg.dismiss();
+                    confirmSetSound(types[idx], names[idx], icons[idx], titleTypes[idx], lowerTypes[idx]);
+                });
+
+                row.addView(buildDialogIconCircle(icons[i], 44, 22, circleBg, cOnSecBtn));
+
+                LinearLayout txtCol = new LinearLayout(this);
+                txtCol.setOrientation(LinearLayout.VERTICAL);
+                TextView nameTv = text(16.5f, cOnSecBtn, true, false);
+                nameTv.setText(names[i]);
+                TextView subTv = text(13.5f, cOnVariant, false, false);
+                subTv.setText(descs[i]);
+                LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                slp.topMargin = dp(2);
+                txtCol.addView(nameTv);
+                txtCol.addView(subTv, slp);
+                LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                clp.leftMargin = dp(14);
+                row.addView(txtCol, clp);
+
+                LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                if (i > 0) rlp.topMargin = dp(6);
+                box.addView(row, rlp);
+            }
+
+            // Footer: nút Hủy
+            LinearLayout foot = new LinearLayout(this);
+            foot.setOrientation(LinearLayout.HORIZONTAL);
+            foot.setGravity(Gravity.END);
+            TextView cancel = text(15.5f, cPrimary, true, true);
+            cancel.setText(vi ? "Hủy" : "Cancel");
+            cancel.setPadding(dp(16), dp(10), dp(16), dp(10));
+            cancel.setOnClickListener(v -> dlg.dismiss());
+            foot.addView(cancel);
+            LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            flp.topMargin = dp(12);
+            box.addView(foot, flp);
+
+            dlg.setContentView(box);
+            if (dlg.getWindow() != null) {
+                dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
+                dlg.getWindow().setLayout((int) (getResources().getDisplayMetrics().widthPixels * 0.90f), ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+            dlg.show();
         } catch (Throwable ignored) {}
     }
 
-    private void confirmSetSound(final String type, final String label, final String titleType, final String lowerType) {
+    private void confirmSetSound(final String type, final String label, final int iconRes, final String titleType, final String lowerType) {
         if (uri == null) return;
         String fileName = rawDisplayName(uri);
         if (fileName == null || fileName.trim().isEmpty()) fileName = "sound.mp3";
@@ -1165,7 +1272,69 @@ public class QuickPlayActivity extends Activity {
                 ? ("Bạn có muốn đặt \"" + fileName + "\" làm " + lowerType + " không?")
                 : ("Do you want to set \"" + fileName + "\" as your " + lowerType + "?");
         try {
-            showQpDialog(title, msg, null, null, vi ? "Đặt" : "Set", () -> setSoundImpl(type, label));
+            final android.app.Dialog dlg = new android.app.Dialog(this);
+            dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+            int cardBg = blendColors(cSurface, cTrack, 0.18f);
+            int circleBg = blendColors(cSecBtn, cSurface, 0.35f);
+
+            LinearLayout box = new LinearLayout(this);
+            box.setOrientation(LinearLayout.VERTICAL);
+            box.setPadding(dp(24), dp(24), dp(24), dp(16));
+            box.setBackground(round(cardBg, 32));
+
+            // Header: icon đúng loại âm thanh + tiêu đề "Set as <Type>"
+            LinearLayout head = new LinearLayout(this);
+            head.setOrientation(LinearLayout.HORIZONTAL);
+            head.setGravity(Gravity.CENTER_VERTICAL);
+            head.addView(buildDialogIconCircle(iconRes, 52, 24, circleBg, cOnSurface));
+            TextView tt = text(21, cOnSurface, true, true);
+            tt.setText(title);
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            tlp.leftMargin = dp(16);
+            head.addView(tt, tlp);
+            box.addView(head, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+            // Nội dung xác nhận kèm tên tệp
+            TextView mm = text(15, cOnVariant, false, false);
+            mm.setText(msg);
+            LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            ml.topMargin = dp(16);
+            box.addView(mm, ml);
+
+            // Footer: Hủy + nút pill Đặt màu primary
+            LinearLayout btns = new LinearLayout(this);
+            btns.setOrientation(LinearLayout.HORIZONTAL);
+            btns.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+
+            TextView cancel = text(15.5f, cPrimary, true, true);
+            cancel.setText(vi ? "Hủy" : "Cancel");
+            cancel.setPadding(dp(16), dp(10), dp(16), dp(10));
+            cancel.setOnClickListener(v -> dlg.dismiss());
+            btns.addView(cancel);
+
+            TextView ok = text(15.5f, cOnPlayBtn, true, true);
+            ok.setText(vi ? "Đặt" : "Set");
+            ok.setBackground(round(cPlayBtn, 20));
+            ok.setPadding(dp(22), dp(10), dp(22), dp(10));
+            ok.setOnClickListener(v -> {
+                dlg.dismiss();
+                toastMsg(vi ? "Đang cài đặt âm thanh..." : "Installing sound...");
+                setSoundImpl(type, label);
+            });
+            LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            olp.leftMargin = dp(8);
+            btns.addView(ok, olp);
+
+            LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            bl.topMargin = dp(18);
+            box.addView(btns, bl);
+
+            dlg.setContentView(box);
+            if (dlg.getWindow() != null) {
+                dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
+                dlg.getWindow().setLayout((int) (getResources().getDisplayMetrics().widthPixels * 0.90f), ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+            dlg.show();
         } catch (Throwable ignored) {}
     }
 
