@@ -234,7 +234,9 @@
         }, 280);
     }
     window.__closeSongSheet = function () {
+        const sc = document.getElementById('ss-sound-confirm-dlg');
         const pl = document.getElementById('ss-pl-screen'), sd = document.getElementById('ss-sound-dlg');
+        if (sc && sc.classList.contains('open')) { sc.classList.remove('open'); return true; }
         if (sd && sd.classList.contains('open')) { sd.classList.remove('open'); return true; }
         if (pl && pl.classList.contains('open')) { pl.classList.remove('open'); return true; }
         if (root && root.classList.contains('open')) { close(); return true; }
@@ -489,27 +491,60 @@
         dlg.querySelector('.ssd-desc').textContent = T('ss.use_as_desc', 'Chọn nơi Media Player sẽ cài âm thanh này.');
         dlg.querySelector('.ssd-cancel').textContent = T('ss.cancel', 'Hủy');
         const opts = [
-            ['ringtone', 'music_note', T('ss.ringtone', 'Nhạc chuông điện thoại'), T('ss.ringtone_d', 'Cuộc gọi đến')],
-            ['notification', 'notifications_active', T('ss.notif', 'Âm thông báo'), T('ss.notif_d', 'Tin nhắn và thông báo ứng dụng')],
-            ['alarm', 'alarm', T('ss.alarm', 'Âm báo thức'), T('ss.alarm_d', 'Báo thức đồng hồ')]
+            ['ringtone', 'music_note', T('ss.ringtone', 'Nhạc chuông điện thoại'), T('ss.ringtone_d', 'Cuộc gọi đến'), T('ss.type_ringtone', 'Nhạc chuông'), T('ss.type_ringtone_lower', 'nhạc chuông')],
+            ['notification', 'notifications_active', T('ss.notif', 'Âm thông báo'), T('ss.notif_d', 'Tin nhắn và thông báo ứng dụng'), T('ss.type_notif', 'Âm thông báo'), T('ss.type_notif_lower', 'âm thông báo')],
+            ['alarm', 'alarm', T('ss.alarm', 'Âm báo thức'), T('ss.alarm_d', 'Báo thức đồng hồ'), T('ss.type_alarm', 'Âm báo thức'), T('ss.type_alarm_lower', 'âm báo thức')]
         ];
         const box = dlg.querySelector('.ssd-opts'); box.innerHTML = '';
-        opts.forEach(([type, ic, name, desc]) => {
+        opts.forEach(([type, ic, name, desc, shortType, lowerType]) => {
             const b = document.createElement('button');
             b.type = 'button'; b.className = 'ssd-opt';
             b.innerHTML = '<span class="ssd-oic">' + icon(ic) + '</span><span class="ssd-ot"><b></b><small></small></span>';
             b.querySelector('b').textContent = name; b.querySelector('small').textContent = desc;
             b.addEventListener('click', () => {
                 const t = track;
-                dlg.classList.remove('open'); close();
-                toast(T('ss.installing', 'Đang cài đặt âm thanh...'), 'notifications_active');
-                ab.setAsSound(String(t.nativeId || ''), String(t.nativeLocation || ''), String(t.nativeName || ((t.name || 'sound') + '.' + (t.ext || 'mp3').toLowerCase())), type);
+                dlg.classList.remove('open');
+                openSoundConfirmDialog(t, type, ic, shortType, lowerType);
             });
             box.appendChild(b);
         });
         dlg.style.display = 'flex';
         void dlg.offsetWidth;
         dlg.classList.add('open');
+    }
+
+    function openSoundConfirmDialog(t, type, ic, shortType, lowerType) {
+        if (!t) return;
+        const ab = AB();
+        if (!ab || typeof ab.setAsSound !== 'function') return;
+        let cdlg = document.getElementById('ss-sound-confirm-dlg');
+        if (!cdlg) {
+            cdlg = document.createElement('div');
+            cdlg.id = 'ss-sound-confirm-dlg';
+            cdlg.innerHTML = '<div class="ssd-card"><div class="ssd-head"><span class="ssd-ic"></span><h3></h3></div><p class="ssd-desc"></p>' +
+                '<div class="ssd-foot"><button type="button" class="ssd-cancel"></button><button type="button" class="ssd-confirm"></button></div></div>';
+            document.body.appendChild(cdlg);
+            cdlg.addEventListener('click', (e) => { if (e.target === cdlg) cdlg.classList.remove('open'); });
+            cdlg.querySelector('.ssd-cancel').addEventListener('click', () => cdlg.classList.remove('open'));
+        }
+        const fileName = String(t.nativeName || (t.file && t.file.name) || ((t.name || 'sound') + '.' + (t.ext || 'mp3').toLowerCase()));
+        cdlg.querySelector('.ssd-ic').innerHTML = icon(ic || 'notifications_active');
+        cdlg.querySelector('h3').textContent = T('ss.confirm_title', 'Đặt làm {type}').replace('{type}', shortType);
+        cdlg.querySelector('.ssd-desc').textContent = T('ss.confirm_body', 'Bạn có muốn đặt "{file}" làm {type} không?')
+            .replace('{file}', fileName)
+            .replace('{type}', lowerType);
+        cdlg.querySelector('.ssd-cancel').textContent = T('ss.cancel', 'Hủy');
+        const okBtn = cdlg.querySelector('.ssd-confirm');
+        okBtn.textContent = T('ss.confirm_ok', 'Đặt');
+        okBtn.onclick = () => {
+            cdlg.classList.remove('open');
+            close();
+            toast(T('ss.installing', 'Đang cài đặt âm thanh...'), 'notifications_active');
+            ab.setAsSound(String(t.nativeId || ''), String(t.nativeLocation || ''), fileName, type);
+        };
+        cdlg.style.display = 'flex';
+        void cdlg.offsetWidth;
+        cdlg.classList.add('open');
     }
     window.__onSetSoundResult = function (r) {
         try {
