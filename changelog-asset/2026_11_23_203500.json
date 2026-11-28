@@ -2,6 +2,10 @@
   "date": "2026-11-23",
   "vi": [
     {
+      "content": "Đặt làm âm thanh (Nhạc chuông / Âm thông báo / Âm báo thức): thêm hộp thoại xác nhận \"Đặt làm <Loại>\" kèm tên tệp (\"Bạn có muốn đặt \\\"tệp.mp3\\\" làm <loại> không?\") trên cả app chính lẫn Sheet phát nhanh trước khi áp dụng",
+      "icon": "notifications_active"
+    },
+    {
       "content": "Android: sửa lỗi đổi nhạc chuông / thông báo / báo thức ở Cài đặt máy nhưng tệp cũ chưa tự xóa — thêm ContentObserver theo dõi cài đặt âm thanh hệ thống, kiểm tra lại sau khi quay lại app, chuẩn hóa khớp URI/ID/đường dẫn và double-check dọn tệp cũ ngay trong lúc quét thư viện",
       "icon": "notifications_active"
     },
@@ -219,6 +223,10 @@
     }
   ],
   "en": [
+    {
+      "content": "Set as sound (Ringtone / Notification / Alarm): added a confirmation dialog (\"Set as <Type>\" — \"Do you want to set \\\"file.mp3\\\" as your <type>?\") in both the main app and QuickPlay before applying",
+      "icon": "notifications_active"
+    },
     {
       "content": "Android: fixed old ringtone/notification/alarm copies not auto-deleting after changing defaults in system Settings — added a ContentObserver for system sound settings, retried cleanup after resume, normalized URI/ID/path matching, and double-checked stale files during library scans",
       "icon": "notifications_active"
