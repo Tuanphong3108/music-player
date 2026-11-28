@@ -2453,22 +2453,25 @@ html.m-ui #m-lib-list.m-locating .m-lib-item { content-visibility: visible; }
         #ss-pl-screen .ssp-cancel { background: var(--md-sys-color-surface-container-highest, var(--md-sys-color-surface-variant)); color: var(--md-sys-color-on-surface); }
         #ss-pl-screen .ssp-save { padding: 0 28px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 
-        #ss-sound-dlg { pointer-events: none; display: none; position: fixed; inset: 0; z-index: 9600; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.55); opacity: 0; transition: opacity .2s; }
-        #ss-sound-dlg.open { opacity: 1; pointer-events: auto; }
-        #ss-sound-dlg .ssd-card { width: 100%; max-width: 420px; border-radius: 32px; padding: 24px; background: var(--md-sys-color-surface-container-high, var(--md-sys-color-surface)); color: var(--md-sys-color-on-surface); transform: scale(.94); transition: transform .2s; }
-        #ss-sound-dlg.open .ssd-card { transform: scale(1); }
-        #ss-sound-dlg .ssd-head { display: flex; align-items: center; gap: 16px; }
-        #ss-sound-dlg .ssd-head h3 { margin: 0; font-size: calc(26px * var(--font-scale-factor, 1)); font-weight: 700; }
-        #ss-sound-dlg .ssd-ic { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: var(--md-sys-color-surface-variant); }
-        #ss-sound-dlg .ssd-desc { margin: 16px 0; opacity: .75; font-size: calc(16px * var(--font-scale-factor, 1)); }
+        #ss-sound-dlg, #ss-sound-confirm-dlg { pointer-events: none; display: none; position: fixed; inset: 0; z-index: 9600; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.55); opacity: 0; transition: opacity .2s; }
+        #ss-sound-confirm-dlg { z-index: 9650; }
+        #ss-sound-dlg.open, #ss-sound-confirm-dlg.open { opacity: 1; pointer-events: auto; }
+        #ss-sound-dlg .ssd-card, #ss-sound-confirm-dlg .ssd-card { width: 100%; max-width: 420px; border-radius: 32px; padding: 24px; background: var(--md-sys-color-surface-container-high, var(--md-sys-color-surface)); color: var(--md-sys-color-on-surface); transform: scale(.94); transition: transform .2s; }
+        #ss-sound-dlg.open .ssd-card, #ss-sound-confirm-dlg.open .ssd-card { transform: scale(1); }
+        #ss-sound-dlg .ssd-head, #ss-sound-confirm-dlg .ssd-head { display: flex; align-items: center; gap: 16px; }
+        #ss-sound-dlg .ssd-head h3, #ss-sound-confirm-dlg .ssd-head h3 { margin: 0; font-size: calc(24px * var(--font-scale-factor, 1)); font-weight: 700; line-height: 1.25; }
+        #ss-sound-dlg .ssd-ic, #ss-sound-confirm-dlg .ssd-ic { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: var(--md-sys-color-surface-variant); }
+        #ss-sound-dlg .ssd-desc, #ss-sound-confirm-dlg .ssd-desc { margin: 16px 0; opacity: .82; font-size: calc(16px * var(--font-scale-factor, 1)); line-height: 1.48; word-break: break-word; }
         #ss-sound-dlg .ssd-opts { display: flex; flex-direction: column; gap: 4px; }
         #ss-sound-dlg .ssd-opt { border: none; cursor: pointer; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 22px; text-align: left; font: inherit; background: var(--md-sys-color-surface-container-highest, var(--md-sys-color-surface-variant)); color: var(--md-sys-color-on-surface); }
         #ss-sound-dlg .ssd-opt:active { transform: scale(.98); }
         #ss-sound-dlg .ssd-oic { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: var(--md-sys-color-surface-variant); }
         #ss-sound-dlg .ssd-ot b { display: block; font-size: calc(18px * var(--font-scale-factor, 1)); }
         #ss-sound-dlg .ssd-ot small { display: block; opacity: .7; font-size: calc(15px * var(--font-scale-factor, 1)); }
-        #ss-sound-dlg .ssd-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
-        #ss-sound-dlg .ssd-cancel { border: none; background: none; cursor: pointer; padding: 10px 14px; border-radius: 20px; font: inherit; font-weight: 600; font-size: calc(18px * var(--font-scale-factor, 1)); color: var(--md-sys-color-primary); }
+        #ss-sound-dlg .ssd-foot, #ss-sound-confirm-dlg .ssd-foot { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 14px; }
+        #ss-sound-dlg .ssd-cancel, #ss-sound-confirm-dlg .ssd-cancel { border: none; background: none; cursor: pointer; padding: 10px 16px; border-radius: 20px; font: inherit; font-weight: 600; font-size: calc(16px * var(--font-scale-factor, 1)); color: var(--md-sys-color-primary); }
+        #ss-sound-confirm-dlg .ssd-confirm { border: none; cursor: pointer; padding: 10px 22px; border-radius: 20px; font: inherit; font-weight: 700; font-size: calc(16px * var(--font-scale-factor, 1)); background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); transition: transform .12s ease; }
+        #ss-sound-confirm-dlg .ssd-confirm:active { transform: scale(.96); }
         html.m-ui .pld-handle { touch-action: none; cursor: grab; padding: 8px 4px; margin: -8px -4px; }
         html.m-ui .m-lib-list.m-reordering .m-lib-item { content-visibility: visible; }
         html.m-ui .m-lib-list.m-reordering { overflow-anchor: none; }
